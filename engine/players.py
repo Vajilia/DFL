@@ -1,7 +1,6 @@
 """Players: persistent identities with a position, age, ratings and injury state.
 
-Player names are placeholders (P00001...). Real names and personalities arrive with the
-character cards in a later phase. Ratings are 1-100.
+A player is called P00001 until cards.py gives her a card (name, personality, archetypes). Ratings are 1-100.
 """
 from __future__ import annotations
 
@@ -41,13 +40,15 @@ class Player:
     retired: bool = False
     fa_years: int = 0                    # seasons spent unsigned
     ovr: float = 0.0
+    card: object = None                  # cards.PlayerCard, attached by cards.ensure_cards
+    display_name: str = ""               # the card's name once the card exists
 
     def __post_init__(self):
         self.recompute()
 
     @property
     def name(self) -> str:
-        return f"P{self.id:05d}"
+        return self.display_name or f"P{self.id:05d}"
 
     @property
     def label(self) -> str:

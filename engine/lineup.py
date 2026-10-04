@@ -83,7 +83,7 @@ def _rec_rating(p: Player) -> float:
     return r["hands"]                                   # RB
 
 
-def build_lineup(team_id: int, roster: List[Player]) -> Lineup:
+def build_lineup(team_id: int, roster: List[Player], coach=None) -> Lineup:
     ch = depth_chart(roster)
     qb, k, p = ch["QB"][0], ch["K"][0], ch["P"][0]
     rbs, wrs, te = ch["RB"][:2], ch["WR"][:3], ch["TE"][0]
@@ -111,6 +111,14 @@ def build_lineup(team_id: int, roster: List[Player]) -> Lineup:
                   + 0.15 * _mean([x.ratings["tackling"] for x in s]) + 0.10 * _mean([c.ratings["tackling"] for c in cb]))
     L.k_acc, L.k_pow = k.ratings["accuracy"], k.ratings["power"]
     L.p_pow, L.p_acc = p.ratings["power"], p.ratings["accuracy"]
+
+    if coach is not None:
+        # head coach: a small capped lift to the offensive or defensive units (cards.COACH_POINTS_AT_100)
+        o, d = coach.offense_points, coach.defense_points
+        for f in ("qb_acc", "qb_arm", "qb_aware", "rec", "pass_block", "run_block", "rb_run"):
+            setattr(L, f, getattr(L, f) + o)
+        for f in ("pass_rush", "coverage", "ball_skills", "run_stop"):
+            setattr(L, f, getattr(L, f) + d)
 
     # who gets credit: sacks go to pass rushers, interceptions to ball hawks, tackles to everyone
     rush = [(d, d.ratings["pass_rush"]) for d in dl] + [(b, 0.5 * b.ratings["pass_rush"]) for b in lb]

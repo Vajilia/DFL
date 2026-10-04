@@ -73,7 +73,7 @@ class GameRunner:
         lu = self._cache.get(tid)
         if lu is None:
             from lineup import build_lineup
-            lu = self._cache[tid] = build_lineup(tid, self.league.by_id[tid].roster)
+            lu = self._cache[tid] = build_lineup(tid, self.league.by_id[tid].roster, self.league.by_id[tid].coach)
         return lu
 
     def power(self, tid: int) -> float:

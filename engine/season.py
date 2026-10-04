@@ -133,7 +133,11 @@ def run_season(league: League, year: int, rng: random.Random, opt: Options = Non
     off_log = None
     if league.has_rosters:
         from offseason import run_roster_offseason
+        before = [p for t in league.teams for p in t.roster] + list(league.free_agents)
         off_log = run_roster_offseason(league, rng, opt.roster_model, year, pick_of, returners)
+        import cards
+        league.retired_players.extend(p for p in before if p.retired)
+        cards.offseason_cards(league, year)
     else:
         for t in league.teams:
             s = model.retention * t.strength + model.pick_value(pick_of[t.id]) + rng.gauss(0.0, model.offseason_noise_sd)

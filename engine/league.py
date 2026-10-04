@@ -20,6 +20,7 @@ class Team:
     tier: Optional[int]       # 1..5 while active; None while exiled
     strength: float           # talent rating in points better than average (placeholder scalar, or the roster's power rating)
     roster: List[Player] = None
+    coach: object = None      # cards.CoachCard, the head coach
 
     @property
     def division_id(self) -> int:
@@ -38,6 +39,15 @@ class League:
         self.free_agents: List[Player] = []
         self.new_id: IdSource = IdSource()
         self.has_rosters = False
+        self.card_seed = 0                 # seeds every character card; set from the league's own seed
+        self.coaches_on = True             # head coaches nudge team strength (turn off to compare)
+        self.coaches: list = []            # every head coach ever hired (the Archive keeps them)
+        self.retired_players: list = []    # retired players keep their cards
+        self._coach_ids = 0
+
+    def new_coach_id(self) -> int:
+        self._coach_ids += 1
+        return self._coach_ids
 
     # -- lookups ---------------------------------------------------------
     def division(self, division_id: int) -> List[Team]:
@@ -66,7 +76,7 @@ class League:
         return {t.id: (t.status, t.tier, round(t.strength, 3)) for t in self.teams}
 
 
-def new_league(rng: random.Random, rosters: bool = False) -> League:
+def new_league(rng: random.Random, rosters: bool = False, coaches: bool = True) -> League:
     """ASSUMED starting league: random strengths, one random team per division starts
     in exile, and the rest take tiers 1-5 in order of strength."""
     teams: List[Team] = []
@@ -89,6 +99,8 @@ def new_league(rng: random.Random, rosters: bool = False) -> League:
             teams.extend(members + [exiled])
     teams.sort(key=lambda t: t.id)
     lg = League(teams)
+    lg.card_seed = hash(rng.getstate()[1]) % (2 ** 31)    # reads the generator without drawing from it
+    lg.coaches_on = coaches
     if rosters:
         give_rosters(lg, rng)
     return lg
@@ -103,6 +115,8 @@ def give_rosters(lg: League, rng: random.Random):
     for t in lg.teams:
         t.roster = build_roster(rng, lg.new_id, t.id, rng.gauss(0.0, TEAM_OFFSET_SD))
     lg.has_rosters = True
+    import cards
+    cards.init_league_cards(lg, 0)
     refresh_strengths(lg)
     for div_id in range(R.TOTAL_DIVISIONS):
         act = sorted(lg.active_in_division(div_id), key=lambda t: -t.strength)
@@ -114,4 +128,4 @@ def refresh_strengths(lg: League):
     from lineup import build_lineup
     import power_rating as PR
     for t in lg.teams:
-        t.strength = PR.rating(build_lineup(t.id, t.roster))
+        t.strength = PR.rating(build_lineup(t.id, t.roster, t.coach))

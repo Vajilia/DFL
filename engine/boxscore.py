@@ -3,7 +3,7 @@
     from boxscore import format_box
     print(format_box(game, league))
 
-Player names are placeholders (P00123) until the character cards exist.
+Players are named by their character cards (P00123 only if a card is missing).
 """
 from __future__ import annotations
 
@@ -15,12 +15,12 @@ def _clock(secs: float) -> str:
     return f"{s // 60}:{s % 60:02d}"
 
 
-def _lines(res, side, pid_pos):
+def _lines(res, side, pid_pos, names=None):
     rows = {"pass": [], "rush": [], "rec": [], "def": [], "kick": []}
     for pid, d in sorted(res.players.items()):
         if d["team"] != side:
             continue
-        nm = f"P{pid:05d}"
+        nm = (names or {}).get(pid) or f"P{pid:05d}"
         if d.get("pass_att"):
             rows["pass"].append(f"{nm} ({d['pos']}) {d.get('pass_cmp', 0)}/{d['pass_att']}, {d.get('pass_yds', 0)} yds, "
                                 f"{d.get('pass_td', 0)} TD, {d.get('pass_int', 0)} INT, sacked {d.get('sacked', 0)}")
@@ -44,6 +44,8 @@ def format_box(game, league, drive_log: bool = True) -> str:
     res = game.result
     if res is None:
         return f"{game.home} {game.home_pts} - {game.away} {game.away_pts} (no box score kept)"
+    pname = {p.id: p.name for p in [q for t in league.teams for q in t.roster] + list(league.free_agents)
+             + list(getattr(league, "retired_players", ()))}
     h, a = league.by_id[game.home].name, league.by_id[game.away].name
     names = (h, a)
     L = []
@@ -68,7 +70,7 @@ def format_box(game, league, drive_log: bool = True) -> str:
     row("Time of possession", lambda t: _clock(t["top_secs"]))
     L.append("")
     for side in (0, 1):
-        rows = _lines(res, side, None)
+        rows = _lines(res, side, None, pname)
         L.append(f"**{names[side]}**")
         for key, title in (("pass", "Passing"), ("rush", "Rushing"), ("rec", "Receiving"), ("kick", "Kicking"),
                            ("def", "Defense")):

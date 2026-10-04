@@ -45,8 +45,8 @@ def main():
     lg = new_league(rng, rosters=True)
     out = []
     out.append("# Phase 2 report: rosters and the drive-by-drive game engine\n")
-    out.append(f"Seed {a.seed}, {a.seasons} seasons, drive engine. Player names are placeholders (P00123) until the character "
-               "cards exist. Every number here comes from placeholder dials, not from league rules.\n")
+    out.append(f"Seed {a.seed}, {a.seasons} seasons, drive engine. Players have names and cards (see card_samples.md). "
+               "Every number here comes from placeholder dials, not from league rules.\n")
 
     tot = collections.defaultdict(float)
     ngames_team = 0
@@ -79,6 +79,8 @@ def main():
         for k, v in res.offseason.items():
             offlog[k].append(v)
         sds.append(st.pstdev([t.strength for t in lg.teams]))
+
+    names = {p.id: p.name for p in [q for t in lg.teams for q in t.roster] + list(lg.free_agents) + list(lg.retired_players)}
 
     # --- sample box scores (season 1)
     out.append("## Sample box score: the season-1 championship game\n")
@@ -122,10 +124,10 @@ def main():
     def leaders(title, key, pos, n=5, minimum=0, fmt=lambda d: ""):
         rows = [(pid, d) for pid, d in pl.items() if d["pos"] == pos and d.get(key, 0) > minimum]
         rows.sort(key=lambda x: -x[1][key])
-        out.append(f"**{title}** (all {a.seasons} seasons combined, per player id)")
+        out.append(f"**{title}** (all {a.seasons} seasons combined)")
         out.append("")
         for pid, d in rows[:n]:
-            out.append(f"- P{pid:05d} ({pos}): {int(d[key])}  {fmt(d)}")
+            out.append(f"- {names.get(pid, f'P{pid:05d}')} ({pos}): {int(d[key])}  {fmt(d)}")
         out.append("")
 
     out.append("## Career leaders in the simulated seasons\n")
