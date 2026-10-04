@@ -78,6 +78,13 @@ FINAL_IS_NEUTRAL_SITE = True
 # ---- Exile -----------------------------------------------------------------
 EXILE_TRIGGER_FINISH = 5        # CONFIRMED: finish 5th in the division
 EXILE_DURATION_SEASONS = 1
+# CONFIRMED (Jeph, 2026-10-04): the LEAGUE does not treat exile as punishment. It is help for a
+# distressed team (relief, plus play in exotic locations around the world while it rebuilds).
+# Media and fans may feel differently. The help should be modest: a returning team should have
+# the potential to compete for 3rd place in its division, sometimes succeeding, sometimes not.
+# This is the target the placeholder benefits are tuned to (see calibrate_exile.py).
+EXILE_IS_PUNISHMENT = False
+EXILE_TARGET_DIVISION_FINISH = 3
 EXILE_CAP_ABSORPTION = 0.50     # 50% cap relief (not used until the cap model exists)
 AMBASSADOR_ROUND_ROBIN_TEAMS = EXILED_TEAMS
 AMBASSADOR_GAMES_PER_TEAM = AMBASSADOR_ROUND_ROBIN_TEAMS - 1   # 7
@@ -160,6 +167,7 @@ PROVENANCE = {
     "Lottery is 8 teams": CONFIRMED,
     "Recall: 1 division league-wide per year, 8-year cycle": CONFIRMED,
     "Recall also triggered by exile": CONFIRMED,
+    "Exile is relief, not punishment; a returning team can compete for about 3rd in its division": CONFIRMED,
     "Lottery weights 18/16/15/13/12/10/9/7": ASSUMED,
     "Which 8 teams are in the lottery (just finished 5th vs just finished exile)": ASSUMED,
     "Lottery drawn one pick at a time by weight": ASSUMED,

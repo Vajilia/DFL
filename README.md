@@ -20,6 +20,7 @@ A league engine with no AI and no characters. It builds legal 18-game schedules,
 | `engine/run_sim.py` | Run many seasons |
 | `engine/league_report.py` | Plain-language report on a run |
 | `engine/exile_study.py` | Does exile pay? Sensitivity study |
+| `engine/calibrate_exile.py` | Tunes the placeholder exile benefits to the design intent (a returning team can compete for about 3rd) |
 | `reports/` | Output of the two reports above |
 | `docs/decisions.md` | Confirmed rules, assumed rules, open questions |
 

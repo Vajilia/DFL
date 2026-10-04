@@ -117,8 +117,8 @@ def main():
     args = ap.parse_args()
     leagues, seasons = (6, 16) if args.quick else (40, 30)
     pools = ["just_finished_fifth", "just_finished_exile"]
-    pick1s = [0.0, 1.5, 3.0, 4.5, 6.0]
-    bonuses = [0.0, 1.0, 2.0, 3.0]
+    pick1s = [0.0, 1.0, 2.0, 3.0, 4.5, 6.0]
+    bonuses = [0.0, 0.5, 1.0, 2.0, 3.0]
     jobs = [(p, v, b, leagues, seasons, 1000) for p in pools for v in pick1s for b in bonuses]
     results = {}
     cache = os.path.join(args.out, ".exile_study_cache.npz")
@@ -152,7 +152,8 @@ def main():
         "not simulated yet, so the real cost of exile is larger than anything shown here.\n")
     ap_("## With the current placeholder settings\n")
     ap_(f"Lottery for teams that just finished 5th. A pick-1 draft pick is worth {PM.DRAFT_PICK1_VALUE:+.1f} points of team "
-        f"strength; coming back from exile is worth {PM.EXILE_RETURN_BONUS:+.1f} points.\n")
+        f"strength; coming back from exile is worth {PM.EXILE_RETURN_BONUS:+.1f} points. These settings were calibrated so a returning "
+        f"team averages roughly 3rd-to-4th in its division (exile as help, not punishment; see exile_calibration.md).\n")
     pt, lo, hi = with_ci(results[base_key])
     ap_("| Measure (exiled minus 4th place) | Difference | 95% range |")
     ap_("| --- | --- | --- |")
@@ -197,7 +198,8 @@ def main():
         f"so a pick-1 value of 3 points is about {3 * per_point:.1f} extra wins a year.")
     ap_(f"- **With today's placeholder settings**, a team that finishes 5th {verdict} against one that finishes 4th on playoff "
         f"appearances over four seasons ({fmt(bp[ix_p])}, range {fmt(bl[ix_p])} to {fmt(bh[ix_p])}), even though it sits out a whole "
-        f"season. It returns {bp[ix['talent_at_return']]:.1f} points stronger and is {abs(bp[ix['exiled_again']]) * 100:.0f} points "
+        f"season. It returns {bp[ix['talent_at_return']]:.1f} points stronger and is {abs(bp[ix['exiled_again']]) * 100:.0f} percentage point"
+        f"{'' if round(abs(bp[ix['exiled_again']]) * 100) == 1 else 's'} "
         f"{'less' if bp[ix['exiled_again']] < 0 else 'more'} likely to be exiled again.")
     base0 = with_ci(results[(pools[0], 0.0, 0.0)])[0][ix_p]
     ap_(f"- **With both benefits at zero**, exile costs {abs(base0):.2f} playoff appearances per four seasons. That is the true price "

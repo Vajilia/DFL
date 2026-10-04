@@ -21,12 +21,14 @@ OFFSEASON_NOISE_SD = 2.2      # random year-to-year drift
 # ---- Draft value -------------------------------------------------------------
 # Strength a team gains from the draft pick it holds: pick 1 is worth DRAFT_PICK1_VALUE,
 # falling off by a factor of exp(-1/DRAFT_DECAY) per pick.
-DRAFT_PICK1_VALUE = 3.0
+# Calibrated 2026-10-04 so a team returning from exile averages about 3rd-to-4th in its division
+# (see calibrate_exile.py and reports/exile_calibration.md). A dial, not a rule.
+DRAFT_PICK1_VALUE = 1.0
 DRAFT_DECAY = 12.0
 
 # ---- Exile ----------------------------------------------------------------
 # Extra strength a team gets in the offseason it returns, standing in for 50% cap relief.
-EXILE_RETURN_BONUS = 1.0
+EXILE_RETURN_BONUS = 0.5       # calibrated together with DRAFT_PICK1_VALUE; a dial, not a rule
 
 
 def draft_value(pick: int, pick1_value: float = DRAFT_PICK1_VALUE, decay: float = DRAFT_DECAY) -> float:
