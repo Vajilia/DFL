@@ -16,6 +16,7 @@ from league import League, refresh_strengths
 from players import Player, clamp, make_player, random_age
 from positions import POSITIONS, ROSTER_COUNTS, STARTERS
 from roster_model import RosterModel
+import staff_cards as SC
 
 # Years of aging offset by position: quarterbacks, kickers and punters last longer.
 AGE_SHIFT = {"QB": 2, "K": 5, "P": 5, "RB": -1}
@@ -163,7 +164,7 @@ def run_roster_offseason(lg: League, rng: random.Random, rm: RosterModel, year: 
     for t in teams:
         keep = []
         for p in t.roster:
-            q = rm.fa_entry_rate * (rm.fa_star_protect if p.ovr >= 70 else 1.0)
+            q = rm.fa_entry_rate * (rm.fa_star_protect if p.ovr >= 70 else 1.0) * SC.gm_retention_factor(t)
             if rng.random() < q:
                 p.team_id, p.fa_years = None, 0
                 pool.append(p)
@@ -177,7 +178,7 @@ def run_roster_offseason(lg: League, rng: random.Random, rm: RosterModel, year: 
     for t in teams:
         pick = pick_of[t.id]
         pos = _pick_rookie_position(t.roster, rng)
-        p = make_player(rng, lg.new_id(), pos, rookie_ovr(pick, rm, rng), rng.choice((22, 22, 22, 23)), t.id,
+        p = make_player(rng, lg.new_id(), pos, clamp(rookie_ovr(pick, rm, rng) + SC.gm_scouting_bonus(t), 30, 95), rng.choice((22, 22, 22, 23)), t.id,
                         draft_year=year, draft_pick=pick)
         p.years_in_league = 0
         t.roster.append(p)

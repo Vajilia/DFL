@@ -11,121 +11,120 @@ Seed 1, after 14 seasons. Names, hometowns and backgrounds come from placeholder
 
 ## A franchise player at each position group
 
-### Brooke Beaumont  (QB, Team 39)
+### Alana Landry  (QB, Team 45)
 ```yaml
-IDENTITY: [Brooke Beaumont, age 29, from Spokane WA; Power-conference star]
-SOUL (fixed): [+ Well-Rounded, - Reads Late]  temperament family: balanced
-PERSONALITY: [Diplomat] wants a calm, united team; fears locker-room civil war
-  - allowed by her soul: Diplomat, Grinder, Loyalist, Mercenary; right now she is clear-eyed (-0.01)
-RATINGS: [overall 85, Franchise player]
-  - accuracy: 87  (sees herself at 87)
-  - arm: 87  (sees herself at 86)
-  - awareness: 80  (sees herself at 81)
-  - pressure thresholds: exile 54, contract 54, spotlight 40, loyalty 35
-RELATIONSHIPS: {}  # none yet; filled by Interactions
-CAREER: [drafted 7 (pick 8)]
-DECISION_LOG: [none yet]
-```
-### Nova Gentry  (WR, Team 46)
-```yaml
-IDENTITY: [Nova Gentry, age 27, from Winnipeg MB; Two-sport athlete]
-SOUL (fixed): [+ Burner, - Rough Routes]  temperament family: flash
-PERSONALITY: [Free Spirit] wants freedom and adventure along the way; fears a rigid system
-  - allowed by her soul: Showman, Free Spirit, Competitor, Mercenary; right now she is full of doubt (-1.00)
-RATINGS: [overall 94, Franchise player]
-  - route: 86  (sees herself at 78, doubting)
-  - hands: 95  (sees herself at 86, doubting)
-  - speed: 100  (sees herself at 91, doubting)
-  - pressure thresholds: exile 27, contract 43, spotlight 44, loyalty 52
-RELATIONSHIPS: {}  # none yet; filled by Interactions
-CAREER: [drafted 9 (pick 2)]
-DECISION_LOG: [none yet]
-```
-### Samira Paddock  (OL, Team 14)
-```yaml
-IDENTITY: [Samira Paddock, age 24, from Sao Paulo Brazil; Walk-on turned starter]
-SOUL (fixed): [+ Pass-Pro Wall, - Soft in the Run]  temperament family: precision
-PERSONALITY: [Perfectionist] wants flawless execution; fears the one mistake everyone remembers
-  - allowed by her soul: Perfectionist, Quiet Leader, Grinder, Diplomat; right now she is full of doubt (-0.78)
-RATINGS: [overall 92, Franchise player]
-  - pass_block: 97  (sees herself at 91, doubting)
-  - run_block: 88  (sees herself at 82, doubting)
-  - pressure thresholds: exile 53, contract 40, spotlight 58, loyalty 55
-RELATIONSHIPS: {}  # none yet; filled by Interactions
-CAREER: [drafted 12 (pick 7)]
-DECISION_LOG: [none yet]
-```
-### Brooke Okafor  (DL, Team 25)
-```yaml
-IDENTITY: [Brooke Okafor, age 27, from Duluth MN; Overlooked recruit]
-SOUL (fixed): [+ Well-Rounded, - No Glaring Weakness]  temperament family: balanced
-PERSONALITY: [Diplomat] wants a calm, united team; fears locker-room civil war
-  - allowed by her soul: Diplomat, Grinder, Loyalist, Mercenary; right now she is clear-eyed (+0.05)
-RATINGS: [overall 94, Franchise player]
-  - pass_rush: 94  (sees herself at 94)
-  - run_stop: 95  (sees herself at 96)
-  - pressure thresholds: exile 72, contract 37, spotlight 27, loyalty 71
+IDENTITY: [Alana Landry, age 28, from Knoxville TN; Overlooked recruit]
+SOUL (fixed): [+ Cannon, - Wild Arm]  temperament family: power
+PERSONALITY: [Grinder] wants to earn every inch; fears being handed nothing and losing it anyway
+  - allowed by her soul: Competitor, Hothead, Grinder, Loyalist; right now she is full of doubt (-1.00)
+RATINGS: [overall 90, Franchise player]
+  - accuracy: 88  (sees herself at 75, doubting)
+  - arm: 93  (sees herself at 79, doubting)
+  - awareness: 91  (sees herself at 78, doubting)
+  - pressure thresholds: exile 52, contract 64, spotlight 33, loyalty 63
 RELATIONSHIPS: {}  # none yet; filled by Interactions
 CAREER: [drafted 9 (pick 6)]
 DECISION_LOG: [none yet]
 ```
-### Aaliyah Jefferson  (CB, Team 05)
+### Josie Kimura  (WR, Team 23)
 ```yaml
-IDENTITY: [Aaliyah Jefferson, age 30, from Tacoma WA; Two-sport athlete]
-SOUL (fixed): [+ Ballhawk, - Avoids Contact]  temperament family: flash
-PERSONALITY: [Free Spirit] wants freedom and adventure along the way; fears a rigid system
-  - allowed by her soul: Showman, Free Spirit, Competitor, Mercenary; right now she is clear-eyed (-0.18)
-RATINGS: [overall 95, Franchise player]
-  - coverage: 97  (sees herself at 93, doubting)
-  - ball_skills: 97  (sees herself at 94, doubting)
-  - tackling: 87  (sees herself at 89)
-  - pressure thresholds: exile 34, contract 35, spotlight 62, loyalty 55
+IDENTITY: [Josie Kimura, age 29, from Toledo OH; Late bloomer]
+SOUL (fixed): [+ Well-Rounded, - Lacks Burst]  temperament family: balanced
+PERSONALITY: [Grinder] wants to earn every inch; fears being handed nothing and losing it anyway
+  - allowed by her soul: Diplomat, Grinder, Loyalist, Mercenary; right now she is full of doubt (-1.00)
+RATINGS: [overall 88, Franchise player]
+  - route: 89  (sees herself at 83, doubting)
+  - hands: 92  (sees herself at 83, doubting)
+  - speed: 85  (sees herself at 75, doubting)
+  - pressure thresholds: exile 36, contract 79, spotlight 30, loyalty 54
 RELATIONSHIPS: {}  # none yet; filled by Interactions
-CAREER: [drafted 6 (pick 3); became Free Spirit (was Showman) 8]
+CAREER: [drafted 7 (pick 3)]
 DECISION_LOG: [none yet]
 ```
-### Aaliyah Chavez  (K, Team 47)
+### Celeste Stratton  (OL, Team 13)
 ```yaml
-IDENTITY: [Aaliyah Chavez, age 30, from Helsinki Finland; Power-conference star]
+IDENTITY: [Celeste Stratton, age 27, from Sacramento CA; Junior-college transfer]
+SOUL (fixed): [+ Road Grader, - Turnstile]  temperament family: power
+PERSONALITY: [Hothead] wants to settle every score on the field; fears being embarrassed in public
+  - allowed by her soul: Competitor, Hothead, Grinder, Loyalist; right now she is overconfident (+0.50)
+RATINGS: [overall 96, Franchise player]
+  - pass_block: 92  (sees herself at 97, overrating)
+  - run_block: 100  (sees herself at 103, overrating)
+  - pressure thresholds: exile 30, contract 47, spotlight 45, loyalty 61
+RELATIONSHIPS: {}  # none yet; filled by Interactions
+CAREER: [drafted 9 (pick 3)]
+DECISION_LOG: [none yet]
+```
+### Alana Trevino  (DL, Team 17)
+```yaml
+IDENTITY: [Alana Trevino, age 29, from Glasgow Scotland; Small-college standout]
 SOUL (fixed): [+ Well-Rounded, - No Glaring Weakness]  temperament family: balanced
 PERSONALITY: [Diplomat] wants a calm, united team; fears locker-room civil war
-  - allowed by her soul: Diplomat, Grinder, Loyalist, Mercenary; right now she is full of doubt (-0.76)
-RATINGS: [overall 91, Franchise player]
-  - power: 95  (sees herself at 89, doubting)
-  - accuracy: 88  (sees herself at 82, doubting)
-  - pressure thresholds: exile 41, contract 24, spotlight 49, loyalty 43
+  - allowed by her soul: Diplomat, Grinder, Loyalist, Mercenary; right now she is clear-eyed (-0.12)
+RATINGS: [overall 99, Franchise player]
+  - pass_rush: 99  (sees herself at 98)
+  - run_stop: 98  (sees herself at 96)
+  - pressure thresholds: exile 46, contract 51, spotlight 22, loyalty 49
 RELATIONSHIPS: {}  # none yet; filled by Interactions
-CAREER: [none recorded]
+CAREER: [drafted 7 (pick 2)]
+DECISION_LOG: [none yet]
+```
+### Tamsin Christensen  (CB, Team 37)
+```yaml
+IDENTITY: [Tamsin Christensen, age 24, from Kansas City MO; Small-college standout]
+SOUL (fixed): [+ Shutdown Corner, - Poor Ball Skills]  temperament family: flash
+PERSONALITY: [Showman] wants the spotlight and a signature moment; fears being ignored by the media
+  - allowed by her soul: Showman, Free Spirit, Competitor, Mercenary; right now she is clear-eyed (+0.04)
+RATINGS: [overall 90, Franchise player]
+  - coverage: 95  (sees herself at 94)
+  - ball_skills: 78  (sees herself at 81, overrating)
+  - tackling: 94  (sees herself at 93)
+  - pressure thresholds: exile 77, contract 39, spotlight 70, loyalty 10
+RELATIONSHIPS: {}  # none yet; filled by Interactions
+CAREER: [drafted 12 (pick 3)]
+DECISION_LOG: [none yet]
+```
+### Liesel Trevino  (K, Team 18)
+```yaml
+IDENTITY: [Liesel Trevino, age 26, from Reno NV; Overlooked recruit]
+SOUL (fixed): [+ Well-Rounded, - No Glaring Weakness]  temperament family: balanced
+PERSONALITY: [Diplomat] wants a calm, united team; fears locker-room civil war
+  - allowed by her soul: Diplomat, Grinder, Loyalist, Mercenary; right now she is full of doubt (-0.55)
+RATINGS: [overall 98, Franchise player]
+  - power: 98  (sees herself at 94, doubting)
+  - accuracy: 98  (sees herself at 94, doubting)
+  - pressure thresholds: exile 26, contract 55, spotlight 48, loyalty 58
+RELATIONSHIPS: {}  # none yet; filled by Interactions
+CAREER: [drafted 10 (pick 4)]
 DECISION_LOG: [none yet]
 ```
 
 ## A young rookie and a veteran
 
-### Anneke Chandler  (CB, Team 37)
+### Ines Barrientos  (DL, Team 44)
 ```yaml
-IDENTITY: [Anneke Chandler, age 22, from Helsinki Finland; Late bloomer]
-SOUL (fixed): [+ Ballhawk, - Beaten Deep]  temperament family: flash
-PERSONALITY: [Showman] wants the spotlight and a signature moment; fears being ignored by the media
-  - allowed by her soul: Showman, Free Spirit, Competitor, Mercenary; right now she is overconfident (+0.64)
-RATINGS: [overall 59, Depth]
-  - coverage: 56  (sees herself at 64, overrating)
-  - ball_skills: 64  (sees herself at 68, overrating)
-  - tackling: 62  (sees herself at 66, overrating)
-  - pressure thresholds: exile 40, contract 79, spotlight 59, loyalty 41
+IDENTITY: [Ines Barrientos, age 22, from Mobile AL; Overlooked recruit]
+SOUL (fixed): [+ Well-Rounded, - No Glaring Weakness]  temperament family: balanced
+PERSONALITY: [Mercenary] wants the biggest contract on the market; fears a bad deal and an early exit
+  - allowed by her soul: Diplomat, Grinder, Loyalist, Mercenary; right now she is overconfident (+0.37)
+RATINGS: [overall 63, Starter]
+  - pass_rush: 62  (sees herself at 64)
+  - run_stop: 64  (sees herself at 69, overrating)
+  - pressure thresholds: exile 39, contract 49, spotlight 39, loyalty 63
 RELATIONSHIPS: {}  # none yet; filled by Interactions
 CAREER: [drafted 14 (pick 1)]
 DECISION_LOG: [none yet]
 ```
-### Alma Navarro  (P, Team 35)
+### Jasmine Christensen  (P, Team 07)
 ```yaml
-IDENTITY: [Alma Navarro, age 36, from Birmingham AL; Overlooked recruit]
+IDENTITY: [Jasmine Christensen, age 36, from Richmond VA; Overlooked recruit]
 SOUL (fixed): [+ Boomer, - Wayward]  temperament family: power
 PERSONALITY: [Competitor] wants to win everything in front of her; fears being outworked
-  - allowed by her soul: Competitor, Hothead, Grinder, Loyalist; right now she is overconfident (+0.95)
-RATINGS: [overall 91, Franchise player]
-  - power: 97  (sees herself at 105, overrating)
-  - accuracy: 81  (sees herself at 89, overrating)
-  - pressure thresholds: exile 22, contract 57, spotlight 43, loyalty 44
+  - allowed by her soul: Competitor, Hothead, Grinder, Loyalist; right now she is overconfident (+0.82)
+RATINGS: [overall 92, Franchise player]
+  - power: 100  (sees herself at 106, overrating)
+  - accuracy: 80  (sees herself at 87, overrating)
+  - pressure thresholds: exile 66, contract 63, spotlight 69, loyalty 27
 RELATIONSHIPS: {}  # none yet; filled by Interactions
 CAREER: [none recorded]
 DECISION_LOG: [none yet]
@@ -133,105 +132,177 @@ DECISION_LOG: [none yet]
 
 ## A player whose personality changed (her soul stayed the same)
 
-### Kirsten Pemberton  (DL, Team 45)
+### Lourdes Andersen  (LB, Team 01)
 ```yaml
-IDENTITY: [Kirsten Pemberton, age 32, from Youngstown OH; Overlooked recruit]
-SOUL (fixed): [+ Run Stuffer, - Little Pressure]  temperament family: power
+IDENTITY: [Lourdes Andersen, age 30, from Fargo ND; Walk-on turned starter]
+SOUL (fixed): [+ Thumper, - Blitzes Poorly]  temperament family: power
 PERSONALITY: [Competitor] wants to win everything in front of her; fears being outworked
-  - allowed by her soul: Competitor, Hothead, Grinder, Loyalist; right now she is clear-eyed (+0.19)
-RATINGS: [overall 64, Starter]
-  - pass_rush: 60  (sees herself at 61)
-  - run_stop: 68  (sees herself at 70, overrating)
-  - pressure thresholds: exile 60, contract 51, spotlight 69, loyalty 52
+  - allowed by her soul: Competitor, Hothead, Grinder, Loyalist; right now she is full of doubt (-0.59)
+RATINGS: [overall 62, Depth]
+  - pass_rush: 51  (sees herself at 46, doubting)
+  - run_stop: 71  (sees herself at 66, doubting)
+  - coverage: 59  (sees herself at 55, doubting)
+  - pressure thresholds: exile 54, contract 55, spotlight 49, loyalty 26
 RELATIONSHIPS: {}  # none yet; filled by Interactions
-CAREER: [became Grinder (was Competitor) 6; became Competitor (was Grinder) 10; became Grinder (was Competitor) 11; became Competitor (was Grinder) 13]
+CAREER: [became Grinder (was Competitor) 7; became Competitor (was Grinder) 12]
 DECISION_LOG: [none yet]
 ```
 
 ## A retired player (cards are kept for the Archive)
 
-### Mabel Colburn  (WR, retired)
+### Elsa Alderman  (K, retired)
 ```yaml
-IDENTITY: [Mabel Colburn, age 32, from Portland OR; Coach's daughter]
-SOUL (fixed): [+ Burner, - No Glaring Weakness]  temperament family: flash
-PERSONALITY: [Showman] wants the spotlight and a signature moment; fears being ignored by the media
-  - allowed by her soul: Showman, Free Spirit, Competitor, Mercenary; right now she is overconfident (+0.76)
-RATINGS: [overall 88, Franchise player]
-  - route: 88  (sees herself at 93, overrating)
-  - hands: 86  (sees herself at 92, overrating)
-  - speed: 91  (sees herself at 97, overrating)
-  - pressure thresholds: exile 62, contract 55, spotlight 66, loyalty 56
+IDENTITY: [Elsa Alderman, age 37, from Lubbock TX; Coach's daughter]
+SOUL (fixed): [+ Well-Rounded, - No Glaring Weakness]  temperament family: balanced
+PERSONALITY: [Diplomat] wants a calm, united team; fears locker-room civil war
+  - allowed by her soul: Diplomat, Grinder, Loyalist, Mercenary; right now she is clear-eyed (+0.22)
+RATINGS: [overall 92, Franchise player]
+  - power: 90  (sees herself at 94, overrating)
+  - accuracy: 93  (sees herself at 93)
+  - pressure thresholds: exile 23, contract 53, spotlight 48, loyalty 57
 RELATIONSHIPS: {}  # none yet; filled by Interactions
-CAREER: [became Free Spirit (was Showman) 1; became Showman (was Free Spirit) 7; retired 9]
+CAREER: [retired 11]
 DECISION_LOG: [none yet]
 ```
 
 ## Head coaches: a legend, a typical coach and a weak one
 
-### Coach Amelia Colburn  (Team 16)  -  LEGEND
+### Coach Aaliyah Lockhart  (Team 20)  -  LEGEND
 ```yaml
-IDENTITY: [Amelia Colburn, age 52, from Lubbock TX; Analytics-minded newcomer]
+IDENTITY: [Aaliyah Lockhart, age 43, from Winnipeg MB; Rose through the assistant ranks]
 PERSONALITY: [Gambler] wants a fourth-down legend; fears being second-guessed for the one that failed
-ARCHETYPES: [+ Legend: Defensive Architect, - Undisciplined]
+ARCHETYPES: [+ Legend: Inspirer, - Undisciplined]
 RATINGS:
-  - offense: 90   -> +0.80 points of margin
-  - defense: 94   -> +0.87 points of margin
-  - development: 91   -> +0.33 rating points per year to each young player
-  - gamecraft: 75   (no on-field effect yet)
-  - discipline: 74   (no on-field effect yet)
-  - motivation: 77   (no on-field effect yet)
-  - pressure thresholds: exile 42, contract 56, spotlight 31, loyalty 38
+  - offense: 91   -> +0.81 points of margin
+  - defense: 90   -> +0.80 points of margin
+  - development: 89   -> +0.31 rating points per year to each young player
+  - gamecraft: 84   (no on-field effect yet)
+  - discipline: 79   (no on-field effect yet)
+  - motivation: 94   (no on-field effect yet)
+  - pressure thresholds: exile 34, contract 51, spotlight 15, loyalty 48
 RELATIONSHIPS: {}  # none yet; filled by Interactions
-CAREER: [hired 0]
+CAREER: [hired 14]
 DECISION_LOG: [none yet]
 ```
-### Coach Iris Dellinger  (Team 46)
+### Coach Alicia Arceneaux  (Team 40)
 ```yaml
-IDENTITY: [Iris Dellinger, age 59, from Milwaukee WI; Came over from another league]
+IDENTITY: [Alicia Arceneaux, age 61, from Accra Ghana; Former star player turned coach]
 PERSONALITY: [Tactician] wants the cleverest scheme in the league; fears being out-schemed on a big night
-ARCHETYPES: [+ Talent Developer, - Undisciplined]
+ARCHETYPES: [+ Inspirer, - Stunts Growth]
 RATINGS:
-  - offense: 52   -> +0.03 points of margin
-  - defense: 37   -> -0.26 points of margin
-  - development: 71   -> +0.17 rating points per year to each young player
-  - gamecraft: 44   (no on-field effect yet)
-  - discipline: 26   (no on-field effect yet)
-  - motivation: 57   (no on-field effect yet)
-  - pressure thresholds: exile 43, contract 42, spotlight 82, loyalty 51
-RELATIONSHIPS: {}  # none yet; filled by Interactions
-CAREER: [hired 0]
-DECISION_LOG: [none yet]
-```
-### Coach Georgia McAllister  (Team 20)
-```yaml
-IDENTITY: [Georgia McAllister, age 44, from Tacoma WA; Long-time position coach]
-PERSONALITY: [Tactician] wants the cleverest scheme in the league; fears being out-schemed on a big night
-ARCHETYPES: [+ Clock Manager, - Predictable Offense]
-RATINGS:
-  - offense: 15   -> -0.71 points of margin
-  - defense: 41   -> -0.19 points of margin
-  - development: 42   -> -0.06 rating points per year to each young player
-  - gamecraft: 55   (no on-field effect yet)
-  - discipline: 30   (no on-field effect yet)
-  - motivation: 47   (no on-field effect yet)
-  - pressure thresholds: exile 53, contract 26, spotlight 36, loyalty 46
+  - offense: 54   -> +0.07 points of margin
+  - defense: 48   -> -0.05 points of margin
+  - development: 33   -> -0.14 rating points per year to each young player
+  - gamecraft: 66   (no on-field effect yet)
+  - discipline: 60   (no on-field effect yet)
+  - motivation: 74   (no on-field effect yet)
+  - pressure thresholds: exile 41, contract 39, spotlight 42, loyalty 59
 RELATIONSHIPS: {}  # none yet; filled by Interactions
 CAREER: [hired 10]
 DECISION_LOG: [none yet]
 ```
+### Coach Camila Toussaint  (Team 27)
+```yaml
+IDENTITY: [Camila Toussaint, age 44, from Spokane WA; Came over from another league]
+PERSONALITY: [Gambler] wants a fourth-down legend; fears being second-guessed for the one that failed
+ARCHETYPES: [+ Clock Manager, - Leaky Defense]
+RATINGS:
+  - offense: 28   -> -0.44 points of margin
+  - defense: 26   -> -0.49 points of margin
+  - development: 43   -> -0.05 rating points per year to each young player
+  - gamecraft: 70   (no on-field effect yet)
+  - discipline: 50   (no on-field effect yet)
+  - motivation: 47   (no on-field effect yet)
+  - pressure thresholds: exile 35, contract 45, spotlight 48, loyalty 52
+RELATIONSHIPS: {}  # none yet; filled by Interactions
+CAREER: [hired 12]
+DECISION_LOG: [none yet]
+```
+
+## An owner, a GM, and the Archive's first entries
+
+### Owner Sofia Atwood  (Team 01, owner)
+```yaml
+IDENTITY: [Sofia Atwood, age 66, from Sacramento CA; Media heiress]
+PERSONALITY: [Meddler] wants a hand in every decision; fears being irrelevant
+ARCHETYPES: [+ Shrewd Operator, - Absentee Owner]
+RATINGS:
+  - patience: 56
+  - ambition: 60
+  - involvement: 50
+  - popularity: 58
+  - business: 64
+  - fan approval right now: 60%  (a recall vote is triggered under 40%)
+  - pressure thresholds: recall 62, media 69, losing 51, subsidy 48
+RELATIONSHIPS: {}  # none yet; filled by Interactions
+CAREER: [bought 0]
+DECISION_LOG: [none yet]
+```
+### Owner Sylvie Solberg  (Team 12, recalled)
+```yaml
+IDENTITY: [Sylvie Solberg, age 65, from Spokane WA; Sports-franchise veteran]
+PERSONALITY: [Meddler] wants a hand in every decision; fears being irrelevant
+ARCHETYPES: [+ Relentless Competitor, - Absentee Owner]
+RATINGS:
+  - patience: 61
+  - ambition: 71
+  - involvement: 56
+  - popularity: 60
+  - business: 65
+  - fan approval right now: 43%  (a recall vote is triggered under 40%)
+  - pressure thresholds: recall 52, media 51, losing 73, subsidy 39
+RELATIONSHIPS: {}  # none yet; filled by Interactions
+CAREER: [elected 13; recalled 14]
+DECISION_LOG: [none yet]
+```
+### GM Treasure Wagner  (Team 28, gm)
+```yaml
+IDENTITY: [Treasure Wagner, age 64, from Lubbock TX; Longtime scout]
+PERSONALITY: [Planner] wants a five-year roster plan; fears a short-term panic
+ARCHETYPES: [+ Draft Whisperer, - Gets Fleeced]
+RATINGS:
+  - scouting: 90   -> +1.19 rating points on her team's rookie each year
+  - negotiation: 84   -> 20% fewer contract expiries
+  - evaluation: 63   (no on-field effect yet)
+  - trades: 12   (no on-field effect yet)
+  - cap_sense: 61   (no on-field effect yet)
+  - pressure thresholds: exile 63, contract 61, spotlight 46, loyalty 70
+RELATIONSHIPS: {}  # none yet; filled by Interactions
+CAREER: [hired 0]
+DECISION_LOG: [none yet]
+```
+**A recall vote as the Archive logs it:**
+
+```
+year: 14
+event: recall_vote
+team: 44
+trigger: approval
+approval: 0.375
+recall_share: 0.51
+result: recalled
+owner: Kimi Eberhardt
+replacement: Angela Tillman
+candidates: ['Laila Goldberg', 'Oona Kruger', 'Tilda Obuya', 'Angela Tillman', 'Eliana Beaumont']
+```
+
 
 ## How the cards spread across the league
 
-**Core personalities (all rostered players):** Diplomat 500, Competitor 444, Grinder 351, Perfectionist 349, Showman 211, Quiet Leader 156, Free Spirit 105, Hothead 90, Mercenary 34, Loyalist 16
+**Core personalities (all rostered players):** Diplomat 529, Competitor 439, Grinder 343, Perfectionist 309, Showman 227, Quiet Leader 143, Hothead 105, Free Spirit 96, Mercenary 41, Loyalist 24
 
-**Most common positive archetypes:** Well-Rounded 639, Pass-Pro Wall 139, Ballhawk 108, Edge Terror 96, Run Stuffer 90, Glue Hands 87, Road Grader 86, Route Technician 76
+**Most common positive archetypes:** Well-Rounded 692, Ballhawk 115, Road Grader 104, Run Stuffer 98, Pass-Pro Wall 96, Route Technician 78, Edge Terror 76, Willing Tackler 74
 
-**Coach effect across the 48 teams:** average -0.06, spread (sd) 0.62, best +1.76, worst -0.93 points of expected margin. For scale, team talent has a spread of about 3 to 4 points.
+**Coach effect across the 48 teams:** average -0.05, spread (sd) 0.55, best +1.76, worst -0.93 points of expected margin. For scale, team talent has a spread of about 3 to 4 points.
 
-**Personality shifts:** 783 of 5284 players have changed personality at least once in 14 seasons.
+**Personality shifts:** 784 of 5287 players have changed personality at least once in 14 seasons.
 
-**Legends:** 9 of 116 coaches hired so far are legends; 3 on the field now.
+**Legends:** 6 of 174 coaches hired so far are legends; 2 on the field now.
 
-**Coaches so far:** 116 hired and 68 retired in 14 seasons.
+**Recall votes:** 187 in 14 seasons (13.4 a year); 49 owners recalled (3.5 a year), 26% of votes. Owners retire on their own too: 44 so far.
 
-**Players with cards:** 2321 active or unsigned, 3028 retired.
+**Firings:** 57 coaches and 34 GMs fired in 14 seasons.
+
+**Coaches so far:** 174 hired and 126 retired in 14 seasons.
+
+**Players with cards:** 2360 active or unsigned, 3031 retired.

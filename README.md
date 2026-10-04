@@ -22,6 +22,8 @@ A league engine with no AI (Phase 2 adds 47-player rosters, a drive-by-drive gam
 | `engine/calibrate_engine.py` | Checks the engine looks like football |
 | `engine/phase2_report.py` | Writes `reports/phase2_report.md` |
 | `engine/cards.py`, `card_pools.py` | Character cards: player souls (archetypes), perception and personality; head coaches who develop players, with rare legends |
+| `engine/staff_cards.py` | Owner and GM cards; fan approval, recall votes, hiring and firing; the Archive's first entries |
+| `engine/staff_sweep.py` | Tests owners, firings and the GM levers (and 3x, 6x stress versions) against the fairness bands; writes `reports/staff_fairness_study.md` |
 | `engine/card_report.py` | Writes `reports/card_samples.md` |
 | `engine/coach_sweep.py` | Sweeps the coach dials (team lift, player development, legend rate) against the fairness bands; writes `reports/coach_fairness_study.md` |
 | `engine/tiebreak.py` | NFL-style tiebreaking procedures (division, wild card, draft order) |
@@ -43,6 +45,7 @@ A league engine with no AI (Phase 2 adds 47-player rosters, a drive-by-drive gam
     python engine/check_phase0.py          # do the rules agree with each other?
     python engine/check_tiebreaks.py       # NFL tiebreakers
     python engine/check_cards.py           # character cards and the coach effect
+    python engine/check_staff.py           # owners, GMs, recall votes, firings
     python engine/check_phase2.py          # rosters, game engine, injuries, offseason
     python engine/calibrate_engine.py      # does the game look like football?
     python engine/phase2_report.py         # sample box score, league stats, exile target (about 2 minutes)

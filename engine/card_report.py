@@ -12,6 +12,7 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import cards as C  # noqa: E402
+import staff_cards as S  # noqa: E402
 from league import new_league  # noqa: E402
 from positions import POSITIONS  # noqa: E402
 from season import Options, run_season  # noqa: E402
@@ -63,6 +64,18 @@ def main():
         out.append(C.render_coach(legends[0].coach, lg))
     out.append(C.render_coach(ranked[len(ranked) // 2].coach, lg))
     out.append(C.render_coach(ranked[0].coach, lg))
+    out.append("\n## An owner, a GM, and the Archive's first entries\n")
+    top = max(lg.teams, key=lambda t: t.owner.seasons_owned)
+    out.append(S.render_owner(top.owner, lg))
+    recalled = [o for o in lg.owners if o.status == "recalled"]
+    if recalled:
+        out.append(S.render_owner(recalled[-1], lg))
+    out.append(S.render_gm(max(lg.teams, key=lambda t: abs(t.gm.scouting_points) + abs(1 - t.gm.retention_factor)).gm, lg))
+    votes = [e for e in lg.archive if e["event"] == "recall_vote"]
+    out.append("**A recall vote as the Archive logs it:**\n")
+    ex = next((e for e in reversed(votes) if e["result"] == "recalled"), None)
+    if ex:
+        out.append("```\n" + "\n".join(f"{k}: {v}" for k, v in ex.items()) + "\n```\n")
     out.append("\n## How the cards spread across the league\n")
     tc = collections.Counter(p.card.trait for p in active)
     out.append("**Core personalities (all rostered players):** " + ", ".join(f"{k} {v}" for k, v in tc.most_common()) + "\n")
@@ -74,6 +87,12 @@ def main():
     shifts = sum(any(e["event"] == "personality_shift" for e in p.card.career) for p in active + list(lg.retired_players))
     out.append(f"**Personality shifts:** {shifts} of {len(active) + len(lg.retired_players)} players have changed personality at least once in {a.seasons} seasons.\n")
     out.append(f"**Legends:** {sum(c.legend for c in lg.coaches)} of {len(lg.coaches)} coaches hired so far are legends; {len(legends)} on the field now.\n")
+    yrs = a.seasons
+    nv = len(votes)
+    nr = sum(e["result"] == "recalled" for e in votes)
+    out.append(f"**Recall votes:** {nv} in {yrs} seasons ({nv / yrs:.1f} a year); {nr} owners recalled ({nr / yrs:.1f} a year), "
+               f"{100 * nr / max(1, nv):.0f}% of votes. Owners retire on their own too: {sum(o.status == 'retired' for o in lg.owners)} so far.\n")
+    out.append(f"**Firings:** {sum(e['event'] == 'coach_fired' for e in lg.archive)} coaches and {sum(e['event'] == 'gm_fired' for e in lg.archive)} GMs fired in {yrs} seasons.\n")
     out.append(f"**Coaches so far:** {len(lg.coaches)} hired and {sum(c.retired for c in lg.coaches)} retired in {a.seasons} seasons.\n")
     out.append(f"**Players with cards:** {len(active) + len(lg.free_agents)} active or unsigned, {len(lg.retired_players)} retired.\n")
     path = os.path.join(ROOT, "reports", "card_samples.md")

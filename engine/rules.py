@@ -228,6 +228,9 @@ PROVENANCE = {
     "Coaches develop their players, and rare legends (a Walsh or a Lombardi) appear more often than in the NFL, all inside the bands": CONFIRMED,
     "Archetypes are the player's soul; personality is an expression of the soul and her perception of her ratings, bounded by the archetype": CONFIRMED,
     "The sizes: coach team lift 1.0 point, development 0.4 rating points a year, legend rate 5%; the soul pull, perception speed, trait families, coach aging and retirement, and every word list on the cards": ASSUMED,
+    "Owners and GMs come next after players and coaches (Jeph: go with the AI's recommendations)": CONFIRMED,
+    "Recall: 1M fans by simple majority, 5 generated candidates, vote on exile or approval under 40% or when the division comes up, no one owns twice": CONFIRMED,
+    "What drives fan approval, how fans pick among candidates, owner aging, when owners fire coaches and GMs, and the two GM levers (scouting 1.5 points, retention 30%)": ASSUMED,
     "Every test is judged against \"fair competitiveness\"": CONFIRMED,
     "The numeric ranges that define fair competitiveness (AI proposal, accepted by Jeph as working limits)": CONFIRMED,
 }

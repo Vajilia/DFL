@@ -126,7 +126,7 @@ for eng in ("fast", "drives"):
 
 # ---- fair competitiveness (the project's test standard) ------------------------------------
 import fairness  # noqa: E402
-per, rows = fairness.run("fast", range(100, 106), 48)
+per, rows = fairness.run("fast", range(100, 116), 48)      # 16 leagues: the exile-effect measure is noisy, 6 leagues were not enough
 for name, v, lo, hi, ok, a, b, meaning in rows:
     check(f"fair competitiveness: {name} inside {lo} to {hi}", ok, f"{v:.3f}")
 

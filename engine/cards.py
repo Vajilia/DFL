@@ -58,7 +58,7 @@ COACH_POINTS_AT_100 = 1.0               # a 100-rated offense (or defense) coach
 DEV_POINTS_AT_100 = 0.40                # a 100-rated development coach adds this many rating points per year to each of her players (and a 1 takes it away)
 DEV_OLD_FACTOR = 0.5                    # players older than 27 respond to coaching half as much
 COACH_RATING_MEAN, COACH_RATING_SD = 50.0, 14.0
-LEGEND_RATE = 0.05                      # chance a newly hired coach is a Walsh or Lombardi
+LEGEND_RATE = 0.03                      # chance a newly hired coach is a Walsh or Lombardi (owners fire coaches, so hires are frequent: this gives about 2 or 3 on the field at a time)
 LEGEND_MEAN, LEGEND_SD = 93.0, 4.0      # a legend's offense, defense and development
 LEGEND_OTHER_MEAN, LEGEND_OTHER_SD = 85.0, 6.0
 COACH_RETIRE_FROM = 60                  # chance of retiring each year: 3% before this age, then rising
@@ -180,6 +180,7 @@ class CoachCard:
     ratings: Dict[str, float]                # offense, defense, development, gamecraft, discipline, motivation (1-100)
     pressure: Dict[str, int]
     legend: bool = False                     # one of the rare all-time greats
+    heat: float = 0.0                        # how much her owner's patience has worn thin (staff_cards)
     team_id: Optional[int] = None
     seasons_with_team: int = 0
     retired: bool = False
@@ -352,6 +353,9 @@ def init_league_cards(lg, year: int = 0):
         for t in lg.teams:
             if t.coach is None:
                 _hire(lg, t, year)
+        if getattr(lg, "staff_on", True):
+            import staff_cards
+            staff_cards.init_staff(lg, year)
     ensure_cards(lg, year)
 
 

@@ -33,10 +33,10 @@ def _corr(xs: List[float], ys: List[float]) -> float:
     return sum((x - mx) * (y - my) for x, y in zip(xs, ys)) / (sx * sy)
 
 
-def measure_league(seed: int, seasons: int, engine: str = "fast", opt: Options = None, burn: int = BURN, coaches: bool = True) -> Dict[str, float]:
+def measure_league(seed: int, seasons: int, engine: str = "fast", opt: Options = None, burn: int = BURN, coaches: bool = True, staff: bool = True) -> Dict[str, float]:
     """Run one league and return its fairness measurements (after the warm-up)."""
     rng = random.Random(seed)
-    lg = new_league(rng, rosters=(engine != "placeholder"), coaches=coaches)
+    lg = new_league(rng, rosters=(engine != "placeholder"), coaches=coaches, staff=staff)
     opt = opt or Options(engine=engine, keep_boxes=False)
     sd_by_season, close, games_n = [], 0, 0
     x_prev, y_next = [], []
@@ -177,7 +177,7 @@ if __name__ == "__main__":
                "\"fair competitiveness\". The numeric ranges below are the AI's first proposal and are **assumed** until you set "
                "your own (`FAIR_COMPETITION_BANDS` in `engine/rules.py`). Each league runs 48 seasons; the first 8 are thrown "
                "away while the league settles. Values are averaged over the leagues; the last column shows the spread.\n"]
-        for eng, n in (("fast", 8), ("drives", 5)):
+        for eng, n in (("fast", 12), ("drives", 6)):
             per, rows = run(eng, range(100, 100 + n), 48)
             bad = [r[0] for r in rows if not r[4]]
             out.append(f"## {eng} engine, {n} leagues x 48 seasons\n")

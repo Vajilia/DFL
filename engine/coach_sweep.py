@@ -53,7 +53,7 @@ def main(argv=None):
            "Each coach card has three levers: a lift to the team's offense and defense (a 50 rating is average and does nothing; "
            "a 100 is worth the stated points of margin), and a yearly boost to the development of each of her players (a 100 adds "
            "the stated rating points per year to every young player, half that to older ones; a 1 takes it away). Rare legends "
-           "(5% of hires unless stated) have 90-plus ratings on all three. Coaches stay until they retire, so a great coach is a lasting edge. "
+           "(see LEGEND_RATE; 5% in this table) have 90-plus ratings on all three. Coaches stay until they retire, so a great coach is a lasting edge. "
            "Same leagues and seeds in every row, 48 seasons each (first 8 thrown away). The question for every row: does any trend leave its band?\n"]
     base = (C.COACH_POINTS_AT_100, C.DEV_POINTS_AT_100, C.LEGEND_RATE)
     summary = []

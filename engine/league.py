@@ -21,6 +21,8 @@ class Team:
     strength: float           # talent rating in points better than average (placeholder scalar, or the roster's power rating)
     roster: List[Player] = None
     coach: object = None      # cards.CoachCard, the head coach
+    owner: object = None      # staff_cards.OwnerCard
+    gm: object = None         # staff_cards.GMCard
 
     @property
     def division_id(self) -> int:
@@ -40,10 +42,24 @@ class League:
         self.new_id: IdSource = IdSource()
         self.has_rosters = False
         self.card_seed = 0                 # seeds every character card; set from the league's own seed
+        self.staff_on = True               # owners, GMs, recalls, firings
         self.coaches_on = True             # head coaches nudge team strength (turn off to compare)
         self.coaches: list = []            # every head coach ever hired (the Archive keeps them)
         self.retired_players: list = []    # retired players keep their cards
         self._coach_ids = 0
+        self.owners: list = []             # every owner and recall candidate ever generated
+        self.gms: list = []
+        self.archive: list = []            # plain-fact event log (recalls, firings, hirings); the Archive proper comes later
+        self._owner_ids = 0
+        self._gm_ids = 0
+
+    def new_owner_id(self) -> int:
+        self._owner_ids += 1
+        return self._owner_ids
+
+    def new_gm_id(self) -> int:
+        self._gm_ids += 1
+        return self._gm_ids
 
     def new_coach_id(self) -> int:
         self._coach_ids += 1
@@ -76,7 +92,7 @@ class League:
         return {t.id: (t.status, t.tier, round(t.strength, 3)) for t in self.teams}
 
 
-def new_league(rng: random.Random, rosters: bool = False, coaches: bool = True) -> League:
+def new_league(rng: random.Random, rosters: bool = False, coaches: bool = True, staff: bool = True) -> League:
     """ASSUMED starting league: random strengths, one random team per division starts
     in exile, and the rest take tiers 1-5 in order of strength."""
     teams: List[Team] = []
@@ -101,6 +117,7 @@ def new_league(rng: random.Random, rosters: bool = False, coaches: bool = True) 
     lg = League(teams)
     lg.card_seed = hash(rng.getstate()[1]) % (2 ** 31)    # reads the generator without drawing from it
     lg.coaches_on = coaches
+    lg.staff_on = coaches and staff        # owners and GMs (and firing); needs the coaches
     if rosters:
         give_rosters(lg, rng)
     return lg
