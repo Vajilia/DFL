@@ -131,6 +131,24 @@ DRAFT_PICKS = {
     "playoff_teams": (35, 48),        # CONFIRMED (by round, then record)
 }
 
+# ---- Fair competitiveness: the standard every test is judged against --------------------------
+# CONFIRMED (Jeph, 2026-10-04): the test for any trend in the simulation is whether it falls outside the
+# expected / accepted range of "fair competitiveness".
+# ASSUMED, PROVISIONAL: the actual ranges below are the AI's first proposal (Jeph has not set numbers).
+# name -> (low, high, plain-language meaning). Judged on pooled multi-season runs after a warm-up.
+FAIR_COMPETITION_BANDS = {
+    "win_pct_sd":           (0.13, 0.19, "spread of regular-season win percentage across teams (pure luck alone is about 0.12)"),
+    "year_to_year_corr":    (0.10, 0.50, "how much a team's win % repeats from one season to the next (0 = pure luck, 1 = fixed)"),
+    "close_game_share":     (0.35, 0.55, "share of games decided by 8 points or fewer"),
+    "repeat_champion_rate": (0.00, 0.12, "share of seasons in which the champion is the previous champion"),
+    "max_titles_in_20":     (0, 4, "most titles one team wins in any 20-season stretch (the luckiest of 40 equal teams gets 2-3, a 14-team field gives 3-5; 5 or more is a dynasty)"),
+    "best_team_title_odds": (0.08, 0.25, "how often the strongest team on paper wins the title"),
+    "returner_avg_finish":  (2.8, 3.4, "average division finish of a team back from exile (3.0 = league average)"),
+    "returner_win_div":     (0.10, 0.30, "share of returning teams that win their division"),
+    "returner_fifth_again": (0.10, 0.30, "share of returning teams that finish 5th again"),
+    "stuck_at_bottom":      (0.00, 0.10, "share of team-seasons that follow three straight bottom-two finishes (pure luck gives about 0.06; exile years are skipped)"),
+}
+
 # ---- Owner accountability --------------------------------------------------
 # CONFIRMED (Jeph, 2026-10-04): every division's owners are voted on once every
 # 8 years, one division league-wide per year. The earlier "4-year cycle" was wrong.
@@ -181,6 +199,8 @@ PROVENANCE = {
     "Ambassador weeks and the Ambassador Bowl format": ASSUMED,
     "Order in which divisions come up for owner recall": ASSUMED,
     "Starting league (which teams begin in exile, starting tiers)": ASSUMED,
+    "Every test is judged against \"fair competitiveness\"": CONFIRMED,
+    "The numeric ranges that define fair competitiveness": ASSUMED,
 }
 
 

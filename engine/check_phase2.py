@@ -123,6 +123,12 @@ for eng in ("fast", "drives"):
           f"min {min(sds[3:]):.1f}, max {max(sds):.1f}")
     check(f"[{eng}] tier slots stay legal for 25 seasons", ok_tiers)
 
+# ---- fair competitiveness (the project's test standard) ------------------------------------
+import fairness  # noqa: E402
+per, rows = fairness.run("fast", range(100, 106), 48)
+for name, v, lo, hi, ok, a, b, meaning in rows:
+    check(f"fair competitiveness: {name} inside {lo} to {hi}", ok, f"{v:.3f}")
+
 print()
 if failures:
     print(f"{len(failures)} Phase 2 check(s) FAILED:")

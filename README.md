@@ -21,6 +21,7 @@ A league engine with no AI (Phase 2 adds 47-player rosters, a drive-by-drive gam
 | `engine/boxscore.py` | Readable box score |
 | `engine/calibrate_engine.py` | Checks the engine looks like football |
 | `engine/phase2_report.py` | Writes `reports/phase2_report.md` |
+| `engine/fairness.py` | Measures trends against the "fair competitiveness" bands in `rules.py`; writes `reports/fairness_report.md` |
 | `engine/standings.py` | Records and tiebreakers |
 | `engine/playoffs.py` | Seeding and bracket |
 | `engine/draft.py` | Lottery and 48-pick draft order |

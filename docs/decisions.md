@@ -19,6 +19,8 @@ Every rule is tagged **confirmed** (Jeph stated it) or **assumed** (the AI fille
 | Recall cycle | One division league-wide per year, so every owner is voted on once every 8 years | Jeph, 2026-10-04 (replaces an earlier wrong "4-year" change) |
 | Recall also triggers on exile | Yes | rules text |
 | What exile is | The league treats exile as help for a distressed team, not punishment: relief plus play in exotic locations around the world while it rebuilds. Media and fans may see it differently. | Jeph, 2026-10-04 |
+| Test standard | Every test asks one question: does the trend fall outside the expected / accepted range of "fair competitiveness"? | Jeph, 2026-10-04 |
+| How exile shows up in the story | Not set by rules. It emerges from how the local and national media and fanbase react (a long-suffering Cleveland-style market versus a cutthroat "he's not Montana or Young" market give very different stories). That belongs to the character, media and fan layer built later | Jeph, 2026-10-04 |
 | How much help | Modest. A returning team should have the potential to compete for 3rd place in its division, sometimes succeeding, sometimes not. Promotes fair competitiveness. | Jeph, 2026-10-04 |
 
 ## Assumed (provisional, awaiting Jeph)
@@ -48,6 +50,7 @@ Every rule is tagged **confirmed** (Jeph stated it) or **assumed** (the AI fille
 | Contracts and free agency | About 15% of each roster reaches the market every year (stars are re-signed more often). Worst teams pick first. Open slots are filled from the market |
 | Rookies | One per team per year, quality set by the pick. Position chosen by team need |
 | Exile relief in free agency | A team returning from exile gets a few extra top-of-market signings on average (0.25 per year in the current setting), standing in for the 50% cap relief. It does not pick first in free agency (that tested as too strong) |
+| Numeric bands for "fair competitiveness" | Ten measured trends with low/high limits (win-percentage spread 0.13-0.19, repeat champion at most 12% of seasons, no franchise with 5+ titles in 20 years, a returner averages 2.8-3.4 in its division, and so on). Defined in `rules.FAIR_COMPETITION_BANDS`, measured by `engine/fairness.py`, reported in `reports/fairness_report.md`. The AI's first proposal; Jeph may change any limit |
 | Game engine modes | `drives` (full game), `fast` (power rating to score, no box score, for long studies), `placeholder` (Phase 1 scalar model) |
 
 ## Placeholder model (not rules)
@@ -66,5 +69,4 @@ On the roster model (Phase 2) the same target was re-calibrated: the dials are i
 2. Exile is now defined as modest relief aimed at a 3rd-place-level return (see `reports/exile_calibration.md`). Where should the help come from: the lottery pick, cap relief, or a mix?
 3. "Super Bowl" is an NFL trademark. Keep it or rename it with the other NFL-style names?
 4. Do you want returning exiled teams ranked into the 9-34 draft band by Ambassador record, or placed some other way?
-5. The league is currently tighter than the NFL: the spread of regular-season win percentage is about 0.14 (the NFL is nearer 0.19). Do you want a more top-heavy league (dynasties and true cellar teams) or is this "fair competitiveness" what you meant?
-6. How should exile relief show up in the story: a cap discount, first pick of free agents, or a few premium signings? Right now it is a small number of premium signings.
+5. Are the proposed fair-competitiveness bands (see `rules.FAIR_COMPETITION_BANDS`) the right limits? The one to watch is how often the strongest team on paper wins the title (about 22-24% now, band tops out at 25%).
