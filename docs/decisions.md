@@ -21,7 +21,9 @@ Every rule is tagged **confirmed** (Jeph stated it) or **assumed** (the AI fille
 | What exile is | The league treats exile as help for a distressed team, not punishment: relief plus play in exotic locations around the world while it rebuilds. Media and fans may see it differently. | Jeph, 2026-10-04 |
 | Tiebreakers | All tie-breaking mirrors the NFL, at least for now (division, wild card and seeding, draft order). Procedures in `engine/tiebreak.py`, checked against nfl.com on 2026-10-04 | Jeph, 2026-10-04 |
 | Lottery format | 8 teams. The number of balls a team holds depends on its rank among the 8. Four balls are drawn for picks 1-4; the other four teams pick 5-8 in order of record (worst first), so the worst team falls no lower than 5th | Jeph, 2026-10-04 |
-| Final's name | He may keep calling it the Super Bowl, but a new feminine, proud name is wanted (see open questions) | Jeph, 2026-10-04 |
+| The final | Named the **Diamond Coronation**. The champion is presented with a **Diamond Tiara** instead of a trophy. "Super Bowl" is the old name from the rules text and may still be used in conversation | Jeph, 2026-10-04 |
+| Priority | Fairness comes before narrative. The narrative (fan and media story) is derived from the fanbase and media, not designed in | Jeph, 2026-10-04 |
+| Exile and the two drafts | Lottery pick as a new exile, then a block pick at the end of the 9-34 band (picks 27-34, ordered by Ambassador Season record) when back from exile. Accepted as the working design | Jeph, 2026-10-04 |
 | Test standard | Every test asks one question: does the trend fall outside the expected / accepted range of "fair competitiveness"? | Jeph, 2026-10-04 |
 | How exile shows up in the story | Not set by rules. It emerges from how the local and national media and fanbase react (a long-suffering Cleveland-style market versus a cutthroat "he's not Montana or Young" market give very different stories). That belongs to the character, media and fan layer built later | Jeph, 2026-10-04 |
 | How much help | Modest. A returning team should have the potential to compete for 3rd place in its division, sometimes succeeding, sometimes not. Promotes fair competitiveness. | Jeph, 2026-10-04 |
@@ -35,7 +37,6 @@ Every rule is tagged **confirmed** (Jeph stated it) or **assumed** (the AI fille
 | Lottery draw | The four draws are made one at a time by weight, without replacement |
 | How tiers are earned | Last season's finish in the division: 1st = Tier 1 ... 4th = Tier 4; the team back from exile = Tier 5 |
 | NFL tiebreak adaptations | The NFL restart rule is used to rank every team, not just pick a winner; wild-card ties inside one division are settled by the division procedure first; the Ambassador Season uses head-to-head, strength of victory and schedule, net points, net touchdowns, coin toss; where touchdowns were not kept they are estimated as points // 7 |
-| Returners' second draft | Teams back from exile pick as a block at the end of the 9-34 band (picks 27-34), ordered among themselves by Ambassador Season record. Evidence: `reports/exile_two_draft_study.md` |
 | 5th-place teams and the playoffs | A 5th-place team cannot take a wild card (it is exiled) |
 | Tied games | None; overtime always produces a winner |
 | Division games inside weeks 5-14 | Weeks 5, 7, 9, 11, 13 |
@@ -44,7 +45,6 @@ Every rule is tagged **confirmed** (Jeph stated it) or **assumed** (the AI fille
 | Ambassador Season | Weeks 1-7, Ambassador Bowl in week 8 between the two best records |
 | Owner-recall order | Divisions come up in a fixed rotation, one per year |
 | Starting league | Random strengths; one random team per division starts in exile |
-| Final's name | "Super Bowl" kept from the rules text (NFL trademark; see open questions) |
 | Roster | 47 players per team: QB 3, RB 4, WR 6, TE 3, OL 8, DL 7, LB 5, CB 5, S 4, K 1, P 1 (structural choice for the game engine) |
 | Starters | QB 1, RB 1, WR 3, TE 1, OL 5, DL 4, LB 2, CB 3, S 2, K, P (the rating of a unit is built from these) |
 | Game detail | Games are played play by play inside the engine but only drive-level results are kept (box score, drives, team and player stats). Full play-by-play is built in and switched off (`record_plays`); you chose "option 2, with option 3 later" |
@@ -70,7 +70,6 @@ On the roster model (Phase 2) the same target was re-calibrated: the dials are i
 
 ## Open questions for Jeph
 
-1. Exile help: the AI's recommendation is in `reports/exile_two_draft_study.md` (lottery pick for the new exile, a block pick at the end of the band when it returns, and a very small free-agency boost). Do you accept it as the working design?
-2. Should the lottery cover teams that just finished 5th (current) or teams that just served their exile year? The study found the current choice works better because it does not make the Ambassador Season a tanking contest.
-3. Are the proposed fair-competitiveness bands (see `rules.FAIR_COMPETITION_BANDS`) the right limits? The one to watch is how often the strongest team on paper wins the title (about 20-24%, band tops out at 25%).
-4. The final's name. Ideas: The Coronation, The Valkyrie Cup, The Athena Cup, Battle of the Goddesses, The Diamond Crown, The Empress Cup.
+1. Should the lottery cover teams that just finished 5th (current, and the study found it works better) or teams that just served their exile year?
+2. Are the proposed fair-competitiveness bands (see `rules.FAIR_COMPETITION_BANDS`) the right limits? The one to watch is how often the strongest team on paper wins the title (about 20-24%, band tops out at 25%).
+3. Are the lottery ball counts (18 / 16 / 15 / 13 / 12 / 10 / 9 / 7 percent chance of the first ball, worst record to best) what you want?

@@ -68,11 +68,15 @@ WILD_CARDS_PER_CONFERENCE = 3
 PLAYOFF_SEEDS_PER_CONFERENCE = DIVISION_WINNERS_PER_CONFERENCE + WILD_CARDS_PER_CONFERENCE  # 7
 PLAYOFF_TEAMS = PLAYOFF_SEEDS_PER_CONFERENCE * len(CONFERENCES)                             # 14
 TOP_SEED_HAS_BYE = True
-FINAL_NAME = "Super Bowl"       # name used in the rules text; see open questions
+# CONFIRMED (Jeph, 2026-10-04): the final is the Diamond Coronation. The champion is presented with a Diamond Tiara
+# rather than a trophy. "Super Bowl" appears in the old rules text and may still be used in conversation.
+FINAL_NAME = "Diamond Coronation"
+FINAL_AWARD = "Diamond Tiara"
+FINAL_OLD_NAME = "Super Bowl"
 # ASSUMED: seeds 1-4 are the division winners ranked by record; 5-7 the wild cards.
 # ASSUMED: a team that finishes 5th in its division cannot be a wild card (it is exiled).
 FIFTH_PLACE_WILD_CARD_ELIGIBLE = False
-# ASSUMED: the Super Bowl is played at a neutral site (no home advantage).
+# ASSUMED: the Diamond Coronation is played at a neutral site (no home advantage).
 FINAL_IS_NEUTRAL_SITE = True
 
 # ---- Exile -----------------------------------------------------------------
@@ -130,7 +134,7 @@ LOTTERY_WEIGHTS = (18, 16, 15, 13, 12, 10, 9, 7)
 #   "just_finished_fifth" = the 8 teams that just finished 5th (they sit out next season)
 #   "just_finished_exile" = the 8 teams that just served their exile year (they return)
 LOTTERY_POOL = "just_finished_fifth"
-# ASSUMED (advice from the two-draft study, reports/exile_two_draft_study.md): a team back from exile has already had
+# CONFIRMED (Jeph, 2026-10-04, accepting the AI's advice from reports/exile_two_draft_study.md): a team back from exile has already had
 # its lottery pick, so in its second draft it picks inside the 9-34 band as a block at the end (picks 27-34), ordered
 # among themselves by Ambassador Season record. Options: "by_record" (mixed in with everyone, Phase 1 behaviour),
 # "end_of_band", "start_of_band".
@@ -204,7 +208,8 @@ PROVENANCE = {
     "Lottery weights 18/16/15/13/12/10/9/7": ASSUMED,
     "Which 8 teams are in the lottery (just finished 5th vs just finished exile)": ASSUMED,
     "Lottery drawn one pick at a time by weight": ASSUMED,
-    "Teams back from exile pick as a block at the end of the 9-34 band (no stacking of two high picks)": ASSUMED,
+    "Teams back from exile pick as a block at the end of the 9-34 band (no stacking of two high picks)": CONFIRMED,
+    "The final is the Diamond Coronation; the champion receives a Diamond Tiara": CONFIRMED,
     "How tiers are earned (last division finish)": ASSUMED,
     "Tiebreakers mirror the NFL": CONFIRMED,
     "NFL tiebreak adaptations (restart rule used to rank everyone, wild-card division reduction, Ambassador chain, estimated touchdowns)": ASSUMED,
