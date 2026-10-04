@@ -22,7 +22,8 @@ A league engine with no AI (Phase 2 adds 47-player rosters, a drive-by-drive gam
 | `engine/calibrate_engine.py` | Checks the engine looks like football |
 | `engine/phase2_report.py` | Writes `reports/phase2_report.md` |
 | `engine/cards.py`, `card_pools.py` | Character cards: player souls (archetypes), perception and personality; head coaches who develop players, with rare legends |
-| `engine/staff_cards.py` | Owner and GM cards; fan approval, recall votes, hiring and firing; the Archive's first entries |
+| `engine/staff_cards.py` | Owner and GM cards; recall votes, hiring and firing; the Archive's first entries |
+| `engine/fan_media_cards.py` | Fanbase cards (culture, ratings, approval, Fan Capital) and media outlet cards (voice, ratings, Credibility, forecasts) |
 | `engine/staff_sweep.py` | Tests owners, firings and the GM levers (and 3x, 6x stress versions) against the fairness bands; writes `reports/staff_fairness_study.md` |
 | `engine/card_report.py` | Writes `reports/card_samples.md` |
 | `engine/coach_sweep.py` | Sweeps the coach dials (team lift, player development, legend rate) against the fairness bands; writes `reports/coach_fairness_study.md` |

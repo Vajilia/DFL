@@ -236,6 +236,9 @@ def init_staff(lg, year: int = 0):
             _seat_owner(lg, t, year, new_owner=False)
         if t.gm is None:
             _hire_gm(lg, t, year)
+    if getattr(lg, "fans_on", False):
+        import fan_media_cards as FM
+        FM.init_fans_media(lg, year)
 
 
 def gm_scouting_bonus(team) -> float:
@@ -257,18 +260,27 @@ def season_end(lg, year: int, pct: Dict[int, float], new_exiles, champion: int, 
     out = dict(votes=[], recalled=[], survived=[], owner_retired=[], coach_fired=[], gm_fired=[], coach_retired=[],
                approval={}, new_owner_teams=[])
     new_exiles = set(new_exiles)
+    fans_on = getattr(lg, "fans_on", False)
+    if fans_on:
+        import fan_media_cards as FM
+        tone = FM.media_season(lg, year, pct, champion, new_exiles)
     # 1. fans update their view of the owner; the coach and GM heat up or cool off
     for t in lg.teams:
         o = t.owner
         if o is None:
             continue
-        r = C._rng(lg.card_seed, "approval", o.oid, year)
-        target = 0.5 + APPROVAL_WIN_WEIGHT * (pct.get(t.id, 0.5) - 0.5)
-        target += APPROVAL_PLAYOFF * (t.id in playoff_teams) + APPROVAL_TITLE * (t.id == champion)
-        target -= APPROVAL_EXILE_HIT * (t.id in new_exiles)
-        target += (o.ratings["popularity"] - 50.0) / 50.0 * APPROVAL_POPULARITY
-        o.approval += APPROVAL_SMOOTH * (target - o.approval) + r.gauss(0.0, APPROVAL_NOISE)
-        o.approval = max(0.0, min(1.0, o.approval))
+        if fans_on:
+            FM.fan_season(lg, t, year, pct.get(t.id, 0.5), tone.get(t.id, 0.0), t.id in playoff_teams, t.id == champion,
+                          t.id in new_exiles, APPROVAL_SMOOTH, APPROVAL_WIN_WEIGHT, APPROVAL_PLAYOFF, APPROVAL_TITLE,
+                          APPROVAL_EXILE_HIT, APPROVAL_POPULARITY, APPROVAL_NOISE)
+        else:
+            r = C._rng(lg.card_seed, "approval", o.oid, year)
+            target = 0.5 + APPROVAL_WIN_WEIGHT * (pct.get(t.id, 0.5) - 0.5)
+            target += APPROVAL_PLAYOFF * (t.id in playoff_teams) + APPROVAL_TITLE * (t.id == champion)
+            target -= APPROVAL_EXILE_HIT * (t.id in new_exiles)
+            target += (o.ratings["popularity"] - 50.0) / 50.0 * APPROVAL_POPULARITY
+            o.approval += APPROVAL_SMOOTH * (target - o.approval) + r.gauss(0.0, APPROVAL_NOISE)
+            o.approval = max(0.0, min(1.0, o.approval))
         o.seasons_owned += 1
         o.age += 1
         shortfall = 0.5 - pct.get(t.id, 0.5) + (HEAT_EXILE if t.id in new_exiles else 0.0)
@@ -284,12 +296,16 @@ def season_end(lg, year: int, pct: Dict[int, float], new_exiles, champion: int, 
         t = lg.by_id[tid]
         o = t.owner
         r = C._rng(lg.card_seed, "recall", o.oid, year)
-        share = max(0.0, min(1.0, (1.0 - o.approval - RECALL_NEUTRAL) + r.gauss(0.0, RECALL_NOISE)))
+        buffer = FM.capital_buffer(t) if fans_on else 0.0
+        share = max(0.0, min(1.0, (1.0 - o.approval - RECALL_NEUTRAL - buffer) + r.gauss(0.0, RECALL_NOISE)))
         why = ("approval" if o.approval < R.RECALL_APPROVAL_THRESHOLD else "exile" if tid in new_exiles else "rotation")
         out["votes"].append(tid)
         if share > 0.5:
             cands = [make_owner_card(lg.card_seed, lg.new_owner_id(), tid, new_owner=True) for _ in range(R.RECALL_REPLACEMENT_CANDIDATES)]
-            pick = max(cands, key=lambda c: c.ratings["popularity"] + r.gauss(0.0, FAN_PICK_NOISE))
+            if fans_on:
+                pick = FM.fan_pick(t, cands, r, FAN_PICK_NOISE)
+            else:
+                pick = max(cands, key=lambda c: c.ratings["popularity"] + r.gauss(0.0, FAN_PICK_NOISE))
             o.status = "recalled"
             o.career.append({"year": year, "event": "recalled", "approval": round(o.approval, 3), "team": tid})
             pick.teams_owned = [tid]
@@ -297,11 +313,14 @@ def season_end(lg, year: int, pct: Dict[int, float], new_exiles, champion: int, 
             t.owner = pick
             lg.owners.extend(c for c in cands)          # every candidate gets an id and a card, elected or not
             log(lg, year, "recall_vote", team=tid, trigger=why, approval=round(o.approval, 3), recall_share=round(share, 3),
-                result="recalled", owner=o.name, replacement=pick.name, candidates=[c.name for c in cands])
+                result="recalled", owner=o.name, replacement=pick.name, candidates=[c.name for c in cands],
+                **({"capital": round(t.fans.capital, 3)} if fans_on else {}))
             out["recalled"].append(tid)
             out["new_owner_teams"].append(tid)
         else:
             o.approval = min(1.0, o.approval + SURVIVE_BOUNCE)
+            if fans_on:
+                t.fans.approval = o.approval
             log(lg, year, "recall_vote", team=tid, trigger=why, approval=round(o.approval, 3), recall_share=round(share, 3),
                 result="survived", owner=o.name)
             out["survived"].append(tid)
@@ -319,6 +338,9 @@ def season_end(lg, year: int, pct: Dict[int, float], new_exiles, champion: int, 
             _seat_owner(lg, t, year, new_owner=True, age=None)
             out["owner_retired"].append(t.id)
             out["new_owner_teams"].append(t.id)
+    if fans_on:
+        for t in lg.teams:
+            FM.after_vote(t, t.id in out["new_owner_teams"])
     # 4. coaches age (and some retire); then each owner decides about her coach and GM
     pre = {t.id: t.coach for t in lg.teams}
     C.coach_offseason(lg, year)
