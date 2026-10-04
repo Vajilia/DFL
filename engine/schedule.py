@@ -29,6 +29,7 @@ class Game:
     kind: str                     # nonconf | division | tier | ambassador | ambassador_bowl | playoff_*
     home_pts: Optional[int] = None
     away_pts: Optional[int] = None
+    result: object = None             # box score (GameResult) when the drive engine kept it
 
     @property
     def winner(self) -> int:

@@ -2,9 +2,9 @@
 
 A fictional 48-team football simulation. Rules live in `engine/rules.py`; the rule text is in `docs/`.
 
-## What exists (Phase 0 and Phase 1)
+## What exists (Phases 0, 1 and 2)
 
-A league engine with no AI and no characters. It builds legal 18-game schedules, plays them with a placeholder game model, ranks divisions with tiebreakers, runs the playoffs, exiles the five-place teams, plays the Ambassador Season, runs the lottery, drafts and sets up next year.
+A league engine with no AI (Phase 2 adds 47-player rosters, a drive-by-drive game engine, injuries and a roster offseason; run it with `new_league(rng, rosters=True)`) and no characters. It builds legal 18-game schedules, plays them with a placeholder game model, ranks divisions with tiebreakers, runs the playoffs, exiles the five-place teams, plays the Ambassador Season, runs the lottery, drafts and sets up next year.
 
 | File | What it does |
 | --- | --- |
@@ -12,7 +12,15 @@ A league engine with no AI and no characters. It builds legal 18-game schedules,
 | `engine/placeholder_model.py` | Stand-in numbers (game scores, talent, draft value). Not rules. |
 | `engine/league.py` | The 48 teams and their state |
 | `engine/schedule.py` | Schedule generator and schedule checker |
-| `engine/sim.py` | Placeholder game simulation |
+| `engine/sim.py` | Game front end: placeholder, fast or drive-by-drive; injuries and stat totals |
+| `engine/game_engine.py` | The drive-by-drive football engine (box scores; play-by-play switch for later) |
+| `engine/positions.py`, `players.py`, `lineup.py` | Rosters, players, depth charts and unit ratings |
+| `engine/injuries.py` | Injury rates and clock |
+| `engine/offseason.py`, `roster_model.py` | Aging, retirement, draft rookies, free agency, exile relief |
+| `engine/power_rating.py` | Generated: team rating to expected margin (made by `fit_power_rating.py`) |
+| `engine/boxscore.py` | Readable box score |
+| `engine/calibrate_engine.py` | Checks the engine looks like football |
+| `engine/phase2_report.py` | Writes `reports/phase2_report.md` |
 | `engine/standings.py` | Records and tiebreakers |
 | `engine/playoffs.py` | Seeding and bracket |
 | `engine/draft.py` | Lottery and 48-pick draft order |
@@ -27,6 +35,9 @@ A league engine with no AI and no characters. It builds legal 18-game schedules,
 ## Commands
 
     python engine/check_phase0.py          # do the rules agree with each other?
+    python engine/check_phase2.py          # rosters, game engine, injuries, offseason
+    python engine/calibrate_engine.py      # does the game look like football?
+    python engine/phase2_report.py         # sample box score, league stats, exile target (about 2 minutes)
     python engine/check_phase1.py          # does the engine obey the rules? (add --long for more)
     python engine/run_sim.py --seasons 20 --seed 1
     python engine/league_report.py --seed 1 --seasons 20

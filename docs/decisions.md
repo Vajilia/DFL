@@ -40,10 +40,21 @@ Every rule is tagged **confirmed** (Jeph stated it) or **assumed** (the AI fille
 | Owner-recall order | Divisions come up in a fixed rotation, one per year |
 | Starting league | Random strengths; one random team per division starts in exile |
 | Final's name | "Super Bowl" kept from the rules text (NFL trademark; see open questions) |
+| Roster | 47 players per team: QB 3, RB 4, WR 6, TE 3, OL 8, DL 7, LB 5, CB 5, S 4, K 1, P 1 (structural choice for the game engine) |
+| Starters | QB 1, RB 1, WR 3, TE 1, OL 5, DL 4, LB 2, CB 3, S 2, K, P (the rating of a unit is built from these) |
+| Game detail | Games are played play by play inside the engine but only drive-level results are kept (box score, drives, team and player stats). Full play-by-play is built in and switched off (`record_plays`); you chose "option 2, with option 3 later" |
+| Injuries | Decided by the engine, not the AI. Counted in weeks; every injured player heals during the offseason. None are rolled in the playoffs (injured players stay out, nobody new is hurt) |
+| Aging and retirement | Players improve until their mid-twenties, hold, then decline; kickers, punters and quarterbacks last longer. Retirement chance rises from about 31 |
+| Contracts and free agency | About 15% of each roster reaches the market every year (stars are re-signed more often). Worst teams pick first. Open slots are filled from the market |
+| Rookies | One per team per year, quality set by the pick. Position chosen by team need |
+| Exile relief in free agency | A team returning from exile gets a few extra top-of-market signings on average (0.25 per year in the current setting), standing in for the 50% cap relief. It does not pick first in free agency (that tested as too strong) |
+| Game engine modes | `drives` (full game), `fast` (power rating to score, no box score, for long studies), `placeholder` (Phase 1 scalar model) |
 
 ## Placeholder model (not rules)
 
-How ratings turn into scores, how the draft changes team strength and how strength drifts between seasons are stand-ins so the league can run. The exile-related dials (pick-1 value 1.0, cap relief 0.5) were calibrated on 2026-10-04 so a returning team averages about a 3.2 division finish, in line with the confirmed exile intent. They live in `engine/placeholder_model.py` and must not be read as design decisions.
+How ratings turn into scores, how the draft changes team strength and how strength drifts between seasons are stand-ins so the league can run. The exile-related dials (pick-1 value 1.0, cap relief 0.5) were calibrated on 2026-10-04 so a returning team averages about a 3.2 division finish on the Phase 1 scalar model, in line with the confirmed exile intent. They live in `engine/placeholder_model.py` and must not be read as design decisions.
+
+On the roster model (Phase 2) the same target was re-calibrated: the dials are in `engine/roster_model.py` and `engine/players.py`. A returning team now averages a 3.0 to 3.1 division finish (a league-average team is 3.0), with about 19% finishing 1st and about 22% falling to 5th again. See `reports/phase2_report.md`. Free-agency priority for returners was tried and dropped because it pushed the average to about 2.7.
 
 ## Notes
 
@@ -55,3 +66,5 @@ How ratings turn into scores, how the draft changes team strength and how streng
 2. Exile is now defined as modest relief aimed at a 3rd-place-level return (see `reports/exile_calibration.md`). Where should the help come from: the lottery pick, cap relief, or a mix?
 3. "Super Bowl" is an NFL trademark. Keep it or rename it with the other NFL-style names?
 4. Do you want returning exiled teams ranked into the 9-34 draft band by Ambassador record, or placed some other way?
+5. The league is currently tighter than the NFL: the spread of regular-season win percentage is about 0.14 (the NFL is nearer 0.19). Do you want a more top-heavy league (dynasties and true cellar teams) or is this "fair competitiveness" what you meant?
+6. How should exile relief show up in the story: a cap discount, first pick of free agents, or a few premium signings? Right now it is a small number of premium signings.
