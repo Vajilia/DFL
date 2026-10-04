@@ -2,22 +2,32 @@
 
 Every rule number lives here. No other file may hard-code one.
 Change a number here and the whole league follows.
+
+Every rule is labelled with where it came from (see PROVENANCE at the bottom):
+
+  CONFIRMED  Jeph wrote it in the rules text or said it in chat.
+  ASSUMED    The AI proposed it to fill a gap. It is a working default only and
+             stays provisional until Jeph confirms or changes it.
+
+The game-result and talent model is NOT a rule. It is a stand-in that lives in
+placeholder_model.py and is labelled as such.
 """
 
-# ---- League structure ------------------------------------------------------
+# ---- League structure (CONFIRMED) -----------------------------------------
 CONFERENCES = ("Western", "Eastern")   # Western = blue, Eastern = red
 DIVISIONS_PER_CONFERENCE = 4
 TEAMS_PER_DIVISION = 6                 # 5 active + 1 exile slot
 ACTIVE_PER_DIVISION = 5
 EXILE_SLOTS_PER_DIVISION = 1
 
-TOTAL_TEAMS = len(CONFERENCES) * DIVISIONS_PER_CONFERENCE * TEAMS_PER_DIVISION      # 48
-ACTIVE_TEAMS = len(CONFERENCES) * DIVISIONS_PER_CONFERENCE * ACTIVE_PER_DIVISION    # 40
+TOTAL_DIVISIONS = len(CONFERENCES) * DIVISIONS_PER_CONFERENCE                       # 8
+TOTAL_TEAMS = TOTAL_DIVISIONS * TEAMS_PER_DIVISION                                  # 48
+ACTIVE_TEAMS = TOTAL_DIVISIONS * ACTIVE_PER_DIVISION                                # 40
 EXILED_TEAMS = TOTAL_TEAMS - ACTIVE_TEAMS                                           # 8
 
-# ---- Tiers (schedule strength rank, 1 = strongest). NOT playoff seeds. ------
+# ---- Tiers (schedule strength rank, 1 = strongest). NOT playoff seeds. -----
 TIERS = (1, 2, 3, 4, 5)
-# Tier-based non-division opponents: tier -> tiers it plays
+# Tier-based non-division opponents: tier -> tiers it plays (CONFIRMED, from rules text)
 TIER_OPPONENTS = {
     1: (1, 2),
     2: (1, 3),
@@ -25,9 +35,12 @@ TIER_OPPONENTS = {
     4: (3, 5),
     5: (4, 5),
 }
-EXILE_RETURN_TIER = 5
+EXILE_RETURN_TIER = 5                  # CONFIRMED: an exiled team returns as Tier 5
+# ASSUMED: how a team earns its tier. Last season's finish inside its division:
+# 1st -> Tier 1 ... 4th -> Tier 4, the team returning from exile -> Tier 5.
+TIER_FROM = "last_division_finish"
 
-# ---- Regular season --------------------------------------------------------
+# ---- Regular season (CONFIRMED) -------------------------------------------
 GAMES_PER_TEAM = 18
 NON_CONFERENCE_GAMES = 4        # weeks 1-4, same tier vs same tier
 DIVISION_GAMES_FIRST_BLOCK = 4  # weeks 5-14
@@ -39,46 +52,87 @@ WEEKS_DIVISIONAL = (15, 19)
 REGULAR_SEASON_WEEKS = 19       # 18 games + 1 bye
 PLAYOFF_WEEKS = 4               # wild card, divisional, championship, final
 GAME_WEEKS_TOTAL = REGULAR_SEASON_WEEKS + PLAYOFF_WEEKS   # 23
+WILD_CARD_WEEK, DIVISIONAL_WEEK, CHAMPIONSHIP_WEEK, FINAL_WEEK = 20, 21, 22, 23
+
+# ASSUMED: inside weeks 5-14, the five weeks that carry division games. The other
+# five weeks are tier-based games. (A 5-team division cannot all play each other in
+# one week, so in a division week one team plays a tier-based game instead.)
+CONFERENCE_BLOCK_DIVISION_WEEKS = (5, 7, 9, 11, 13)
+# ASSUMED: games never end in a tie (overtime always produces a winner).
+TIES_ALLOWED = False
 
 # ---- Playoffs --------------------------------------------------------------
+# CONFIRMED (Jeph answered this one): 4 division winners + 3 wild cards.
 DIVISION_WINNERS_PER_CONFERENCE = 4
 WILD_CARDS_PER_CONFERENCE = 3
 PLAYOFF_SEEDS_PER_CONFERENCE = DIVISION_WINNERS_PER_CONFERENCE + WILD_CARDS_PER_CONFERENCE  # 7
 PLAYOFF_TEAMS = PLAYOFF_SEEDS_PER_CONFERENCE * len(CONFERENCES)                             # 14
 TOP_SEED_HAS_BYE = True
+FINAL_NAME = "Super Bowl"       # name used in the rules text; see open questions
+# ASSUMED: seeds 1-4 are the division winners ranked by record; 5-7 the wild cards.
+# ASSUMED: a team that finishes 5th in its division cannot be a wild card (it is exiled).
+FIFTH_PLACE_WILD_CARD_ELIGIBLE = False
+# ASSUMED: the Super Bowl is played at a neutral site (no home advantage).
+FINAL_IS_NEUTRAL_SITE = True
 
 # ---- Exile -----------------------------------------------------------------
-EXILE_TRIGGER_FINISH = 5        # finish 5th in the division
+EXILE_TRIGGER_FINISH = 5        # CONFIRMED: finish 5th in the division
 EXILE_DURATION_SEASONS = 1
-EXILE_CAP_ABSORPTION = 0.50     # 50% cap relief
+EXILE_CAP_ABSORPTION = 0.50     # 50% cap relief (not used until the cap model exists)
 AMBASSADOR_ROUND_ROBIN_TEAMS = EXILED_TEAMS
 AMBASSADOR_GAMES_PER_TEAM = AMBASSADOR_ROUND_ROBIN_TEAMS - 1   # 7
 AMBASSADOR_TOTAL_GAMES = AMBASSADOR_ROUND_ROBIN_TEAMS * AMBASSADOR_GAMES_PER_TEAM // 2  # 28
+AMBASSADOR_WEEKS = (1, 7)       # ASSUMED placement
+AMBASSADOR_BOWL_WEEK = 8        # ASSUMED: the two best Ambassador records meet
 
-# ---- Tiebreakers (in order) ------------------------------------------------
+# ---- Tiebreakers -----------------------------------------------------------
+# ASSUMED (the AI suggested this order; Jeph said "go with it for now").
+# Division ranking, which decides exile:
 TIEBREAKERS = (
     "head_to_head",
     "division_record",
     "point_differential",
     "seeded_coin_flip",
 )
+# ASSUMED: used to rank division winners and wild cards across divisions
+# (head-to-head is skipped because those teams often never met).
+CROSS_DIVISION_TIEBREAKERS = (
+    "conference_record",
+    "point_differential",
+    "seeded_coin_flip",
+)
+# ASSUMED: used inside the Ambassador season and for ordering draft picks by record.
+RECORD_ONLY_TIEBREAKERS = (
+    "head_to_head",
+    "point_differential",
+    "seeded_coin_flip",
+)
 
 # ---- Draft -----------------------------------------------------------------
-# Lottery: worst record -> best record among the exiled teams, percent, sums to 100
+LOTTERY_TEAMS = 8               # CONFIRMED: 8 teams in the lottery
+# ASSUMED, PLACEHOLDER: the old 14%/6% figures were left over from an earlier design.
+# Worst record -> best record, percent, sums to 100.
 LOTTERY_WEIGHTS = (18, 16, 15, 13, 12, 10, 9, 7)
-LOTTERY_APPLIES_TO = "teams_that_just_finished_fifth"
+# ASSUMED: which 8 teams are in the lottery.
+#   "just_finished_fifth" = the 8 teams that just finished 5th (they sit out next season)
+#   "just_finished_exile" = the 8 teams that just served their exile year (they return)
+LOTTERY_POOL = "just_finished_fifth"
+# ASSUMED: every pick 1-8 is drawn by weight, one at a time, without replacement.
 DRAFT_PICKS = {
-    "exiled_lottery": (1, 8),
-    "active_non_playoff": (9, 34),
-    "playoff_teams": (35, 48),
+    "exiled_lottery": (1, 8),         # CONFIRMED
+    "active_non_playoff": (9, 34),    # CONFIRMED
+    "playoff_teams": (35, 48),        # CONFIRMED (by round, then record)
 }
 
 # ---- Owner accountability --------------------------------------------------
-RECALL_DIVISIONS_PER_CONFERENCE_PER_YEAR = 1
-RECALL_CYCLE_YEARS = DIVISIONS_PER_CONFERENCE // RECALL_DIVISIONS_PER_CONFERENCE_PER_YEAR  # 4
+# CONFIRMED (Jeph, 2026-10-04): every division's owners are voted on once every
+# 8 years, one division league-wide per year. The earlier "4-year cycle" was wrong.
+RECALL_DIVISIONS_PER_YEAR = 1
+RECALL_CYCLE_YEARS = TOTAL_DIVISIONS // RECALL_DIVISIONS_PER_YEAR   # 8
 RECALL_APPROVAL_THRESHOLD = 0.40
 RECALL_VOTERS = 1_000_000
 RECALL_REPLACEMENT_CANDIDATES = 5
+RECALL_ON_EXILE = True          # CONFIRMED (rules text: "Trigger: ... or team exiled")
 FORCED_SALE_SUBSIDY_QUARTERS = 2
 FORCED_SALE_VOTES_NEEDED = 25   # of 48 owners
 OWNER_MAY_OWN_TWICE = False
@@ -90,6 +144,36 @@ REAL_WEEKS_PER_SEASON = 2
 # ---- Character card limits -------------------------------------------------
 RATING_MIN, RATING_MAX = 1, 100
 RELATIONSHIP_MIN, RELATIONSHIP_MAX = -100, 100
+
+# ---- Where each rule came from --------------------------------------------
+CONFIRMED = "confirmed"
+ASSUMED = "assumed"
+PROVENANCE = {
+    "League structure (48 teams, 2 conferences, 8 divisions, 5 active + 1 exile slot)": CONFIRMED,
+    "Schedule shape (18 games, 19 weeks, 4 non-conference, 4+4 division, 6 tier-based)": CONFIRMED,
+    "Tier opponent table": CONFIRMED,
+    "Exile trigger (finish 5th), one-season duration, return as Tier 5": CONFIRMED,
+    "Ambassador Season (7-game round-robin among the 8 exiled teams + Ambassador Bowl)": CONFIRMED,
+    "Playoff field (4 division winners + 3 wild cards per conference)": CONFIRMED,
+    "Playoff bracket (wild card, divisional, championship, final; seed 1 bye)": CONFIRMED,
+    "Draft bands (1-8 exiled lottery, 9-34 active non-playoff, 35-48 playoff)": CONFIRMED,
+    "Lottery is 8 teams": CONFIRMED,
+    "Recall: 1 division league-wide per year, 8-year cycle": CONFIRMED,
+    "Recall also triggered by exile": CONFIRMED,
+    "Lottery weights 18/16/15/13/12/10/9/7": ASSUMED,
+    "Which 8 teams are in the lottery (just finished 5th vs just finished exile)": ASSUMED,
+    "Lottery drawn one pick at a time by weight": ASSUMED,
+    "How tiers are earned (last division finish)": ASSUMED,
+    "Tiebreaker orders": ASSUMED,
+    "5th-place teams cannot take a wild card": ASSUMED,
+    "No tied games": ASSUMED,
+    "Which weeks inside 5-14 carry division games": ASSUMED,
+    "Home/away balance (9 home, 9 away)": ASSUMED,
+    "Draft order inside the bands (worst record first; returning teams by Ambassador record)": ASSUMED,
+    "Ambassador weeks and the Ambassador Bowl format": ASSUMED,
+    "Order in which divisions come up for owner recall": ASSUMED,
+    "Starting league (which teams begin in exile, starting tiers)": ASSUMED,
+}
 
 
 def placeholder_teams():

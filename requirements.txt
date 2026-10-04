@@ -1,1 +1,3 @@
-# Phase 0 uses only the Python standard library.
+# The league engine uses only the Python standard library.
+# The exile study (engine/exile_study.py) also needs numpy.
+numpy

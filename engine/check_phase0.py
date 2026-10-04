@@ -72,7 +72,16 @@ lo, hi = R.DRAFT_PICKS["playoff_teams"]
 check("playoff picks = 14", hi - lo + 1 == R.PLAYOFF_TEAMS)
 
 # Owner accountability
-check("recall cycle is 4 years", R.RECALL_CYCLE_YEARS == 4)
+# Facts Jeph confirmed, written down independently of the formulas in rules.py
+check("8 divisions in total", R.TOTAL_DIVISIONS == 8 and R.DIVISIONS_PER_CONFERENCE * len(R.CONFERENCES) == 8)
+check("recall cycle is 8 years (1 division league-wide per year)",
+      R.RECALL_DIVISIONS_PER_YEAR == 1 and R.RECALL_CYCLE_YEARS == 8)
+check("lottery is 8 teams", R.LOTTERY_TEAMS == 8 and len(R.LOTTERY_WEIGHTS) == 8)
+check("lottery draws no more teams than there are exiles", R.LOTTERY_TEAMS == R.EXILED_TEAMS)
+check("every rule is tagged confirmed or assumed", all(v in (R.CONFIRMED, R.ASSUMED) for v in R.PROVENANCE.values()))
+check("lottery weights are tagged assumed (not confirmed)",
+      R.PROVENANCE["Lottery weights 18/16/15/13/12/10/9/7"] == R.ASSUMED)
+check("tiebreakers are tagged assumed", R.PROVENANCE["Tiebreaker orders"] == R.ASSUMED)
 check("forced-sale vote is a majority of 48", R.FORCED_SALE_VOTES_NEEDED > R.TOTAL_TEAMS // 2)
 check("season is 23 game weeks", R.GAME_WEEKS_TOTAL == 23)
 
