@@ -1,3 +1,5 @@
+[NOTE, 2026-10-04: this Foreword is a vestige of an earlier design and is not authoritative. See decisions.md; the confirmed rules win where they differ, e.g. exile is relief, not punishment.]
+
 FOREWORD: THE STORY OF THE SYSTEM
 In 1988, you built an ant farm on graph paper. You moved the ants with dice and imagination. You were the only one who could see them.
 

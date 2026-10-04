@@ -45,10 +45,13 @@ Every rule is tagged **confirmed** (Jeph stated it) or **assumed** (the AI fille
 
 How ratings turn into scores, how the draft changes team strength and how strength drifts between seasons are stand-ins so the league can run. The exile-related dials (pick-1 value 1.0, cap relief 0.5) were calibrated on 2026-10-04 so a returning team averages about a 3.2 division finish, in line with the confirmed exile intent. They live in `engine/placeholder_model.py` and must not be read as design decisions.
 
+## Notes
+
+- The Foreword in the rules text is a vestige of an earlier design (Jeph, 2026-10-04). It is not authoritative. Where it conflicts with the confirmed rules above (for example it frames exile as erasure and punishment), the confirmed rules win.
+
 ## Open questions for Jeph
 
 1. Do the lottery weights suit you, and should the lottery cover teams that just finished 5th or teams that just served their exile year?
 2. Exile is now defined as modest relief aimed at a 3rd-place-level return (see `reports/exile_calibration.md`). Where should the help come from: the lottery pick, cap relief, or a mix?
 3. "Super Bowl" is an NFL trademark. Keep it or rename it with the other NFL-style names?
 4. Do you want returning exiled teams ranked into the 9-34 draft band by Ambassador record, or placed some other way?
-5. The Foreword still says "failure means erasure" and describes exile as games "in empty stadiums", which reads as punishment. Should the Foreword be reworded to match the relief framing and the exotic locations?
