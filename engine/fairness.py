@@ -108,6 +108,7 @@ def measure_league(seed: int, seasons: int, engine: str = "fast", opt: Options =
         "close_game_share": close / games_n,
         "repeat_champion_rate": repeat / max(1, len(champs) - 1),
         "max_titles_in_20": worst,
+        "worst_league_titles": worst,
         "best_team_title_odds": top_wins / top_n,
         "returner_avg_finish": st.mean(ret_fin),
         "returner_win_div": sum(f == 1 for f in ret_fin) / n_ret,
@@ -133,7 +134,7 @@ def evaluate(per_league: List[Dict[str, float]]):
         d["exile_effect"] = float(np.linalg.lstsq(a_, np.array(d["_xy"][1]), rcond=None)[0][2])
     for name, (lo, hi, meaning) in R.FAIR_COMPETITION_BANDS.items():
         vals = [d[name] for d in per_league]
-        v = max(vals) if name == "max_titles_in_20" else pooled_effect if name == "exile_effect" else st.mean(vals)   # titles: judge the worst league
+        v = max(vals) if name == "worst_league_titles" else pooled_effect if name == "exile_effect" else st.mean(vals)   # titles: judge the worst league
         rows.append((name, v, lo, hi, lo <= v <= hi, min(vals), max(vals), meaning))
     return rows
 
@@ -146,7 +147,7 @@ def run(engine: str, seeds, seasons: int, **kw):
 def table(rows) -> str:
     L = ["| Trend | This league | Fair-competitiveness band | Inside? | Range across leagues |", "| --- | --- | --- | --- | --- |"]
     for name, v, lo, hi, ok, a, b, meaning in rows:
-        f = (lambda x: f"{x:.3f}") if name not in ("max_titles_in_20", "returner_avg_finish", "exile_effect") else (lambda x: f"{x:.0f}" if name == "max_titles_in_20" else f"{x:.2f}")
+        f = (lambda x: f"{x:.3f}") if name not in ("max_titles_in_20", "worst_league_titles", "returner_avg_finish", "exile_effect") else (lambda x: f"{x:.0f}" if name == "worst_league_titles" else f"{x:.2f}")
         L.append(f"| {meaning} | {f(v)} | {f(lo)} to {f(hi)} | {'yes' if ok else '**NO**'} | {f(a)} to {f(b)} |")
     return "\n".join(L)
 

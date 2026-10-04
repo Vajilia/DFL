@@ -53,7 +53,7 @@ Every rule is tagged **confirmed** (Jeph stated it) or **assumed** (the AI fille
 | Contracts and free agency | About 15% of each roster reaches the market every year (stars are re-signed more often). Worst teams pick first. Open slots are filled from the market |
 | Rookies | One per team per year, quality set by the pick. Position chosen by team need |
 | Exile relief in free agency | A team returning from exile gets an extra top-of-market signing 5% of the time on average (0.05 per year; it was 0.25 before the two-draft study), standing in for the 50% cap relief. It does not pick first in free agency (that tested as too strong) |
-| Numeric bands for "fair competitiveness" | Ten measured trends with low/high limits (win-percentage spread 0.13-0.19, repeat champion at most 12% of seasons, no franchise with 5+ titles in 20 years, a returner averages 2.8-3.4 in its division, and so on). Defined in `rules.FAIR_COMPETITION_BANDS`, measured by `engine/fairness.py`, reported in `reports/fairness_report.md`. The AI's first proposal; Jeph may change any limit |
+| Numeric bands for "fair competitiveness" | Thirteen measured trends with low/high limits (win-percentage spread 0.13-0.19, repeat champion at most 12% of seasons, no franchise with 6+ titles in 20 years, exile never worth more than half a rating point, a returner averages 2.8-3.4 in its division, and so on). Defined in `rules.FAIR_COMPETITION_BANDS`, measured by `engine/fairness.py`, reported in `reports/fairness_report.md`. The AI's first proposal; Jeph may change any limit |
 | Game engine modes | `drives` (full game), `fast` (power rating to score, no box score, for long studies), `placeholder` (Phase 1 scalar model) |
 
 ## Placeholder model (not rules)
