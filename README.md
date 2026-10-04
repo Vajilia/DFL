@@ -21,9 +21,9 @@ A league engine with no AI (Phase 2 adds 47-player rosters, a drive-by-drive gam
 | `engine/boxscore.py` | Readable box score |
 | `engine/calibrate_engine.py` | Checks the engine looks like football |
 | `engine/phase2_report.py` | Writes `reports/phase2_report.md` |
-| `engine/cards.py`, `card_pools.py` | Character cards for players and head coaches (names, personality, archetypes, pressure thresholds, capped coach effect) |
+| `engine/cards.py`, `card_pools.py` | Character cards: player souls (archetypes), perception and personality; head coaches who develop players, with rare legends |
 | `engine/card_report.py` | Writes `reports/card_samples.md` |
-| `engine/card_fairness_study.py` | Tests the coach effect (and 3x, 5x stress versions) against the fairness bands; writes `reports/coach_fairness_study.md` |
+| `engine/coach_sweep.py` | Sweeps the coach dials (team lift, player development, legend rate) against the fairness bands; writes `reports/coach_fairness_study.md` |
 | `engine/tiebreak.py` | NFL-style tiebreaking procedures (division, wild card, draft order) |
 | `engine/exile_fairness_study.py` | Compares ways to handle an exiled team's two drafts; writes `reports/exile_two_draft_study.md` |
 | `engine/fairness.py` | Measures trends against the "fair competitiveness" bands in `rules.py`; writes `reports/fairness_report.md` |

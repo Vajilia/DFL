@@ -44,14 +44,21 @@ def _retire_prob(p: Player) -> float:
     return min(base, 0.95)
 
 
-def progress(players: List[Player], rm: RosterModel, rng: random.Random):
+def progress(players: List[Player], rm: RosterModel, rng: random.Random, coach_of: Dict[int, object] = None):
+    """Everyone ages and changes. `coach_of` maps a player id to the head coach she developed under this year
+    (cards.development_bonus). Afterwards each player's ratings are pulled back toward the shape her soul gives her
+    (cards.apply_soul). Neither step draws random numbers, so the random stream is the same with or without cards."""
+    import cards
     for p in players:
         p.age += 1
         p.years_in_league += 1
         shift = _age_drift(p.age - AGE_SHIFT.get(p.pos, 0)) + rng.gauss(0.0, rm.prog_noise)
+        if coach_of:
+            shift += cards.development_bonus(coach_of.get(p.id), p.age)
         for a in p.ratings:
             p.ratings[a] = clamp(p.ratings[a] + shift + rng.gauss(0.0, rm.prog_attr_noise))
         p.recompute()
+        cards.apply_soul(p)
 
 
 def rookie_ovr(pick: int, rm: RosterModel, rng: random.Random) -> float:
@@ -129,7 +136,8 @@ def run_roster_offseason(lg: League, rng: random.Random, rm: RosterModel, year: 
         p.weeks_out = 0
 
     # 1. everybody ages and changes
-    progress([p for t in teams for p in t.roster], rm, rng)
+    progress([p for t in teams for p in t.roster], rm, rng,
+             {p.id: t.coach for t in teams if t.coach is not None for p in t.roster})
     progress(lg.free_agents, rm, rng)
 
     # 2. retirement (rostered players and the unsigned)

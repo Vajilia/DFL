@@ -47,13 +47,23 @@ def measure_league(seed: int, seasons: int, engine: str = "fast", opt: Options =
     finishes: Dict[int, List[int]] = defaultdict(list)
     stuck, stuck_n = 0, 0
     hist = []
+    leg = dict(seasons=0, wins=0.0, playoffs=0, titles=0, seasons_all=0, titles_total=0)
     for y in range(1, seasons + 1):
         strengths = {tid: v[2] for tid, v in lg.snapshot().items()}
+        legends = {t.id for t in lg.teams if t.coach is not None and t.coach.legend and t.status == "active"}
         res = run_season(lg, y, rng, opt)
         pct = {tid: float(s.pct) for tid, s in res.stats.items()}
         hist.append(dict(start=strengths, ranks=res.division_ranks, pick={t: p for p, t, _ in res.draft}, new=res.new_exiles))
         if y > burn:
             sd_by_season.append(st.pstdev(pct.values()))
+            in_po = {t for seeds in res.seeds.values() for t in seeds}
+            leg["seasons_all"] += 1
+            for tid in legends:
+                if tid in pct:
+                    leg["seasons"] += 1
+                    leg["wins"] += pct[tid]
+                    leg["playoffs"] += tid in in_po
+                    leg["titles"] += tid == res.champion
             for g in res.games:
                 close += abs(g.home_pts - g.away_pts) <= 8
                 games_n += 1
@@ -116,6 +126,7 @@ def measure_league(seed: int, seasons: int, engine: str = "fast", opt: Options =
         "stuck_at_bottom": stuck / max(1, stuck_n),
         "exile_double_early": early / max(1, n_new),
         "_xy": (xs, ys, five),
+        "_legend": leg,
         "_n_returners": n_ret,
     }
 

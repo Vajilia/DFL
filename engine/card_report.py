@@ -22,7 +22,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--seed", type=int, default=1)
-    ap.add_argument("--seasons", type=int, default=6)
+    ap.add_argument("--seasons", type=int, default=14)
     a = ap.parse_args()
     rng = random.Random(a.seed)
     lg = new_league(rng, rosters=True)
@@ -33,9 +33,10 @@ def main():
            "(engine/card_pools.py) that you can replace. Ratings, archetypes and the coach effect are real: they come from "
            "the engine. Relationships and the decision log start empty on purpose; the Interaction system will fill them.\n",
            "## How to read a card\n",
-           "- **Archetypes** describe the player's rating profile: her best attribute names the positive archetype and her weakest the negative one.",
+           "- **Soul (archetypes)** is fixed for life. It is read from the rating profile she is born with: her best attribute names the positive archetype and her weakest the negative one. Her development is bent to stay true to it.",
+           "- **Personality** is how her soul shows up. Her archetype allows four personalities; which one she shows depends on her temperament and on how she rates herself. Her self-image lags the truth, so a declining veteran overrates herself and a rising rookie undersells herself. When her confidence moves enough, her personality can shift, but only inside the four her soul allows.",
            "- **Pressure thresholds** (exile, contract, spotlight, loyalty) are how much each kind of pressure rattles her, 1 to 100. They do nothing yet; the Interaction system will use them.",
-           "- **Coach ratings**: only offense and defense move games today (capped at +/- 1.0 point of margin each). The other four are stored for later.\n"]
+           "- **Coach ratings**: offense and defense lift the team (up to +/- 1.0 point of margin each); development adds up to 0.4 rating points a year to each young player. The other three are stored for later. Legends are the rare all-time greats.\n"]
     out.append("## A franchise player at each position group\n")
     active = [p for t in lg.teams for p in t.roster]
     for pos in ("QB", "WR", "OL", "DL", "CB", "K"):
@@ -48,21 +49,31 @@ def main():
     vet = max((p for p in active if p.years_in_league > 8), key=lambda p: p.ovr, default=None)
     if vet:
         out.append(C.render_player(vet, lg))
+    changed = [p for p in active if any(e["event"] == "personality_shift" for e in p.card.career) and p.ovr >= 60]
+    out.append("\n## A player whose personality changed (her soul stayed the same)\n")
+    if changed:
+        out.append(C.render_player(max(changed, key=lambda p: sum(e["event"] == "personality_shift" for e in p.card.career)), lg))
     out.append("\n## A retired player (cards are kept for the Archive)\n")
     ret = max(lg.retired_players, key=lambda p: p.ovr)
     out.append(C.render_player(ret, lg))
-    out.append("\n## Head coaches: the best and the weakest by total on-field effect\n")
-    ranked = sorted(lg.teams, key=lambda t: t.coach.offense_points + t.coach.defense_points)
-    out.append(C.render_coach(ranked[-1].coach, lg))
+    out.append("\n## Head coaches: a legend, a typical coach and a weak one\n")
+    legends = [t for t in lg.teams if t.coach.legend]
+    ranked = sorted(lg.teams, key=lambda t: t.coach.offense_points + t.coach.defense_points + t.coach.development_points)
+    if legends:
+        out.append(C.render_coach(legends[0].coach, lg))
+    out.append(C.render_coach(ranked[len(ranked) // 2].coach, lg))
     out.append(C.render_coach(ranked[0].coach, lg))
     out.append("\n## How the cards spread across the league\n")
     tc = collections.Counter(p.card.trait for p in active)
     out.append("**Core personalities (all rostered players):** " + ", ".join(f"{k} {v}" for k, v in tc.most_common()) + "\n")
-    ac = collections.Counter(C.archetypes(p.pos, p.ratings)[0] for p in active)
+    ac = collections.Counter(p.card.archetype_pos for p in active)
     out.append("**Most common positive archetypes:** " + ", ".join(f"{k} {v}" for k, v in ac.most_common(8)) + "\n")
     eff = [t.coach.offense_points + t.coach.defense_points for t in lg.teams]
     out.append(f"**Coach effect across the 48 teams:** average {st.mean(eff):+.2f}, spread (sd) {st.pstdev(eff):.2f}, "
                f"best {max(eff):+.2f}, worst {min(eff):+.2f} points of expected margin. For scale, team talent has a spread of about 3 to 4 points.\n")
+    shifts = sum(any(e["event"] == "personality_shift" for e in p.card.career) for p in active + list(lg.retired_players))
+    out.append(f"**Personality shifts:** {shifts} of {len(active) + len(lg.retired_players)} players have changed personality at least once in {a.seasons} seasons.\n")
+    out.append(f"**Legends:** {sum(c.legend for c in lg.coaches)} of {len(lg.coaches)} coaches hired so far are legends; {len(legends)} on the field now.\n")
     out.append(f"**Coaches so far:** {len(lg.coaches)} hired and {sum(c.retired for c in lg.coaches)} retired in {a.seasons} seasons.\n")
     out.append(f"**Players with cards:** {len(active) + len(lg.free_agents)} active or unsigned, {len(lg.retired_players)} retired.\n")
     path = os.path.join(ROOT, "reports", "card_samples.md")
