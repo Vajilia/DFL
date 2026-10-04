@@ -21,6 +21,8 @@ A league engine with no AI (Phase 2 adds 47-player rosters, a drive-by-drive gam
 | `engine/boxscore.py` | Readable box score |
 | `engine/calibrate_engine.py` | Checks the engine looks like football |
 | `engine/phase2_report.py` | Writes `reports/phase2_report.md` |
+| `engine/tiebreak.py` | NFL-style tiebreaking procedures (division, wild card, draft order) |
+| `engine/exile_fairness_study.py` | Compares ways to handle an exiled team's two drafts; writes `reports/exile_two_draft_study.md` |
 | `engine/fairness.py` | Measures trends against the "fair competitiveness" bands in `rules.py`; writes `reports/fairness_report.md` |
 | `engine/standings.py` | Records and tiebreakers |
 | `engine/playoffs.py` | Seeding and bracket |
@@ -36,6 +38,7 @@ A league engine with no AI (Phase 2 adds 47-player rosters, a drive-by-drive gam
 ## Commands
 
     python engine/check_phase0.py          # do the rules agree with each other?
+    python engine/check_tiebreaks.py       # NFL tiebreakers
     python engine/check_phase2.py          # rosters, game engine, injuries, offseason
     python engine/calibrate_engine.py      # does the game look like football?
     python engine/phase2_report.py         # sample box score, league stats, exile target (about 2 minutes)

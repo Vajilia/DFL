@@ -120,6 +120,16 @@ check("lottery always returns each of the 8 teams exactly once", valid)
 maxdev = max(abs(firsts[i] / N * 100 - R.LOTTERY_WEIGHTS[i]) for i in range(8))
 check("pick 1 chances match the weights", maxdev < 1.0, f"largest gap {maxdev:.2f} percentage points over {N} draws")
 check("worst team wins pick 1 most often", firsts[0] == max(firsts.values()))
+# picks 5-8 follow the record, and no team falls more than four places from where its record puts it
+fall_ok = order_ok = True
+worst_pick = 0
+for _ in range(4000):
+    p = run_lottery(list(range(8)), R.LOTTERY_WEIGHTS, lot_rng)
+    tail = p[R.LOTTERY_DRAWN_PICKS:]
+    order_ok &= tail == sorted(tail)
+    worst_pick = max(worst_pick, p.index(0) + 1)
+check("picks 5-8 go to the remaining teams worst record first", order_ok)
+check("the worst team can fall no lower than 5th", worst_pick == R.LOTTERY_DRAWN_PICKS + 1, f"lowest seen: pick {worst_pick}")
 
 # ---------------------------------------------------------------------------
 # 4. Whole seasons, many leagues

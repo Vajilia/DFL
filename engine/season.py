@@ -14,7 +14,7 @@ from playoffs import play_playoffs
 from schedule import Game, build_ambassador_schedule, build_schedule, check_schedule
 from sim import GameRunner
 from roster_model import RosterModel
-from standings import Stats, compute_stats, rank_teams
+from standings import Stats, compute_stats, rank_by_style
 
 
 @dataclass
@@ -22,6 +22,7 @@ class Options:
     model: PM.Model = field(default_factory=PM.Model)
     lottery_pool: str = R.LOTTERY_POOL
     lottery_weights: tuple = R.LOTTERY_WEIGHTS
+    returner_slot: str = R.RETURNER_DRAFT_SLOT   # where teams back from exile pick in the 9-34 band: by_record | end_of_band | start_of_band
     validate_schedule: bool = True
     engine: str = "auto"               # "placeholder" | "fast" | "drives"; auto = drives if the league has rosters
     roster_model: RosterModel = field(default_factory=RosterModel)
@@ -85,8 +86,8 @@ def run_season(league: League, year: int, rng: random.Random, opt: Options = Non
     for week in range(1, R.REGULAR_SEASON_WEEKS + 1):
         if week == R.AMBASSADOR_BOWL_WEEK:
             # the two best Ambassador records meet once the 28 round-robin games are done
-            amb_rank = rank_teams(returners, compute_stats(league, amb_games, returners),
-                                  R.RECORD_ONLY_TIEBREAKERS, rng, log, "ambassador")
+            amb_rank = rank_by_style("ambassador", returners, compute_stats(league, amb_games, returners),
+                                     rng, log, "ambassador")
             bowl = Game(R.AMBASSADOR_BOWL_WEEK, amb_rank[0], amb_rank[1], "ambassador_bowl")
             by_week.setdefault(week, []).append(bowl)
         for g in by_week.get(week, []):
@@ -99,18 +100,18 @@ def run_season(league: League, year: int, rng: random.Random, opt: Options = Non
     division_ranks: Dict[int, List[int]] = {}
     for div_id in range(R.TOTAL_DIVISIONS):
         ids = [t.id for t in league.active_in_division(div_id)]
-        division_ranks[div_id] = rank_teams(ids, stats, R.TIEBREAKERS, rng, log, f"division")
+        division_ranks[div_id] = rank_by_style("division", ids, stats, rng, log, "division")
     new_exiles = [ranks[R.EXILE_TRIGGER_FINISH - 1] for ranks in division_ranks.values()]
 
     # ---- playoffs (ASSUMED: no new injuries in the playoffs; existing injuries stay as they are)
     seeds, playoff_games, exits, champion = play_playoffs(league, division_ranks, stats, rng, runner, log)
 
     # ---- draft
-    all_stats = dict(stats)
-    all_stats.update(amb_stats)
+    all_stats = compute_stats(league, games + amb_games, active_ids + returners)   # one table so tiebreaks see every game
     draft, pool_order = build_draft_order(
         new_exiles=new_exiles, returners=returners, active_ids=active_ids, playoff_exits=exits,
-        stats=all_stats, rng=rng, log=log, lottery_pool=opt.lottery_pool, weights=opt.lottery_weights)
+        stats=all_stats, rng=rng, log=log, lottery_pool=opt.lottery_pool, weights=opt.lottery_weights,
+        returner_slot=opt.returner_slot)
 
     # ---- owner recall workload (ASSUMED rotation: division 0, 1, ... 7, repeat)
     recall_div = (year - 1) % R.TOTAL_DIVISIONS

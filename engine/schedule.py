@@ -30,6 +30,8 @@ class Game:
     home_pts: Optional[int] = None
     away_pts: Optional[int] = None
     result: object = None             # box score (GameResult) when the drive engine kept it
+    home_tds: Optional[int] = None    # touchdowns scored (drive engine); None = estimate as points // 7
+    away_tds: Optional[int] = None
 
     @property
     def winner(self) -> int:

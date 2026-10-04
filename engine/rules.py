@@ -93,7 +93,10 @@ AMBASSADOR_WEEKS = (1, 7)       # ASSUMED placement
 AMBASSADOR_BOWL_WEEK = 8        # ASSUMED: the two best Ambassador records meet
 
 # ---- Tiebreakers -----------------------------------------------------------
-# ASSUMED (the AI suggested this order; Jeph said "go with it for now").
+# CONFIRMED (Jeph, 2026-10-04): all tie-breaking mirrors the NFL, at least for now. "nfl" uses the NFL's
+# procedures (tiebreak.py). "simple" is the short Phase 1 list kept below for comparison and the old checks.
+TIEBREAK_STYLE = "nfl"
+# The simple Phase 1 lists (used only when TIEBREAK_STYLE = "simple").
 # Division ranking, which decides exile:
 TIEBREAKERS = (
     "head_to_head",
@@ -117,6 +120,9 @@ RECORD_ONLY_TIEBREAKERS = (
 
 # ---- Draft -----------------------------------------------------------------
 LOTTERY_TEAMS = 8               # CONFIRMED: 8 teams in the lottery
+# CONFIRMED (Jeph, 2026-10-04): the number of balls a team holds depends on its rank among the 8. Four balls
+# are drawn to decide picks 1-4; the other four teams take picks 5-8 in order of record (worst first).
+LOTTERY_DRAWN_PICKS = 4
 # ASSUMED, PLACEHOLDER: the old 14%/6% figures were left over from an earlier design.
 # Worst record -> best record, percent, sums to 100.
 LOTTERY_WEIGHTS = (18, 16, 15, 13, 12, 10, 9, 7)
@@ -124,7 +130,12 @@ LOTTERY_WEIGHTS = (18, 16, 15, 13, 12, 10, 9, 7)
 #   "just_finished_fifth" = the 8 teams that just finished 5th (they sit out next season)
 #   "just_finished_exile" = the 8 teams that just served their exile year (they return)
 LOTTERY_POOL = "just_finished_fifth"
-# ASSUMED: every pick 1-8 is drawn by weight, one at a time, without replacement.
+# ASSUMED (advice from the two-draft study, reports/exile_two_draft_study.md): a team back from exile has already had
+# its lottery pick, so in its second draft it picks inside the 9-34 band as a block at the end (picks 27-34), ordered
+# among themselves by Ambassador Season record. Options: "by_record" (mixed in with everyone, Phase 1 behaviour),
+# "end_of_band", "start_of_band".
+RETURNER_DRAFT_SLOT = "end_of_band"
+# ASSUMED: the four draws are one at a time by weight, without replacement (a team already drawn is skipped).
 DRAFT_PICKS = {
     "exiled_lottery": (1, 8),         # CONFIRMED
     "active_non_playoff": (9, 34),    # CONFIRMED
@@ -146,6 +157,8 @@ FAIR_COMPETITION_BANDS = {
     "returner_avg_finish":  (2.8, 3.4, "average division finish of a team back from exile (3.0 = league average)"),
     "returner_win_div":     (0.10, 0.30, "share of returning teams that win their division"),
     "returner_fifth_again": (0.10, 0.30, "share of returning teams that finish 5th again"),
+    "exile_effect":         (-0.5, 0.5, "extra team rating (points, about half a win per point) a team has two years after finishing 5th compared with one that finished 4th"),
+    "exile_double_early":   (0.00, 0.10, "share of exiled teams that get a top-8 pick in the lottery and then a top-16 pick in their second draft"),
     "stuck_at_bottom":      (0.00, 0.10, "share of team-seasons that follow three straight bottom-two finishes (pure luck gives about 0.06; exile years are skipped)"),
 }
 
@@ -183,19 +196,22 @@ PROVENANCE = {
     "Playoff bracket (wild card, divisional, championship, final; seed 1 bye)": CONFIRMED,
     "Draft bands (1-8 exiled lottery, 9-34 active non-playoff, 35-48 playoff)": CONFIRMED,
     "Lottery is 8 teams": CONFIRMED,
+    "Lottery draws 4 balls for picks 1-4; the other 4 teams pick 5-8 by record": CONFIRMED,
     "Recall: 1 division league-wide per year, 8-year cycle": CONFIRMED,
     "Recall also triggered by exile": CONFIRMED,
     "Exile is relief, not punishment; a returning team can compete for about 3rd in its division": CONFIRMED,
     "Lottery weights 18/16/15/13/12/10/9/7": ASSUMED,
     "Which 8 teams are in the lottery (just finished 5th vs just finished exile)": ASSUMED,
     "Lottery drawn one pick at a time by weight": ASSUMED,
+    "Teams back from exile pick as a block at the end of the 9-34 band (no stacking of two high picks)": ASSUMED,
     "How tiers are earned (last division finish)": ASSUMED,
-    "Tiebreaker orders": ASSUMED,
+    "Tiebreakers mirror the NFL": CONFIRMED,
+    "NFL tiebreak adaptations (restart rule used to rank everyone, wild-card division reduction, Ambassador chain, estimated touchdowns)": ASSUMED,
     "5th-place teams cannot take a wild card": ASSUMED,
     "No tied games": ASSUMED,
     "Which weeks inside 5-14 carry division games": ASSUMED,
     "Home/away balance (9 home, 9 away)": ASSUMED,
-    "Draft order inside the bands (worst record first; returning teams by Ambassador record)": ASSUMED,
+    "Draft order inside the bands (worst record first, NFL tiebreakers)": ASSUMED,
     "Ambassador weeks and the Ambassador Bowl format": ASSUMED,
     "Order in which divisions come up for owner recall": ASSUMED,
     "Starting league (which teams begin in exile, starting tiers)": ASSUMED,

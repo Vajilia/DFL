@@ -46,10 +46,12 @@ def measure_league(seed: int, seasons: int, engine: str = "fast", opt: Options =
     prev_returners: List[int] = []
     finishes: Dict[int, List[int]] = defaultdict(list)
     stuck, stuck_n = 0, 0
+    hist = []
     for y in range(1, seasons + 1):
         strengths = {tid: v[2] for tid, v in lg.snapshot().items()}
         res = run_season(lg, y, rng, opt)
         pct = {tid: float(s.pct) for tid, s in res.stats.items()}
+        hist.append(dict(start=strengths, ranks=res.division_ranks, pick={t: p for p, t, _ in res.draft}, new=res.new_exiles))
         if y > burn:
             sd_by_season.append(st.pstdev(pct.values()))
             for g in res.games:
@@ -87,6 +89,19 @@ def measure_league(seed: int, seasons: int, engine: str = "fast", opt: Options =
     for i in range(0, max(1, len(champs) - win + 1)):
         worst = max(worst, max(Counter(champs[i:i + win]).values()))
     n_ret = len(ret_fin)
+    # exile effect: 4th and 5th place teams in year i, their rating at the start of year i + 2
+    xs, ys, five = [], [], []
+    early, n_new = 0, 0
+    for i in range(burn, len(hist)):
+        if i + 2 < len(hist):
+            for ranks in hist[i]["ranks"].values():
+                for pos in (4, 5):
+                    t = ranks[pos - 1]
+                    xs.append(hist[i]["start"][t]); ys.append(hist[i + 2]["start"][t]); five.append(1.0 if pos == 5 else 0.0)
+        if i + 1 < len(hist):
+            for t in hist[i]["new"]:
+                n_new += 1
+                early += hist[i]["pick"][t] <= 8 and hist[i + 1]["pick"][t] <= 16
     return {
         "win_pct_sd": st.mean(sd_by_season),
         "year_to_year_corr": _corr(x_prev, y_next),
@@ -98,6 +113,8 @@ def measure_league(seed: int, seasons: int, engine: str = "fast", opt: Options =
         "returner_win_div": sum(f == 1 for f in ret_fin) / n_ret,
         "returner_fifth_again": sum(f == 5 for f in ret_fin) / n_ret,
         "stuck_at_bottom": stuck / max(1, stuck_n),
+        "exile_double_early": early / max(1, n_new),
+        "_xy": (xs, ys, five),
         "_n_returners": n_ret,
     }
 
@@ -105,9 +122,18 @@ def measure_league(seed: int, seasons: int, engine: str = "fast", opt: Options =
 def evaluate(per_league: List[Dict[str, float]]):
     """Pool the leagues. Returns [(name, value, low, high, ok, spread_low, spread_high, meaning)]."""
     rows = []
+    # the exile effect is a regression, so pool the raw samples from every league
+    import numpy as np
+    xs = sum((d["_xy"][0] for d in per_league), []); ys = sum((d["_xy"][1] for d in per_league), [])
+    fv = sum((d["_xy"][2] for d in per_league), [])
+    A = np.column_stack([np.ones(len(xs)), xs, fv])
+    pooled_effect = float(np.linalg.lstsq(A, np.array(ys), rcond=None)[0][2])
+    for d in per_league:
+        a_ = np.column_stack([np.ones(len(d["_xy"][0])), d["_xy"][0], d["_xy"][2]])
+        d["exile_effect"] = float(np.linalg.lstsq(a_, np.array(d["_xy"][1]), rcond=None)[0][2])
     for name, (lo, hi, meaning) in R.FAIR_COMPETITION_BANDS.items():
         vals = [d[name] for d in per_league]
-        v = max(vals) if name == "max_titles_in_20" else st.mean(vals)       # titles: judge the worst league
+        v = max(vals) if name == "max_titles_in_20" else pooled_effect if name == "exile_effect" else st.mean(vals)   # titles: judge the worst league
         rows.append((name, v, lo, hi, lo <= v <= hi, min(vals), max(vals), meaning))
     return rows
 
@@ -120,7 +146,7 @@ def run(engine: str, seeds, seasons: int, **kw):
 def table(rows) -> str:
     L = ["| Trend | This league | Fair-competitiveness band | Inside? | Range across leagues |", "| --- | --- | --- | --- | --- |"]
     for name, v, lo, hi, ok, a, b, meaning in rows:
-        f = (lambda x: f"{x:.3f}") if name not in ("max_titles_in_20", "returner_avg_finish") else (lambda x: f"{x:.2f}" if name == "returner_avg_finish" else f"{x:.0f}")
+        f = (lambda x: f"{x:.3f}") if name not in ("max_titles_in_20", "returner_avg_finish", "exile_effect") else (lambda x: f"{x:.0f}" if name == "max_titles_in_20" else f"{x:.2f}")
         L.append(f"| {meaning} | {f(v)} | {f(lo)} to {f(hi)} | {'yes' if ok else '**NO**'} | {f(a)} to {f(b)} |")
     return "\n".join(L)
 

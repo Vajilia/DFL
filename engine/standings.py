@@ -35,8 +35,23 @@ class Stats:
         return f"{self.wins}-{self.losses}"
 
 
+class StatsTable(dict):
+    """team id -> Stats, plus the games behind them so the NFL tiebreakers can see every result."""
+    league = None
+    games: list = None
+
+    @property
+    def ledger(self):
+        if getattr(self, "_ledger", None) is None:
+            from tiebreak import Ledger
+            self._ledger = Ledger(self.league, self.games, list(self.keys()))
+        return self._ledger
+
+
 def compute_stats(league, games: Iterable[Game], team_ids: Iterable[int]) -> Dict[int, Stats]:
-    stats = {tid: Stats() for tid in team_ids}
+    games = list(games)
+    stats = StatsTable((tid, Stats()) for tid in team_ids)
+    stats.league, stats.games = league, games
     for g in games:
         if g.home_pts is None:
             continue
@@ -121,3 +136,23 @@ def _resolve(group, stats, criteria, rng, log, context):
         return out
     # no coin flip in the list and nothing separated them: keep the order given
     return group
+
+
+def rank_by_style(kind: str, ids: List[int], stats, rng: random.Random, log: list = None, context: str = "") -> List[int]:
+    """Best to worst. kind: division | conference | ambassador. Uses the NFL procedures when
+    R.TIEBREAK_STYLE == "nfl" and the stats table knows its games."""
+    if R.TIEBREAK_STYLE == "nfl" and isinstance(stats, StatsTable) and stats.league is not None:
+        import tiebreak as T
+        fn = {"division": T.rank_division, "conference": T.rank_conference, "ambassador": T.rank_ambassador}[kind]
+        return fn(stats.ledger, ids, rng, log, context or kind)
+    crit = {"division": R.TIEBREAKERS, "conference": R.CROSS_DIVISION_TIEBREAKERS,
+            "ambassador": R.RECORD_ONLY_TIEBREAKERS}[kind]
+    return rank_teams(ids, stats, crit, rng, log, context or kind)
+
+
+def draft_worst_to_best(ids: List[int], stats, rng: random.Random, log: list = None, context: str = "draft") -> List[int]:
+    """Draft order for a group of teams: worst record picks first."""
+    if R.TIEBREAK_STYLE == "nfl" and isinstance(stats, StatsTable) and stats.league is not None:
+        import tiebreak as T
+        return T.draft_order(stats.ledger, ids, rng, log, context)
+    return rank_teams(ids, stats, R.RECORD_ONLY_TIEBREAKERS, rng, log, context)[::-1]

@@ -67,24 +67,24 @@ Seed 1, 10 seasons, drive engine. Player names are placeholders (P00123) until t
 
 | Measure (per team per game unless noted) | This league | Football-like target | Within range? |
 | --- | --- | --- | --- |
-| points | 22.44 | 22.00 (+/- 1.5) | yes |
-| plays | 62.52 | 63.50 (+/- 3.0) | yes |
-| pass att | 33.20 | 33.50 (+/- 2.0) | yes |
-| completion pct | 68.66 | 65.00 (+/- 2.0) | NO |
-| yards per attempt | 7.50 | 6.90 (+/- 0.5) | NO |
-| rush att | 26.95 | 26.50 (+/- 2.0) | yes |
-| yards per carry | 4.24 | 4.30 (+/- 0.3) | yes |
-| total yards | 348.86 | 340.00 (+/- 25.0) | yes |
-| sacks taken | 2.37 | 2.50 (+/- 0.5) | yes |
-| punts | 3.99 | 4.30 (+/- 0.8) | yes |
-| first downs | 20.59 | 20.00 (+/- 2.5) | yes |
-| third down pct | 44.30 | 40.00 (+/- 4.0) | NO |
-| fg attempts | 2.08 | 1.90 (+/- 0.5) | yes |
-| fg pct | 86.05 | 84.00 (+/- 5.0) | yes |
-| drives | 10.67 | 11.00 (+/- 1.2) | yes |
-| time of possession min | 30.28 | 30.00 (+/- 1.5) | yes |
-| game margin sd | 12.65 | 13.50 (+/- 1.5) | yes |
-| home win pct | 56.08 | 54.00 (+/- 3.0) | yes |
+| points | 22.49 | 22.00 (+/- 1.5) | yes |
+| plays | 62.40 | 63.50 (+/- 3.0) | yes |
+| pass att | 33.10 | 33.50 (+/- 2.0) | yes |
+| completion pct | 68.92 | 65.00 (+/- 2.0) | NO |
+| yards per attempt | 7.52 | 6.90 (+/- 0.5) | NO |
+| rush att | 26.98 | 26.50 (+/- 2.0) | yes |
+| yards per carry | 4.26 | 4.30 (+/- 0.3) | yes |
+| total yards | 349.94 | 340.00 (+/- 25.0) | yes |
+| sacks taken | 2.32 | 2.50 (+/- 0.5) | yes |
+| punts | 3.97 | 4.30 (+/- 0.8) | yes |
+| first downs | 20.67 | 20.00 (+/- 2.5) | yes |
+| third down pct | 44.24 | 40.00 (+/- 4.0) | NO |
+| fg attempts | 2.07 | 1.90 (+/- 0.5) | yes |
+| fg pct | 85.75 | 84.00 (+/- 5.0) | yes |
+| drives | 10.62 | 11.00 (+/- 1.2) | yes |
+| time of possession min | 30.26 | 30.00 (+/- 1.5) | yes |
+| game margin sd | 12.93 | 13.50 (+/- 1.5) | yes |
+| home win pct | 56.47 | 54.00 (+/- 3.0) | yes |
 
 Targets are rough NFL-style figures chosen by the AI as a stand-in for "looks like football". They are not rules and not your decisions.
 
@@ -92,58 +92,58 @@ Targets are rough NFL-style figures chosen by the AI as a stand-in for "looks li
 
 **Passing yards** (all 10 seasons combined, per player id)
 
-- P01740 (QB): 49774  (340 TD, 49 INT, 187 games)
-- P01411 (QB): 49161  (356 TD, 118 INT, 189 games)
-- P00988 (QB): 48578  (343 TD, 55 INT, 181 games)
-- P02069 (QB): 44703  (303 TD, 84 INT, 173 games)
-- P00330 (QB): 44682  (297 TD, 85 INT, 172 games)
+- P00988 (QB): 50797  (369 TD, 48 INT, 186 games)
+- P01740 (QB): 49126  (365 TD, 72 INT, 183 games)
+- P02452 (QB): 47384  (324 TD, 99 INT, 171 games)
+- P01223 (QB): 45891  (314 TD, 51 INT, 176 games)
+- P02116 (QB): 45365  (321 TD, 74 INT, 173 games)
 
 **Rushing yards** (all 10 seasons combined, per player id)
 
-- P02025 (RB): 14740  (3330 carries, 4.4 avg)
-- P01555 (RB): 13615  (3191 carries, 4.3 avg)
-- P00380 (RB): 12637  (2730 carries, 4.6 avg)
-- P00148 (RB): 11974  (2830 carries, 4.2 avg)
-- P01416 (RB): 10792  (2627 carries, 4.1 avg)
+- P02025 (RB): 15382  (3418 carries, 4.5 avg)
+- P01790 (RB): 13475  (3098 carries, 4.3 avg)
+- P00380 (RB): 13244  (2962 carries, 4.5 avg)
+- P01088 (RB): 12058  (2793 carries, 4.3 avg)
+- P01696 (RB): 11823  (2628 carries, 4.5 avg)
 
 **Receiving yards** (all 10 seasons combined, per player id)
 
-- P00666 (WR): 13377  (1219 catches, 96 TD)
-- P01419 (WR): 13064  (1157 catches, 90 TD)
-- P01184 (WR): 12996  (1210 catches, 81 TD)
-- P01658 (WR): 12470  (1077 catches, 93 TD)
-- P00480 (WR): 12433  (1108 catches, 74 TD)
+- P01184 (WR): 15032  (1356 catches, 107 TD)
+- P01136 (WR): 13307  (1213 catches, 91 TD)
+- P00948 (WR): 13230  (1149 catches, 92 TD)
+- P00949 (WR): 12871  (1165 catches, 79 TD)
+- P01232 (WR): 12752  (1172 catches, 79 TD)
 
 **Sacks** (all 10 seasons combined, per player id)
 
-- P00685 (DL): 138  
-- P01106 (DL): 133  
-- P02049 (DL): 122  
-- P01109 (DL): 115  
-- P01765 (DL): 112  
+- P01297 (DL): 141  
+- P02049 (DL): 135  
+- P00216 (DL): 133  
+- P01765 (DL): 113  
+- P01012 (DL): 113  
 
 **Interceptions** (all 10 seasons combined, per player id)
 
-- P00649 (CB): 37  
-- P01306 (CB): 32  
-- P02108 (CB): 30  
-- P00086 (CB): 28  
-- P01308 (CB): 27  
+- P00272 (CB): 34  
+- P00462 (CB): 33  
+- P02247 (CB): 32  
+- P01589 (CB): 32  
+- P01590 (CB): 29  
 
 ## Parity
 
-- Team strength spread (standard deviation of team power ratings, points): 3.1 on average (range 2.8 to 3.4).
-- Regular-season win percentage of the 40 active teams: sd 0.144; best 5% about 0.722, worst 5% about 0.278.
+- Team strength spread (standard deviation of team power ratings, points): 3.2 on average (range 2.7 to 3.5).
+- Regular-season win percentage of the 40 active teams: sd 0.146; best 5% about 0.722, worst 5% about 0.278.
 
 ## Injuries
 
-- About 277 injuries per season league-wide, roughly 5.8 per team. Rates and lengths are placeholder dials in injuries.py.
+- About 280 injuries per season league-wide, roughly 5.8 per team. Rates and lengths are placeholder dials in injuries.py.
 
 ## Roster offseason (per year, whole league)
 
 | Retirements | Contracts ended | Free-agent signings | Premium (exile relief) signings | Rookies drafted | Street free agents needed |
 | --- | --- | --- | --- | --- | --- |
-| 209 | 286 | 395 | 2.2 | 48 | 2 |
+| 209 | 284 | 392 | 0.5 | 48 | 2 |
 
 ## Exile target on the roster model
 
@@ -151,7 +151,7 @@ Where a team that has just come back from exile finishes in its division. Your t
 
 | Engine | Leagues x seasons | Average finish | 1st | 2nd | 3rd | 4th | 5th (exiled again) |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| fast | 8 x 40 | 3.04 (+/- 0.06) | 22% | 17% | 17% | 21% | 22% |
-| drives | 4 x 40 | 3.10 (+/- 0.09) | 19% | 18% | 19% | 22% | 22% |
+| fast | 8 x 40 | 3.16 (+/- 0.06) | 17% | 18% | 19% | 21% | 24% |
+| drives | 4 x 40 | 3.25 (+/- 0.08) | 16% | 16% | 20% | 25% | 23% |
 
 `fast` decides a game from the two teams' power ratings; `drives` plays the whole game. They agree, which is the point of the fast mode: long studies can use it.

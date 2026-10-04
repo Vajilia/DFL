@@ -8,7 +8,7 @@ import rules as R
 import placeholder_model as PM
 from schedule import Game
 from sim import GameRunner
-from standings import rank_teams
+from standings import rank_by_style
 
 
 def seed_conference(conf: int, league, division_ranks: Dict[int, List[int]], stats, rng: random.Random,
@@ -16,7 +16,7 @@ def seed_conference(conf: int, league, division_ranks: Dict[int, List[int]], sta
     """Seeds 1-7 for one conference (team ids, best seed first)."""
     div_ids = [conf * R.DIVISIONS_PER_CONFERENCE + d for d in range(R.DIVISIONS_PER_CONFERENCE)]
     winners = [division_ranks[d][0] for d in div_ids]
-    ranked_winners = rank_teams(winners, stats, R.CROSS_DIVISION_TIEBREAKERS, rng, log, "division_winner_seeding")
+    ranked_winners = rank_by_style("conference", winners, stats, rng, log, "division_winner_seeding")
     fifth = {division_ranks[d][-1] for d in div_ids}
     others = []
     for d in div_ids:
@@ -26,7 +26,7 @@ def seed_conference(conf: int, league, division_ranks: Dict[int, List[int]], sta
             if tid in fifth and not R.FIFTH_PLACE_WILD_CARD_ELIGIBLE:
                 continue
             others.append(tid)
-    ranked_wc = rank_teams(others, stats, R.CROSS_DIVISION_TIEBREAKERS, rng, log, "wild_card")
+    ranked_wc = rank_by_style("conference", others, stats, rng, log, "wild_card")
     return ranked_winners + ranked_wc[:R.WILD_CARDS_PER_CONFERENCE]
 
 

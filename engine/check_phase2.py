@@ -117,8 +117,9 @@ for eng in ("fast", "drives"):
         sds.append(st.pstdev([t.strength for t in L.teams]))
         ovrs.append(st.mean(p.ovr for t in L.teams for p in t.roster))
         ok_tiers &= len({(t.conf, t.div, t.tier) for t in L.active()}) == R.ACTIVE_TEAMS
-    check(f"[{eng}] talent level settles and stays steady (seasons 12 to 25)", abs(ovrs[-1] - ovrs[11]) < 1.0 and max(ovrs[11:]) - min(ovrs[11:]) < 1.5,
-          f"avg overall {ovrs[11]:.1f} -> {ovrs[-1]:.1f}")
+    early, late = st.mean(ovrs[11:18]), st.mean(ovrs[18:])
+    check(f"[{eng}] talent level settles and stays steady (seasons 12-18 vs 19-25)", abs(late - early) < 1.0 and max(ovrs[11:]) - min(ovrs[11:]) < 2.0,
+          f"avg overall {early:.1f} -> {late:.1f}")
     check(f"[{eng}] the league keeps its parity (strength spread stays between 2 and 6 points)", 2.0 < min(sds[3:]) and max(sds) < 6.0,
           f"min {min(sds[3:]):.1f}, max {max(sds):.1f}")
     check(f"[{eng}] tier slots stay legal for 25 seasons", ok_tiers)

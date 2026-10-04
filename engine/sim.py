@@ -95,6 +95,13 @@ class GameRunner:
             res = simulate_game(self.lineup(game.home), self.lineup(game.away), self.rng, self.params,
                                 neutral=neutral, record_plays=self.record_plays)
             game.home_pts, game.away_pts = res.score
+            tds = [0, 0]
+            for d in res.drives:
+                if d["result"] == "TD":
+                    tds[d["side"]] += 1
+                elif d["result"] in ("INT_TD", "FUMBLE_TD"):
+                    tds[1 - d["side"]] += 1
+            game.home_tds, game.away_tds = tds
             game.result = res if self.keep_boxes else None
             self._accumulate(game, res)
         self.games_played += 1

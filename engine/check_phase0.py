@@ -81,7 +81,9 @@ check("lottery draws no more teams than there are exiles", R.LOTTERY_TEAMS == R.
 check("every rule is tagged confirmed or assumed", all(v in (R.CONFIRMED, R.ASSUMED) for v in R.PROVENANCE.values()))
 check("lottery weights are tagged assumed (not confirmed)",
       R.PROVENANCE["Lottery weights 18/16/15/13/12/10/9/7"] == R.ASSUMED)
-check("tiebreakers are tagged assumed", R.PROVENANCE["Tiebreaker orders"] == R.ASSUMED)
+check("tiebreakers mirror the NFL (confirmed); the adaptations are tagged assumed",
+      R.TIEBREAK_STYLE == "nfl" and R.PROVENANCE["Tiebreakers mirror the NFL"] == R.CONFIRMED
+      and R.PROVENANCE["NFL tiebreak adaptations (restart rule used to rank everyone, wild-card division reduction, Ambassador chain, estimated touchdowns)"] == R.ASSUMED)
 check("forced-sale vote is a majority of 48", R.FORCED_SALE_VOTES_NEEDED > R.TOTAL_TEAMS // 2)
 check("season is 23 game weeks", R.GAME_WEEKS_TOTAL == 23)
 

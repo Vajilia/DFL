@@ -19,6 +19,9 @@ Every rule is tagged **confirmed** (Jeph stated it) or **assumed** (the AI fille
 | Recall cycle | One division league-wide per year, so every owner is voted on once every 8 years | Jeph, 2026-10-04 (replaces an earlier wrong "4-year" change) |
 | Recall also triggers on exile | Yes | rules text |
 | What exile is | The league treats exile as help for a distressed team, not punishment: relief plus play in exotic locations around the world while it rebuilds. Media and fans may see it differently. | Jeph, 2026-10-04 |
+| Tiebreakers | All tie-breaking mirrors the NFL, at least for now (division, wild card and seeding, draft order). Procedures in `engine/tiebreak.py`, checked against nfl.com on 2026-10-04 | Jeph, 2026-10-04 |
+| Lottery format | 8 teams. The number of balls a team holds depends on its rank among the 8. Four balls are drawn for picks 1-4; the other four teams pick 5-8 in order of record (worst first), so the worst team falls no lower than 5th | Jeph, 2026-10-04 |
+| Final's name | He may keep calling it the Super Bowl, but a new feminine, proud name is wanted (see open questions) | Jeph, 2026-10-04 |
 | Test standard | Every test asks one question: does the trend fall outside the expected / accepted range of "fair competitiveness"? | Jeph, 2026-10-04 |
 | How exile shows up in the story | Not set by rules. It emerges from how the local and national media and fanbase react (a long-suffering Cleveland-style market versus a cutthroat "he's not Montana or Young" market give very different stories). That belongs to the character, media and fan layer built later | Jeph, 2026-10-04 |
 | How much help | Modest. A returning team should have the potential to compete for 3rd place in its division, sometimes succeeding, sometimes not. Promotes fair competitiveness. | Jeph, 2026-10-04 |
@@ -27,17 +30,17 @@ Every rule is tagged **confirmed** (Jeph stated it) or **assumed** (the AI fille
 
 | Item | Working default |
 | --- | --- |
-| Lottery weights | 18 / 16 / 15 / 13 / 12 / 10 / 9 / 7, worst record to best. The old 14%/6% figures were left over from an earlier design. |
+| Lottery balls | 18 / 16 / 15 / 13 / 12 / 10 / 9 / 7 percent chance of the first ball, worst record to best. The old 14%/6% figures were left over from an earlier design. |
 | Lottery timing | The 8 teams that just finished 5th. Switchable in `rules.py` (`LOTTERY_POOL`). |
-| Lottery draw | Each pick drawn one at a time by weight, without replacement |
+| Lottery draw | The four draws are made one at a time by weight, without replacement |
 | How tiers are earned | Last season's finish in the division: 1st = Tier 1 ... 4th = Tier 4; the team back from exile = Tier 5 |
-| Tiebreakers (division) | Head-to-head, division record, point differential, seeded coin flip |
-| Tiebreakers (seeding across divisions) | Conference record, point differential, seeded coin flip |
+| NFL tiebreak adaptations | The NFL restart rule is used to rank every team, not just pick a winner; wild-card ties inside one division are settled by the division procedure first; the Ambassador Season uses head-to-head, strength of victory and schedule, net points, net touchdowns, coin toss; where touchdowns were not kept they are estimated as points // 7 |
+| Returners' second draft | Teams back from exile pick as a block at the end of the 9-34 band (picks 27-34), ordered among themselves by Ambassador Season record. Evidence: `reports/exile_two_draft_study.md` |
 | 5th-place teams and the playoffs | A 5th-place team cannot take a wild card (it is exiled) |
 | Tied games | None; overtime always produces a winner |
 | Division games inside weeks 5-14 | Weeks 5, 7, 9, 11, 13 |
 | Home/away | Each team 9 home, 9 away |
-| Draft order inside bands | Worst record picks first; teams back from exile ranked by their Ambassador Season record |
+| Draft order inside bands | Worst record picks first, NFL tiebreakers (lower strength of schedule picks first) |
 | Ambassador Season | Weeks 1-7, Ambassador Bowl in week 8 between the two best records |
 | Owner-recall order | Divisions come up in a fixed rotation, one per year |
 | Starting league | Random strengths; one random team per division starts in exile |
@@ -49,7 +52,7 @@ Every rule is tagged **confirmed** (Jeph stated it) or **assumed** (the AI fille
 | Aging and retirement | Players improve until their mid-twenties, hold, then decline; kickers, punters and quarterbacks last longer. Retirement chance rises from about 31 |
 | Contracts and free agency | About 15% of each roster reaches the market every year (stars are re-signed more often). Worst teams pick first. Open slots are filled from the market |
 | Rookies | One per team per year, quality set by the pick. Position chosen by team need |
-| Exile relief in free agency | A team returning from exile gets a few extra top-of-market signings on average (0.25 per year in the current setting), standing in for the 50% cap relief. It does not pick first in free agency (that tested as too strong) |
+| Exile relief in free agency | A team returning from exile gets an extra top-of-market signing 5% of the time on average (0.05 per year; it was 0.25 before the two-draft study), standing in for the 50% cap relief. It does not pick first in free agency (that tested as too strong) |
 | Numeric bands for "fair competitiveness" | Ten measured trends with low/high limits (win-percentage spread 0.13-0.19, repeat champion at most 12% of seasons, no franchise with 5+ titles in 20 years, a returner averages 2.8-3.4 in its division, and so on). Defined in `rules.FAIR_COMPETITION_BANDS`, measured by `engine/fairness.py`, reported in `reports/fairness_report.md`. The AI's first proposal; Jeph may change any limit |
 | Game engine modes | `drives` (full game), `fast` (power rating to score, no box score, for long studies), `placeholder` (Phase 1 scalar model) |
 
@@ -61,12 +64,13 @@ On the roster model (Phase 2) the same target was re-calibrated: the dials are i
 
 ## Notes
 
+- The Phase 1 reports built on the placeholder model (`reports/exile_study.md`, `exile_calibration.md`, `league_summary_seed1.md`) were produced before the NFL tiebreakers and the new lottery format and have not been re-run. The roster-model reports (`phase2_report.md`, `fairness_report.md`, `exile_two_draft_study.md`) supersede them.
+
 - The Foreword in the rules text is a vestige of an earlier design (Jeph, 2026-10-04). It is not authoritative. Where it conflicts with the confirmed rules above (for example it frames exile as erasure and punishment), the confirmed rules win.
 
 ## Open questions for Jeph
 
-1. Do the lottery weights suit you, and should the lottery cover teams that just finished 5th or teams that just served their exile year?
-2. Exile is now defined as modest relief aimed at a 3rd-place-level return (see `reports/exile_calibration.md`). Where should the help come from: the lottery pick, cap relief, or a mix?
-3. "Super Bowl" is an NFL trademark. Keep it or rename it with the other NFL-style names?
-4. Do you want returning exiled teams ranked into the 9-34 draft band by Ambassador record, or placed some other way?
-5. Are the proposed fair-competitiveness bands (see `rules.FAIR_COMPETITION_BANDS`) the right limits? The one to watch is how often the strongest team on paper wins the title (about 22-24% now, band tops out at 25%).
+1. Exile help: the AI's recommendation is in `reports/exile_two_draft_study.md` (lottery pick for the new exile, a block pick at the end of the band when it returns, and a very small free-agency boost). Do you accept it as the working design?
+2. Should the lottery cover teams that just finished 5th (current) or teams that just served their exile year? The study found the current choice works better because it does not make the Ambassador Season a tanking contest.
+3. Are the proposed fair-competitiveness bands (see `rules.FAIR_COMPETITION_BANDS`) the right limits? The one to watch is how often the strongest team on paper wins the title (about 20-24%, band tops out at 25%).
+4. The final's name. Ideas: The Coronation, The Valkyrie Cup, The Athena Cup, Battle of the Goddesses, The Diamond Crown, The Empress Cup.
