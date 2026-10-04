@@ -117,8 +117,9 @@ for _ in range(N):
     valid &= sorted(picks) == list(range(8))
     firsts[picks[0]] += 1
 check("lottery always returns each of the 8 teams exactly once", valid)
-maxdev = max(abs(firsts[i] / N * 100 - R.LOTTERY_WEIGHTS[i]) for i in range(8))
-check("pick 1 chances match the weights", maxdev < 1.0, f"largest gap {maxdev:.2f} percentage points over {N} draws")
+tot_balls = sum(R.LOTTERY_WEIGHTS)
+maxdev = max(abs(firsts[i] / N * 100 - 100 * R.LOTTERY_WEIGHTS[i] / tot_balls) for i in range(8))
+check("pick 1 chances match the ball counts", maxdev < 1.0, f"largest gap {maxdev:.2f} percentage points over {N} draws")
 check("worst team wins pick 1 most often", firsts[0] == max(firsts.values()))
 # picks 5-8 follow the record, and no team falls more than four places from where its record puts it
 fall_ok = order_ok = True

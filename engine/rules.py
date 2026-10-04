@@ -127,10 +127,11 @@ LOTTERY_TEAMS = 8               # CONFIRMED: 8 teams in the lottery
 # CONFIRMED (Jeph, 2026-10-04): the number of balls a team holds depends on its rank among the 8. Four balls
 # are drawn to decide picks 1-4; the other four teams take picks 5-8 in order of record (worst first).
 LOTTERY_DRAWN_PICKS = 4
-# ASSUMED, PLACEHOLDER: the old 14%/6% figures were left over from an earlier design.
-# Worst record -> best record, percent, sums to 100.
-LOTTERY_WEIGHTS = (18, 16, 15, 13, 12, 10, 9, 7)
-# ASSUMED: which 8 teams are in the lottery.
+# CONFIRMED (Jeph, 2026-10-04): the lottery team with the best record holds 1 ball, the next best 2 balls, and so on
+# up to 8 balls for the worst record. Listed worst record -> best record, so the worst team holds 8 of the 36 balls.
+LOTTERY_WEIGHTS = (8, 7, 6, 5, 4, 3, 2, 1)
+# CONFIRMED (Jeph, 2026-10-04): the lottery covers the 8 teams that just finished 5th.
+# (The other option below is kept only so studies can compare it.)
 #   "just_finished_fifth" = the 8 teams that just finished 5th (they sit out next season)
 #   "just_finished_exile" = the 8 teams that just served their exile year (they return)
 LOTTERY_POOL = "just_finished_fifth"
@@ -149,15 +150,15 @@ DRAFT_PICKS = {
 # ---- Fair competitiveness: the standard every test is judged against --------------------------
 # CONFIRMED (Jeph, 2026-10-04): the test for any trend in the simulation is whether it falls outside the
 # expected / accepted range of "fair competitiveness".
-# ASSUMED, PROVISIONAL: the actual ranges below are the AI's first proposal (Jeph has not set numbers).
+# CONFIRMED (Jeph, 2026-10-04): the ranges below, proposed by the AI, are accepted as the working limits. Change any of them here.
 # name -> (low, high, plain-language meaning). Judged on pooled multi-season runs after a warm-up.
 FAIR_COMPETITION_BANDS = {
     "win_pct_sd":           (0.13, 0.19, "spread of regular-season win percentage across teams (pure luck alone is about 0.12)"),
     "year_to_year_corr":    (0.10, 0.50, "how much a team's win % repeats from one season to the next (0 = pure luck, 1 = fixed)"),
     "close_game_share":     (0.35, 0.55, "share of games decided by 8 points or fewer"),
     "repeat_champion_rate": (0.00, 0.12, "share of seasons in which the champion is the previous champion"),
-    "max_titles_in_20":     (0, 4, "most titles one team wins in any 20-season stretch, averaged over leagues (the luckiest of 40 equal teams gets 2-3; a 14-team playoff field gives 3-5)"),
-    "worst_league_titles":  (0, 5, "most titles one team wins in any 20 seasons in the single worst league (6 or more is a dynasty)"),
+    "max_titles_in_20":     (0, 4.7, "most titles one team wins in any 20-season stretch, averaged over leagues. A league where every playoff team had exactly equal title odds averages 4.7 (40 equal teams would give 3.1), so this caps concentration at pure luck among the 14"),
+    "worst_league_titles":  (0, 7, "most titles one team wins in any 20 seasons in the single worst league (7 or more happens under pure luck about 3% of the time, so it signals a dynasty)"),
     "best_team_title_odds": (0.08, 0.25, "how often the strongest team on paper wins the title"),
     "returner_avg_finish":  (2.8, 3.4, "average division finish of a team back from exile (3.0 = league average)"),
     "returner_win_div":     (0.10, 0.30, "share of returning teams that win their division"),
@@ -205,8 +206,8 @@ PROVENANCE = {
     "Recall: 1 division league-wide per year, 8-year cycle": CONFIRMED,
     "Recall also triggered by exile": CONFIRMED,
     "Exile is relief, not punishment; a returning team can compete for about 3rd in its division": CONFIRMED,
-    "Lottery weights 18/16/15/13/12/10/9/7": ASSUMED,
-    "Which 8 teams are in the lottery (just finished 5th vs just finished exile)": ASSUMED,
+    "Lottery balls: best record of the eight holds 1 ball, next best 2, ... worst 8 (36 balls)": CONFIRMED,
+    "Which 8 teams are in the lottery (the teams that just finished 5th)": CONFIRMED,
     "Lottery drawn one pick at a time by weight": ASSUMED,
     "Teams back from exile pick as a block at the end of the 9-34 band (no stacking of two high picks)": CONFIRMED,
     "The final is the Diamond Coronation; the champion receives a Diamond Tiara": CONFIRMED,
@@ -222,7 +223,7 @@ PROVENANCE = {
     "Order in which divisions come up for owner recall": ASSUMED,
     "Starting league (which teams begin in exile, starting tiers)": ASSUMED,
     "Every test is judged against \"fair competitiveness\"": CONFIRMED,
-    "The numeric ranges that define fair competitiveness": ASSUMED,
+    "The numeric ranges that define fair competitiveness (AI proposal, accepted by Jeph as working limits)": CONFIRMED,
 }
 
 

@@ -20,7 +20,7 @@ Every rule is tagged **confirmed** (Jeph stated it) or **assumed** (the AI fille
 | Recall also triggers on exile | Yes | rules text |
 | What exile is | The league treats exile as help for a distressed team, not punishment: relief plus play in exotic locations around the world while it rebuilds. Media and fans may see it differently. | Jeph, 2026-10-04 |
 | Tiebreakers | All tie-breaking mirrors the NFL, at least for now (division, wild card and seeding, draft order). Procedures in `engine/tiebreak.py`, checked against nfl.com on 2026-10-04 | Jeph, 2026-10-04 |
-| Lottery format | 8 teams. The number of balls a team holds depends on its rank among the 8. Four balls are drawn for picks 1-4; the other four teams pick 5-8 in order of record (worst first), so the worst team falls no lower than 5th | Jeph, 2026-10-04 |
+| Lottery format | 8 teams, the ones that just finished 5th. The best record of the eight holds 1 ball, the next best 2, and so on up to 8 balls for the worst record (36 balls). Four balls are drawn for picks 1-4; the other four teams pick 5-8 in order of record (worst first), so the worst team falls no lower than 5th. Chance of pick 1, worst to best: 22.2 / 19.4 / 16.7 / 13.9 / 11.1 / 8.3 / 5.6 / 2.8 percent; chance of a top-4 pick: 75 / 71 / 65 / 58 / 50 / 39 / 28 / 15 percent | Jeph, 2026-10-04 |
 | The final | Named the **Diamond Coronation**. The champion is presented with a **Diamond Tiara** instead of a trophy. "Super Bowl" is the old name from the rules text and may still be used in conversation | Jeph, 2026-10-04 |
 | Priority | Fairness comes before narrative. The narrative (fan and media story) is derived from the fanbase and media, not designed in | Jeph, 2026-10-04 |
 | Exile and the two drafts | Lottery pick as a new exile, then a block pick at the end of the 9-34 band (picks 27-34, ordered by Ambassador Season record) when back from exile. Accepted as the working design | Jeph, 2026-10-04 |
@@ -28,13 +28,11 @@ Every rule is tagged **confirmed** (Jeph stated it) or **assumed** (the AI fille
 | How exile shows up in the story | Not set by rules. It emerges from how the local and national media and fanbase react (a long-suffering Cleveland-style market versus a cutthroat "he's not Montana or Young" market give very different stories). That belongs to the character, media and fan layer built later | Jeph, 2026-10-04 |
 | How much help | Modest. A returning team should have the potential to compete for 3rd place in its division, sometimes succeeding, sometimes not. Promotes fair competitiveness. | Jeph, 2026-10-04 |
 
-## Assumed (provisional, awaiting Jeph)
+## Assumed (provisional, can be changed)
 
 | Item | Working default |
 | --- | --- |
-| Lottery balls | 18 / 16 / 15 / 13 / 12 / 10 / 9 / 7 percent chance of the first ball, worst record to best. The old 14%/6% figures were left over from an earlier design. |
-| Lottery timing | The 8 teams that just finished 5th. Switchable in `rules.py` (`LOTTERY_POOL`). |
-| Lottery draw | The four draws are made one at a time by weight, without replacement |
+| Lottery draw | The four draws are made one ball at a time; a team already drawn is skipped (same as drawing without replacement) |
 | How tiers are earned | Last season's finish in the division: 1st = Tier 1 ... 4th = Tier 4; the team back from exile = Tier 5 |
 | NFL tiebreak adaptations | The NFL restart rule is used to rank every team, not just pick a winner; wild-card ties inside one division are settled by the division procedure first; the Ambassador Season uses head-to-head, strength of victory and schedule, net points, net touchdowns, coin toss; where touchdowns were not kept they are estimated as points // 7 |
 | 5th-place teams and the playoffs | A 5th-place team cannot take a wild card (it is exiled) |
@@ -53,7 +51,7 @@ Every rule is tagged **confirmed** (Jeph stated it) or **assumed** (the AI fille
 | Contracts and free agency | About 15% of each roster reaches the market every year (stars are re-signed more often). Worst teams pick first. Open slots are filled from the market |
 | Rookies | One per team per year, quality set by the pick. Position chosen by team need |
 | Exile relief in free agency | A team returning from exile gets an extra top-of-market signing 5% of the time on average (0.05 per year; it was 0.25 before the two-draft study), standing in for the 50% cap relief. It does not pick first in free agency (that tested as too strong) |
-| Numeric bands for "fair competitiveness" | Thirteen measured trends with low/high limits (win-percentage spread 0.13-0.19, repeat champion at most 12% of seasons, no franchise with 6+ titles in 20 years, exile never worth more than half a rating point, a returner averages 2.8-3.4 in its division, and so on). Defined in `rules.FAIR_COMPETITION_BANDS`, measured by `engine/fairness.py`, reported in `reports/fairness_report.md`. The AI's first proposal; Jeph may change any limit |
+| Numeric bands for "fair competitiveness" | Thirteen measured trends with low/high limits (win-percentage spread 0.13-0.19, repeat champion at most 12% of seasons, title concentration no worse than pure luck among the 14 playoff teams (an average of 4.7 titles for the top franchise in any 20 years, and no single league above 7), exile never worth more than half a rating point, a returner averages 2.8-3.4 in its division, and so on). Defined in `rules.FAIR_COMPETITION_BANDS`, measured by `engine/fairness.py`, reported in `reports/fairness_report.md`. The AI's first proposal; Jeph may change any limit |
 | Game engine modes | `drives` (full game), `fast` (power rating to score, no box score, for long studies), `placeholder` (Phase 1 scalar model) |
 
 ## Placeholder model (not rules)
@@ -70,6 +68,4 @@ On the roster model (Phase 2) the same target was re-calibrated: the dials are i
 
 ## Open questions for Jeph
 
-1. Should the lottery cover teams that just finished 5th (current, and the study found it works better) or teams that just served their exile year?
-2. Are the proposed fair-competitiveness bands (see `rules.FAIR_COMPETITION_BANDS`) the right limits? The one to watch is how often the strongest team on paper wins the title (about 20-24%, band tops out at 25%).
-3. Are the lottery ball counts (18 / 16 / 15 / 13 / 12 / 10 / 9 / 7 percent chance of the first ball, worst record to best) what you want?
+None right now. Answered on 2026-10-04: the lottery covers teams that just finished 5th, the fair-competitiveness bands are accepted as proposed, and the ball counts run 1 to 8. The bands are still the AI's numbers; Jeph accepted them as the working limits and can change any of them in `rules.FAIR_COMPETITION_BANDS`.

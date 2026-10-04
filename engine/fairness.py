@@ -166,7 +166,7 @@ if __name__ == "__main__":
                "\"fair competitiveness\". The numeric ranges below are the AI's first proposal and are **assumed** until you set "
                "your own (`FAIR_COMPETITION_BANDS` in `engine/rules.py`). Each league runs 48 seasons; the first 8 are thrown "
                "away while the league settles. Values are averaged over the leagues; the last column shows the spread.\n"]
-        for eng, n in (("fast", 8), ("drives", 3)):
+        for eng, n in (("fast", 8), ("drives", 5)):
             per, rows = run(eng, range(100, 100 + n), 48)
             bad = [r[0] for r in rows if not r[4]]
             out.append(f"## {eng} engine, {n} leagues x 48 seasons\n")

@@ -59,7 +59,7 @@ check("Ambassador round-robin: 7 games per team, 28 total",
 check("one exile per division", R.EXILE_SLOTS_PER_DIVISION * R.DIVISIONS_PER_CONFERENCE * len(R.CONFERENCES) == R.EXILED_TEAMS)
 
 # Draft and lottery
-check("lottery weights sum to 100", sum(R.LOTTERY_WEIGHTS) == 100, f"sum = {sum(R.LOTTERY_WEIGHTS)}")
+check("lottery balls run 8 (worst record) down to 1 (best record), 36 in all", list(R.LOTTERY_WEIGHTS) == [8, 7, 6, 5, 4, 3, 2, 1] and sum(R.LOTTERY_WEIGHTS) == 36, f"sum = {sum(R.LOTTERY_WEIGHTS)}")
 check("lottery has one weight per exiled team", len(R.LOTTERY_WEIGHTS) == R.EXILED_TEAMS)
 check("lottery weights fall from worst to best", list(R.LOTTERY_WEIGHTS) == sorted(R.LOTTERY_WEIGHTS, reverse=True))
 picks = sum(hi - lo + 1 for lo, hi in R.DRAFT_PICKS.values())
@@ -79,8 +79,9 @@ check("recall cycle is 8 years (1 division league-wide per year)",
 check("lottery is 8 teams", R.LOTTERY_TEAMS == 8 and len(R.LOTTERY_WEIGHTS) == 8)
 check("lottery draws no more teams than there are exiles", R.LOTTERY_TEAMS == R.EXILED_TEAMS)
 check("every rule is tagged confirmed or assumed", all(v in (R.CONFIRMED, R.ASSUMED) for v in R.PROVENANCE.values()))
-check("lottery weights are tagged assumed (not confirmed)",
-      R.PROVENANCE["Lottery weights 18/16/15/13/12/10/9/7"] == R.ASSUMED)
+check("lottery balls and lottery pool are tagged confirmed",
+      R.PROVENANCE["Lottery balls: best record of the eight holds 1 ball, next best 2, ... worst 8 (36 balls)"] == R.CONFIRMED
+      and R.PROVENANCE["Which 8 teams are in the lottery (the teams that just finished 5th)"] == R.CONFIRMED)
 check("tiebreakers mirror the NFL (confirmed); the adaptations are tagged assumed",
       R.TIEBREAK_STYLE == "nfl" and R.PROVENANCE["Tiebreakers mirror the NFL"] == R.CONFIRMED
       and R.PROVENANCE["NFL tiebreak adaptations (restart rule used to rank everyone, wild-card division reduction, Ambassador chain, estimated touchdowns)"] == R.ASSUMED)

@@ -106,8 +106,8 @@ def build_report(seed: int, seasons: int) -> str:
     # lottery
     w("## The lottery\n")
     pool_names = {"just_finished_fifth": "the 8 teams that just finished 5th"}
-    w(f"The lottery covers {pool_names.get(R.LOTTERY_POOL, R.LOTTERY_POOL)}, with weights "
-      f"{' / '.join(str(x) for x in R.LOTTERY_WEIGHTS)} (placeholder). ")
+    w(f"The lottery covers {pool_names.get(R.LOTTERY_POOL, R.LOTTERY_POOL)}, with balls "
+      f"{' / '.join(str(x) for x in R.LOTTERY_WEIGHTS)} (worst record to best; Jeph's rule: the best record of the eight holds 1 ball). ")
     got_first = Counter()
     avg_pick = defaultdict(list)
     for r in results:
