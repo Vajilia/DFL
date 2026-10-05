@@ -19,7 +19,7 @@ from __future__ import annotations
 
 import random
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple
 
 import card_pools as CP
 import cards as C
@@ -253,6 +253,124 @@ def _fire_threshold(owner: OwnerCard, factor: float = 1.0) -> float:
     return (FIRE_BASE + FIRE_PATIENCE * owner.ratings["patience"] / 100.0) * factor   # patience 50 -> 0.25
 
 
+# ---- decision points: the owner's staff review and her hires (Phase 4b pilot) -----------------------------------
+HIRE_POOL = 3                    # candidates an owner sees when she hires; the autopilot takes the first, as the old rule did
+CAND_BASE = 20000                # candidate cards that are not hired are numbered from here, clear of every real id
+LEGEND_CAP = 8                   # most legend coaches on the field at once; above this no legend is offered to an owner (legends stay rare whatever agents do)
+COACH_VIEW = ("offense", "defense", "development", "gamecraft", "discipline", "motivation")
+
+
+def _perceived(lg, o, card, year, attrs) -> dict:
+    """How the owner rates a person: the truth plus her own blind spots. A shrewd operator sees clearly; a money pit does not."""
+    r = C._rng(lg.card_seed, "perceive", o.oid, year, card.first, card.last)
+    sd = 4.0 + (100.0 - o.ratings["business"]) / 10.0
+    return {a: round(max(1.0, min(100.0, card.ratings[a] + r.gauss(0.0, sd))), 0) for a in attrs}
+
+
+def _person_view(lg, o, card, year, attrs, is_coach: bool) -> dict:
+    v = dict(name=card.name, age=card.age, path=card.path, trait=card.trait, perceived=_perceived(lg, o, card, year, attrs))
+    if is_coach:
+        v["legend"] = card.legend
+    return v
+
+
+def _staff_review(lg, t, year, o, c, g, can_coach, default_fc, default_fg, new_boss, pct, rank, tid_voted, exiled) -> Tuple[bool, bool]:
+    """The owner's yearly question: keep her coach and GM, or fire one or both? Returns (fire coach?, fire GM?)."""
+    import decisions as D
+    opts = [dict(id="keep_all", label="Keep the coach and the GM", tags={"fires": 0})]
+    if can_coach:
+        opts.append(dict(id="fire_coach", label=f"Fire coach {c.name}", tags={"fires": 1}))
+    if g is not None:
+        opts.append(dict(id="fire_gm", label=f"Fire GM {g.name}", tags={"fires": 1}))
+    if can_coach and g is not None:
+        opts.append(dict(id="fire_both", label="Fire both", tags={"fires": 2}))
+    default = {(False, False): "keep_all", (True, False): "fire_coach", (False, True): "fire_gm", (True, True): "fire_both"}[(bool(default_fc), bool(default_fg))]
+    fb = getattr(t, "fans", None)
+    context = dict(
+        record_this_season=round(pct.get(t.id, 0.5), 3), record_last_season=None if lg.prev_pct.get(t.id) is None else round(lg.prev_pct[t.id], 3),
+        exiled_this_year=bool(exiled),
+        fan_approval_of_you=round(o.approval, 3), facing_a_recall_vote_this_year=bool(tid_voted), you_are_a_new_owner=bool(new_boss),
+        press_effect_on_fans=None if fb is None else round(fb.last_sway, 3),
+        coach=None if c is None else dict(_person_view(lg, o, c, year, COACH_VIEW, True), seasons_with_team=c.seasons_with_team,
+                                           pressure_on_her=round(c.heat, 3), can_be_fired=bool(can_coach)),
+        gm=None if g is None else dict(_person_view(lg, o, g, year, tuple(GM_ATTRS), False), seasons_with_team=g.seasons_with_team,
+                                       pressure_on_her=round(g.heat, 3)))
+    internal = dict(team=t, owner=o, coach=c, gm=g, strength_rank=rank[t.id], record=pct.get(t.id, 0.5))
+    dp = D.DecisionPoint("staff_review", year, t.id, "owner", o, context, opts, default, internal)
+    pick = D.decide(lg, dp)
+    return pick in ("fire_coach", "fire_both"), pick in ("fire_gm", "fire_both")
+
+
+def _rank_of(lg, t) -> int:
+    return 1 + sum(1 for x in lg.teams if x.strength > t.strength)
+
+
+def _pool(lg, make, next_id: int, team_id: int, n: int):
+    cards = [make(lg.card_seed, next_id, team_id)]          # the card the old rule would have hired
+    for _ in range(n - 1):
+        lg._cand_ids += 1
+        cards.append(make(lg.card_seed, CAND_BASE + lg._cand_ids, team_id))
+    return cards
+
+
+def _passed_over(lg, card, idfield: str, team_id: int, year: int):
+    lg._cand_ids += 1
+    setattr(card, idfield, CAND_BASE + lg._cand_ids)
+    card.team_id = None
+    card.career.append({"year": year, "event": "passed_over", "team": team_id})
+    lg.passed_over.append(card)
+
+
+def _hire_coach(lg, t, year: int, o):
+    """The owner picks her new coach from three candidates."""
+    import decisions as D
+    cands = _pool(lg, C.make_coach_card, lg._coach_ids + 1, t.id, HIRE_POOL)
+    if sum(1 for x in lg.teams if x.coach is not None and x.coach.legend) >= LEGEND_CAP:
+        # the guardrail: with the cap reached no legend is on offer; a legend candidate is replaced by an ordinary one
+        for i, c in enumerate(cands):
+            while c.legend:
+                lg.legend_cap_hits += 1
+                lg._cand_ids += 1
+                c = C.make_coach_card(lg.card_seed, CAND_BASE + lg._cand_ids, t.id)
+            cands[i] = c
+    opts = [dict(id=f"candidate_{i}", label=f"Hire {c.name}", tags={}, view=_person_view(lg, o, c, year, COACH_VIEW, True)) for i, c in enumerate(cands)]
+    dp = D.DecisionPoint("hire_coach", year, t.id, "owner", o, dict(team_needs="a head coach"), opts, "candidate_0",
+                         dict(team=t, owner=o, candidates={f"candidate_{i}": c for i, c in enumerate(cands)}, strength_rank=_rank_of(lg, t)))
+    k = int(D.decide(lg, dp).split("_")[1])
+    for i, c in enumerate(cands):
+        if i != k:
+            _passed_over(lg, c, "cid", t.id, year)
+    new = cands[k]
+    new.cid = lg.new_coach_id()
+    new.team_id = t.id
+    new.career.append({"year": year, "event": "hired", "team": t.id})
+    t.coach = new
+    lg.coaches.append(new)
+    if k:
+        o.decision_log.append({"year": year, "interaction": dp.id, "action": f"hired coach {new.name}, passing on {', '.join(c.name for i, c in enumerate(cands) if i != k)}"})
+
+
+def _hire_gm_decision(lg, t, year: int, o):
+    import decisions as D
+    cands = _pool(lg, make_gm_card, lg._gm_ids + 1, t.id, HIRE_POOL)
+    opts = [dict(id=f"candidate_{i}", label=f"Hire {g.name}", tags={}, view=_person_view(lg, o, g, year, tuple(GM_ATTRS), False)) for i, g in enumerate(cands)]
+    dp = D.DecisionPoint("hire_gm", year, t.id, "owner", o, dict(team_needs="a general manager"), opts, "candidate_0",
+                         dict(team=t, owner=o, candidates={f"candidate_{i}": g for i, g in enumerate(cands)}, strength_rank=_rank_of(lg, t)))
+    k = int(D.decide(lg, dp).split("_")[1])
+    for i, g in enumerate(cands):
+        if i != k:
+            _passed_over(lg, g, "gid", t.id, year)
+    new = cands[k]
+    new.gid = lg.new_gm_id()
+    new.team_id = t.id
+    new.career.append({"year": year, "event": "hired", "team": t.id})
+    t.gm = new
+    lg.gms.append(new)
+    log(lg, year, "gm_hired", team=t.id, gm=new.name)
+    if k:
+        o.decision_log.append({"year": year, "interaction": dp.id, "action": f"hired GM {new.name}, passing on {', '.join(g.name for i, g in enumerate(cands) if i != k)}"})
+
+
 def season_end(lg, year: int, pct: Dict[int, float], new_exiles, champion: int, playoff_teams, recall_div: int) -> dict:
     """One season's accountability: approval, recall votes, owner turnover, then hiring and firing.
     `pct` is every team's win percentage this season (the exiled teams' come from the Ambassador Season).
@@ -360,33 +478,39 @@ def season_end(lg, year: int, pct: Dict[int, float], new_exiles, champion: int, 
         if t.gm is not None:
             t.gm.age += 1
             t.gm.seasons_with_team += 1
+    rank = {tid: i + 1 for i, tid in enumerate(sorted((t.id for t in lg.teams), key=lambda i: -lg.by_id[i].strength))}
     for t in lg.teams:
         o = t.owner
         r = C._rng(lg.card_seed, "firing", o.oid, year, t.id)
         new_boss = t.id in out["new_owner_teams"]
         clean = new_boss and r.random() < NEW_OWNER_CLEAN_HOUSE * o.ratings["involvement"] / 50.0
-        c = t.coach
+        c, g = t.coach, t.gm
         clean_coach = clean and not (c is not None and c.legend)          # nobody sweeps out a legend
-        if c is not None and t.id not in out["coach_retired"] and (clean_coach or c.heat > _fire_threshold(o, LEGEND_FIRE_FACTOR if c.legend else 1.0)):
-            log(lg, year, "coach_fired", team=t.id, coach=c.name, heat=round(c.heat, 3), by=o.name,
-                reason="new owner cleaned house" if clean_coach and c.heat <= _fire_threshold(o, LEGEND_FIRE_FACTOR if c.legend else 1.0) else "results")
+        thr_c = _fire_threshold(o, LEGEND_FIRE_FACTOR if c is not None and c.legend else 1.0)
+        thr_g = _fire_threshold(o, GM_FIRE_FACTOR)
+        can_coach = c is not None and t.id not in out["coach_retired"]
+        default_fc = can_coach and (clean_coach or c.heat > thr_c)         # the autopilot's rule, unchanged
+        default_fg = g is not None and (clean or g.heat > thr_g)
+        fc, fg = _staff_review(lg, t, year, o, c, g, can_coach, default_fc, default_fg, new_boss, pct, rank, tid_voted=(t.id in out["votes"]), exiled=(t.id in new_exiles))
+        if fc:
+            reason = ("new owner cleaned house" if clean_coach and c.heat <= thr_c else "results") if default_fc else "owner's judgment"
+            log(lg, year, "coach_fired", team=t.id, coach=c.name, heat=round(c.heat, 3), by=o.name, reason=reason)
             c.career.append({"year": year, "event": "fired", "team": t.id})
             c.team_id, c.retired = None, True
             t.coach = None
-            C._hire(lg, t, year)
+            _hire_coach(lg, t, year, o)
             out["coach_fired"].append(t.id)
-            out["firing_details"].append(dict(team=t.id, who="coach", card=c, heat=c.heat, owner=o,
-                                              reason="new owner cleaned house" if clean_coach and c.heat <= _fire_threshold(o, LEGEND_FIRE_FACTOR if c.legend else 1.0) else "results"))
-        g = t.gm
-        if g is not None and (clean or g.heat > _fire_threshold(o, GM_FIRE_FACTOR)):
+            out["firing_details"].append(dict(team=t.id, who="coach", card=c, heat=c.heat, owner=o, reason=reason))
+        if fg:
+            reason = ("new owner cleaned house" if clean and g.heat <= thr_g else "results") if default_fg else "owner's judgment"
             log(lg, year, "gm_fired", team=t.id, gm=g.name, heat=round(g.heat, 3), by=o.name)
             g.career.append({"year": year, "event": "fired", "team": t.id})
             g.status, g.team_id = "fired", None
             t.gm = None
-            _hire_gm(lg, t, year)
+            _hire_gm_decision(lg, t, year, o)
             out["gm_fired"].append(t.id)
-            out["firing_details"].append(dict(team=t.id, who="gm", card=g, heat=g.heat, owner=o,
-                                              reason="new owner cleaned house" if clean and g.heat <= _fire_threshold(o, GM_FIRE_FACTOR) else "results"))
+            out["firing_details"].append(dict(team=t.id, who="gm", card=g, heat=g.heat, owner=o, reason=reason))
+    lg.prev_pct = dict(pct)
     if scenes_on:
         out["scenes"] = IX.season_scenes(lg, year, ctx, out, new_exiles)
     return out

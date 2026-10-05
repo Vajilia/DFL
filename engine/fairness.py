@@ -33,10 +33,11 @@ def _corr(xs: List[float], ys: List[float]) -> float:
     return sum((x - mx) * (y - my) for x, y in zip(xs, ys)) / (sx * sy)
 
 
-def measure_league(seed: int, seasons: int, engine: str = "fast", opt: Options = None, burn: int = BURN, coaches: bool = True, staff: bool = True, fans: bool = True) -> Dict[str, float]:
+def measure_league(seed: int, seasons: int, engine: str = "fast", opt: Options = None, burn: int = BURN, coaches: bool = True, staff: bool = True, fans: bool = True, driver=None) -> Dict[str, float]:
     """Run one league and return its fairness measurements (after the warm-up)."""
     rng = random.Random(seed)
     lg = new_league(rng, rosters=(engine != "placeholder"), coaches=coaches, staff=staff, fans=fans)
+    lg.driver = driver
     opt = opt or Options(engine=engine, keep_boxes=False)
     sd_by_season, close, games_n = [], 0, 0
     x_prev, y_next = [], []

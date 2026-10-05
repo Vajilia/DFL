@@ -186,6 +186,9 @@ def firing_scene(lg, ctx, year, detail: dict):
     if ev["new_owner"]:
         frame = "fresh_start"
         text = f"{owner.name} ({owner.trait}): \"New owner, new staff. I wanted {owner.wants} and I wasn't going to ask {fired.name} for it.\""
+    elif detail["reason"] == "owner's judgment":
+        frame = "results" if ev["record"] < 0.5 else "judgment"
+        text = (f"{owner.name} ({owner.trait}): \"It was my call. I wanted {owner.wants}, and I did not think {fired.name} was the person to get it.\"")
     else:
         frame = "results" if owner.ratings["involvement"] >= 50 else "underperformed"
         gave = f"I gave her {fired.seasons_with_team + 1} season{'s' if fired.seasons_with_team else ''}" if who == "coach" else "I trusted her with the roster"

@@ -13,7 +13,9 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import cards as C  # noqa: E402
 import fan_media_cards as FM  # noqa: E402
+import decisions as DEC  # noqa: E402
 import interactions as IX  # noqa: E402
+import json  # noqa: E402
 import staff_cards as S  # noqa: E402
 from league import new_league  # noqa: E402
 from positions import POSITIONS  # noqa: E402
@@ -110,6 +112,28 @@ def main():
     pick(lambda x: x["kind"] == "firing" and x["evidence"].get("ruling") == "sweep", "A new owner's sweep")
     pick(lambda x: x["kind"] == "recall_vote" and "recalled;" in x["outcome"], "A recall vote that removes an owner")
     pick(lambda x: x["kind"] == "recall_vote" and x["outcome"].endswith("survives"), "A recall vote the owner survives")
+    out.append("\n## What an agent is shown, and what the log keeps\n")
+    out.append("Choices go through Decision Points. An agent is shown its own card, what it perceives (candidates' ratings as the owner sees them, with blind spots) and the legal options, and answers with one option id. "
+               "The guard applies the choice (or the autopilot's choice if the answer is invalid or late) and logs it. Below: the two decisions an owner faces, as an agent receives them, and the log line.\n")
+    seen = []
+
+    def spy(payload):
+        seen.append(payload)
+        pick = max(payload["options"], key=lambda o: o.get("tags", {}).get("fires", 0))["id"] if payload["kind"] == "staff_review" else payload["options"][0]["id"]
+        return {"choice": pick, "reason": "Illustrative answer from a stand-in agent."}
+    rng2 = random.Random(a.seed + 1)
+    lg2 = new_league(rng2, rosters=True)
+    lg2.driver = DEC.AgentDriver(spy, timeout=10.0)
+    for y in range(1, 4):
+        run_season(lg2, y, rng2, Options(engine="fast", keep_boxes=False))
+    rev = next(p for p in seen if p["kind"] == "staff_review")
+    hire = next(p for p in seen if p["kind"] == "hire_coach")
+    out.append("**An owner's staff review, as an agent receives it:**\n")
+    out.append("```json\n" + json.dumps(rev, indent=1) + "\n```\n")
+    out.append("**A coaching hire, as an agent receives it:**\n")
+    out.append("```json\n" + json.dumps(hire, indent=1) + "\n```\n")
+    out.append("**The choice log keeps:**\n")
+    out.append("```\n" + "\n".join(json.dumps(e) for e in lg2.choice_log if e["kind"] == "hire_coach")[:1200] + "\n```\n")
     out.append("\n## How the cards spread across the league\n")
     tc = collections.Counter(p.card.trait for p in active)
     out.append("**Core personalities (all rostered players):** " + ", ".join(f"{k} {v}" for k, v in tc.most_common()) + "\n")

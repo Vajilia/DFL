@@ -23,6 +23,8 @@ A league engine with no AI (Phase 2 adds 47-player rosters, a drive-by-drive gam
 | `engine/phase2_report.py` | Writes `reports/phase2_report.md` |
 | `engine/cards.py`, `card_pools.py` | Character cards: player souls (archetypes), perception and personality; head coaches who develop players, with rare legends |
 | `engine/staff_cards.py` | Owner and GM cards; recall votes, hiring and firing; the Archive's first entries |
+| `engine/decisions.py` | Decision Points: the one door for every choice (options, drivers, guard, choice log) |
+| `engine/adversaries.py` | Worst-case drivers used to test the fairness bands |
 | `engine/interactions.py` | The Interaction system, first slice: firing, recall vote and exile determination scenes (claims, evidence, relationships, decision logs) |
 | `engine/fan_media_cards.py` | Fanbase cards (culture, ratings, approval, Fan Capital) and media outlet cards (voice, ratings, Credibility, forecasts) |
 | `engine/staff_sweep.py` | Tests owners, firings and the GM levers (and 3x, 6x stress versions) against the fairness bands; writes `reports/staff_fairness_study.md` |
@@ -49,6 +51,8 @@ A league engine with no AI (Phase 2 adds 47-player rosters, a drive-by-drive gam
     python engine/check_cards.py           # character cards and the coach effect
     python engine/check_staff.py           # owners, GMs, recall votes, firings
     python engine/check_fans.py            # fanbase and media cards
+    python engine/check_decisions.py       # decision points, the guard, replay, the autopilot's exactness
+    python engine/decision_sweep.py        # fairness under random and worst-case choices (slow)
     python engine/check_interactions.py    # firing, recall and exile scenes (and proof they change no outcome)
     python engine/fan_media_sweep.py       # fairness study for the fan and media cards (slow)
     python engine/check_phase2.py          # rosters, game engine, injuries, offseason

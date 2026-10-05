@@ -1,0 +1,69 @@
+"""Do the fairness bands hold whatever the agents choose?
+
+Same leagues and seeds in every row; only who makes the owner's keep/fire/hire choices changes. The first row is the autopilot (the
+rules as they were before agents). The others are random-legal play and four adversaries that use the TRUE state to push staff
+quality to the legal limit (see adversaries.py). The question for every row: does any trend leave its band?
+Writes reports/decision_fairness_study.md.
+
+    python engine/decision_sweep.py [--leagues 8] [--seasons 48] [--only A,B]
+"""
+import argparse
+import os
+import sys
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import adversaries as ADV  # noqa: E402
+import decisions as D  # noqa: E402
+import fairness  # noqa: E402
+from coach_sweep import footprint  # noqa: E402
+
+ROOT = os.path.dirname(os.path.abspath(__file__)).rsplit(os.sep, 1)[0]
+
+VARIANTS = [
+    ("A. Autopilot (the rules as they were before agents)", lambda: D.PolicyDriver()),
+    ("B. Random legal choices", lambda: D.RandomLegalDriver(7)),
+    ("C. Nobody is ever fired", lambda: ADV.StandPat()),
+    ("D. Worst case: every owner fires everyone every year and hires the truly best candidate", lambda: ADV.ChurnOracle()),
+    ("E. Worst case: only the 8 strongest teams churn and hire perfectly", lambda: ADV.EliteOracle(8)),
+    ("F. Worst case: the 8 strongest hire the best, the 8 weakest the worst, every year", lambda: ADV.Polarized(8)),
+    ("G. Worst case: everyone hunts for a legend coach", lambda: ADV.LegendHunter()),
+]
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--leagues", type=int, default=8)
+    ap.add_argument("--seasons", type=int, default=48)
+    ap.add_argument("--only", default="")
+    ap.add_argument("--out", default="")
+    a = ap.parse_args()
+    keep = {x.strip() for x in a.only.split(",") if x.strip()}
+    out = ["# Whatever the agents choose: fairness under the worst legal play\n",
+           "The principle: the road has guardrails and traffic controls, the character card is the driver, and what the driver does with the car "
+           "always stays inside the fair-competitiveness bands. The first owner choice to go through a Decision Point is keep, fire or hire "
+           "for the coach and the GM (the hire is one of three candidates). The autopilot row reproduces the league as it was before agents. "
+           "The other rows replace the owners' choices with random play and with adversaries that see the TRUE ratings of every candidate "
+           "(no real agent can) and play the legal limit. Everything they do is a legal option; the guard would reject anything else.\n"]
+    for label, mk in VARIANTS:
+        if keep and label[0] not in keep:
+            continue
+        per, rows = fairness.run("fast", range(100, 100 + a.leagues), a.seasons, driver=mk())
+        bad = [r[0] for r in rows if not r[4]]
+        out.append(f"## {label}\n")
+        out.append(f"fast engine, {a.leagues} leagues x {a.seasons} seasons.\n")
+        out.append(fairness.table(rows))
+        out.append("\n" + ("All trends inside the bands.\n" if not bad else f"**Outside the bands:** {', '.join(bad)}.\n"))
+        out.append(footprint(per) + "\n")
+        v = {r[0]: r[1] for r in rows}
+        print("    ", footprint(per), flush=True)
+        print(label, "->", "ALL INSIDE" if not bad else "OUTSIDE: " + "; ".join(bad), flush=True)
+        print("    title conc:", round(v["max_titles_in_20"], 2), v["worst_league_titles"], " corr:", round(v["year_to_year_corr"], 3),
+              " best-team odds:", round(v["best_team_title_odds"], 3), " repeat:", round(v["repeat_champion_rate"], 3),
+              " stuck:", round(v["stuck_at_bottom"], 3), " exile fx:", round(v["exile_effect"], 2), flush=True)
+    path = a.out or os.path.join(ROOT, "reports", "decision_fairness_study.md")
+    open(path, "w").write("\n".join(out))
+    print("wrote", path)
+
+
+if __name__ == "__main__":
+    main()

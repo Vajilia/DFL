@@ -54,6 +54,11 @@ class League:
         self.fans_on = True                # fanbase and media cards decide owner approval (turn off for the old placeholder model)
         self.interactions_on = True        # Required interactions are written up as scenes (never changes an outcome)
         self.prev_pct: dict = {}           # last season's win% by team, for the scenes' evidence
+        self.driver = None                 # who makes the choices (decisions.py); None means the autopilot
+        self.choice_log: list = []         # every choice anyone made, the canonical record of the league's history
+        self.passed_over: list = []        # candidate cards that were not hired (the Archive keeps them)
+        self._cand_ids = 0
+        self.legend_cap_hits = 0           # times the legend cap kept a legend off an owner's list
         self.fanbases: list = []
         self.media: list = []              # every media outlet ever founded, folded ones included
         self._media_ids = 0

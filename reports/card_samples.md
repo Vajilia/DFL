@@ -504,6 +504,222 @@ EVENT 14-recall_vote-44-1  (Team 44; recall vote; vote triggered by approval)
 ```
 
 
+## What an agent is shown, and what the log keeps
+
+Choices go through Decision Points. An agent is shown its own card, what it perceives (candidates' ratings as the owner sees them, with blind spots) and the legal options, and answers with one option id. The guard applies the choice (or the autopilot's choice if the answer is invalid or late) and logs it. Below: the two decisions an owner faces, as an agent receives them, and the log line.
+
+**An owner's staff review, as an agent receives it:**
+
+```json
+{
+ "id": "1-staff_review-01-1",
+ "kind": "staff_review",
+ "year": 1,
+ "team": 1,
+ "decider": {
+  "role": "owner",
+  "name": "Stella Wagner",
+  "trait": "Showwoman",
+  "wants": "spectacle and headlines",
+  "fears": "boredom",
+  "ratings": {
+   "patience": 31.5,
+   "ambition": 46.5,
+   "involvement": 53.8,
+   "popularity": 53.5,
+   "business": 62.8
+  },
+  "pressure": {
+   "recall": 32,
+   "media": 67,
+   "losing": 54,
+   "subsidy": 50
+  }
+ },
+ "context": {
+  "record_this_season": 0.389,
+  "record_last_season": null,
+  "exiled_this_year": true,
+  "fan_approval_of_you": 0.488,
+  "facing_a_recall_vote_this_year": true,
+  "you_are_a_new_owner": false,
+  "press_effect_on_fans": -0.009,
+  "coach": {
+   "name": "Honor Lachance",
+   "age": 56,
+   "path": "Former star player turned coach",
+   "trait": "Innovator",
+   "perceived": {
+    "offense": 34.0,
+    "defense": 31.0,
+    "development": 55.0,
+    "gamecraft": 41.0,
+    "discipline": 59.0,
+    "motivation": 29.0
+   },
+   "legend": false,
+   "seasons_with_team": 1,
+   "pressure_on_her": 0.111,
+   "can_be_fired": true
+  },
+  "gm": {
+   "name": "Astrid Ellison",
+   "age": 41,
+   "path": "Coach's trusted lieutenant",
+   "trait": "Talent Hawk",
+   "perceived": {
+    "scouting": 18.0,
+    "negotiation": 44.0,
+    "evaluation": 41.0,
+    "trades": 69.0,
+    "cap_sense": 54.0
+   },
+   "seasons_with_team": 1,
+   "pressure_on_her": 0.111
+  }
+ },
+ "options": [
+  {
+   "id": "keep_all",
+   "label": "Keep the coach and the GM",
+   "tags": {
+    "fires": 0
+   }
+  },
+  {
+   "id": "fire_coach",
+   "label": "Fire coach Honor Lachance",
+   "tags": {
+    "fires": 1
+   }
+  },
+  {
+   "id": "fire_gm",
+   "label": "Fire GM Astrid Ellison",
+   "tags": {
+    "fires": 1
+   }
+  },
+  {
+   "id": "fire_both",
+   "label": "Fire both",
+   "tags": {
+    "fires": 2
+   }
+  }
+ ],
+ "instructions": "Reply with the id of exactly one option, and optionally a short reason in plain words."
+}
+```
+
+**A coaching hire, as an agent receives it:**
+
+```json
+{
+ "id": "1-hire_coach-01-1",
+ "kind": "hire_coach",
+ "year": 1,
+ "team": 1,
+ "decider": {
+  "role": "owner",
+  "name": "Stella Wagner",
+  "trait": "Showwoman",
+  "wants": "spectacle and headlines",
+  "fears": "boredom",
+  "ratings": {
+   "patience": 31.5,
+   "ambition": 46.5,
+   "involvement": 53.8,
+   "popularity": 53.5,
+   "business": 62.8
+  },
+  "pressure": {
+   "recall": 32,
+   "media": 67,
+   "losing": 54,
+   "subsidy": 50
+  }
+ },
+ "context": {
+  "team_needs": "a head coach"
+ },
+ "options": [
+  {
+   "id": "candidate_0",
+   "label": "Hire Sofia Hutchins",
+   "tags": {},
+   "view": {
+    "name": "Sofia Hutchins",
+    "age": 55,
+    "path": "Coordinator who got her first shot",
+    "trait": "Developer",
+    "perceived": {
+     "offense": 61.0,
+     "defense": 62.0,
+     "development": 21.0,
+     "gamecraft": 53.0,
+     "discipline": 61.0,
+     "motivation": 16.0
+    },
+    "legend": false
+   }
+  },
+  {
+   "id": "candidate_1",
+   "label": "Hire Julia Burkhart",
+   "tags": {},
+   "view": {
+    "name": "Julia Burkhart",
+    "age": 42,
+    "path": "Third-generation coaching family",
+    "trait": "Developer",
+    "perceived": {
+     "offense": 54.0,
+     "defense": 35.0,
+     "development": 59.0,
+     "gamecraft": 31.0,
+     "discipline": 58.0,
+     "motivation": 49.0
+    },
+    "legend": false
+   }
+  },
+  {
+   "id": "candidate_2",
+   "label": "Hire Mei Eklund",
+   "tags": {},
+   "view": {
+    "name": "Mei Eklund",
+    "age": 38,
+    "path": "Rose through the assistant ranks",
+    "trait": "Tactician",
+    "perceived": {
+     "offense": 48.0,
+     "defense": 53.0,
+     "development": 48.0,
+     "gamecraft": 39.0,
+     "discipline": 50.0,
+     "motivation": 38.0
+    },
+    "legend": false
+   }
+  }
+ ],
+ "instructions": "Reply with the id of exactly one option, and optionally a short reason in plain words."
+}
+```
+
+**The choice log keeps:**
+
+```
+{"id": "1-hire_coach-01-1", "year": 1, "kind": "hire_coach", "team": 1, "actor": "owner", "options": ["candidate_0", "candidate_1", "candidate_2"], "default": "candidate_0", "chosen": "candidate_0", "driver": "agent", "status": "ok", "reason": "Illustrative answer from a stand-in agent."}
+{"id": "1-hire_coach-02-1", "year": 1, "kind": "hire_coach", "team": 2, "actor": "owner", "options": ["candidate_0", "candidate_1", "candidate_2"], "default": "candidate_0", "chosen": "candidate_0", "driver": "agent", "status": "ok", "reason": "Illustrative answer from a stand-in agent."}
+{"id": "1-hire_coach-03-1", "year": 1, "kind": "hire_coach", "team": 3, "actor": "owner", "options": ["candidate_0", "candidate_1", "candidate_2"], "default": "candidate_0", "chosen": "candidate_0", "driver": "agent", "status": "ok", "reason": "Illustrative answer from a stand-in agent."}
+{"id": "1-hire_coach-04-1", "year": 1, "kind": "hire_coach", "team": 4, "actor": "owner", "options": ["candidate_0", "candidate_1", "candidate_2"], "default": "candidate_0", "chosen": "candidate_0", "driver": "agent", "status": "ok", "reason": "Illustrative answer from a stand-in agent."}
+{"id": "1-hire_coach-05-1", "year": 1, "
+```
+
+
 ## How the cards spread across the league
 
 **Core personalities (all rostered players):** Diplomat 507, Competitor 407, Perfectionist 372, Grinder 355, Showman 196, Quiet Leader 134, Free Spirit 132, Hothead 91, Mercenary 46, Loyalist 16
