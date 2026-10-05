@@ -23,6 +23,12 @@ def _best(dp, worst=False):
     return (min if worst else max)(items, key=key)[0]
 
 
+def _table(dp) -> bool:
+    """A negotiation table's turn (interviews.py). The staffing adversaries below play only the owner's review and hire choices and leave
+    the tables to the rules."""
+    return dp.kind.startswith("interview")
+
+
 def _most_fires(dp):
     return max(dp.options, key=lambda o: o["tags"].get("fires", 0))["id"]
 
@@ -32,7 +38,7 @@ class StandPat:
     name = "stand-pat"
 
     def choose(self, dp):
-        return ("keep_all" if dp.kind == "staff_review" else "candidate_0"), "stand pat"
+        return ("keep_all" if dp.kind == "staff_review" else dp.default), "stand pat"
 
 
 class ChurnOracle:
@@ -40,6 +46,8 @@ class ChurnOracle:
     name = "churn-oracle"
 
     def choose(self, dp):
+        if _table(dp):
+            return dp.default, "the rules"
         return (_most_fires(dp) if dp.kind == "staff_review" else _best(dp)), "churn and pick the best"
 
 
@@ -51,6 +59,8 @@ class EliteOracle:
         self.top_n = top_n
 
     def choose(self, dp):
+        if _table(dp):
+            return dp.default, "the rules"
         rank = dp.internal["strength_rank"]
         if rank <= self.top_n:
             return ChurnOracle().choose(dp)
@@ -65,6 +75,8 @@ class Polarized:
         self.n = n
 
     def choose(self, dp):
+        if _table(dp):
+            return dp.default, "the rules"
         rank = dp.internal["strength_rank"]
         if dp.kind == "staff_review":
             return _most_fires(dp), "churn"
@@ -72,7 +84,7 @@ class Polarized:
             return _best(dp), "best"
         if rank > 48 - self.n:
             return _best(dp, worst=True), "worst"
-        return "candidate_0", "default"
+        return dp.default, "default"
 
 
 class StarHunter:
@@ -81,6 +93,8 @@ class StarHunter:
     name = "star-hunter"
 
     def choose(self, dp):
+        if _table(dp):
+            return dp.default, "the rules"
         if dp.kind == "staff_review":
             c = dp.internal["coach"]
             offered = dp.option_ids
@@ -104,4 +118,55 @@ class CarouselRider:
             if vets:
                 return vets[0], "a familiar face"
             return _best(dp), "best"
+        return dp.default, "default"
+
+
+class LockIn:
+    """The worst case for guarantees. The strongest teams hire the truly best candidate and guarantee her the maximum (three reviews
+    of safety, and every candidate accepts); the weakest hire the worst candidate on no guarantee, and everyone else follows the rules.
+    Contracts used to widen the gap between the top and the bottom as far as the rules let them."""
+    name = "lock-in"
+
+    def __init__(self, n: int = 8):
+        self.n = n
+
+    def choose(self, dp):
+        rank = dp.internal["strength_rank"]
+        top, bottom = rank <= self.n, rank > 48 - self.n
+        if dp.kind == "interview_offer":
+            return ("offer_3" if top else "offer_0"), "lock in the best" if top else "no guarantee"
+        if _table(dp):
+            return ("accept" if "accept" in dp.option_ids else dp.default), "sign"
+        if dp.kind in ("hire_coach", "hire_gm"):
+            if top:
+                return _best(dp), "best"
+            if bottom:
+                return _best(dp, worst=True), "worst"
+        return dp.default, "default"
+
+
+class EveryoneWalks:
+    """Every candidate refuses every job. The league office fills every seat by the old rule, so the league should simply be the old one,
+    but every table and every fallback is exercised."""
+    name = "everyone-walks"
+
+    def choose(self, dp):
+        if dp.kind in ("interview_reply", "interview_final"):
+            return "walk", "refuse"
+        return dp.default, "default"
+
+
+class HardBargain:
+    """Every candidate asks for the most she can and walks if she does not get it; every owner holds at her first offer (nothing).
+    The owners keep choosing among who is left and the league office fills the seat if no one will sign."""
+    name = "hard-bargain"
+
+    def choose(self, dp):
+        if dp.kind == "interview_reply":
+            asks = [o["id"] for o in dp.options if o["id"].startswith("counter_")]
+            return (asks[-1] if asks else "accept"), "ask for the most"
+        if dp.kind == "interview_counter":
+            return "hold", "hold the line"
+        if dp.kind == "interview_final":
+            return "walk", "no deal"
         return dp.default, "default"

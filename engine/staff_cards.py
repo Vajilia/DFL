@@ -123,6 +123,7 @@ class GMCard:
     seasons_with_team: int = 0
     status: str = "gm"                       # gm | fired | retired
     idle_years: int = 0
+    protected_until: int = 0                 # her contract's guarantee (interviews.py): the owner cannot fire her in a review of this year or earlier
     ref: Optional[Dict[str, float]] = None
     # the soul (fixed at birth) and the living parts (living.py)
     soul_pos: str = ""
@@ -273,16 +274,16 @@ def _person_view(lg, o, card, year, attrs, is_coach: bool) -> dict:
                 reputation=card.standing or "unknown", honors=h, previous_jobs=sum(1 for e in card.career if e["event"] == "hired"))
 
 
-def _review_point(lg, t, year, o, c, g, can_coach, default_fc, default_fg, new_boss, pct, rank, tid_voted, exiled):
+def _review_point(lg, t, year, o, c, g, can_coach, default_fc, default_fg, new_boss, pct, rank, tid_voted, exiled, can_gm=True):
     """The owner's yearly question: keep her coach and GM, or fire one or both? Returns the Decision Point (the answers to all 48
     owners' questions are independent, so the season asks them together)."""
     import decisions as D
     opts = [dict(id="keep_all", label="Keep the coach and the GM", tags={"fires": 0})]
     if can_coach:
         opts.append(dict(id="fire_coach", label=f"Fire coach {c.name}", tags={"fires": 1}))
-    if g is not None:
+    if g is not None and can_gm:
         opts.append(dict(id="fire_gm", label=f"Fire GM {g.name}", tags={"fires": 1}))
-    if can_coach and g is not None:
+    if can_coach and g is not None and can_gm:
         opts.append(dict(id="fire_both", label="Fire both", tags={"fires": 2}))
     default = {(False, False): "keep_all", (True, False): "fire_coach", (False, True): "fire_gm", (True, True): "fire_both"}[(bool(default_fc), bool(default_fg))]
     fb = getattr(t, "fans", None)
@@ -292,9 +293,11 @@ def _review_point(lg, t, year, o, c, g, can_coach, default_fc, default_fg, new_b
         fan_approval_of_you=round(o.approval, 3), facing_a_recall_vote_this_year=bool(tid_voted), you_are_a_new_owner=bool(new_boss),
         press_effect_on_fans=None if fb is None else round(fb.last_sway, 3),
         coach=None if c is None else dict(_person_view(lg, o, c, year, COACH_VIEW, True), seasons_with_team=c.seasons_with_team,
-                                           pressure_on_her=round(c.heat, 3), can_be_fired=bool(can_coach)),
+                                           pressure_on_her=round(c.heat, 3), can_be_fired=bool(can_coach),
+                                           **({"guaranteed_through_season": c.protected_until} if c.protected_until >= year else {})),
         gm=None if g is None else dict(_person_view(lg, o, g, year, tuple(GM_ATTRS), False), seasons_with_team=g.seasons_with_team,
-                                       pressure_on_her=round(g.heat, 3)))
+                                       pressure_on_her=round(g.heat, 3), can_be_fired=bool(can_gm),
+                                       **({"guaranteed_through_season": g.protected_until} if g.protected_until >= year else {})))
     internal = dict(team=t, owner=o, coach=c, gm=g, strength_rank=rank[t.id], record=pct.get(t.id, 0.5))
     return D.DecisionPoint("staff_review", year, t.id, "owner", o, context, opts, default, internal)
 
@@ -375,39 +378,98 @@ def _install(lg, kind: str, t, cands, vets, k: int, year: int):
     return new
 
 
-def _hire_round(lg, year: int, jobs) -> list:
-    """Fill several jobs at once. `jobs` is a list of (kind, team), kind being "coach" or "gm". Each owner is shown three candidates;
-    the choices are made together (the owners do not depend on each other), then applied in the order given. Returns the new cards."""
+def _hire_point(lg, s, year: int):
+    """The owner's hire decision among the candidates still in play for one job (all three the first time, fewer after a refusal)."""
     import decisions as D
+    kind, t, o, cands, vets = s["kind"], s["t"], s["o"], s["cands"], s["vets"]
+    attrs, is_coach = (COACH_VIEW, True) if kind == "coach" else (tuple(GM_ATTRS), False)
+    left = s["left"]
+    opts = [dict(id=f"candidate_{i}", label=f"Hire {cands[i].name}", tags={"between_jobs": id(cands[i]) in vets}, view=_person_view(lg, o, cands[i], year, attrs, is_coach))
+            for i in left]
+    return D.DecisionPoint(f"hire_{kind}", year, t.id, "owner", o, dict(team_needs="a head coach" if kind == "coach" else "a general manager",
+                                                                         **({"refused_you": s["refused"]} if s["refused"] else {})), opts,
+                           f"candidate_{left[0]}", dict(team=t, owner=o, candidates={f"candidate_{i}": cands[i] for i in left}, strength_rank=_rank_of(lg, t)))
+
+
+def _hire_round(lg, year: int, jobs) -> list:
+    """Fill several jobs at once. `jobs` is a list of (kind, team), kind being "coach" or "gm". Each owner is shown three candidates and
+    chooses one (the owners do not depend on each other, so the choices are made together); the owner and the candidate then sit at an
+    interview table (interviews.py) where each has her own say. A candidate who walks (or is withdrawn from) is out and the owner
+    chooses again among the rest; if all three refuse, the league office fills the seat by the old rule. The hires are applied in the
+    order given. Returns the new cards."""
+    import decisions as D
+    import interactions as IX
+    import interviews as IV
+    import tables as TB
     made = {"coach": 0, "gm": 0}
     base = {"coach": lg._coach_ids, "gm": lg._gm_ids}
     taken: set = set()
-    built = []
+    seats = []
     for kind, t in jobs:
         o = t.owner
         make = C.make_coach_card if kind == "coach" else make_gm_card
-        attrs, is_coach = (COACH_VIEW, True) if kind == "coach" else (tuple(GM_ATTRS), False)
         cands, vets = _candidates(lg, kind, make, t, year, o, base[kind] + 1 + made[kind], taken)
         made[kind] += 1
         taken |= {id(c) for c in cands if id(c) in vets}
-        opts = [dict(id=f"candidate_{i}", label=f"Hire {c.name}", tags={"between_jobs": id(c) in vets}, view=_person_view(lg, o, c, year, attrs, is_coach))
-                for i, c in enumerate(cands)]
-        dp = D.DecisionPoint(f"hire_{kind}", year, t.id, "owner", o, dict(team_needs="a head coach" if kind == "coach" else "a general manager"), opts,
-                             "candidate_0", dict(team=t, owner=o, candidates={f"candidate_{i}": c for i, c in enumerate(cands)}, strength_rank=_rank_of(lg, t)))
-        built.append((kind, t, o, cands, vets, dp))
-    picks = D.decide_many(lg, [b[5] for b in built])
+        seats.append(dict(kind=kind, t=t, o=o, cands=cands, vets=vets, left=list(range(len(cands))), attempts=[], refused=[], k=None, g=0, assigned=False, tables=[]))
+    fires = IV.recent_fires(lg, year)
+    while any(s["k"] is None for s in seats):
+        open_ = [s for s in seats if s["k"] is None]
+        asks = [s for s in open_ if len(s["left"]) > 1]
+        picks = D.decide_many(lg, [_hire_point(lg, s, year) for s in asks]) if asks else []
+        for s, pick in zip(asks, picks):
+            s["pick"] = int(pick.split("_")[1])
+        for s in open_:
+            if len(s["left"]) == 1:
+                s["pick"] = s["left"][0]                      # no one else is left: nothing to choose
+        tables = []
+        for s in open_:
+            cand = s["cands"][s["pick"]]
+            attrs, is_coach = (COACH_VIEW, True) if s["kind"] == "coach" else (tuple(GM_ATTRS), False)
+            tables.append(IV.Interview(lg, year, s["t"], s["kind"], s["o"], cand, id(cand) in s["vets"], len(s["left"]) - 1,
+                                       fires.get((s["kind"], s["t"].id), 0), _person_view(lg, s["o"], cand, year, attrs, is_coach)))
+        TB.run_tables(lg, tables)
+        for s, tb in zip(open_, tables):
+            s["tables"].append(tb)
+            s["attempts"].append(tb.summary())
+            if tb.outcome[0] == "deal":
+                s["k"], s["g"] = s["pick"], tb.outcome[1]
+                continue
+            cand = s["cands"][s["pick"]]
+            cand.career.append({"year": year, "event": "turned_down" if tb.outcome[1] == "candidate" else "withdrawn", "team": s["t"].id})
+            s["refused"].append(cand.name)
+            s["left"].remove(s["pick"])
+            if not s["left"]:                                 # everyone refused: the league office fills the seat by the old rule
+                s["k"], s["g"], s["assigned"] = 0, 0, True
     hired = []
-    for (kind, t, o, cands, vets, dp), pick in zip(built, picks):
-        k = int(pick.split("_")[1])
+    for s in seats:
+        kind, t, o, cands, vets, k = s["kind"], s["t"], s["o"], s["cands"], s["vets"], s["k"]
         others = [c.name for i, c in enumerate(cands) if i != k]
         new = _install(lg, kind, t, cands, vets, k, year)
+        new.protected_until = year + s["g"]
         if kind == "coach":
             t.coach = new
         else:
             t.gm = new
             log(lg, year, "gm_hired", team=t.id, gm=new.name)
+        if s["g"] or s["assigned"]:
+            new.career[-1].update(guaranteed=s["g"], **({"assigned_by_league_office": True} if s["assigned"] else {}))
+        last = s["tables"][-1]
+        plain = all(tb.plain() for tb in s["tables"]) and not s["assigned"]
         if k:
-            o.decision_log.append({"year": year, "interaction": dp.id, "action": f"hired {'coach' if kind == 'coach' else 'GM'} {new.name}, passing on {', '.join(others)}"})
+            o.decision_log.append({"year": year, "interaction": last.points[0], "action": f"hired {'coach' if kind == 'coach' else 'GM'} {new.name}, passing on {', '.join(others)}"})
+        if not plain:
+            job = "coach" if kind == "coach" else "GM"
+            what = (f"the league office filled the {job} job after everyone refused" if s["assigned"]
+                    else f"signed {new.name} as {job} with {IV._s(s['g'])}" + (f" after {', '.join(s['refused'])} refused" if s["refused"] else ""))
+            o.decision_log.append({"year": year, "interaction": last.points[0], "action": what})
+            new.decision_log.append({"year": year, "interaction": last.points[0], "action": f"took the {t.name} {job} job with {IV._s(s['g'])}" +
+                                     (" (assigned by the league office)" if s["assigned"] else "")})
+            log(lg, year, "interview", team=t.id, job=kind, hired=new.name, guaranteed=s["g"], assigned=bool(s["assigned"]), attempts=s["attempts"])
+        if not s["assigned"] and getattr(lg, "interactions_on", False):      # goodwill is a scene's business: with scenes off there are no relationships
+            bump = IV.REL_DEAL + (IV.REL_COUNTER_DEAL if len(last.steps) > 2 else 0)
+            IX._bump(new, IX.key("owner", o), bump)
+            IX._bump(o, IX.key(kind, new), bump)
         hired.append(new)
     return hired
 
@@ -548,10 +610,11 @@ def season_end(lg, year: int, pct: Dict[int, float], new_exiles, champion: int, 
         clean_coach = clean and not (c is not None and RC.is_famous(c))          # nobody sweeps out a famous coach
         thr_c = _fire_threshold(o, 1.0 + ROPE_WEIGHT * (RC.esteem_ratio(c) if c is not None else 0.0))
         thr_g = _fire_threshold(o, GM_FIRE_FACTOR * (1.0 + GM_ROPE_WEIGHT * (RC.esteem_ratio(g) if g is not None else 0.0)))
-        can_coach = c is not None and t.id not in out["coach_retired"]
+        can_coach = c is not None and t.id not in out["coach_retired"] and not (c.protected_until >= year)     # a guarantee (interviews.py) cannot be fired through
+        can_gm = g is not None and not (g.protected_until >= year)
         default_fc = can_coach and (clean_coach or c.heat > thr_c)         # the autopilot's rule, unchanged
-        default_fg = g is not None and (clean or g.heat > thr_g)
-        dp = _review_point(lg, t, year, o, c, g, can_coach, default_fc, default_fg, new_boss, pct, rank, tid_voted=(t.id in out["votes"]), exiled=(t.id in new_exiles))
+        default_fg = can_gm and (clean or g.heat > thr_g)
+        dp = _review_point(lg, t, year, o, c, g, can_coach, default_fc, default_fg, new_boss, pct, rank, tid_voted=(t.id in out["votes"]), exiled=(t.id in new_exiles), can_gm=can_gm)
         reviews.append((t, o, c, g, clean, clean_coach, thr_c, thr_g, default_fc, default_fg, dp))
     picks = D.decide_many(lg, [x[-1] for x in reviews])
     jobs = []

@@ -25,6 +25,8 @@ LOOKS_FOR = {                                     # owner trait -> what she weig
     "Glory Hunter": (1.0, 1.0, 0.2, 0.5, 0.2, 0.3), "Patient Steward": (0.3, 0.3, 1.0, 0.3, 0.6, 0.6), "Legacy Builder": (0.6, 0.6, 1.0, 0.4, 0.4, 0.4),
     "Showwoman": (1.0, 0.4, 0.2, 0.3, 0.1, 1.0), "Meddler": (0.5, 0.5, 0.3, 1.0, 0.9, 0.3), "Penny-Pincher": (0.5, 0.5, 0.5, 0.5, 0.5, 0.5),
     "Local Hero": (0.4, 0.4, 0.6, 0.4, 0.6, 1.0), "Opportunist": (0.8, 0.8, 0.2, 0.6, 0.2, 0.2)}
+OFFER_OPEN = {"Patient Steward": 1, "Legacy Builder": 1, "Local Hero": 1, "Penny-Pincher": 0, "Opportunist": 0, "Showwoman": 0, "Glory Hunter": 0, "Meddler": 0}   # what an owner opens with
+OFFER_LIMIT = {"Patient Steward": 3, "Legacy Builder": 2, "Local Hero": 2, "Penny-Pincher": 1, "Opportunist": 1, "Showwoman": 1, "Glory Hunter": 0, "Meddler": 0}   # the most she will give
 GM_VIEW = ("scouting", "negotiation", "evaluation", "trades", "cap_sense")
 
 
@@ -43,6 +45,8 @@ class StandIn:
         r = random.Random(f"standin-{payload['id']}")
         if payload["kind"] == "staff_review":
             return self._review(payload, me, r)
+        if payload["kind"].startswith("interview"):
+            return getattr(self, "_" + payload["kind"])(payload, me, r)
         return self._hire(payload, me, r)
 
     # ---- the yearly review: keep, or fire the coach, the GM or both
@@ -55,7 +59,7 @@ class StandIn:
         wants = []
         for who in ("coach", "gm"):
             c = ctx.get(who)
-            if c is None or (who == "coach" and not c.get("can_be_fired", True)):
+            if c is None or not c.get("can_be_fired", True):
                 continue
             heat = c["pressure_on_her"]
             cut = bad + 0.25 * heat + (0.08 if angry_fans else 0.0) + (0.10 if ctx["you_are_a_new_owner"] else 0.0) - (0.15 if c["reputation"] in ("legend", "Hall of Famer") else 0.0) + r.gauss(0.0, 0.03)
@@ -91,6 +95,66 @@ class StandIn:
                 best, best_score = o, score
         note = f"Hired {best['view']['name']} ({best['view']['reputation']})." if self.notes else ""
         return dict(choice=best["id"], reason=f"{me['trait']} weighed the candidates", note=note)
+
+    # ---- the job interview (interviews.py): the owner's side
+    def _owner_limit(self, me, candidate, alternatives) -> int:
+        """The most guaranteed seasons this owner will give: patient owners give more, and everyone gives more to a famous name or when no one else is left."""
+        base = OFFER_LIMIT.get(me["trait"], 1)
+        famous = candidate.get("reputation") in ("legend", "Hall of Famer", "star")
+        return max(0, min(3, base + (1 if famous else 0) + (1 if alternatives == 0 else 0)))
+
+    def _interview_offer(self, p, me, r):
+        ctx = p["context"]
+        alts = 0 if "no one else" in ctx["if_she_walks"] else 1
+        g = max(0, min(3, OFFER_OPEN.get(me["trait"], 0) + (1 if ctx["candidate"].get("reputation") in ("legend", "Hall of Famer", "star") else 0) + (1 if not alts else 0)
+                       + (1 if r.random() < 0.15 else 0)))
+        return dict(choice=f"offer_{g}", reason=f"{me['trait']} opens with {g}", note=f"Offered {ctx['candidate']['name']} {g} guaranteed season(s)." if self.notes else "")
+
+    def _interview_counter(self, p, me, r):
+        ctx = p["context"]
+        ask = next(o["tags"]["guaranteed"] for o in p["options"] if o["id"] == "accept")
+        offer = next(o["tags"]["guaranteed"] for o in p["options"] if o["id"] == "hold")
+        alts = 0 if "no one else" in ctx["if_she_walks"] else 1
+        limit = self._owner_limit(me, ctx["candidate"], alts)
+        if ask <= limit:
+            pick = "accept"
+        elif ask - offer >= 3 and alts and r.random() < 0.3:
+            pick = "walk"
+        else:
+            pick = "hold"
+        return dict(choice=pick, reason=f"{me['trait']}: she wants {ask}, I will go to {limit}", note=f"Bargained over guaranteed seasons: {pick}." if self.notes else "")
+
+    # ---- the job interview: the candidate's side
+    def _wants(self, me, job) -> int:
+        """How many guaranteed seasons she wants before she takes this job: more for an impatient or trigger-happy owner and a struggling team, and for
+        someone with a name or who is anxious about contracts."""
+        o = job["owner"]
+        last = job["team_record_last_season"]
+        want = (0.4 * o["fired_coaches_or_gms_here_in_the_last_5_years"] + (55.0 - o["patience_as_you_read_her"]) / 25.0 + (0.5 - (0.5 if last is None else last)) * 3.0
+                + (me["pressure"]["contract"] - 50.0) / 50.0 + (0.8 if me["reputation"] in ("legend", "Hall of Famer", "star") else 0.0) - (0.5 if o["new_owner"] else 0.0))
+        return max(0, min(3, round(want)))
+
+    def _interview_reply(self, p, me, r):
+        job = p["context"]
+        want = self._wants(me, job)
+        offer = next(o["tags"]["guaranteed"] for o in p["options"] if o["id"] == "accept")
+        counters = {o["tags"]["guaranteed"]: o["id"] for o in p["options"] if o["id"].startswith("counter_")}
+        if offer >= want:
+            pick, why = "accept", "enough security"
+        elif want - offer >= 2 and job["other_candidates_the_owner_could_turn_to"] > 0 and r.random() < 0.4:
+            pick, why = "walk", "not enough security for this owner"
+        else:
+            pick, why = counters.get(want, "accept"), f"asks for {want}"
+        note = {"accept": f"Took the {job['team']} job on {offer} guaranteed season(s).", "walk": f"Turned down {job['team']}: too little security.",
+                }.get(pick, f"Asked {job['team']} for {want} guaranteed seasons.") if self.notes else ""
+        return dict(choice=pick, reason=why, note=note)
+
+    def _interview_final(self, p, me, r):
+        job = p["context"]
+        want = self._wants(me, job)
+        offer = next(o["tags"]["guaranteed"] for o in p["options"] if o["id"] == "accept")
+        pick = "accept" if offer >= want - 1 or r.random() < 0.5 else "walk"
+        return dict(choice=pick, reason=f"wanted {want}, offered {offer}", note=(f"{'Took' if pick == 'accept' else 'Turned down'} {job['team']} after bargaining.") if self.notes else "")
 
 
 class Flaky:

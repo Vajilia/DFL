@@ -178,6 +178,7 @@ class CoachCard:
     seasons_with_team: int = 0
     retired: bool = False
     idle_years: int = 0                      # years spent between jobs
+    protected_until: int = 0                 # her contract's guarantee (interviews.py): the owner cannot fire her in a review of this year or earlier
     # the soul (fixed at birth) and the living parts (living.py)
     soul_pos: str = ""
     soul_neg: str = ""

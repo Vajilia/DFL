@@ -37,6 +37,9 @@ AGENT_VARIANTS = [
     ("I. A stand-in agent in all 48 owners' seats (cards decide, a dozen at a time)", lambda: D.AgentDriver(AG.StandIn(), workers=12)),
     ("J. Agents in 12 seats (every fourth team), the autopilot in the other 36", lambda: AG.seats(range(1, 49, 4), AG.StandIn())),
     ("K. The same agent, but a quarter of its answers are lost or invalid (the autopilot steps in)", lambda: D.AgentDriver(AG.Flaky(AG.StandIn(), every=4), workers=12)),
+    ("L. Worst case at the interview table: the 8 strongest hire the best and guarantee her three seasons, the 8 weakest hire the worst on no guarantee", lambda: ADV.LockIn(8)),
+    ("M. Every candidate refuses every job (the league office fills every seat by the old rule)", lambda: ADV.EveryoneWalks()),
+    ("N. Hard bargaining: every candidate asks for the most and walks without it, every owner holds the line", lambda: ADV.HardBargain()),
 ]
 
 
