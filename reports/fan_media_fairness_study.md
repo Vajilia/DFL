@@ -1,5 +1,8 @@
 # Fanbase and media cards, and fair competitiveness
 
+> **Historical (2026-10-05):** this study was run before coaches, GMs and owners became living cards and before designated legends were removed. It is kept for what it shows about sizing the dials. The current proof is `decision_fairness_study.md` (autopilot, random and worst-case choices) and `living_fairness_drives_engine.md` (full drive engine).
+
+
 Fans and the press never touch a game. A fanbase's culture and ratings decide how an owner's approval responds to a season (how patient, how demanding, how moody, how much it believes the press). The press moves approval by at most 3 points a year (more in a big market, to a trusting fanbase). Fan Capital, the slow store of goodwill, only ever buffers a recall vote. Approval decides recalls, and a recall can lead to a coach or GM being fired, so the only road to the field is long. The question for every row: does any trend leave its band?
 
 ## A. Old placeholder approval model (owners, GMs and coaches, no fan or media cards)

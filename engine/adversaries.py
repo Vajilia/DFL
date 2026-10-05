@@ -75,19 +75,33 @@ class Polarized:
         return "candidate_0", "default"
 
 
-class LegendHunter:
-    """Everybody fires every coach who is not a legend and hires a legend whenever one is on offer, else the best."""
-    name = "legend-hunter"
+class StarHunter:
+    """Everybody fires every coach who is not already a star in the media's eyes, and hires the most famous candidate on offer,
+    else the best. The worst case for reputation: every owner chases fame, and the carousel recycles the famous."""
+    name = "star-hunter"
 
     def choose(self, dp):
         if dp.kind == "staff_review":
             c = dp.internal["coach"]
             offered = dp.option_ids
-            if c is not None and not c.legend and "fire_coach" in offered:
+            if c is not None and c.standing not in ("legend", "Hall of Famer", "star") and "fire_coach" in offered:
                 return ("fire_both" if "fire_both" in offered else "fire_coach"), "hunt"
             return dp.default, "default"
         if dp.kind == "hire_coach":
-            for k, c in dp.internal["candidates"].items():
-                if c.legend:
-                    return k, "a legend"
+            k, c = max(dp.internal["candidates"].items(), key=lambda kc: kc[1].esteem)
+            if c.esteem > 0:
+                return k, "the most famous"
         return _best(dp), "best"
+
+
+class CarouselRider:
+    """Always hires a person who is between jobs when one is on offer (every owner recycles the same people), else the best."""
+    name = "carousel-rider"
+
+    def choose(self, dp):
+        if dp.kind in ("hire_coach", "hire_gm"):
+            vets = [o["id"] for o in dp.options if o["tags"].get("between_jobs")]
+            if vets:
+                return vets[0], "a familiar face"
+            return _best(dp), "best"
+        return dp.default, "default"

@@ -47,17 +47,23 @@ rev = [e for e in log if e["kind"] == "staff_review"]
 check("every owner makes a staff review every season", len(rev) == 48 * 40)
 fired_c = sum(len(r.staff["coach_fired"]) for r in res)
 fired_g = sum(len(r.staff["gm_fired"]) for r in res)
-check("every firing is followed by a hire decision", sum(e["kind"] == "hire_coach" for e in log) == fired_c and sum(e["kind"] == "hire_gm" for e in log) == fired_g,
-      f"{fired_c} coaches, {fired_g} GMs")
+ret_c = sum(e["event"] == "coach_retired" for e in L.archive)
+ret_g = sum(e["event"] == "gm_retired" for e in L.archive)
+check("every firing and every retirement is followed by a hire decision", sum(e["kind"] == "hire_coach" for e in log) == fired_c + ret_c and sum(e["kind"] == "hire_gm" for e in log) == fired_g + ret_g,
+      f"{fired_c} coaches fired + {ret_c} retired, {fired_g} GMs fired + {ret_g} retired")
 check("under the autopilot every choice is the default and was accepted", all(e["chosen"] == e["default"] and e["status"] == "ok" and e["driver"] == "autopilot" for e in log))
 check("every choice is one of the options offered", all(e["chosen"] in e["options"] for e in log))
 check("decision ids are unique", len({e["id"] for e in log}) == len(log))
-check("passed-over candidates are kept for the Archive and never coach anyone",
-      len(L.passed_over) == 2 * (fired_c + fired_g) and all(c.team_id is None for c in L.passed_over))
+hires = sum(e["kind"] in ("hire_coach", "hire_gm") for e in log)
+check("every candidate who is not hired is kept, and is a person who lives on (between jobs, retired, or hired later)",
+      0 < len(L.passed_over) <= 2 * hires and all(c.team_id is None or c.career[-1]["event"] == "hired" for c in L.passed_over))
+free = L.free_coaches + L.free_gms
+check("people between jobs are alive and unemployed: not retired, not on a team", free and all(c.team_id is None and not getattr(c, "retired", False) and getattr(c, "status", "") != "retired" for c in free), f"{len(free)} between jobs")
+check("under the autopilot nobody between jobs is ever re-hired (the autopilot keeps the rule it had)", all(sum(e["event"] == "hired" for e in c.career) == 1 for c in L.coaches))
 ids = [c.cid for c in L.coaches]
 check("every hired coach has a unique id", len(ids) == len(set(ids)))
-check("coach and GM names stay unique across hired and passed-over candidates",
-      len({c.name for c in L.coaches} | {c.name for c in L.passed_over if hasattr(c, "cid")}) == len({c.name for c in L.coaches}) + len({c.name for c in L.passed_over if hasattr(c, "cid")}))
+people = {id(c): c for c in list(L.coaches) + [c for c in L.passed_over if hasattr(c, "cid")]}
+check("coach names stay unique across everyone hired or passed over", len({c.name for c in people.values()}) == len(people))
 
 # ---- the guard ----------------------------------------------------------------------------------------------
 
@@ -184,22 +190,18 @@ check("the driver for that team really does choose differently from the autopilo
 
 # ---- the league survives every driver ------------------------------------------------------------------------------------
 for name, drv in (("churn-oracle", ADV.ChurnOracle()), ("elite-oracle", ADV.EliteOracle()), ("polarized", ADV.Polarized()),
-                  ("legend-hunter", ADV.LegendHunter()), ("stand-pat", ADV.StandPat()), ("random-legal", D.RandomLegalDriver(2))):
+                  ("star-hunter", ADV.StarHunter()), ("carousel-rider", ADV.CarouselRider()), ("stand-pat", ADV.StandPat()), ("random-legal", D.RandomLegalDriver(2))):
     Ld, rd, _ = play(12, 15, driver=drv)
     ok = all(t.coach and t.gm and t.owner for t in Ld.teams) and all(e["status"] == "ok" for e in Ld.choice_log) and Ld.by_id and True
     check(f"{name}: 15 seasons complete, every team keeps a coach, GM and owner, every choice accepted", ok)
 
-# ---- the legend cap keeps legends rare whatever owners choose --------------------------------------------------------------
-mx = 0
-rr2 = random.Random(5)
-Lh2 = new_league(rr2, rosters=True)
-Lh2.driver = ADV.LegendHunter()
-for y in range(1, 31):
-    run_season(Lh2, y, rr2, Options(engine="fast", keep_boxes=False))
-    mx = max(mx, sum(1 for t in Lh2.teams if t.coach.legend))
-check("with every owner hunting for a legend, legends stay rare (the cap holds, give or take natural arrivals)", mx <= S.LEGEND_CAP + 2 and Lh2.legend_cap_hits > 0,
-      f"most on the field {mx}, cap {S.LEGEND_CAP}, {Lh2.legend_cap_hits} legends kept off lists")
-check("the cap never touches the autopilot on the seeds in the golden file", all(play(int(sd), 40)[0].legend_cap_hits == 0 for sd in gold["seeds"]))
+# ---- the carousel: people between jobs really are re-hired when owners choose them ------------------------------------------
+Lc2, _, _ = play(5, 30, driver=ADV.CarouselRider())
+rehired = [c for c in Lc2.coaches if len({e["team"] for e in c.career if e["event"] == "hired"}) >= 2]
+check("owners who choose them re-hire people between jobs, who keep their one card and identity", len(rehired) > 5 and len({c.cid for c in Lc2.coaches}) == len(Lc2.coaches),
+      f"{len(rehired)} coaches have worked for 2 or more teams")
+check("a re-hired coach keeps her ratings history and her soul (same card, same people)", all(c.soul_pos and c.career[0]["event"] in ("hired", "passed_over") for c in rehired))
+check("no one is ever on two teams at once", all(sum(1 for t in Lc2.teams if t.coach is c) <= 1 for c in Lc2.coaches) and len({id(t.coach) for t in Lc2.teams}) == 48 and len({id(t.gm) for t in Lc2.teams}) == 48)
 
 # ---- scenes still explain what happened, whoever decided -------------------------------------------------------------------
 Lr2, _, _ = play(8, 20, driver=D.RandomLegalDriver(11))

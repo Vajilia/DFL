@@ -97,3 +97,54 @@ COACH_TRAITS = {
     "Gambler": ("a fourth-down legend", "being second-guessed for the one that failed"),
     "Steady Hand": ("sustained quiet success", "a collapse nobody saw coming"),
 }
+
+
+# ---- owners, general managers and coaches: personalities, backgrounds and the soul labels of each rating ----
+OWNER_TRAITS = {
+    "Legacy Builder": ("a dynasty with her name on it", "being recalled"),
+    "Penny-Pincher": ("a profitable franchise", "a league subsidy"),
+    "Glory Hunter": ("a title right now", "being a laughingstock"),
+    "Meddler": ("a hand in every decision", "being irrelevant"),
+    "Patient Steward": ("a slow, sound build", "panic"),
+    "Showwoman": ("spectacle and headlines", "boredom"),
+    "Local Hero": ("the town's love", "selling out"),
+    "Opportunist": ("a quick profit", "a long losing stretch"),
+}
+OWNER_PATHS = ["Founder's daughter", "Self-made industrialist", "Tech founder", "Media heiress", "Real-estate magnate",
+               "Former player turned investor", "Local business owner", "Consortium front-woman", "Sports-franchise veteran",
+               "Philanthropist"]
+OWNER_ARCHETYPES = {
+    "patience": ("Patient Steward", "Trigger-Happy"),
+    "ambition": ("Relentless Competitor", "Content With Mediocrity"),
+    "involvement": ("Hands-On Leader", "Absentee Owner"),
+    "popularity": ("Fan Favorite", "Despised"),
+    "business": ("Shrewd Operator", "Money Pit"),
+}
+GM_PATHS = ["Longtime scout", "Former player turned executive", "Analytics-driven executive", "Agent turned GM",
+            "Came up through the personnel department", "Coach's trusted lieutenant", "Cap specialist", "Hired away from another league"]
+GM_TRAITS = {
+    "Talent Hawk": ("the best young players", "missing on a first-round pick"),
+    "Dealmaker": ("the best contract in every negotiation", "being outmaneuvered"),
+    "Planner": ("a five-year roster plan", "a short-term panic"),
+    "Gambler": ("a high-risk, high-reward bet", "a boring middling roster"),
+    "Loyal Lieutenant": ("her owner's trust", "being replaced"),
+    "Cold Realist": ("decisions free of sentiment", "a veteran she cannot cut"),
+}
+GM_ARCHETYPES = {
+    "scouting": ("Draft Whisperer", "Draft-Day Disaster"),
+    "negotiation": ("Closer", "Poor Negotiator"),
+    "evaluation": ("Eye for Talent", "Misjudges Players"),
+    "trades": ("Master Trader", "Gets Fleeced"),
+    "cap_sense": ("Cap Wizard", "Cap Casualty"),
+}
+
+
+
+COACH_ARCHETYPES = {
+    "offense": ("Offensive Mastermind", "Predictable Offense"),
+    "defense": ("Defensive Architect", "Leaky Defense"),
+    "development": ("Talent Developer", "Stunts Growth"),
+    "gamecraft": ("Clock Manager", "Costly Decisions"),
+    "discipline": ("Taskmaster", "Undisciplined"),
+    "motivation": ("Inspirer", "Flat Locker Room"),
+}

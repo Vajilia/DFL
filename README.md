@@ -21,7 +21,11 @@ A league engine with no AI (Phase 2 adds 47-player rosters, a drive-by-drive gam
 | `engine/boxscore.py` | Readable box score |
 | `engine/calibrate_engine.py` | Checks the engine looks like football |
 | `engine/phase2_report.py` | Writes `reports/phase2_report.md` |
-| `engine/cards.py`, `card_pools.py` | Character cards: player souls (archetypes), perception and personality; head coaches who develop players, with rare legends |
+| `engine/cards.py`, `card_pools.py` | Character cards: player souls (archetypes), perception and personality; head coaches who develop players |
+| `engine/living.py` | The living bones shared by coaches, GMs and owners: souls, careers, perception, personality inside the soul's family, the league reference, free agents |
+| `engine/recognition.py` | Honors, esteem, what the media calls people (legends emerge, nobody is designated) and the league Hall of Fame |
+| `engine/store.py` | Persistence: SQLite snapshots that resume exactly, and plain queryable tables |
+| `engine/emergence_study.py` | Plays long leagues and reports how legends and the Hall of Fame emerge; writes `reports/emergence_study.md` |
 | `engine/staff_cards.py` | Owner and GM cards; recall votes, hiring and firing; the Archive's first entries |
 | `engine/decisions.py` | Decision Points: the one door for every choice (options, drivers, guard, choice log) |
 | `engine/adversaries.py` | Worst-case drivers used to test the fairness bands |
@@ -29,7 +33,7 @@ A league engine with no AI (Phase 2 adds 47-player rosters, a drive-by-drive gam
 | `engine/fan_media_cards.py` | Fanbase cards (culture, ratings, approval, Fan Capital) and media outlet cards (voice, ratings, Credibility, forecasts) |
 | `engine/staff_sweep.py` | Tests owners, firings and the GM levers (and 3x, 6x stress versions) against the fairness bands; writes `reports/staff_fairness_study.md` |
 | `engine/card_report.py` | Writes `reports/card_samples.md` |
-| `engine/coach_sweep.py` | Sweeps the coach dials (team lift, player development, legend rate) against the fairness bands; writes `reports/coach_fairness_study.md` |
+| `engine/coach_sweep.py` | Sweeps the coach dials (team lift, player development) against the fairness bands; writes `reports/coach_fairness_study.md` |
 | `engine/tiebreak.py` | NFL-style tiebreaking procedures (division, wild card, draft order) |
 | `engine/exile_fairness_study.py` | Compares ways to handle an exiled team's two drafts; writes `reports/exile_two_draft_study.md` |
 | `engine/fairness.py` | Measures trends against the "fair competitiveness" bands in `rules.py`; writes `reports/fairness_report.md` |
@@ -52,6 +56,7 @@ A league engine with no AI (Phase 2 adds 47-player rosters, a drive-by-drive gam
     python engine/check_staff.py           # owners, GMs, recall votes, firings
     python engine/check_fans.py            # fanbase and media cards
     python engine/check_decisions.py       # decision points, the guard, replay, the autopilot's exactness
+    python engine/check_living.py          # living cards, recognition, the Hall of Fame, saving and resuming a league
     python engine/decision_sweep.py        # fairness under random and worst-case choices (slow)
     python engine/check_interactions.py    # firing, recall and exile scenes (and proof they change no outcome)
     python engine/fan_media_sweep.py       # fairness study for the fan and media cards (slow)

@@ -51,7 +51,7 @@ def measure_league(seed: int, seasons: int, engine: str = "fast", opt: Options =
     leg = dict(seasons=0, wins=0.0, playoffs=0, titles=0, seasons_all=0, titles_total=0)
     for y in range(1, seasons + 1):
         strengths = {tid: v[2] for tid, v in lg.snapshot().items()}
-        legends = {t.id for t in lg.teams if t.coach is not None and t.coach.legend and t.status == "active"}
+        legends = {t.id for t in lg.teams if t.coach is not None and t.coach.standing in ("legend", "Hall of Famer") and t.status == "active"}   # led by a coach the media calls a legend
         res = run_season(lg, y, rng, opt)
         pct = {tid: float(s.pct) for tid, s in res.stats.items()}
         hist.append(dict(start=strengths, ranks=res.division_ranks, pick={t: p for p, t, _ in res.draft}, new=res.new_exiles))

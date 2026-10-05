@@ -177,13 +177,30 @@ poor.ratings["development"] = 1.0
 check("a poor development coach holds players back", C.development_bonus(poor, 24) < 0 and abs(C.development_bonus(poor, 24)) <= C.DEV_POINTS_AT_100 + 1e-9)
 check("development bonus is capped", all(abs(C.development_bonus(c, 24)) <= C.DEV_POINTS_AT_100 + 1e-9 for c in L.coaches))
 check("older players respond half as much", abs(C.development_bonus(good_coach, 30) - 0.5 * C.development_bonus(good_coach, 24)) < 1e-9)
-n_legends = sum(c.legend for c in L.coaches)
-check("legends exist but are rare", 0 < n_legends < 0.15 * len(L.coaches), f"{n_legends} of {len(L.coaches)} coaches over 25 seasons")
-leg = [c for c in L.coaches if c.legend]
-check("every legend is truly exceptional", all(min(c.ratings["offense"], c.ratings["defense"], c.ratings["development"]) >= 75 for c in leg))
+# ---- coaches are living people: no designated legends -----------------------------------------------------------
+import living as LV  # noqa: E402
+check("no coach is born a legend (there is no such flag)", not any(hasattr(c, "legend") for c in L.coaches) and not hasattr(C, "LEGEND_RATE"))
 many = [C.make_coach_card(7, i) for i in range(1, 4001)]
-check("legend frequency matches the dial", abs(sum(c.legend for c in many) / len(many) - C.LEGEND_RATE) < 0.012, f"{sum(c.legend for c in many) / len(many):.3f}")
-check("legends do not lift the average coach", abs(st.mean(c.ratings["offense"] for c in many) - 50.0) < 1.5, f"{st.mean(c.ratings['offense'] for c in many):.1f}")
+check("new coaches are drawn around 50, with no special tail", abs(st.mean(c.ratings["offense"] for c in many) - 50.0) < 1.0 and
+      sum(c.ratings["offense"] >= 90 for c in many) / len(many) < 0.01, f"mean {st.mean(c.ratings['offense'] for c in many):.1f}, "
+      f"{sum(c.ratings['offense'] >= 90 for c in many)} of {len(many)} at 90+")
+old = [c for c in L.coaches if len([e for e in c.career if e["event"] == "hired"]) and c.seasons_with_team >= 8]
+check("a career changes a coach's ratings (they grow, plateau and fade)", len(old) > 10 and st.mean(abs(c.ratings["offense"] - c.anchor["offense"]) for c in old) > 3.0,
+      f"{len(old)} coaches with 8+ seasons; mean change {st.mean(abs(c.ratings['offense'] - c.anchor['offense']) for c in old):.1f}")
+check("but her soul is fixed: the best and worst of her birth ratings are still her archetypes and her shape never moved",
+      all(c.soul_pos == max(c.anchor, key=lambda a, c=c: c.anchor[a]) and c.soul_neg == min(c.anchor, key=lambda a, c=c: c.anchor[a]) and
+          abs(sum(c.shape.values())) < 1e-6 for c in L.coaches))
+check("her soul keeps her ratings in shape (her birth strength is still, on average, her best)", st.mean(c.ratings[c.soul_pos] >= LV.level(c) for c in old) > 0.8)
+check("her personality is always one her soul allows", all(c.trait in c.family for c in L.coaches))
+check("some coaches changed personality over their careers", sum(any(e["event"] == "personality_shift" for e in c.career) for c in L.coaches) > 5)
+check("a coach's self-image lags the truth (the average gap is real but small)", all(abs(LV.confidence_gap(c)) < 20 for c in L.coaches))
+seated = [t.coach for t in L.teams]
+check("the average coach on the job has zero effect (effects are measured against the league's current average)",
+      abs(st.mean(c.offense_points for c in seated)) < 0.05 and abs(st.mean(c.development_points for c in seated)) < 0.02,
+      f"{st.mean(c.offense_points for c in seated):+.3f} and {st.mean(c.development_points for c in seated):+.3f}")
+check("effects are capped at the stated sizes whatever the ratings", all(abs(c.offense_points) <= C.COACH_POINTS_AT_100 + 1e-9 and abs(c.defense_points) <= C.COACH_POINTS_AT_100 + 1e-9
+      and abs(c.development_points) <= C.DEV_POINTS_AT_100 + 1e-9 for c in L.coaches))
+check("every rating stays between 1 and 100", all(1 <= v <= 100 for c in L.coaches for v in c.ratings.values()))
 
 print()
 if failures:

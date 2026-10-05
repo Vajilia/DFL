@@ -1,7 +1,7 @@
 """How big can the coach effects get before a fair-competitiveness band breaks?
 
-Sweeps the three coach dials (team lift, player development, how often a legend appears) with the same leagues and
-seeds, reports every band for each setting, and what the legends actually achieve. Writes reports/coach_fairness_study.md.
+Sweeps the three coach dials (team lift, player development, team lift and player development; legends are no longer a dial, they emerge) with the same leagues and
+seeds, reports every band for each setting, and what the media-recognized legends actually achieve. Writes reports/coach_fairness_study.md.
 
     python engine/coach_sweep.py [--leagues 8] [--seasons 48]
 """
@@ -15,7 +15,7 @@ import fairness  # noqa: E402
 
 ROOT = os.path.dirname(os.path.abspath(__file__)).rsplit(os.sep, 1)[0]
 
-# (label, coaches on?, team points at 100, development points at 100, legend rate, engine, leagues)
+# (label, coaches on?, team points at 100, development points at 100, unused, engine)
 VARIANTS = [
     ("A. No coaches at all (souls only)", False, 1.0, 0.0, 0.05, "fast"),
     ("B. Team lift only, as first built (1.0 point, no development)", True, 1.0, 0.0, 0.05, "fast"),
@@ -26,16 +26,15 @@ VARIANTS = [
     ("G. Development 1.00", True, 1.0, 1.00, 0.05, "fast"),
     ("H. Development 0.40 and team lift 1.5 points", True, 1.5, 0.40, 0.05, "fast"),
     ("I. Development 0.40 and team lift 2.0 points", True, 2.0, 0.40, 0.05, "fast"),
-    ("J. Development 0.40, lift 1.0, legends twice as common (10%)", True, 1.0, 0.40, 0.10, "fast"),
 ]
 
 
 def footprint(per):
     t = {k: sum(d["_legend"][k] for d in per) for k in ("seasons", "wins", "playoffs", "titles", "seasons_all")}
     if not t["seasons"]:
-        return "No legend-led team-seasons occurred."
+        return "No team was led by a media-recognized legend."
     n = t["seasons"]
-    return (f"Legend-led teams: {n / len(per):.0f} team-seasons per league (about {n / max(1, t['seasons_all']):.1f} legends on the field at a time). "
+    return (f"Teams led by a coach the media calls a legend: {n / len(per):.0f} team-seasons per league (about {n / max(1, t['seasons_all']):.1f} on the field at a time). "
             f"They won {100 * t['wins'] / n:.1f}% of their games (league average 50%), made the playoffs {100 * t['playoffs'] / n:.0f}% of the time "
             f"(14 of 40 teams = 35% on average) and won the title in {100 * t['titles'] / n:.1f}% of seasons (1 in 40 = 2.5% on average).")
 
@@ -52,15 +51,15 @@ def main(argv=None):
     out = ["# Coach effects and fair competitiveness\n",
            "Each coach card has three levers: a lift to the team's offense and defense (a 50 rating is average and does nothing; "
            "a 100 is worth the stated points of margin), and a yearly boost to the development of each of her players (a 100 adds "
-           "the stated rating points per year to every young player, half that to older ones; a 1 takes it away). Rare legends "
-           "(see LEGEND_RATE; 5% in this table) have 90-plus ratings on all three. Coaches stay until they retire, so a great coach is a lasting edge. "
+           "the stated rating points per year to every young player, half that to older ones; a 1 takes it away). Coaches grow and fade over a career, "
+           "and the lift is measured against the league's current average coach. "
            "Same leagues and seeds in every row, 48 seasons each (first 8 thrown away). The question for every row: does any trend leave its band?\n"]
-    base = (C.COACH_POINTS_AT_100, C.DEV_POINTS_AT_100, C.LEGEND_RATE)
+    base = (C.COACH_POINTS_AT_100, C.DEV_POINTS_AT_100)
     summary = []
     for label, coaches, pts, dev, leg, eng in VARIANTS:
         if keep and label[0] not in keep:
             continue
-        C.COACH_POINTS_AT_100, C.DEV_POINTS_AT_100, C.LEGEND_RATE = pts, dev, leg
+        C.COACH_POINTS_AT_100, C.DEV_POINTS_AT_100 = pts, dev
         per, rows = fairness.run(eng, range(100, 100 + a.leagues), a.seasons, coaches=coaches)
         bad = [r[0][:40] for r in rows if not r[4]]
         out.append(f"## {label}\n")
@@ -75,7 +74,7 @@ def main(argv=None):
         print("    title conc (mean/worst):", round(v["max_titles_in_20"], 2), v["worst_league_titles"],
               " corr:", round(v["year_to_year_corr"], 3), " best-team odds:", round(v["best_team_title_odds"], 3),
               " stuck:", round(v["stuck_at_bottom"], 3), " win sd:", round(v["win_pct_sd"], 3), flush=True)
-    C.COACH_POINTS_AT_100, C.DEV_POINTS_AT_100, C.LEGEND_RATE = base
+    C.COACH_POINTS_AT_100, C.DEV_POINTS_AT_100 = base
     if not a.no_write:
         path = a.out or os.path.join(ROOT, "reports", "coach_fairness_study.md")
         open(path, "w").write("\n".join(out))

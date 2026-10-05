@@ -26,7 +26,8 @@ VARIANTS = [
     ("D. Worst case: every owner fires everyone every year and hires the truly best candidate", lambda: ADV.ChurnOracle()),
     ("E. Worst case: only the 8 strongest teams churn and hire perfectly", lambda: ADV.EliteOracle(8)),
     ("F. Worst case: the 8 strongest hire the best, the 8 weakest the worst, every year", lambda: ADV.Polarized(8)),
-    ("G. Worst case: everyone hunts for a legend coach", lambda: ADV.LegendHunter()),
+    ("G. Worst case: everyone hunts for the most famous coach", lambda: ADV.StarHunter()),
+    ("H. Worst case: every owner recycles the same people between jobs", lambda: ADV.CarouselRider()),
 ]
 
 

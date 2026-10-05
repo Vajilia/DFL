@@ -1,5 +1,9 @@
 {
-  "note": "Fingerprints of 40-season fast-engine leagues under the AUTOPILOT, taken from the code as it stood before decision points existed (commit b2b95ff). check_decisions.py asserts the autopilot still reproduces them. If a later change is MEANT to alter outcomes, regenerate with fingerprint.py and say so in docs/decisions.md.",
+  "note": "Fingerprints of 40-season fast-engine leagues under the AUTOPILOT, regenerated on 2026-10-05 for the living-cards change (coaches, GMs and owners now grow, retire and re-enter pools, so outcomes legitimately changed; the old fingerprints were from commit 7c0e0dc). check_decisions.py asserts the autopilot still reproduces them, so any later change that alters outcomes must regenerate them and say so in docs/decisions.md.",
   "seasons": 40,
-  "seeds": {"33": "15602933470dc8ca", "5": "696260d54d5b6058", "21": "9d46d8aa96d56623"}
+  "seeds": {
+    "33": "d5f65abc38cdb78c",
+    "5": "abe3c074c85b7ef1",
+    "21": "2a0d1023cfc3655c"
+  }
 }

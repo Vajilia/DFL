@@ -1,5 +1,8 @@
 # Owners, GMs, recalls and fair competitiveness
 
+> **Historical (2026-10-05):** this study was run before coaches, GMs and owners became living cards and before designated legends were removed. It is kept for what it shows about sizing the dials. The current proof is `decision_fairness_study.md` (autopilot, random and worst-case choices) and `living_fairness_drives_engine.md` (full drive engine).
+
+
 Owners never touch a game. What they change is who coaches and who manages: an owner whose team under-delivers builds up "heat" and eventually fires her coach and GM, and a new owner sometimes sweeps the staff out. GMs have two small levers: they lift their team's rookie a little each year (a 100-rated scout is worth +1.5 rating points; a 1 costs the same) and they keep slightly more of the roster from reaching free agency (a 100-rated negotiator cuts contract expiries by 30%; a 1 raises them by 30%). The question for every row: does any trend leave its band?
 
 ## What this shows

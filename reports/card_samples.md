@@ -1,6 +1,6 @@
 # Character cards: samples
 
-Seed 1, after 14 seasons. Names, hometowns and backgrounds come from placeholder word lists (engine/card_pools.py) that you can replace. Ratings, archetypes and the coach effect are real: they come from the engine. Relationships and the decision log start empty and fill as the Interaction system plays scenes (firings, recall votes and exile determinations so far).
+Seed 1, after 40 seasons. Names, hometowns and backgrounds come from placeholder word lists (engine/card_pools.py) that you can replace. Ratings, archetypes and the coach effect are real: they come from the engine. Relationships and the decision log start empty and fill as the Interaction system plays scenes (firings, recall votes and exile determinations so far).
 
 ## How to read a card
 
@@ -8,124 +8,135 @@ Seed 1, after 14 seasons. Names, hometowns and backgrounds come from placeholder
 - **Personality** is how her soul shows up. Her archetype allows four personalities; which one she shows depends on her temperament and on how she rates herself. Her self-image lags the truth, so a declining veteran overrates herself and a rising rookie undersells herself. When her confidence moves enough, her personality can shift, but only inside the four her soul allows.
 - **Pressure thresholds** (exile, contract, spotlight, loyalty) are how much each kind of pressure rattles her, 1 to 100. They do nothing yet; the Interaction system will use them.
 - **Fanbases and outlets**: a fanbase has a culture (its personality), five ratings and two stores: approval of the owner and Fan Capital (goodwill built by sustained success, which only ever buffers a recall). Its expectations drift with what the team delivers, inside a bound set at birth. An outlet has a voice, five ratings and Credibility, which rises when its forecasts come true and falls when they miss; one that stays irrelevant folds and is replaced. The press can move an owner's approval by at most 3 points a year.
-- **Coach ratings**: offense and defense lift the team (up to +/- 1.0 point of margin each); development adds up to 0.4 rating points a year to each young player. The other three are stored for later. Legends are the rare all-time greats.
+- **Coach ratings**: offense and defense lift the team (up to +/- 1.0 point of margin each); development adds up to 0.4 rating points a year to each young player. The other three are stored for later. Effects are measured against the league's current average coach, so the average coach does nothing.
+- **Living cards**: coaches, GMs and owners grow and fade over their careers (ratings move inside the shape their soul gave them), rate themselves with a lag, and can change personality inside the four traits their soul allows. People between jobs live on and can be offered to owners again. The TRAJECTORY line is their overall level by age.
+- **Recognition**: nobody is a legend by birth. Honors (titles, All-League, Coach of the Year...) build a career esteem; the 52 outlets read it with their own noise, and a credibility-weighted share calling someone a legend makes it so (or the media splits and she is *contested*). The Hall of Fame (outlets and owners) votes on people who retired a few years ago. There is no cap on either.
 
 ## A franchise player at each position group
 
-### Winona Hutchins  (QB, Team 37)
+### Ruth Aoki  (QB, Team 35)
 ```yaml
-IDENTITY: [Winona Hutchins, age 25, from Accra Ghana; Came up through the academy system]
-SOUL (fixed): [+ Well-Rounded, - Reads Late]  temperament family: balanced
-PERSONALITY: [Diplomat] wants a calm, united team; fears locker-room civil war
-  - allowed by her soul: Diplomat, Grinder, Loyalist, Mercenary; right now she is clear-eyed (+0.00)
-RATINGS: [overall 91, Franchise player]
-  - accuracy: 93  (sees herself at 94)
-  - arm: 92  (sees herself at 91)
-  - awareness: 88  (sees herself at 87)
-  - pressure thresholds: exile 31, contract 41, spotlight 65, loyalty 51
+IDENTITY: [Ruth Aoki, age 28, from Bozeman MT; Small-college standout]
+SOUL (fixed): [+ Surgeon, - Short-Armed]  temperament family: precision
+PERSONALITY: [Perfectionist] wants flawless execution; fears the one mistake everyone remembers
+  - allowed by her soul: Perfectionist, Quiet Leader, Grinder, Diplomat; right now she is full of doubt (-0.91)
+RATINGS: [overall 94, Franchise player]
+  - accuracy: 100  (sees herself at 93, doubting)
+  - arm: 90  (sees herself at 79, doubting)
+  - awareness: 90  (sees herself at 85, doubting)
+  - pressure thresholds: exile 45, contract 47, spotlight 60, loyalty 72
+RECOGNITION: [unknown; esteem 2.5; honors: All-League]
 RELATIONSHIPS: {}  # none yet; filled by Interactions
-CAREER: [drafted 12 (pick 30)]
+CAREER: [drafted 34 (pick 10)]
 DECISION_LOG: [none yet]
 ```
-### Eden Flanagan  (WR, Team 01)
+### Abigail Dunmore  (WR, Team 39)
 ```yaml
-IDENTITY: [Eden Flanagan, age 28, from Bozeman MT; Two-sport athlete]
-SOUL (fixed): [+ Burner, - Drop-Prone]  temperament family: flash
-PERSONALITY: [Showman] wants the spotlight and a signature moment; fears being ignored by the media
-  - allowed by her soul: Showman, Free Spirit, Competitor, Mercenary; right now she is clear-eyed (+0.11)
-RATINGS: [overall 88, Franchise player]
-  - route: 85  (sees herself at 83, doubting)
-  - hands: 83  (sees herself at 86, overrating)
-  - speed: 95  (sees herself at 97, overrating)
-  - pressure thresholds: exile 32, contract 48, spotlight 51, loyalty 57
-RELATIONSHIPS: {}  # none yet; filled by Interactions
-CAREER: [drafted 8 (pick 3)]
-DECISION_LOG: [none yet]
-```
-### Grace Pappas  (OL, Team 43)
-```yaml
-IDENTITY: [Grace Pappas, age 28, from Helsinki Finland; Late bloomer]
-SOUL (fixed): [+ Well-Rounded, - No Glaring Weakness]  temperament family: balanced
-PERSONALITY: [Diplomat] wants a calm, united team; fears locker-room civil war
-  - allowed by her soul: Diplomat, Grinder, Loyalist, Mercenary; right now she is full of doubt (-0.40)
-RATINGS: [overall 90, Franchise player]
-  - pass_block: 90  (sees herself at 88)
-  - run_block: 90  (sees herself at 85, doubting)
-  - pressure thresholds: exile 43, contract 65, spotlight 62, loyalty 58
-RELATIONSHIPS: {}  # none yet; filled by Interactions
-CAREER: [drafted 9 (pick 6)]
-DECISION_LOG: [none yet]
-```
-### Mirabel Pinkerton  (DL, Team 42)
-```yaml
-IDENTITY: [Mirabel Pinkerton, age 26, from Laredo TX; Small-college standout]
-SOUL (fixed): [+ Run Stuffer, - Little Pressure]  temperament family: power
-PERSONALITY: [Grinder] wants to earn every inch; fears being handed nothing and losing it anyway
-  - allowed by her soul: Competitor, Hothead, Grinder, Loyalist; right now she is full of doubt (-1.00)
-RATINGS: [overall 93, Franchise player]
-  - pass_rush: 88  (sees herself at 73, doubting)
-  - run_stop: 99  (sees herself at 86, doubting)
-  - pressure thresholds: exile 38, contract 64, spotlight 58, loyalty 47
-RELATIONSHIPS: {}  # none yet; filled by Interactions
-CAREER: [drafted 10 (pick 8)]
-DECISION_LOG: [none yet]
-```
-### Alba Gallagher  (CB, Team 23)
-```yaml
-IDENTITY: [Alba Gallagher, age 30, from Sacramento CA; Late bloomer]
-SOUL (fixed): [+ Well-Rounded, - No Glaring Weakness]  temperament family: balanced
-PERSONALITY: [Grinder] wants to earn every inch; fears being handed nothing and losing it anyway
-  - allowed by her soul: Diplomat, Grinder, Loyalist, Mercenary; right now she is clear-eyed (-0.16)
+IDENTITY: [Abigail Dunmore, age 25, from Cleveland OH; Small-college standout]
+SOUL (fixed): [+ Glue Hands, - Rough Routes]  temperament family: precision
+PERSONALITY: [Perfectionist] wants flawless execution; fears the one mistake everyone remembers
+  - allowed by her soul: Perfectionist, Quiet Leader, Grinder, Diplomat; right now she is full of doubt (-0.71)
 RATINGS: [overall 89, Franchise player]
-  - coverage: 88  (sees herself at 85, doubting)
-  - ball_skills: 93  (sees herself at 93)
-  - tackling: 89  (sees herself at 88)
-  - pressure thresholds: exile 44, contract 21, spotlight 48, loyalty 43
+  - route: 82  (sees herself at 76, doubting)
+  - hands: 93  (sees herself at 87, doubting)
+  - speed: 92  (sees herself at 87, doubting)
+  - pressure thresholds: exile 49, contract 50, spotlight 46, loyalty 29
+RECOGNITION: [unknown; esteem 2.5; honors: All-League]
 RELATIONSHIPS: {}  # none yet; filled by Interactions
-CAREER: [drafted 6 (pick 2)]
+CAREER: [drafted 37 (pick 6)]
 DECISION_LOG: [none yet]
 ```
-### Wanda Dellinger  (K, Team 30)
+### Nia Jankowski  (OL, Team 43)
 ```yaml
-IDENTITY: [Wanda Dellinger, age 32, from Duluth MN; Small-college standout]
+IDENTITY: [Nia Jankowski, age 30, from Gary IN; Small-college standout]
 SOUL (fixed): [+ Well-Rounded, - No Glaring Weakness]  temperament family: balanced
 PERSONALITY: [Diplomat] wants a calm, united team; fears locker-room civil war
-  - allowed by her soul: Diplomat, Grinder, Loyalist, Mercenary; right now she is full of doubt (-0.73)
-RATINGS: [overall 90, Franchise player]
-  - power: 91  (sees herself at 84, doubting)
-  - accuracy: 89  (sees herself at 85, doubting)
-  - pressure thresholds: exile 54, contract 58, spotlight 20, loyalty 45
+  - allowed by her soul: Diplomat, Grinder, Loyalist, Mercenary; right now she is overconfident (+0.75)
+RATINGS: [overall 89, Franchise player]
+  - pass_block: 89  (sees herself at 94, overrating)
+  - run_block: 88  (sees herself at 96, overrating)
+  - pressure thresholds: exile 34, contract 41, spotlight 58, loyalty 61
+RECOGNITION: [respected; esteem 10.5; honors: All-League x5]
 RELATIONSHIPS: {}  # none yet; filled by Interactions
-CAREER: [none recorded]
+CAREER: [drafted 32 (pick 2)]
+DECISION_LOG: [none yet]
+```
+### Bianca Baptiste  (DL, Team 36)
+```yaml
+IDENTITY: [Bianca Baptiste, age 27, from Montreal QC; Came up through the academy system]
+SOUL (fixed): [+ Run Stuffer, - Little Pressure]  temperament family: power
+PERSONALITY: [Competitor] wants to win everything in front of her; fears being outworked
+  - allowed by her soul: Competitor, Hothead, Grinder, Loyalist; right now she is full of doubt (-0.33)
+RATINGS: [overall 94, Franchise player]
+  - pass_rush: 89  (sees herself at 86, doubting)
+  - run_stop: 100  (sees herself at 98, doubting)
+  - pressure thresholds: exile 50, contract 67, spotlight 44, loyalty 28
+RECOGNITION: [respected; esteem 9.1; honors: All-League x4]
+RELATIONSHIPS: {}  # none yet; filled by Interactions
+CAREER: [drafted 35 (pick 2)]
+DECISION_LOG: [none yet]
+```
+### Zelda Eberhardt  (CB, Team 41)
+```yaml
+IDENTITY: [Zelda Eberhardt, age 31, from Sao Paulo Brazil; Overlooked recruit]
+SOUL (fixed): [+ Ballhawk, - Avoids Contact]  temperament family: flash
+PERSONALITY: [Showman] wants the spotlight and a signature moment; fears being ignored by the media
+  - allowed by her soul: Showman, Free Spirit, Competitor, Mercenary; right now she is overconfident (+0.73)
+RATINGS: [overall 81, Franchise player]
+  - coverage: 78  (sees herself at 84, overrating)
+  - ball_skills: 91  (sees herself at 95, overrating)
+  - tackling: 75  (sees herself at 82, overrating)
+  - pressure thresholds: exile 62, contract 80, spotlight 57, loyalty 58
+RECOGNITION: [respected; esteem 12.9; honors: All-League x6]
+RELATIONSHIPS: {}  # none yet; filled by Interactions
+CAREER: [drafted 31 (pick 5); became Showman (was Free Spirit) 39]
+DECISION_LOG: [none yet]
+```
+### Destiny Jimenez  (K, Team 20)
+```yaml
+IDENTITY: [Destiny Jimenez, age 38, from Albuquerque NM; Walk-on turned starter]
+SOUL (fixed): [+ Well-Rounded, - No Glaring Weakness]  temperament family: balanced
+PERSONALITY: [Diplomat] wants a calm, united team; fears locker-room civil war
+  - allowed by her soul: Diplomat, Grinder, Loyalist, Mercenary; right now she is clear-eyed (+0.23)
+RATINGS: [overall 86, Franchise player]
+  - power: 89  (sees herself at 89)
+  - accuracy: 84  (sees herself at 87, overrating)
+  - pressure thresholds: exile 72, contract 59, spotlight 61, loyalty 41
+RECOGNITION: [known; esteem 8.6; honors: All-League x4]
+RELATIONSHIPS: {}  # none yet; filled by Interactions
+CAREER: [became Grinder (was Diplomat) 27; became Diplomat (was Grinder) 39]
 DECISION_LOG: [none yet]
 ```
 
 ## A young rookie and a veteran
 
-### Anneke Chandler  (DL, Team 18)
+### Gwen Rivas  (CB, Team 44)
 ```yaml
-IDENTITY: [Anneke Chandler, age 23, from Helsinki Finland; Late bloomer]
-SOUL (fixed): [+ Well-Rounded, - No Glaring Weakness]  temperament family: balanced
-PERSONALITY: [Diplomat] wants a calm, united team; fears locker-room civil war
-  - allowed by her soul: Diplomat, Grinder, Loyalist, Mercenary; right now she is overconfident (+0.70)
-RATINGS: [overall 64, Starter]
-  - pass_rush: 63  (sees herself at 70, overrating)
-  - run_stop: 66  (sees herself at 70, overrating)
-  - pressure thresholds: exile 40, contract 79, spotlight 44, loyalty 41
+IDENTITY: [Gwen Rivas, age 22, from Cleveland OH; Coach's daughter]
+SOUL (fixed): [+ Willing Tackler, - Beaten Deep]  temperament family: power
+PERSONALITY: [Competitor] wants to win everything in front of her; fears being outworked
+  - allowed by her soul: Competitor, Hothead, Grinder, Loyalist; right now she is clear-eyed (+0.06)
+RATINGS: [overall 77, Star]
+  - coverage: 74  (sees herself at 76, overrating)
+  - ball_skills: 81  (sees herself at 82)
+  - tackling: 83  (sees herself at 81)
+  - pressure thresholds: exile 36, contract 44, spotlight 48, loyalty 46
+RECOGNITION: [unknown; esteem 0.0; honors: none yet]
 RELATIONSHIPS: {}  # none yet; filled by Interactions
-CAREER: [drafted 14 (pick 1)]
+CAREER: [drafted 40 (pick 1)]
 DECISION_LOG: [none yet]
 ```
-### Wanda Dellinger  (K, Team 30)
+### Evangeline Dalton  (OL, Team 19)
 ```yaml
-IDENTITY: [Wanda Dellinger, age 32, from Duluth MN; Small-college standout]
+IDENTITY: [Evangeline Dalton, age 32, from Birmingham AL; Walk-on turned starter]
 SOUL (fixed): [+ Well-Rounded, - No Glaring Weakness]  temperament family: balanced
 PERSONALITY: [Diplomat] wants a calm, united team; fears locker-room civil war
-  - allowed by her soul: Diplomat, Grinder, Loyalist, Mercenary; right now she is full of doubt (-0.73)
-RATINGS: [overall 90, Franchise player]
-  - power: 91  (sees herself at 84, doubting)
-  - accuracy: 89  (sees herself at 85, doubting)
-  - pressure thresholds: exile 54, contract 58, spotlight 20, loyalty 45
+  - allowed by her soul: Diplomat, Grinder, Loyalist, Mercenary; right now she is overconfident (+0.38)
+RATINGS: [overall 88, Franchise player]
+  - pass_block: 85  (sees herself at 89, overrating)
+  - run_block: 91  (sees herself at 94, overrating)
+  - pressure thresholds: exile 70, contract 77, spotlight 53, loyalty 64
+RECOGNITION: [star; esteem 22.4; honors: All-League x5, Player of the Year x3]
 RELATIONSHIPS: {}  # none yet; filled by Interactions
 CAREER: [none recorded]
 DECISION_LOG: [none yet]
@@ -133,296 +144,397 @@ DECISION_LOG: [none yet]
 
 ## A player whose personality changed (her soul stayed the same)
 
-### Eva Quillen  (DL, Team 01)
+### Marguerite Fairbanks  (S, Team 17)
 ```yaml
-IDENTITY: [Eva Quillen, age 29, from Richmond VA; Came up through the academy system]
-SOUL (fixed): [+ Edge Terror, - Gets Washed Out]  temperament family: power
+IDENTITY: [Marguerite Fairbanks, age 34, from Columbus OH; Two-sport athlete]
+SOUL (fixed): [+ Deep Patroller, - Poor Ball Skills]  temperament family: command
 PERSONALITY: [Competitor] wants to win everything in front of her; fears being outworked
-  - allowed by her soul: Competitor, Hothead, Grinder, Loyalist; right now she is clear-eyed (+0.16)
-RATINGS: [overall 62, Starter]
-  - pass_rush: 69  (sees herself at 71)
-  - run_stop: 54  (sees herself at 55)
-  - pressure thresholds: exile 80, contract 56, spotlight 48, loyalty 55
+  - allowed by her soul: Quiet Leader, Competitor, Diplomat, Perfectionist; right now she is overconfident (+0.94)
+RATINGS: [overall 60, Depth]
+  - coverage: 67  (sees herself at 74, overrating)
+  - ball_skills: 55  (sees herself at 62, overrating)
+  - tackling: 56  (sees herself at 65, overrating)
+  - pressure thresholds: exile 60, contract 60, spotlight 11, loyalty 65
+RECOGNITION: [unknown; esteem 0.0; honors: none yet]
 RELATIONSHIPS: {}  # none yet; filled by Interactions
-CAREER: [became Grinder (was Competitor) 9; became Competitor (was Grinder) 10]
+CAREER: [became Quiet Leader (was Competitor) 29; became Perfectionist (was Quiet Leader) 30; became Competitor (was Perfectionist) 35]
 DECISION_LOG: [none yet]
 ```
 
 ## A retired player (cards are kept for the Archive)
 
-### Kyra Kaplan  (QB, retired)
+### Bianca Davenport  (CB, retired)
 ```yaml
-IDENTITY: [Kyra Kaplan, age 34, from Charleston SC; Power-conference star]
-SOUL (fixed): [+ Surgeon, - Short-Armed]  temperament family: precision
-PERSONALITY: [Grinder] wants to earn every inch; fears being handed nothing and losing it anyway
-  - allowed by her soul: Perfectionist, Quiet Leader, Grinder, Diplomat; right now she is clear-eyed (+0.08)
-RATINGS: [overall 91, Franchise player]
-  - accuracy: 96  (sees herself at 95)
-  - arm: 88  (sees herself at 86)
-  - awareness: 84  (sees herself at 88, overrating)
-  - pressure thresholds: exile 69, contract 70, spotlight 52, loyalty 78
+IDENTITY: [Bianca Davenport, age 33, from Jackson MS; Coach's daughter]
+SOUL (fixed): [+ Willing Tackler, - Poor Ball Skills]  temperament family: power
+PERSONALITY: [Competitor] wants to win everything in front of her; fears being outworked
+  - allowed by her soul: Competitor, Hothead, Grinder, Loyalist; right now she is clear-eyed (+0.11)
+RATINGS: [overall 95, Franchise player]
+  - coverage: 97  (sees herself at 98)
+  - ball_skills: 89  (sees herself at 91)
+  - tackling: 96  (sees herself at 96)
+  - pressure thresholds: exile 53, contract 41, spotlight 42, loyalty 25
+RECOGNITION: [Hall of Famer; esteem 45.3; honors: All-League x10, Player of the Year x8, Hall of Fame]
 RELATIONSHIPS: {}  # none yet; filled by Interactions
-CAREER: [retired 10]
+CAREER: [drafted 17 (pick 2); became Grinder (was Competitor) 18; became Competitor (was Grinder) 27; retired 28; hof_ballot 31]
 DECISION_LOG: [none yet]
 ```
 
-## Head coaches: a legend, a typical coach and a weak one
+## Head coaches: the most esteemed ever, a typical coach and a weak one
 
-### Coach Xiomara Aoki  (Team 21)  -  LEGEND
+### Coach Tatiana Amundsen  (retired)  -  HALL OF FAMER
 ```yaml
-IDENTITY: [Xiomara Aoki, age 66, from Winnipeg MB; Coordinator who got her first shot]
+IDENTITY: [Tatiana Amundsen, age 61, from Compton CA; Analytics-minded newcomer]
+SOUL (fixed): [+ Inspirer, - Leaky Defense]
+PERSONALITY: [Players' Coach] wants a locker room that plays hard for her; fears losing the room
+  - allowed by her soul: Players' Coach, Developer, Innovator, Survivor; right now she is clear-eyed (-0.23)
+RATINGS:
+  - offense: 80  (sees herself at 79)   -> +0.47 points of margin
+  - defense: 40  (sees herself at 36, doubting)   -> -0.25 points of margin
+  - development: 60  (sees herself at 58, doubting)   -> +0.05 rating points per year to each young player
+  - gamecraft: 74  (sees herself at 73)   (no on-field effect yet)
+  - discipline: 60  (sees herself at 60)   (no on-field effect yet)
+  - motivation: 83  (sees herself at 80, doubting)   (no on-field effect yet)
+  - pressure thresholds: exile 55, contract 45, spotlight 55, loyalty 32
+TRAJECTORY: [age 47: 57; age 49: 63; age 51: 65; age 53: 66; age 55: 68; age 57: 67; age 59: 67; age 61: 66; peak 68 at 55; now 66]
+RECOGNITION: [Hall of Famer; esteem 31.6; honors: Coach of the Year, Champion x2, Hall of Fame]
+RELATIONSHIPS: {Grace Grantham (owner): -5}
+CAREER: [hired 0; retired 15; hof_ballot 18]
+DECISION_LOG: [8: was exiled with her team]
+```
+### Coach Bianca Chandler  (Team 48)
+```yaml
+IDENTITY: [Bianca Chandler, age 51, from Winnipeg MB; Coordinator who got her first shot]
+SOUL (fixed): [+ Taskmaster, - Predictable Offense]
+PERSONALITY: [Disciplinarian] wants order, rules and no excuses; fears chaos and ego
+  - allowed by her soul: Disciplinarian, Steady Hand, Survivor, Tactician; right now she is clear-eyed (+0.10)
+RATINGS:
+  - offense: 39  (sees herself at 39)   -> -0.31 points of margin
+  - defense: 63  (sees herself at 63)   -> +0.17 points of margin
+  - development: 66  (sees herself at 68)   -> +0.13 rating points per year to each young player
+  - gamecraft: 65  (sees herself at 67)   (no on-field effect yet)
+  - discipline: 71  (sees herself at 72)   (no on-field effect yet)
+  - motivation: 42  (sees herself at 42)   (no on-field effect yet)
+  - pressure thresholds: exile 44, contract 20, spotlight 49, loyalty 57
+TRAJECTORY: [age 46: 60; age 47: 59; age 48: 60; age 49: 58; age 50: 59; age 51: 58; peak 60 at 46; now 58]
+RECOGNITION: [known; esteem 3.6; honors: none yet]
+RELATIONSHIPS: {Elena Haskell (owner): -5}
+CAREER: [hired 34]
+DECISION_LOG: [37: was exiled with her team]
+```
+### Coach Dara Ostrander  (Team 33)
+```yaml
+IDENTITY: [Dara Ostrander, age 49, from Bozeman MT; Long-time position coach]
+SOUL (fixed): [+ Clock Manager, - Predictable Offense]
 PERSONALITY: [Survivor] wants another contract year; fears the owner's phone call
-ARCHETYPES: [+ Legend: Talent Developer, - Undisciplined]
+  - allowed by her soul: Tactician, Gambler, Survivor, Steady Hand; right now she is full of doubt (-0.57)
 RATINGS:
-  - offense: 92   -> +0.83 points of margin
-  - defense: 96   -> +0.92 points of margin
-  - development: 99   -> +0.39 rating points per year to each young player
-  - gamecraft: 88   (no on-field effect yet)
-  - discipline: 81   (no on-field effect yet)
-  - motivation: 85   (no on-field effect yet)
-  - pressure thresholds: exile 55, contract 78, spotlight 64, loyalty 33
-RELATIONSHIPS: {Chloe Villanueva (owner): -10, Ines Garrison (owner): -5, Mila Pemberton (gm): +0, Lara Espinoza (gm): +0}
-CAREER: [hired 0]
-DECISION_LOG: [11: was exiled with her team]
-```
-### Coach Stella Landry  (Team 44)
-```yaml
-IDENTITY: [Stella Landry, age 56, from Miami FL; Came over from another league]
-PERSONALITY: [Steady Hand] wants sustained quiet success; fears a collapse nobody saw coming
-ARCHETYPES: [+ Taskmaster, - Stunts Growth]
-RATINGS:
-  - offense: 48   -> -0.04 points of margin
-  - defense: 50   -> -0.01 points of margin
-  - development: 32   -> -0.14 rating points per year to each young player
-  - gamecraft: 41   (no on-field effect yet)
-  - discipline: 60   (no on-field effect yet)
-  - motivation: 57   (no on-field effect yet)
-  - pressure thresholds: exile 47, contract 58, spotlight 45, loyalty 78
+  - offense: 24  (sees herself at 19, doubting)   -> -0.62 points of margin
+  - defense: 32  (sees herself at 28, doubting)   -> -0.45 points of margin
+  - development: 48  (sees herself at 45, doubting)   -> -0.02 rating points per year to each young player
+  - gamecraft: 56  (sees herself at 49, doubting)   (no on-field effect yet)
+  - discipline: 47  (sees herself at 44, doubting)   (no on-field effect yet)
+  - motivation: 25  (sees herself at 21, doubting)   (no on-field effect yet)
+  - pressure thresholds: exile 48, contract 56, spotlight 34, loyalty 58
+TRAJECTORY: [just started]
+RECOGNITION: [unknown; esteem 0.0; honors: none yet]
 RELATIONSHIPS: {}  # none yet; filled by Interactions
-CAREER: [hired 14]
+CAREER: [hired 40]
 DECISION_LOG: [none yet]
 ```
-### Coach Angela Clairmont  (Team 10)
+
+**A coach between jobs (she lives on and may be offered to an owner again):**
+
+### Coach Anneke Lockhart  (between jobs)
 ```yaml
-IDENTITY: [Angela Clairmont, age 47, from Corpus Christi TX; Rose through the assistant ranks]
-PERSONALITY: [Developer] wants to turn raw talent into stars; fears wasting a prospect
-ARCHETYPES: [+ Inspirer, - Leaky Defense]
+IDENTITY: [Anneke Lockhart, age 52, from Helsinki Finland; Third-generation coaching family]
+SOUL (fixed): [+ Defensive Architect, - Stunts Growth]
+PERSONALITY: [Survivor] wants another contract year; fears the owner's phone call
+  - allowed by her soul: Disciplinarian, Tactician, Steady Hand, Survivor; right now she is full of doubt (-0.59)
 RATINGS:
-  - offense: 31   -> -0.38 points of margin
-  - defense: 17   -> -0.66 points of margin
-  - development: 52   -> +0.02 rating points per year to each young player
-  - gamecraft: 43   (no on-field effect yet)
-  - discipline: 39   (no on-field effect yet)
-  - motivation: 56   (no on-field effect yet)
-  - pressure thresholds: exile 50, contract 86, spotlight 56, loyalty 86
-RELATIONSHIPS: {Roxanne Lambert (owner): -5}
-CAREER: [hired 10]
-DECISION_LOG: [13: was exiled with her team]
+  - offense: 52  (sees herself at 46, doubting)   -> -0.04 points of margin
+  - defense: 60  (sees herself at 55, doubting)   -> +0.14 points of margin
+  - development: 48  (sees herself at 42, doubting)   -> -0.00 rating points per year to each young player
+  - gamecraft: 56  (sees herself at 55)   (no on-field effect yet)
+  - discipline: 51  (sees herself at 45, doubting)   (no on-field effect yet)
+  - motivation: 52  (sees herself at 47, doubting)   (no on-field effect yet)
+  - pressure thresholds: exile 33, contract 52, spotlight 10, loyalty 49
+TRAJECTORY: [age 43: 52; age 44: 51; age 45: 51; age 46: 52; age 47: 52; age 48: 52; age 49: 52; age 50: 52; age 51: 52; age 52: 53; peak 53 at 52; now 53]
+RECOGNITION: [known; esteem 7.1; honors: Coach of the Year]
+RELATIONSHIPS: {Juana Emerson (owner): -30, Elsa Brightwater (gm): +0}
+CAREER: [hired 30; fired 38]
+DECISION_LOG: [38: was fired by Juana Emerson]
+```
+
+## Recognition: who the media called a legend, and the Hall of Fame
+
+Nobody was made a legend. These are the Archive's own entries, in order:
+
+```
+year 5: legend contested: Britta Cordero (coach), esteem 21.5, 33% of outlets
+year 7: legend recognized: Mabel Colburn (player), esteem 24.6, 63% of outlets
+year 7: legend contested: Britta Cordero (coach), esteem 22.6, 46% of outlets
+year 9: legend recognized: Corinne Crenshaw (coach), esteem 26.8, 100% of outlets
+year 9: legend recognized: Mirabel Leclair (owner), esteem 23.3, 75% of outlets
+year 10: legend contested: Britta Cordero (coach), esteem 23.0, 56% of outlets
+year 10: legend recognized: Penelope Nolan (coach), esteem 23.7, 100% of outlets
+year 11: legend recognized: Olive Caldwell (player), esteem 27.6, 100% of outlets
+year 11: legend contested: Penelope Nolan (coach), esteem 23.0, 59% of outlets
+year 14: legend recognized: Tatiana Amundsen (coach), esteem 23.7, 100% of outlets
+year 15: legend recognized: Luna Palmieri (gm), esteem 22.3, 100% of outlets
+year 17: legend recognized: Fiona Briggs (player), esteem 25.7, 100% of outlets
+```
+
+**The Hall of Fame so far:**
+
+| Year | Kind | Name | Esteem | Vote | Honors |
+|---|---|---|---|---|---|
+| 15 | player | Mabel Colburn | 29.2 | 97% | All-League x12, Player of the Year x3 |
+| 15 | player | Adriana Avery | 23.5 | 79% | All-League x9, Champion x2, Player of the Year x1 |
+| 16 | owner | Mirabel Leclair | 21.6 | 93% | Champion x2 |
+| 17 | player | Olive Caldwell | 27.5 | 96% | All-League x10, Player of the Year x3 |
+| 18 | coach | Tatiana Amundsen | 31.6 | 100% | Coach of the Year x1, Champion x2 |
+| 23 | coach | Corinne Crenshaw | 20.4 | 77% | Champion x2 |
+| 24 | player | Fiona Briggs | 36.1 | 98% | All-League x9, Player of the Year x6 |
+| 27 | gm | Luna Palmieri | 16.5 | 78% | Executive of the Year x1, Champion x2 |
+| 29 | gm | Simone Vickers | 16.9 | 81% | Champion x3 |
+| 30 | gm | Mika Holmgren | 17.6 | 85% | Champion x3 |
+| 31 | player | Bianca Davenport | 45.3 | 100% | All-League x10, Player of the Year x8 |
+| 35 | gm | Esme Ziegler | 16.9 | 80% | Champion x2 |
+| 36 | owner | Gwen Hutchins | 20.1 | 87% | Champion x2 |
+| 38 | player | Maya Robeson | 30.3 | 99% | All-League x7, Player of the Year x5 |
+
+**The most esteemed player:**
+
+### Bianca Davenport  (CB, retired)
+```yaml
+IDENTITY: [Bianca Davenport, age 33, from Jackson MS; Coach's daughter]
+SOUL (fixed): [+ Willing Tackler, - Poor Ball Skills]  temperament family: power
+PERSONALITY: [Competitor] wants to win everything in front of her; fears being outworked
+  - allowed by her soul: Competitor, Hothead, Grinder, Loyalist; right now she is clear-eyed (+0.11)
+RATINGS: [overall 95, Franchise player]
+  - coverage: 97  (sees herself at 98)
+  - ball_skills: 89  (sees herself at 91)
+  - tackling: 96  (sees herself at 96)
+  - pressure thresholds: exile 53, contract 41, spotlight 42, loyalty 25
+RECOGNITION: [Hall of Famer; esteem 45.3; honors: All-League x10, Player of the Year x8, Hall of Fame]
+RELATIONSHIPS: {}  # none yet; filled by Interactions
+CAREER: [drafted 17 (pick 2); became Grinder (was Competitor) 18; became Competitor (was Grinder) 27; retired 28; hof_ballot 31]
+DECISION_LOG: [none yet]
 ```
 
 ## An owner, a GM, and the Archive's first entries
 
-### Owner Sofia Atwood  (Team 01, owner)
+### Owner Treasure Calloway  (Team 02, owner)
 ```yaml
-IDENTITY: [Sofia Atwood, age 66, from Sacramento CA; Media heiress]
-PERSONALITY: [Meddler] wants a hand in every decision; fears being irrelevant
-ARCHETYPES: [+ Shrewd Operator, - Absentee Owner]
+IDENTITY: [Treasure Calloway, age 64, from Calgary AB; Self-made industrialist]
+SOUL (fixed): [+ Relentless Competitor, - Money Pit]
+PERSONALITY: [Glory Hunter] wants a title right now; fears being a laughingstock
+  - allowed by her soul: Glory Hunter, Legacy Builder, Showwoman, Opportunist; right now she is full of doubt (-0.26)
 RATINGS:
-  - patience: 56
-  - ambition: 60
-  - involvement: 50
-  - popularity: 58
-  - business: 64
-  - fan approval right now: 66%  (a recall vote is triggered under 40%)
-  - pressure thresholds: recall 62, media 69, losing 51, subsidy 48
-RELATIONSHIPS: {Antonia Grantham (gm): -30, Brenna Maldonado (coach): -10, Team 01 fans: +11}
-CAREER: [bought 0]
-DECISION_LOG: [1: survived a recall vote; 6: blamed Antonia Grantham for the exile; 6: survived a recall vote; 8: blamed Antonia Grantham for the exile; 8: survived a recall vote; 9: survived a recall vote]
+  - patience: 55  (sees herself at 53)
+  - ambition: 63  (sees herself at 60, doubting)
+  - involvement: 21  (sees herself at 18, doubting)
+  - popularity: 60  (sees herself at 58)
+  - business: 19  (sees herself at 18)
+  - fan approval right now: 60%  (a recall vote is triggered under 40%)
+  - pressure thresholds: recall 71, media 66, losing 34, subsidy 37
+TRAJECTORY: [age 43: 44; age 46: 44; age 49: 44; age 52: 44; age 55: 44; age 58: 43; age 61: 44; age 64: 44; peak 44 at 48; now 44]
+RECOGNITION: [respected; esteem 10.3; honors: none yet]
+RELATIONSHIPS: {Team 02 fans: +26}
+CAREER: [elected 18]
+DECISION_LOG: [18: was elected by the fans of team 2; 25: survived a recall vote; 33: survived a recall vote]
 ```
-### Owner Junie Gentry  (Team 29, recalled)
+### Owner Esperanza Caldwell  (Team 33, recalled)
 ```yaml
-IDENTITY: [Junie Gentry, age 65, from Compton CA; Media heiress]
+IDENTITY: [Esperanza Caldwell, age 55, from Providence RI; Consortium front-woman]
+SOUL (fixed): [+ Hands-On Leader, - Trigger-Happy]
 PERSONALITY: [Meddler] wants a hand in every decision; fears being irrelevant
-ARCHETYPES: [+ Fan Favorite, - Absentee Owner]
+  - allowed by her soul: Meddler, Legacy Builder, Glory Hunter, Patient Steward; right now she is clear-eyed (-0.15)
 RATINGS:
-  - patience: 55
-  - ambition: 73
-  - involvement: 40
-  - popularity: 82
-  - business: 41
-  - fan approval right now: 28%  (a recall vote is triggered under 40%)
-  - pressure thresholds: recall 46, media 51, losing 68, subsidy 42
-RELATIONSHIPS: {Team 29 fans: -38, Alina Fairbanks (coach): -25, Ruth Jacobsen (gm): -5}
-CAREER: [elected 11; recalled 14]
-DECISION_LOG: [11: was elected by the fans of team 29; 13: blamed Alina Fairbanks for the exile; 13: survived a recall vote; 13: fired coach Alina Fairbanks (results); 14: was recalled]
+  - patience: 39  (sees herself at 36, doubting)
+  - ambition: 44  (sees herself at 43)
+  - involvement: 75  (sees herself at 75)
+  - popularity: 64  (sees herself at 62)
+  - business: 44  (sees herself at 42)
+  - fan approval right now: 38%  (a recall vote is triggered under 40%)
+  - pressure thresholds: recall 60, media 65, losing 38, subsidy 47
+TRAJECTORY: [age 54: 53; age 55: 53; peak 53 at 54; now 53]
+RECOGNITION: [unknown; esteem 1.3; honors: none yet]
+RELATIONSHIPS: {Team 33 fans: -44, Lacey Dahl (coach): -15, Quinn Kendrick (coach): -5, Ruth Fairbanks (gm): -5, Delphine Mikkelsen (gm): -5}
+CAREER: [elected 38; recalled 40]
+DECISION_LOG: [38: fired coach Quinn Kendrick (new owner cleaned house); 38: fired gm Ruth Fairbanks (new owner cleaned house); 40: blamed Lacey Dahl for the exile; 40: was recalled]
 ```
-### GM Treasure Wagner  (Team 28, gm)
+### GM Lola Akana  (Team 42, gm)
 ```yaml
-IDENTITY: [Treasure Wagner, age 64, from Lubbock TX; Longtime scout]
-PERSONALITY: [Planner] wants a five-year roster plan; fears a short-term panic
-ARCHETYPES: [+ Draft Whisperer, - Gets Fleeced]
+IDENTITY: [Lola Akana, age 61, from Columbus OH; Came up through the personnel department]
+SOUL (fixed): [+ Master Trader, - Draft-Day Disaster]
+PERSONALITY: [Dealmaker] wants the best contract in every negotiation; fears being outmaneuvered
+  - allowed by her soul: Dealmaker, Gambler, Cold Realist, Talent Hawk; right now she is clear-eyed (-0.19)
 RATINGS:
-  - scouting: 90   -> +1.19 rating points on her team's rookie each year
-  - negotiation: 84   -> 20% fewer contract expiries
-  - evaluation: 63   (no on-field effect yet)
-  - trades: 12   (no on-field effect yet)
-  - cap_sense: 61   (no on-field effect yet)
-  - pressure thresholds: exile 63, contract 61, spotlight 46, loyalty 70
-RELATIONSHIPS: {Mirabel Leclair (owner): -5, Katya Winslow (owner): -5}
-CAREER: [hired 0]
-DECISION_LOG: [8: was exiled with her team; 14: was exiled with her team]
+  - scouting: 19  (sees herself at 18)   -> -0.95 rating points on her team's rookie each year
+  - negotiation: 52  (sees herself at 51)   -> 1% fewer contract expiries
+  - evaluation: 56  (sees herself at 55)   (no on-field effect yet)
+  - trades: 69  (sees herself at 67, doubting)   (no on-field effect yet)
+  - cap_sense: 48  (sees herself at 45, doubting)   (no on-field effect yet)
+  - pressure thresholds: exile 65, contract 72, spotlight 27, loyalty 42
+TRAJECTORY: [age 60: 48; age 61: 49; peak 49 at 61; now 49]
+RECOGNITION: [unknown; esteem 0.0; honors: none yet]
+RELATIONSHIPS: {}  # none yet; filled by Interactions
+CAREER: [hired 38]
+DECISION_LOG: [none yet]
 ```
 **A recall vote as the Archive logs it:**
 
 ```
-year: 14
+year: 40
 event: recall_vote
-team: 47
+team: 33
 trigger: approval
-approval: 0.299
-recall_share: 0.584
+approval: 0.378
+recall_share: 0.513
 result: recalled
-owner: Paloma Saunders
-replacement: Mabel Rochester
-candidates: ['Thalia Cardenas', 'Ananya Everhart', 'Eden Iverson', 'Ivy McBride', 'Mabel Rochester']
-capital: 0.414
+owner: Esperanza Caldwell
+replacement: Amina Kawamoto
+candidates: ['Kora Amundsen', 'Nova Coleridge', 'Teagan Forsythe', 'Amina Kawamoto', 'Echo Nakamura']
+capital: 0.521
 ```
 
 
 ## A fanbase and the press that covers it
 
-### Fanbase of Team 08  (Entitled)
+### Fanbase of Team 02  (Front-Runners)
 ```yaml
-IDENTITY: [Team 08 fans; market size 64 of 100]
-PERSONALITY: [Entitled] wants a title every year; fears being ignored; picks owners who are strong on ambition
+IDENTITY: [Team 02 fans; market size 48 of 100]
+PERSONALITY: [Front-Runners] wants winners; fears a long losing stretch; picks owners who are strong on ambition
 ARCHETYPES: [+ Demanding, - Indifferent]
 RATINGS:
-  - loyalty: 70
-  - expectations: 97   (born at 82; drifts with results, within +/-15)
-  - passion: 36
-  - volatility: 50
-  - media_trust: 43
-  - approval of the owner: 53%
-  - Fan Capital: 0.67  (recall immunity; worth 5.2 points on a recall vote)
+  - loyalty: 58
+  - expectations: 84   (born at 69; drifts with results, within +/-15)
+  - passion: 42
+  - volatility: 69
+  - media_trust: 55
+  - approval of the owner: 60%
+  - Fan Capital: 0.63  (recall immunity; worth 3.9 points on a recall vote)
   - what the press did to approval last season: +0.1 points
-  - pressure thresholds: exile 40, losing 22, scandal 62, spotlight 47
-RELATIONSHIPS: {Aria Dalton (owner): +5}
-DECISION_LOG: [2: kept the owner; 10: kept the owner]
+  - pressure thresholds: exile 74, losing 49, scandal 59, spotlight 50
+RELATIONSHIPS: {Alana Cruz (owner): -43, Galina Quillen (owner): -43, Fiona Valdez (owner): -30, Adriana Flanagan (owner): +9, Treasure Calloway (owner): +23}
+DECISION_LOG: [3 earlier; 9: kept the owner; 16: kept the owner; 17: voted to recall the owner; 18: voted to recall the owner; 25: kept the owner; 33: kept the owner]
 ```
-### Fanbase of Team 48  (Gloomy Realists)
+### Fanbase of Team 06  (Gloomy Realists)
 ```yaml
-IDENTITY: [Team 48 fans; market size 34 of 100]
+IDENTITY: [Team 06 fans; market size 47 of 100]
 PERSONALITY: [Gloomy Realists] wants honesty; fears being fooled again; picks owners who are strong on business
-ARCHETYPES: [+ Mood Swings, - Easily Pleased]
+ARCHETYPES: [+ Hang On Every Word, - Easily Pleased]
 RATINGS:
-  - loyalty: 49
-  - expectations: 23   (born at 38; drifts with results, within +/-15)
-  - passion: 33
-  - volatility: 70
-  - media_trust: 44
-  - approval of the owner: 46%
-  - Fan Capital: 0.38  (recall immunity; worth 0.0 points on a recall vote)
-  - what the press did to approval last season: -1.6 points
-  - pressure thresholds: exile 59, losing 59, scandal 60, spotlight 53
-RELATIONSHIPS: {Dominique Winslow (owner): -48, Julia Dubois (owner): -33, Kasey Rourke (owner): -33, Thea Hargrove (owner): +4, Amelia Trevino (owner): +18}
-DECISION_LOG: [1 earlier; 3: voted to recall the owner; 4: kept the owner; 5: voted to recall the owner; 7: voted to recall the owner; 8: kept the owner; 12: kept the owner]
-```
-### Fanbase of Team 40  (Die-Hards)
-```yaml
-IDENTITY: [Team 40 fans; market size 51 of 100]
-PERSONALITY: [Die-Hards] wants a team that is theirs; fears a sale or a move; picks owners who are strong on popularity
-ARCHETYPES: [+ Fanatical, - Distrust the Press]
-RATINGS:
-  - loyalty: 61
-  - expectations: 61   (born at 48; drifts with results, within +/-15)
-  - passion: 84
-  - volatility: 62
-  - media_trust: 30
+  - loyalty: 35
+  - expectations: 26   (born at 41; drifts with results, within +/-15)
+  - passion: 37
+  - volatility: 28
+  - media_trust: 57
   - approval of the owner: 55%
-  - Fan Capital: 0.71  (recall immunity; worth 6.3 points on a recall vote)
-  - what the press did to approval last season: +0.1 points
-  - pressure thresholds: exile 63, losing 32, scandal 45, spotlight 67
-RELATIONSHIPS: {Sadie Lovett (owner): -45, Lacey Dunmore (owner): -23, Nova Sheridan (owner): -1, Lola Nightingale (owner): +20}
-DECISION_LOG: [2: voted to recall the owner; 4: kept the owner; 7: kept the owner]
+  - Fan Capital: 0.41  (recall immunity; worth 0.0 points on a recall vote)
+  - what the press did to approval last season: -0.4 points
+  - pressure thresholds: exile 37, losing 45, scandal 56, spotlight 34
+RELATIONSHIPS: {Evangeline Gentry (owner): -48, Tamsin Castellano (owner): -28, Alexis Herrera (owner): -28, Teagan Sheridan (owner): -28, Colette Christensen (owner): -28, Yelena Eberhardt (owner): -28, Kirsten Tillman (owner): -28, Anika Morrow (owner): -28, Petra Sutherland (owner): +1, Vivian Blackwood (owner): +18}
+DECISION_LOG: [7 earlier; 19: voted to recall the owner; 22: voted to recall the owner; 25: kept the owner; 33: voted to recall the owner; 36: voted to recall the owner; 38: voted to recall the owner]
 ```
-### The Tiara Times  (national, league-wide; active)
+### Fanbase of Team 14  (Die-Hards)
 ```yaml
-IDENTITY: [The Tiara Times, national outlet; byline Rosalind Stanhope]
-PERSONALITY: [Watchdog] wants the story behind the story; fears being scooped
-ARCHETYPES: [+ Everywhere, - Locked Out]
+IDENTITY: [Team 14 fans; market size 70 of 100]
+PERSONALITY: [Die-Hards] wants a team that is theirs; fears a sale or a move; picks owners who are strong on popularity
+ARCHETYPES: [+ Fanatical, - Steady Hands]
 RATINGS:
-  - accuracy: 58
-  - sensationalism: 43
-  - reach: 67
-  - access: 41
-  - independence: 63
+  - loyalty: 77
+  - expectations: 57   (born at 49; drifts with results, within +/-15)
+  - passion: 83
+  - volatility: 34
+  - media_trust: 60
+  - approval of the owner: 68%
+  - Fan Capital: 0.67  (recall immunity; worth 5.0 points on a recall vote)
+  - what the press did to approval last season: +2.1 points
+  - pressure thresholds: exile 35, losing 55, scandal 43, spotlight 60
+RELATIONSHIPS: {Haruka Zamora (owner): -66, Catalina Davenport (owner): -52, Gabriela Farrow (owner): -19, Lourdes Jankowski (owner): -19, Malia Kasprzak (owner): +1, Emani Hammond (owner): +2}
+DECISION_LOG: [4 earlier; 17: kept the owner; 19: voted to recall the owner; 21: kept the owner; 23: kept the owner; 27: kept the owner; 35: kept the owner]
+```
+### The DFL Wire  (national, league-wide; active)
+```yaml
+IDENTITY: [The DFL Wire, national outlet; byline Ivy Kimura]
+PERSONALITY: [Statistician] wants being right; fears being wrong in public
+ARCHETYPES: [+ Usually Right, - Dry as Dust]
+RATINGS:
+  - accuracy: 75
+  - sensationalism: 36
+  - reach: 69
+  - access: 48
+  - independence: 41
   - Credibility: 42  (the currency: it weights this outlet's say in a team's coverage)
-  - forecast record (mean miss, win%): 9: 0.14, 10: 0.12, 11: 0.12, 12: 0.11, 13: 0.11, 14: 0.14
-  - pressure thresholds: spotlight 62, access 27, irrelevance 81
+  - forecast record (mean miss, win%): 35: 0.11, 36: 0.13, 37: 0.12, 38: 0.12, 39: 0.11, 40: 0.11
+  - pressure thresholds: spotlight 38, access 54, irrelevance 56
 RELATIONSHIPS: {}  # none yet; filled by Interactions
 DECISION_LOG: [none yet]
 ```
-### The Draft Room  (national, league-wide; active)
+### League Line  (national, league-wide; active)
 ```yaml
-IDENTITY: [The Draft Room, national outlet; byline Ananya Crawley]
-PERSONALITY: [Watchdog] wants the story behind the story; fears being scooped
-ARCHETYPES: [+ Everywhere, - Dry as Dust]
+IDENTITY: [League Line, national outlet; byline Eden Garrison]
+PERSONALITY: [Contrarian] wants the take nobody else has; fears agreeing with everyone
+ARCHETYPES: [+ Everywhere, - Owner's Mouthpiece]
 RATINGS:
-  - accuracy: 38
-  - sensationalism: 34
-  - reach: 63
-  - access: 44
+  - accuracy: 41
+  - sensationalism: 64
+  - reach: 77
+  - access: 45
   - independence: 39
-  - Credibility: 31  (the currency: it weights this outlet's say in a team's coverage)
-  - forecast record (mean miss, win%): 9: 0.14, 10: 0.13, 11: 0.10, 12: 0.13, 13: 0.13, 14: 0.15
-  - pressure thresholds: spotlight 59, access 43, irrelevance 45
+  - Credibility: 32  (the currency: it weights this outlet's say in a team's coverage)
+  - forecast record (mean miss, win%): 35: 0.15, 36: 0.14, 37: 0.16, 38: 0.11, 39: 0.15, 40: 0.14
+  - pressure thresholds: spotlight 55, access 62, irrelevance 95
 RELATIONSHIPS: {}  # none yet; filled by Interactions
 DECISION_LOG: [none yet]
 ```
-### Team 24 Insider  (local, Team 24; active)
+### Team 25 Sports Desk  (local, Team 25; active)
 ```yaml
-IDENTITY: [Team 24 Insider, local outlet; byline Elena Merrick]
-PERSONALITY: [Hype Machine] wants clicks and a roaring crowd; fears irrelevance
-ARCHETYPES: [+ Headline Chaser, - Chronically Wrong]
+IDENTITY: [Team 25 Sports Desk, local outlet; byline Jada Rourke]
+PERSONALITY: [Homer] wants the team's love; fears losing her access
+ARCHETYPES: [+ Headline Chaser, - Nobody Reads It]
 RATINGS:
-  - accuracy: 37
-  - sensationalism: 81
-  - reach: 55
-  - access: 52
-  - independence: 38
-  - Credibility: 65  (the currency: it weights this outlet's say in a team's coverage)
-  - forecast record (mean miss, win%): 9: 0.10, 10: 0.25, 11: 0.04, 12: 0.01, 13: 0.08, 14: 0.01
-  - pressure thresholds: spotlight 37, access 48, irrelevance 41
+  - accuracy: 51
+  - sensationalism: 66
+  - reach: 42
+  - access: 62
+  - independence: 61
+  - Credibility: 75  (the currency: it weights this outlet's say in a team's coverage)
+  - forecast record (mean miss, win%): 35: 0.10, 36: 0.00, 37: 0.00, 38: 0.07, 39: 0.05, 40: 0.02
+  - pressure thresholds: spotlight 44, access 50, irrelevance 67
 RELATIONSHIPS: {}  # none yet; filled by Interactions
 DECISION_LOG: [none yet]
 ```
 **An outlet that folded (the Archive keeps the card):**
 
-### Team 14 Sideline  (local, Team 14; folded)
+### Team 38 Sideline  (local, Team 38; folded)
 ```yaml
-IDENTITY: [Team 14 Sideline, local outlet; byline Julia Ziegler]
-PERSONALITY: [Hype Machine] wants clicks and a roaring crowd; fears irrelevance
-ARCHETYPES: [+ Headline Chaser, - Owner's Mouthpiece]
+IDENTITY: [Team 38 Sideline, local outlet; byline Priya Alvarado]
+PERSONALITY: [Gossip] wants the leak; fears a dead story
+ARCHETYPES: [+ Headline Chaser, - Nobody Reads It]
 RATINGS:
-  - accuracy: 41
-  - sensationalism: 72
-  - reach: 50
-  - access: 66
-  - independence: 40
-  - Credibility: 12  (the currency: it weights this outlet's say in a team's coverage)
-  - forecast record (mean miss, win%): 1: 0.18, 2: 0.32, 3: 0.28, 4: 0.23
-  - pressure thresholds: spotlight 36, access 68, irrelevance 49
+  - accuracy: 40
+  - sensationalism: 56
+  - reach: 38
+  - access: 49
+  - independence: 47
+  - Credibility: 10  (the currency: it weights this outlet's say in a team's coverage)
+  - forecast record (mean miss, win%): 8: 0.17, 9: 0.14, 10: 0.35, 12: 0.17, 14: 0.25, 15: 0.22
+  - pressure thresholds: spotlight 52, access 48, irrelevance 42
 RELATIONSHIPS: {}  # none yet; filled by Interactions
 DECISION_LOG: [none yet]
 ```
 ```
-year: 4
+year: 5
 event: outlet_folded
-outlet: Team 14 Sideline
+outlet: Team 21 Press
 kind: local
-team: 14
-credibility: 11.6
-replacement: Team 14 Sports Desk
+team: 21
+credibility: 16.4
+replacement: Team 21 Sports Desk
 ```
 
 
@@ -433,74 +545,74 @@ Each firing, recall vote and exile determination is a scene: every party gives i
 **An exile determination**
 
 ```
-EVENT 14-exile_determination-47-1  (Team 47; exile determination; finished fifth in the division)
-├── Owner claims: Paloma Saunders (Legacy Builder): "Fifth in the division, and I will say who is to blame: Fatima Calloway. She built a roster that was 0.5 deviations below the league's average."  [supported by the record]
-├── Coach claims: Roxanne Schaefer (Developer): "I was handed a roster 1.1 deviations below average and the schedule did the rest."  [supported, but overstated]
-├── GM claims: Fatima Calloway (Cold Realist): "The roster was 4 of 5 in this division on paper. The record, 28%, was 18% below what it should have been."  [supported by the record]
-├── The fans claim: Team 47 fans: "They finished 28%. We wanted a good time and we feared boredom; that is what we got."  [supported by the record]
-├── Press claims: Team 47 Courier (Watchdog): "We had them at 49%. They finished 28%. Nobody saw this coming."  [not supported by the record]
-└── Evidence supports: Exile followed a thin roster and under-delivery against the roster.  (record 28%, roster predicts 45%, roster -0.5 deviations from average)
-    Outcome: Team 47 is exiled for next season
+EVENT 40-exile_determination-44-1  (Team 44; exile determination; finished fifth in the division)
+├── Owner claims: Cleo Oakley (Legacy Builder): "Fifth in the division, and I will say who is to blame: Rafaela Hightower. She built a roster that was 0.0 deviations above the league's average."  [not supported by the record]
+├── Coach claims: Grace Fontaine (Players' Coach): "I was handed a roster 0.1 deviations above average and the schedule did the rest."  [not supported by the record]
+├── GM claims: Rafaela Hightower (Dealmaker): "The roster was 3 of 5 in this division on paper. The record, 17%, was 31% below what it should have been."  [supported by the record]
+├── The fans claim: Team 44 fans: "We stand by our own, and we have 59 points of goodwill banked. This town wanted a team that is theirs."  [supported by the record]
+├── Press claims: Team 44 Press (Watchdog): "We had them at 58%. They finished 17%. Nobody saw this coming."  [not supported by the record]
+└── Evidence supports: Exile followed under-delivery against the roster.  (record 17%, roster predicts 48%, roster +0.0 deviations from average)
+    Outcome: Team 44 is exiled for next season
 ```
 
 **A firing the record backs**
 
 ```
-EVENT 14-firing-47-1  (Team 47; firing; owner fired the coach (results))
-├── Owner claims: Mabel Rochester (Patient Steward): "28% is not what I bought this team for. I gave her 5 seasons; I was patient."  [supported by the record]
-├── Coach claims: Roxanne Schaefer (Developer): "You gave me a roster 1.1 deviations below the league's average and expected a contender."  [supported, but overstated]
-├── GM claims: Fatima Calloway (Cold Realist): "The roster was fine. The record was 28%, against 45% on paper."  [supported by the record]
-├── The fans claim: Team 47 fans: "They finished 28%. We wanted a good time and we feared boredom; that is what we got."  [supported by the record]
-├── Press claims: Team 47 Courier (Watchdog): "We had them at 49%. They finished 28%. Nobody saw this coming."  [not supported by the record]
-└── Evidence supports: The firing is backed by the record, and the roster does not excuse it: the team won well under what it was built to win.  (record 28%, roster predicts 45%, roster -0.5 deviations from average)
-    Outcome: Roxanne Schaefer fired; replaced by a new coach
+EVENT 40-firing-26-2  (Team 26; firing; owner fired the gm (results))
+├── Owner claims: Agnes Yoder (Showwoman): "the roster should have won about 43% and they won 29%. I trusted her with the roster; I had no patience left."  [supported by the record]
+├── GM claims: Cassidy Delgado (Dealmaker): "I built the roster and she lost games the roster should have won: 29% on a team that rates 43%."  [supported by the record]
+├── Coach claims: Janelle Mathis (Survivor): "I coached what I was handed, a roster 0.6 deviations below average."  [supported by the record]
+├── The fans claim: Team 26 fans: "They finished 29%. We wanted a title every year and we feared being ignored; that is what we got."  [supported by the record]
+└── Evidence supports: The firing is backed by the record, and the roster does not excuse it: it was a thin roster.  (record 29%, roster predicts 43%, roster -0.6 deviations from average)
+    Outcome: Cassidy Delgado fired; replaced by a new gm
 ```
 
 **A harsh firing (the roster explains the record)**
 
 ```
-EVENT 13-firing-37-2  (Team 37; firing; owner fired the gm (results))
-├── Owner claims: Mei Dubois (Meddler): "14% is not what I bought this team for. I trusted her with the roster; I was patient."  [supported by the record]
-├── GM claims: Alina Mikkelsen (Planner): "I built the roster and she lost games the roster should have won: 14% on a team that rates 67%."  [supported by the record]
-├── Coach claims: Oona Sandoval (Survivor): "I coached what I was handed, a roster 1.6 deviations above average."  [not supported by the record]
-├── The fans claim: Team 37 fans: "They finished 14%. We wanted a good time and we feared boredom; that is what we got."  [supported by the record]
-└── Evidence supports: A harsh firing: the record was poor (14%), but the roster she built was not thin, so the shortfall was on the field.  (record 14%, roster predicts 67%, roster +1.6 deviations from average)
-    Outcome: Alina Mikkelsen fired; replaced by a new gm
+EVENT 38-firing-28-2  (Team 28; firing; owner fired the gm (results))
+├── Owner claims: Nia Iverson (Showwoman): "the roster should have won about 56% and they won 29%. I trusted her with the roster; I had no patience left."  [supported by the record]
+├── GM claims: Adriana Maynard (Cold Realist): "I built the roster and she lost games the roster should have won: 29% on a team that rates 56%."  [supported by the record]
+├── Coach claims: Naomi Kawamoto (Survivor): "I coached what I was handed, a roster 1.2 deviations above average."  [not supported by the record]
+├── The fans claim: Team 28 fans: "We stand by our own, and we have 44 points of goodwill banked. This town wanted a team that is theirs."  [not supported by the record]
+└── Evidence supports: A harsh firing: the record was poor (29%), but the roster she built was not thin, so the shortfall was on the field.  (record 29%, roster predicts 56%, roster +1.2 deviations from average)
+    Outcome: Adriana Maynard fired; replaced by a new gm
 ```
 
 **A new owner's sweep**
 
 ```
-EVENT 14-firing-24-2  (Team 24; firing; owner fired the gm (new owner cleaned house))
-├── Owner claims: Bryn Farrow (Showwoman): "New owner, new staff. I wanted spectacle and headlines and I wasn't going to ask Concetta Dunmore for it."  [supported by the record]
-├── GM claims: Concetta Dunmore (Loyal Lieutenant): "I built the roster and she lost games the roster should have won: 61% on a team that rates 51%."  [not supported by the record]
-├── Coach claims: Sylvie Carrow (Gambler): "I coached what I was handed, a roster 0.0 deviations above average."  [not supported by the record]
-├── The fans claim: Team 24 fans: "They finished 61%. We wanted winners and we feared a long losing stretch; we have no complaint about the record, but we are watching."  [not supported by the record]
-├── Press claims: Team 24 Insider (Hype Machine): "We had them at 62%. They finished 61%. We called it."  [supported by the record]
-└── Evidence supports: A sweep: the new owner cleared the staff on arrival, whatever the record (61% against 51% on paper).  (record 61%, roster predicts 51%, roster +0.0 deviations from average)
-    Outcome: Concetta Dunmore fired; replaced by a new gm
+EVENT 40-firing-33-2  (Team 33; firing; owner fired the gm (new owner cleaned house))
+├── Owner claims: Amina Kawamoto (Patient Steward): "New owner, new staff. I wanted a slow, sound build and I wasn't going to ask Delphine Mikkelsen for it."  [supported by the record]
+├── GM claims: Delphine Mikkelsen (Gambler): "I built the roster and she lost games the roster should have won: 39% on a team that rates 57%."  [supported by the record]
+├── Coach claims: Lacey Dahl (Disciplinarian): "I coached what I was handed, a roster 1.3 deviations above average."  [not supported by the record]
+├── The fans claim: Team 33 fans: "We stand by our own, and we have 52 points of goodwill banked. This town wanted a team that is theirs."  [not supported by the record]
+├── Press claims: Team 33 Sports Desk (Homer): "We had them at 42%. They finished 39%. We called it."  [supported by the record]
+└── Evidence supports: A sweep: the new owner cleared the staff on arrival, whatever the record (39% against 57% on paper).  (record 39%, roster predicts 57%, roster +1.3 deviations from average)
+    Outcome: Delphine Mikkelsen fired; replaced by a new gm
 ```
 
 **A recall vote that removes an owner**
 
 ```
-EVENT 14-recall_vote-47-1  (Team 47; recall vote; vote triggered by approval)
-├── Owner claims: Paloma Saunders (Legacy Builder): "I thought we were at 38%. The team lost, and the fans are blaming the person they can vote on."  [supported by the record]
-├── The fans claim: Team 47 fans: "They finished 28%. We wanted a good time and we feared boredom; that is what we got." We wanted an owner strong on involvement and we chose Mabel Rochester.  [supported by the record]
-├── Press claims: Team 47 Courier (Watchdog): "We had them at 49%. They finished 28%. Nobody saw this coming."  [not supported by the record]
-├── New owner claims: Mabel Rochester (Patient Steward): "Five of us stood. The fans wanted strength on involvement and picked me. I want a slow, sound build."  [not supported by the record]
-└── Evidence supports: 58.4% voted to recall (a majority of the 1,000,000 fans is needed): recalled.  (record 28%, roster predicts 45%, roster -0.5 deviations from average)
-    Outcome: Paloma Saunders recalled; Mabel Rochester elected from 5 candidates
+EVENT 40-recall_vote-33-1  (Team 33; recall vote; vote triggered by approval)
+├── Owner claims: Esperanza Caldwell (Meddler): "I thought we were at 41%. This is what the papers did to me, not what I did to this team."  [not supported by the record]
+├── The fans claim: Team 33 fans: "We stand by our own, and we have 52 points of goodwill banked. This town wanted a team that is theirs." We wanted an owner strong on popularity and we chose Amina Kawamoto.  [not supported by the record]
+├── Press claims: Team 33 Sports Desk (Homer): "We had them at 42%. They finished 39%. We called it."  [supported by the record]
+├── New owner claims: Amina Kawamoto (Patient Steward): "Five of us stood. The fans wanted strength on popularity and picked me. I want a slow, sound build."  [supported by the record]
+└── Evidence supports: 51.3% voted to recall (a majority of the 1,000,000 fans is needed): recalled.  (record 39%, roster predicts 57%, roster +1.3 deviations from average)
+    Outcome: Esperanza Caldwell recalled; Amina Kawamoto elected from 5 candidates
 ```
 
 **A recall vote the owner survives**
 
 ```
-EVENT 14-recall_vote-44-1  (Team 44; recall vote; vote triggered by approval)
-├── Owner claims: Kimi Eberhardt (Showwoman): "I told you we were at 47%. The fans know what I stand for: spectacle and headlines."  [not supported by the record]
-├── The fans claim: Team 44 fans: "We stand by our own, and we have 54 points of goodwill banked. This town wanted a team that is theirs."  [not supported by the record]
-└── Evidence supports: 48.0% voted to recall (a majority of the 1,000,000 fans is needed): the owner survives.  (record 29%, roster predicts 47%, roster -0.3 deviations from average)
-    Outcome: Kimi Eberhardt survives
+EVENT 40-recall_vote-48-1  (Team 48; recall vote; vote triggered by rotation)
+├── Owner claims: Elena Haskell (Opportunist): "I told you we were at 64%. The fans know what I stand for: a quick profit."  [supported by the record]
+├── The fans claim: Team 48 fans: "They finished 67%. We wanted honesty and we feared being fooled again; we have no complaint about the record, but we are watching."  [not supported by the record]
+├── Press claims: Team 48 Insider (Contrarian): "We had them at 58%. They finished 67%. Nobody saw this coming."  [not supported by the record]
+└── Evidence supports: 20.6% voted to recall (a majority of the 1,000,000 fans is needed): the owner survives.  (record 67%, roster predicts 44%, roster -0.5 deviations from average)
+    Outcome: Elena Haskell survives
 ```
 
 
@@ -519,63 +631,68 @@ Choices go through Decision Points. An agent is shown its own card, what it perc
  "decider": {
   "role": "owner",
   "name": "Stella Wagner",
-  "trait": "Showwoman",
-  "wants": "spectacle and headlines",
-  "fears": "boredom",
+  "trait": "Glory Hunter",
+  "wants": "a title right now",
+  "fears": "being a laughingstock",
   "ratings": {
-   "patience": 31.5,
-   "ambition": 46.5,
-   "involvement": 53.8,
-   "popularity": 53.5,
-   "business": 62.8
+   "patience": 34.5,
+   "ambition": 76.1,
+   "involvement": 34.2,
+   "popularity": 57.4,
+   "business": 54.7
   },
   "pressure": {
-   "recall": 32,
-   "media": 67,
-   "losing": 54,
-   "subsidy": 50
+   "recall": 49,
+   "media": 70,
+   "losing": 51,
+   "subsidy": 65
   }
  },
  "context": {
-  "record_this_season": 0.389,
+  "record_this_season": 0.5,
   "record_last_season": null,
-  "exiled_this_year": true,
-  "fan_approval_of_you": 0.488,
+  "exiled_this_year": false,
+  "fan_approval_of_you": 0.666,
   "facing_a_recall_vote_this_year": true,
   "you_are_a_new_owner": false,
-  "press_effect_on_fans": -0.009,
+  "press_effect_on_fans": 0.001,
   "coach": {
    "name": "Honor Lachance",
-   "age": 56,
-   "path": "Former star player turned coach",
-   "trait": "Innovator",
+   "age": 63,
+   "path": "Small-college head coach promoted",
+   "trait": "Developer",
    "perceived": {
-    "offense": 34.0,
-    "defense": 31.0,
-    "development": 55.0,
-    "gamecraft": 41.0,
-    "discipline": 59.0,
-    "motivation": 29.0
+    "offense": 51.0,
+    "defense": 41.0,
+    "development": 66.0,
+    "gamecraft": 39.0,
+    "discipline": 25.0,
+    "motivation": 54.0
    },
-   "legend": false,
+   "reputation": "unknown",
+   "honors": {},
+   "previous_jobs": 1,
    "seasons_with_team": 1,
-   "pressure_on_her": 0.111,
+   "pressure_on_her": 0.0,
    "can_be_fired": true
   },
   "gm": {
    "name": "Astrid Ellison",
-   "age": 41,
-   "path": "Coach's trusted lieutenant",
+   "age": 39,
+   "path": "Agent turned GM",
    "trait": "Talent Hawk",
    "perceived": {
-    "scouting": 18.0,
-    "negotiation": 44.0,
-    "evaluation": 41.0,
-    "trades": 69.0,
-    "cap_sense": 54.0
+    "scouting": 63.0,
+    "negotiation": 56.0,
+    "evaluation": 67.0,
+    "trades": 53.0,
+    "cap_sense": 29.0
    },
+   "reputation": "unknown",
+   "honors": {},
+   "previous_jobs": 1,
    "seasons_with_team": 1,
-   "pressure_on_her": 0.111
+   "pressure_on_her": 0.0
   }
  },
  "options": [
@@ -616,28 +733,28 @@ Choices go through Decision Points. An agent is shown its own card, what it perc
 
 ```json
 {
- "id": "1-hire_coach-01-1",
+ "id": "1-hire_coach-06-1",
  "kind": "hire_coach",
  "year": 1,
- "team": 1,
+ "team": 6,
  "decider": {
   "role": "owner",
-  "name": "Stella Wagner",
-  "trait": "Showwoman",
-  "wants": "spectacle and headlines",
-  "fears": "boredom",
+  "name": "Priya Pruitt",
+  "trait": "Patient Steward",
+  "wants": "a slow, sound build",
+  "fears": "panic",
   "ratings": {
-   "patience": 31.5,
-   "ambition": 46.5,
-   "involvement": 53.8,
-   "popularity": 53.5,
-   "business": 62.8
+   "patience": 61.9,
+   "ambition": 34.7,
+   "involvement": 43.6,
+   "popularity": 49.7,
+   "business": 50.1
   },
   "pressure": {
-   "recall": 32,
-   "media": 67,
-   "losing": 54,
-   "subsidy": 50
+   "recall": 51,
+   "media": 31,
+   "losing": 51,
+   "subsidy": 77
   }
  },
  "context": {
@@ -646,62 +763,74 @@ Choices go through Decision Points. An agent is shown its own card, what it perc
  "options": [
   {
    "id": "candidate_0",
-   "label": "Hire Sofia Hutchins",
-   "tags": {},
+   "label": "Hire Yara Marlowe",
+   "tags": {
+    "between_jobs": false
+   },
    "view": {
-    "name": "Sofia Hutchins",
-    "age": 55,
-    "path": "Coordinator who got her first shot",
-    "trait": "Developer",
+    "name": "Yara Marlowe",
+    "age": 43,
+    "path": "Analytics-minded newcomer",
+    "trait": "Tactician",
     "perceived": {
-     "offense": 61.0,
-     "defense": 62.0,
-     "development": 21.0,
-     "gamecraft": 53.0,
-     "discipline": 61.0,
-     "motivation": 16.0
+     "offense": 15.0,
+     "defense": 52.0,
+     "development": 82.0,
+     "gamecraft": 77.0,
+     "discipline": 59.0,
+     "motivation": 52.0
     },
-    "legend": false
+    "reputation": "unknown",
+    "honors": {},
+    "previous_jobs": 0
    }
   },
   {
    "id": "candidate_1",
    "label": "Hire Julia Burkhart",
-   "tags": {},
+   "tags": {
+    "between_jobs": false
+   },
    "view": {
     "name": "Julia Burkhart",
-    "age": 42,
-    "path": "Third-generation coaching family",
-    "trait": "Developer",
+    "age": 62,
+    "path": "Analytics-minded newcomer",
+    "trait": "Innovator",
     "perceived": {
-     "offense": 54.0,
-     "defense": 35.0,
-     "development": 59.0,
-     "gamecraft": 31.0,
-     "discipline": 58.0,
-     "motivation": 49.0
+     "offense": 37.0,
+     "defense": 63.0,
+     "development": 34.0,
+     "gamecraft": 28.0,
+     "discipline": 52.0,
+     "motivation": 60.0
     },
-    "legend": false
+    "reputation": "unknown",
+    "honors": {},
+    "previous_jobs": 0
    }
   },
   {
    "id": "candidate_2",
    "label": "Hire Mei Eklund",
-   "tags": {},
+   "tags": {
+    "between_jobs": false
+   },
    "view": {
     "name": "Mei Eklund",
-    "age": 38,
-    "path": "Rose through the assistant ranks",
-    "trait": "Tactician",
+    "age": 51,
+    "path": "Former star player turned coach",
+    "trait": "Disciplinarian",
     "perceived": {
-     "offense": 48.0,
-     "defense": 53.0,
-     "development": 48.0,
-     "gamecraft": 39.0,
-     "discipline": 50.0,
-     "motivation": 38.0
+     "offense": 59.0,
+     "defense": 39.0,
+     "development": 67.0,
+     "gamecraft": 48.0,
+     "discipline": 55.0,
+     "motivation": 32.0
     },
-    "legend": false
+    "reputation": "unknown",
+    "honors": {},
+    "previous_jobs": 0
    }
   }
  ],
@@ -712,40 +841,40 @@ Choices go through Decision Points. An agent is shown its own card, what it perc
 **The choice log keeps:**
 
 ```
-{"id": "1-hire_coach-01-1", "year": 1, "kind": "hire_coach", "team": 1, "actor": "owner", "options": ["candidate_0", "candidate_1", "candidate_2"], "default": "candidate_0", "chosen": "candidate_0", "driver": "agent", "status": "ok", "reason": "Illustrative answer from a stand-in agent."}
-{"id": "1-hire_coach-02-1", "year": 1, "kind": "hire_coach", "team": 2, "actor": "owner", "options": ["candidate_0", "candidate_1", "candidate_2"], "default": "candidate_0", "chosen": "candidate_0", "driver": "agent", "status": "ok", "reason": "Illustrative answer from a stand-in agent."}
-{"id": "1-hire_coach-03-1", "year": 1, "kind": "hire_coach", "team": 3, "actor": "owner", "options": ["candidate_0", "candidate_1", "candidate_2"], "default": "candidate_0", "chosen": "candidate_0", "driver": "agent", "status": "ok", "reason": "Illustrative answer from a stand-in agent."}
-{"id": "1-hire_coach-04-1", "year": 1, "kind": "hire_coach", "team": 4, "actor": "owner", "options": ["candidate_0", "candidate_1", "candidate_2"], "default": "candidate_0", "chosen": "candidate_0", "driver": "agent", "status": "ok", "reason": "Illustrative answer from a stand-in agent."}
-{"id": "1-hire_coach-05-1", "year": 1, "
+{"id": "1-hire_coach-06-1", "year": 1, "kind": "hire_coach", "team": 6, "actor": "owner", "options": ["candidate_0", "candidate_1", "candidate_2"], "default": "candidate_0", "chosen": "candidate_0", "driver": "agent", "status": "ok", "reason": "Illustrative answer from a stand-in agent."}
+{"id": "1-hire_coach-07-1", "year": 1, "kind": "hire_coach", "team": 7, "actor": "owner", "options": ["candidate_0", "candidate_1", "candidate_2"], "default": "candidate_0", "chosen": "candidate_0", "driver": "agent", "status": "ok", "reason": "Illustrative answer from a stand-in agent."}
+{"id": "1-hire_coach-11-1", "year": 1, "kind": "hire_coach", "team": 11, "actor": "owner", "options": ["candidate_0", "candidate_1", "candidate_2"], "default": "candidate_0", "chosen": "candidate_0", "driver": "agent", "status": "ok", "reason": "Illustrative answer from a stand-in agent."}
+{"id": "1-hire_coach-27-1", "year": 1, "kind": "hire_coach", "team": 27, "actor": "owner", "options": ["candidate_0", "candidate_1", "candidate_2"], "default": "candidate_0", "chosen": "candidate_0", "driver": "agent", "status": "ok", "reason": "Illustrative answer from a stand-in agent."}
+{"id": "1-hire_coach-31-1", "year": 1,
 ```
 
 
 ## How the cards spread across the league
 
-**Core personalities (all rostered players):** Diplomat 507, Competitor 407, Perfectionist 372, Grinder 355, Showman 196, Quiet Leader 134, Free Spirit 132, Hothead 91, Mercenary 46, Loyalist 16
+**Core personalities (all rostered players):** Diplomat 515, Competitor 440, Grinder 375, Perfectionist 320, Showman 211, Quiet Leader 128, Free Spirit 120, Hothead 85, Mercenary 36, Loyalist 26
 
-**Most common positive archetypes:** Well-Rounded 675, Pass-Pro Wall 123, Ballhawk 100, Edge Terror 90, Run Stuffer 89, Road Grader 87, Glue Hands 81, Route Technician 79
+**Most common positive archetypes:** Well-Rounded 681, Ballhawk 115, Road Grader 107, Edge Terror 99, Pass-Pro Wall 94, Burner 85, Route Technician 80, Glue Hands 79
 
-**Coach effect across the 48 teams:** average -0.13, spread (sd) 0.52, best +1.76, worst -1.04 points of expected margin. For scale, team talent has a spread of about 3 to 4 points.
+**Coach effect across the 48 teams:** average -0.01, spread (sd) 0.38, best +0.74, worst -1.07 points of expected margin. For scale, team talent has a spread of about 3 to 4 points.
 
-**Personality shifts:** 802 of 5282 players have changed personality at least once in 14 seasons.
+**Personality shifts:** 2164 of 11069 players have changed personality at least once in 40 seasons.
 
-**Legends:** 5 of 156 coaches hired so far are legends; 1 on the field now.
+**Standing in the media's eyes** (everyone who ever lived, by what the media calls her now): known 229, respected 104, star 36, Hall of Famer 14, legend 1. 14 are in the Hall of Fame.
 
 **Fan cultures:** Die-Hards 13, Entitled 11, Party Crowd 9, Gloomy Realists 7, Long-Suffering 5, Front-Runners 3
 
-**Fan Capital:** average 0.53, from 0.37 to 0.71; the most it can buffer a recall vote is 15 points.
+**Fan Capital:** average 0.53, from 0.41 to 0.67; the most it can buffer a recall vote is 15 points.
 
-**The press on approval, last season:** average 1.0 points either way, largest 3.8 (the cap is 3 before market size and trust).
+**The press on approval, last season:** average 0.9 points either way, largest 3.2 (the cap is 3 before market size and trust).
 
-**Outlets:** 52 active (4 national, one local beat per team); credibility averages 40, from 18 to 65; 9 have folded and been replaced in 14 seasons.
+**Outlets:** 52 active (4 national, one local beat per team); credibility averages 43, from 17 to 75; 14 have folded and been replaced in 40 seasons.
 
-**Scenes:** 386 in 14 seasons ([('recall_vote', 195), ('exile_determination', 112), ('firing', 79)]). Firings by ruling: fair 58, sweep 16, harsh 4, unfounded 1.
+**Scenes:** 1106 in 40 seasons ([('recall_vote', 546), ('exile_determination', 320), ('firing', 240)]). Firings by ruling: fair 150, sweep 69, harsh 15, unfounded 6.
 
-**Recall votes:** 195 in 14 seasons (13.9 a year); 61 owners recalled (4.4 a year), 31% of votes. Owners retire on their own too: 46 so far.
+**Recall votes:** 546 in 40 seasons (13.7 a year); 173 owners recalled (4.3 a year), 32% of votes. Owners retire on their own too: 151 so far.
 
-**Firings:** 49 coaches and 30 GMs fired in 14 seasons.
+**Firings:** 154 coaches and 86 GMs fired in 40 seasons.
 
-**Coaches so far:** 156 hired and 108 retired in 14 seasons.
+**Coaches so far:** 370 hired and 305 retired in 40 seasons; 17 coaches and 13 GMs are between jobs right now.
 
-**Players with cards:** 2345 active or unsigned, 3026 retired.
+**Players with cards:** 2388 active or unsigned, 8813 retired.

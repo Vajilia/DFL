@@ -58,7 +58,10 @@ class League:
         self.choice_log: list = []         # every choice anyone made, the canonical record of the league's history
         self.passed_over: list = []        # candidate cards that were not hired (the Archive keeps them)
         self._cand_ids = 0
-        self.legend_cap_hits = 0           # times the legend cap kept a legend off an owner's list
+        self.free_coaches: list = []       # coaches between jobs (fired or passed over): they live on and can be offered again
+        self.free_gms: list = []
+        self.refs: dict = {}               # the league's average coach and GM ratings (living.refresh_refs): effects are measured against these
+        self.hall: list = []               # the Hall of Fame, in the order people were inducted
         self.fanbases: list = []
         self.media: list = []              # every media outlet ever founded, folded ones included
         self._media_ids = 0
@@ -156,6 +159,8 @@ def give_rosters(lg: League, rng: random.Random):
 
 
 def refresh_strengths(lg: League):
+    import living
+    living.refresh_refs(lg)
     from lineup import build_lineup
     import power_rating as PR
     for t in lg.teams:

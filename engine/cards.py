@@ -11,8 +11,9 @@ Design (confirmed by Jeph, 2026-10-04):
     overrates herself and a rising rookie undersells herself. As perception moves, her personality can shift,
     but only inside the traits her archetype allows.
   * COACHES change results by small, capped amounts: a lift to the team's offense and defense, and a yearly boost
-    (or drag) to the development of her players. Rare legends (a Walsh or a Lombardi) appear now and then. Every
-    effect size is bounded by the fair-competitiveness bands and re-tested against them.
+    (or drag) to the development of her players. They are living people (living.py): ratings grow and fade over a
+    career inside the shape of their soul. There are no designated legends: greatness is noticed by the media and
+    conferred by the Hall of Fame (recognition.py). Every effect size is bounded by the fair-competitiveness bands.
 
 Two rules keep this safe:
 
@@ -36,6 +37,7 @@ from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Tuple
 
 import card_pools as CP
+import living as LV
 from positions import ATTRS
 
 # ---- dials ---------------------------------------------------------------------------------
@@ -57,12 +59,8 @@ BASE_WEIGHTS = (0.60, 0.40, 0.25, 0.15) # how strongly her archetype favors the 
 COACH_POINTS_AT_100 = 1.0               # a 100-rated offense (or defense) coach is worth +1.0 point of margin; 50 is average, 0 effect
 DEV_POINTS_AT_100 = 0.40                # a 100-rated development coach adds this many rating points per year to each of her players (and a 1 takes it away)
 DEV_OLD_FACTOR = 0.5                    # players older than 27 respond to coaching half as much
-COACH_RATING_MEAN, COACH_RATING_SD = 50.0, 14.0
-LEGEND_RATE = 0.03                      # chance a newly hired coach is a Walsh or Lombardi (owners fire coaches, so hires are frequent: this gives about 2 or 3 on the field at a time)
-LEGEND_MEAN, LEGEND_SD = 93.0, 4.0      # a legend's offense, defense and development
-LEGEND_OTHER_MEAN, LEGEND_OTHER_SD = 85.0, 6.0
-COACH_RETIRE_FROM = 60                  # chance of retiring each year: 3% before this age, then rising
-COACH_MAX_AGE = 74
+COACH_RATING_MEAN, COACH_RATING_SD = 50.0, LV.RATING_SD
+COACH_RETIRE_FROM, COACH_MAX_AGE = LV.COACH_RETIRE_FROM, LV.COACH_MAX_AGE
 
 TIERS = ((80.0, "Franchise player"), (72.0, "Star"), (62.0, "Starter"), (52.0, "Depth"), (0.0, "Fringe"))
 
@@ -115,14 +113,7 @@ PHYSICAL_FLAWS = {"Short-Armed", "Plodder", "Goes Down Easy", "Lacks Burst", "Li
                   "Gets Washed Out", "Misses in the Run", "Avoids Contact", "Short Range", "Weak Leg"}
 FLAW_BONUS = 0.20
 
-COACH_ARCHETYPES = {
-    "offense": ("Offensive Mastermind", "Predictable Offense"),
-    "defense": ("Defensive Architect", "Leaky Defense"),
-    "development": ("Talent Developer", "Stunts Growth"),
-    "gamecraft": ("Clock Manager", "Costly Decisions"),
-    "discipline": ("Taskmaster", "Undisciplined"),
-    "motivation": ("Inspirer", "Flat Locker Room"),
-}
+COACH_ARCHETYPES = CP.COACH_ARCHETYPES
 COACH_ATTRS = tuple(COACH_ARCHETYPES)
 
 
@@ -149,6 +140,9 @@ class PlayerCard:
     pressure: Dict[str, int]                 # thresholds 1-100: how much each kind of pressure rattles her
     born_year: int = 0
     last_year: int = 0                       # last season her mind was updated
+    honors: List[dict] = field(default_factory=list)              # All-League, Player of the Year, titles (recognition.py)
+    esteem: float = 0.0
+    standing: str = ""
     relationships: Dict[str, int] = field(default_factory=dict)   # agent id -> score -100..100 (starts empty)
     career: List[dict] = field(default_factory=list)              # facts the engine knows
     decision_log: List[dict] = field(default_factory=list)        # choices she made (Interaction system, later)
@@ -177,13 +171,28 @@ class CoachCard:
     trait: str
     wants: str
     fears: str
-    ratings: Dict[str, float]                # offense, defense, development, gamecraft, discipline, motivation (1-100)
+    ratings: Dict[str, float]                # offense, defense, development, gamecraft, discipline, motivation (1-100); they move over a career
     pressure: Dict[str, int]
-    legend: bool = False                     # one of the rare all-time greats
     heat: float = 0.0                        # how much her owner's patience has worn thin (staff_cards)
     team_id: Optional[int] = None
     seasons_with_team: int = 0
     retired: bool = False
+    idle_years: int = 0                      # years spent between jobs
+    # the soul (fixed at birth) and the living parts (living.py)
+    soul_pos: str = ""
+    soul_neg: str = ""
+    family: List[str] = field(default_factory=list)
+    shape: Dict[str, float] = field(default_factory=dict)
+    anchor: Dict[str, float] = field(default_factory=dict)
+    ego: float = 0.0
+    temper: Dict[str, float] = field(default_factory=dict)
+    perceived: Dict[str, float] = field(default_factory=dict)
+    potential: float = 0.0
+    ref: Optional[Dict[str, float]] = None   # the league's average for the role (living.refresh_refs)
+    honors: List[dict] = field(default_factory=list)
+    esteem: float = 0.0                      # what the league thinks of her career (recognition.py)
+    standing: str = ""                       # what the media calls her: known, respected, star, contested, legend, Hall of Famer
+    history: List[dict] = field(default_factory=list)     # her overall level by year (living.grow)
     relationships: Dict[str, int] = field(default_factory=dict)
     career: List[dict] = field(default_factory=list)
     decision_log: List[dict] = field(default_factory=list)
@@ -192,18 +201,21 @@ class CoachCard:
     def name(self) -> str:
         return f"{self.first} {self.last}"
 
+    def _pts(self, attr: str, at_100: float) -> float:
+        return max(-at_100, min(at_100, LV.rel(self, attr) / 50.0 * at_100))
+
     @property
     def offense_points(self) -> float:
-        return (self.ratings["offense"] - 50.0) / 50.0 * COACH_POINTS_AT_100
+        return self._pts("offense", COACH_POINTS_AT_100)
 
     @property
     def defense_points(self) -> float:
-        return (self.ratings["defense"] - 50.0) / 50.0 * COACH_POINTS_AT_100
+        return self._pts("defense", COACH_POINTS_AT_100)
 
     @property
     def development_points(self) -> float:
         """Rating points per year she adds to (or takes from) each of her young players."""
-        return (self.ratings["development"] - 50.0) / 50.0 * DEV_POINTS_AT_100
+        return self._pts("development", DEV_POINTS_AT_100)
 
 
 def _rng(seed: int, *key) -> random.Random:
@@ -263,6 +275,35 @@ def decisions_text(card) -> str:
     last = card.decision_log[-6:]
     more = f"{len(card.decision_log) - 6} earlier; " if len(card.decision_log) > 6 else ""
     return "[" + more + "; ".join(f"{d['year']}: {d['action']}" for d in last) + "]"
+
+
+def recognition_text(card) -> str:
+    """What the league thinks of her: standing, esteem and the honors she has won."""
+    h = {}
+    for e in card.honors:
+        h[e["honor"]] = h.get(e["honor"], 0) + 1
+    honors = ", ".join(f"{k} x{v}" if v > 1 else k for k, v in h.items()) or "none yet"
+    return f"[{card.standing or 'unknown'}; esteem {card.esteem:.1f}; honors: {honors}]"
+
+
+def trajectory_text(card) -> str:
+    """Her overall level over her career: where she started, her peak, and where she is now."""
+    h = getattr(card, "history", None)
+    if not h:
+        return "[just started]"
+    peak = max(h, key=lambda e: e["level"])
+    pts = h[:: max(1, len(h) // 6)]
+    return "[" + "; ".join(f"age {e['age']}: {e['level']:.0f}" for e in pts) + f"; peak {peak['level']:.0f} at {peak['age']}; now {h[-1]['level']:.0f}]"
+
+
+def career_text(card) -> str:
+    out = []
+    for e in card.career:
+        if e["event"] == "personality_shift":
+            out.append(f"became {e['to']} (was {e['from']}) {e['year']}")
+        else:
+            out.append(f"{e['event']} {e['year']}")
+    return "; ".join(out)
 
 
 # ---- the soul and the mind -----------------------------------------------------------------------
@@ -350,29 +391,19 @@ def tier_label(ovr: float) -> str:
 def make_coach_card(seed: int, cid: int, team_id: Optional[int] = None, age: Optional[int] = None) -> CoachCard:
     r = _rng(seed, "coach", cid)
     first, last = make_name(seed + 23333, cid)                   # a different grid offset from the players
-    trait = r.choice(list(CP.COACH_TRAITS))
-    wants, fears = CP.COACH_TRAITS[trait]
-    legend = r.random() < LEGEND_RATE
-    # everyone else is centered so the whole pool of coaches still averages 50: legends do not lift the league
-    base_mean = (COACH_RATING_MEAN - LEGEND_RATE * LEGEND_MEAN) / (1.0 - LEGEND_RATE)
-    if legend:
-        ratings = {a: (r.gauss(LEGEND_MEAN, LEGEND_SD) if a in ("offense", "defense", "development")
-                       else r.gauss(LEGEND_OTHER_MEAN, LEGEND_OTHER_SD)) for a in COACH_ATTRS}
-    else:
-        ratings = {a: r.gauss(base_mean, COACH_RATING_SD) for a in COACH_ATTRS}
-    ratings = {a: max(1.0, min(100.0, round(v, 1))) for a, v in ratings.items()}
+    ratings = {a: max(1.0, min(100.0, round(r.gauss(COACH_RATING_MEAN, COACH_RATING_SD), 1))) for a in COACH_ATTRS}
     if age is None:
         age = r.randint(38, 64)
-    return CoachCard(cid=cid, first=first, last=last, age=age, hometown=r.choice(CP.HOMETOWNS), path=r.choice(CP.COACH_PATHS),
-                     trait=trait, wants=wants, fears=fears, ratings=ratings, legend=legend,
-                     pressure=_pressure(r, trait, ("Steady Hand",), ("Survivor",), ("Innovator",)), team_id=team_id)
+    card = CoachCard(cid=cid, first=first, last=last, age=age, hometown=r.choice(CP.HOMETOWNS), path=r.choice(CP.COACH_PATHS),
+                     trait="", wants="", fears="", ratings=ratings, pressure={}, team_id=team_id)
+    LV.give_soul(card, "coach", r, age)
+    card.pressure = _pressure(r, card.trait, ("Steady Hand",), ("Survivor",), ("Innovator",))
+    return card
 
 
-def coach_archetypes(ratings: Dict[str, float], legend: bool = False) -> Tuple[str, str]:
-    best = max(COACH_ATTRS, key=lambda a: ratings[a])
-    worst = min(COACH_ATTRS, key=lambda a: ratings[a])
-    good = COACH_ARCHETYPES[best][0]
-    return (f"Legend: {good}" if legend else good), COACH_ARCHETYPES[worst][1]
+def coach_archetypes(card) -> Tuple[str, str]:
+    """Her soul's labels: fixed for life."""
+    return LV.soul_labels(card, "coach")
 
 
 def development_bonus(coach: Optional[CoachCard], age: int) -> float:
@@ -401,6 +432,7 @@ def _hire(lg, team, year: int):
     c.career.append({"year": year, "event": "hired", "team": team.id})
     team.coach = c
     lg.coaches.append(c)
+    LV.seat_ref(lg, "coach", c)
 
 
 def ensure_cards(lg, year: int):
@@ -442,22 +474,27 @@ def apply_soul(p):
     p.recompute()
 
 
-def coach_offseason(lg, year: int):
-    """Coaches age a year; some retire and the team hires a new one. (Owners firing coaches comes with the
-    owner cards.) Uses card-private randomness only."""
+def coach_offseason(lg, year: int, hire: bool = True) -> Dict[int, "CoachCard"]:
+    """Coaches age a year, grow or fade, and some retire. With `hire` the team hires a replacement at once (the old rule);
+    otherwise the owner decides through a Decision Point (staff_cards). Returns {team id: the coach who retired}. Card-private
+    randomness only."""
+    retired = {}
     for t in lg.teams:
         c = t.coach
         if c is None:
             continue
         c.age += 1
         c.seasons_with_team += 1
-        r = _rng(lg.card_seed, "coachret", c.cid, year)
-        p = 0.03 if c.age < COACH_RETIRE_FROM else min(1.0, 0.03 + 0.07 * (c.age - COACH_RETIRE_FROM + 1))
-        if c.age >= COACH_MAX_AGE or r.random() < p:
+        LV.grow(c, "coach", lg.card_seed, year)
+        if LV.retires(c, "coach", lg.card_seed, year):
             c.retired = True
+            c.team_id = None
             c.career.append({"year": year, "event": "retired", "age": c.age})
             t.coach = None
-            _hire(lg, t, year)
+            retired[t.id] = c
+            if hire:
+                _hire(lg, t, year)
+    return retired
 
 
 def offseason_cards(lg, year: int):
@@ -489,6 +526,7 @@ def render_player(p, lg=None) -> str:
     for a in ATTRS[p.pos]:
         L.append(f"  - {a}: {_view(p, a)}")
     L.append("  - pressure thresholds: " + ", ".join(f"{k} {v}" for k, v in c.pressure.items()))
+    L.append("RECOGNITION: " + recognition_text(c))
     L.append("RELATIONSHIPS: " + rel_text(c, lg))
     def ev(e):
         if e["event"] == "personality_shift":
@@ -501,12 +539,16 @@ def render_player(p, lg=None) -> str:
 
 
 def render_coach(c: CoachCard, lg=None) -> str:
-    team = lg.by_id[c.team_id].name if (lg is not None and c.team_id is not None) else "unattached"
-    pos, neg = coach_archetypes(c.ratings, c.legend)
-    L = [f"### Coach {c.name}  ({team})" + ("  -  LEGEND" if c.legend else ""), "```yaml"]
+    team = lg.by_id[c.team_id].name if (lg is not None and c.team_id is not None) else ("retired" if c.retired else "between jobs")
+    pos, neg = coach_archetypes(c)
+    tag = f"  -  {c.standing.upper()}" if c.standing in ("legend", "Hall of Famer") else ""
+    L = [f"### Coach {c.name}  ({team})" + tag, "```yaml"]
     L.append(f"IDENTITY: [{c.name}, age {c.age}, from {c.hometown}; {c.path}]")
+    conf = LV.confidence(c)
+    mood = "overconfident" if conf > 0.25 else "full of doubt" if conf < -0.25 else "clear-eyed"
+    L.append(f"SOUL (fixed): [+ {pos}, - {neg}]")
     L.append(f"PERSONALITY: [{c.trait}] wants {c.wants}; fears {c.fears}")
-    L.append(f"ARCHETYPES: [+ {pos}, - {neg}]")
+    L.append(f"  - allowed by her soul: {', '.join(c.family)}; right now she is {mood} ({conf:+.2f})")
     L.append("RATINGS:")
     for a in COACH_ATTRS:
         if a == "offense":
@@ -517,11 +559,15 @@ def render_coach(c: CoachCard, lg=None) -> str:
             eff = f"   -> {c.development_points:+.2f} rating points per year to each young player"
         else:
             eff = "   (no on-field effect yet)"
-        L.append(f"  - {a}: {c.ratings[a]:.0f}{eff}")
+        see = c.perceived[a]
+        d = see - c.ratings[a]
+        view = f"  (sees herself at {see:.0f}{'' if abs(d) < 2 else ', overrating' if d > 0 else ', doubting'})"
+        L.append(f"  - {a}: {c.ratings[a]:.0f}{view}{eff}")
     L.append("  - pressure thresholds: " + ", ".join(f"{k} {v}" for k, v in c.pressure.items()))
+    L.append("TRAJECTORY: " + trajectory_text(c))
+    L.append("RECOGNITION: " + recognition_text(c))
     L.append("RELATIONSHIPS: " + rel_text(c, lg))
-    career = "; ".join(f"{e['event']} {e['year']}" for e in c.career)
-    L.append(f"CAREER: [{career or 'none recorded'}]")
+    L.append(f"CAREER: [{career_text(c) or 'none recorded'}]")
     L.append("DECISION_LOG: " + decisions_text(c))
     L.append("```")
     return "\n".join(L)

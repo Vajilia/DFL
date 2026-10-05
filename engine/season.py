@@ -138,20 +138,25 @@ def run_season(league: League, year: int, rng: random.Random, opt: Options = Non
     staff_log = None
     if league.has_rosters:
         from offseason import run_roster_offseason
+        import recognition
+        pct = {tid: float(s.pct) for tid, s in stats.items()}
+        pct.update({tid: float(s.pct) for tid, s in amb_stats.items()})
+        playoff_teams = {tid for ids in seeds.values() for tid in ids}
+        if league.coaches_on:
+            recognition.season_honors(league, year, pct, champion, playoff_teams)      # honors, esteem and the media's verdict, before anyone moves
         before = [p for t in league.teams for p in t.roster] + list(league.free_agents)
         off_log = run_roster_offseason(league, rng, opt.roster_model, year, pick_of, returners)
         import cards
         league.retired_players.extend(p for p in before if p.retired)
         if league.staff_on:
             import staff_cards
-            pct = {tid: float(s.pct) for tid, s in stats.items()}
-            pct.update({tid: float(s.pct) for tid, s in amb_stats.items()})
-            playoff_teams = {tid for ids in seeds.values() for tid in ids}
             staff_log = staff_cards.season_end(league, year, pct, new_exiles, champion, playoff_teams, recall_div)
             votes = set(staff_log["votes"])
             cards.ensure_cards(league, year)
         else:
             cards.offseason_cards(league, year)
+        if league.coaches_on:
+            recognition.hall_vote(league, year)
     else:
         for t in league.teams:
             s = model.retention * t.strength + model.pick_value(pick_of[t.id]) + rng.gauss(0.0, model.offseason_noise_sd)

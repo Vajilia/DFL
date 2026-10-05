@@ -27,7 +27,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--seed", type=int, default=1)
-    ap.add_argument("--seasons", type=int, default=14)
+    ap.add_argument("--seasons", type=int, default=40)
     a = ap.parse_args()
     rng = random.Random(a.seed)
     lg = new_league(rng, rosters=True)
@@ -42,7 +42,9 @@ def main():
            "- **Personality** is how her soul shows up. Her archetype allows four personalities; which one she shows depends on her temperament and on how she rates herself. Her self-image lags the truth, so a declining veteran overrates herself and a rising rookie undersells herself. When her confidence moves enough, her personality can shift, but only inside the four her soul allows.",
            "- **Pressure thresholds** (exile, contract, spotlight, loyalty) are how much each kind of pressure rattles her, 1 to 100. They do nothing yet; the Interaction system will use them.",
            "- **Fanbases and outlets**: a fanbase has a culture (its personality), five ratings and two stores: approval of the owner and Fan Capital (goodwill built by sustained success, which only ever buffers a recall). Its expectations drift with what the team delivers, inside a bound set at birth. An outlet has a voice, five ratings and Credibility, which rises when its forecasts come true and falls when they miss; one that stays irrelevant folds and is replaced. The press can move an owner's approval by at most 3 points a year.",
-           "- **Coach ratings**: offense and defense lift the team (up to +/- 1.0 point of margin each); development adds up to 0.4 rating points a year to each young player. The other three are stored for later. Legends are the rare all-time greats.\n"]
+           "- **Coach ratings**: offense and defense lift the team (up to +/- 1.0 point of margin each); development adds up to 0.4 rating points a year to each young player. The other three are stored for later. Effects are measured against the league's current average coach, so the average coach does nothing.",
+           "- **Living cards**: coaches, GMs and owners grow and fade over their careers (ratings move inside the shape their soul gave them), rate themselves with a lag, and can change personality inside the four traits their soul allows. People between jobs live on and can be offered to owners again. The TRAJECTORY line is their overall level by age.",
+           "- **Recognition**: nobody is a legend by birth. Honors (titles, All-League, Coach of the Year...) build a career esteem; the 52 outlets read it with their own noise, and a credibility-weighted share calling someone a legend makes it so (or the media splits and she is *contested*). The Hall of Fame (outlets and owners) votes on people who retired a few years ago. There is no cap on either.\n"]
     out.append("## A franchise player at each position group\n")
     active = [p for t in lg.teams for p in t.roster]
     for pos in ("QB", "WR", "OL", "DL", "CB", "K"):
@@ -62,13 +64,28 @@ def main():
     out.append("\n## A retired player (cards are kept for the Archive)\n")
     ret = max(lg.retired_players, key=lambda p: p.ovr)
     out.append(C.render_player(ret, lg))
-    out.append("\n## Head coaches: a legend, a typical coach and a weak one\n")
-    legends = [t for t in lg.teams if t.coach.legend]
+    out.append("\n## Head coaches: the most esteemed ever, a typical coach and a weak one\n")
     ranked = sorted(lg.teams, key=lambda t: t.coach.offense_points + t.coach.defense_points + t.coach.development_points)
-    if legends:
-        out.append(C.render_coach(legends[0].coach, lg))
+    out.append(C.render_coach(max(lg.coaches, key=lambda c: c.esteem), lg))
     out.append(C.render_coach(ranked[len(ranked) // 2].coach, lg))
     out.append(C.render_coach(ranked[0].coach, lg))
+    if lg.free_coaches:
+        out.append("\n**A coach between jobs (she lives on and may be offered to an owner again):**\n")
+        out.append(C.render_coach(max(lg.free_coaches, key=lambda c: c.esteem), lg))
+    out.append("\n## Recognition: who the media called a legend, and the Hall of Fame\n")
+    out.append("Nobody was made a legend. These are the Archive's own entries, in order:\n")
+    notes = [e for e in lg.archive if e["event"] in ("legend_contested", "legend_recognized", "legend_slipped")][:12]
+    out.append("```\n" + "\n".join(f"year {e['year']}: {e['event'].replace('_', ' ')}: {e['name']} ({e['kind']}), esteem {e['esteem']}, {int(100 * e['outlets_calling_it'])}% of outlets" for e in notes) + "\n```\n")
+    if lg.hall:
+        out.append("**The Hall of Fame so far:**\n")
+        out.append("| Year | Kind | Name | Esteem | Vote | Honors |\n|---|---|---|---|---|---|")
+        for h in lg.hall:
+            out.append(f"| {h['year']} | {h['kind']} | {h['name']} | {h['esteem']} | {h['share']:.0%} | " + ", ".join(f"{k} x{v}" for k, v in h["honors"].items()) + " |")
+        out.append("")
+    allp = active + list(lg.retired_players)
+    star = max(allp, key=lambda p: p.card.esteem)
+    out.append("**The most esteemed player:**\n")
+    out.append(C.render_player(star, lg))
     out.append("\n## An owner, a GM, and the Archive's first entries\n")
     top = max(lg.teams, key=lambda t: t.owner.seasons_owned)
     out.append(S.render_owner(top.owner, lg))
@@ -144,7 +161,8 @@ def main():
                f"best {max(eff):+.2f}, worst {min(eff):+.2f} points of expected margin. For scale, team talent has a spread of about 3 to 4 points.\n")
     shifts = sum(any(e["event"] == "personality_shift" for e in p.card.career) for p in active + list(lg.retired_players))
     out.append(f"**Personality shifts:** {shifts} of {len(active) + len(lg.retired_players)} players have changed personality at least once in {a.seasons} seasons.\n")
-    out.append(f"**Legends:** {sum(c.legend for c in lg.coaches)} of {len(lg.coaches)} coaches hired so far are legends; {len(legends)} on the field now.\n")
+    lg_now = collections.Counter(c.standing for c in list(lg.coaches) + list(lg.gms) + list(lg.owners) + [p.card for p in allp] if c.standing)
+    out.append(f"**Standing in the media's eyes** (everyone who ever lived, by what the media calls her now): " + ", ".join(f"{k} {v}" for k, v in lg_now.most_common()) + f". {len(lg.hall)} are in the Hall of Fame.\n")
     cc = collections.Counter(t.fans.culture for t in lg.teams)
     out.append("**Fan cultures:** " + ", ".join(f"{k} {v}" for k, v in cc.most_common()) + "\n")
     cap = [t.fans.capital for t in lg.teams]
@@ -164,7 +182,7 @@ def main():
     out.append(f"**Recall votes:** {nv} in {yrs} seasons ({nv / yrs:.1f} a year); {nr} owners recalled ({nr / yrs:.1f} a year), "
                f"{100 * nr / max(1, nv):.0f}% of votes. Owners retire on their own too: {sum(o.status == 'retired' for o in lg.owners)} so far.\n")
     out.append(f"**Firings:** {sum(e['event'] == 'coach_fired' for e in lg.archive)} coaches and {sum(e['event'] == 'gm_fired' for e in lg.archive)} GMs fired in {yrs} seasons.\n")
-    out.append(f"**Coaches so far:** {len(lg.coaches)} hired and {sum(c.retired for c in lg.coaches)} retired in {a.seasons} seasons.\n")
+    out.append(f"**Coaches so far:** {len(lg.coaches)} hired and {sum(c.retired for c in lg.coaches)} retired in {a.seasons} seasons; {len(lg.free_coaches)} coaches and {len(lg.free_gms)} GMs are between jobs right now.\n")
     out.append(f"**Players with cards:** {len(active) + len(lg.free_agents)} active or unsigned, {len(lg.retired_players)} retired.\n")
     path = os.path.join(ROOT, "reports", "card_samples.md")
     open(path, "w").write("\n".join(out))

@@ -29,7 +29,7 @@ check("every team has an owner and a GM", all(t.owner is not None and t.gm is no
 check("owner and GM names are unique", len({t.owner.name for t in lg.teams}) == 48 and len({t.gm.name for t in lg.teams}) == 48)
 check("all staff ratings are between 1 and 100", all(1 <= v <= 100 for t in lg.teams for v in list(t.owner.ratings.values()) + list(t.gm.ratings.values())))
 check("starting approvals are sensible", all(0.3 <= t.owner.approval <= 0.75 for t in lg.teams))
-check("cards print in the template format", all(k in S.render_owner(lg.teams[0].owner, lg) for k in ("IDENTITY", "PERSONALITY", "ARCHETYPES", "RATINGS", "RELATIONSHIPS")) and "GM" in S.render_gm(lg.teams[0].gm, lg))
+check("cards print in the template format", all(k in S.render_owner(lg.teams[0].owner, lg) for k in ("IDENTITY", "PERSONALITY", "SOUL", "RATINGS", "RECOGNITION", "RELATIONSHIPS")) and "GM" in S.render_gm(lg.teams[0].gm, lg))
 lg2 = new_league(random.Random(5), rosters=True)
 check("same seed gives the same owners and GMs", [(t.owner.name, t.gm.name) for t in lg.teams] == [(t.owner.name, t.gm.name) for t in lg2.teams])
 
@@ -78,7 +78,7 @@ check("a recall needs a majority (share above 50%), a survival does not reach it
 check("votes are not rubber stamps: some owners fall and some survive", any(e["result"] == "recalled" for e in events) and any(e["result"] == "survived" for e in events),
       f"{sum(e['result'] == 'recalled' for e in events)} recalled, {sum(e['result'] == 'survived' for e in events)} survived of {len(events)}")
 low = [o for o in L.owners if o.status == "recalled"]
-check("recalled owners had fans against them", st.mean(o.career[-1]["approval"] for o in low) < 0.45, f"average approval {st.mean(o.career[-1]['approval'] for o in low):.2f}")
+check("recalled owners had fans against them", st.mean(next(e for e in o.career if e["event"] == "recalled")["approval"] for o in low) < 0.45, f"average approval {st.mean(next(e for e in o.career if e['event'] == 'recalled')['approval'] for o in low):.2f}")
 per_year = [len(h.staff["recalled"]) for h in hist]
 check("recalls per year look sensible (some every year, never most of the league)", 0 < st.mean(per_year) < 10 and max(per_year) < 20, f"average {st.mean(per_year):.1f}, max {max(per_year)}")
 approvals = [a for h in hist[8:] for a in h.staff["approval"].values()]
@@ -87,12 +87,13 @@ cf = sum(len(h.staff["coach_fired"]) for h in hist) / 40
 check("coaches get fired, at a plausible rate", 2 < cf < 12, f"{cf:.1f} firings a year")
 gf = sum(len(h.staff["gm_fired"]) for h in hist) / 40
 check("GMs get fired, less often than coaches", 0.5 < gf < cf, f"{gf:.1f} firings a year")
-fired_legend = sum(c.legend and any(e["event"] == "fired" for e in c.career) for c in L.coaches)
-all_legend = sum(c.legend for c in L.coaches)
-fired_other = sum((not c.legend) and any(e["event"] == "fired" for e in c.career) for c in L.coaches)
-all_other = sum(not c.legend for c in L.coaches)
-check("legends are fired less often than other coaches", fired_legend / max(1, all_legend) < fired_other / max(1, all_other),
-      f"{fired_legend}/{all_legend} legends vs {fired_other}/{all_other} others")
+import recognition as RC  # noqa: E402
+o0 = L.teams[0].owner
+check("owners give a famous coach more rope (the firing threshold rises with esteem, to double at the legend bar)",
+      abs(S._fire_threshold(o0, 1.0 + S.ROPE_WEIGHT * 1.0) - 2.0 * S._fire_threshold(o0, 1.0)) < 1e-9 and S.ROPE_WEIGHT > 0)
+check("firing is not a coin flip on fame: coaches fired had less esteem than the ones kept, on average",
+      st.mean(c.esteem for c in L.coaches if any(e["event"] == "fired" for e in c.career)) <
+      st.mean(c.esteem for c in L.coaches if not any(e["event"] == "fired" for e in c.career) and not c.retired))
 fired = [c for c in L.coaches if any(e["event"] == "fired" for e in c.career)]
 check("fired coaches did worse than keepers (their heat was real)", st.mean(c.heat for c in fired) > st.mean(t.coach.heat for t in L.teams), "")
 check("the Archive records the firings and hirings", {"coach_fired", "gm_fired", "gm_hired", "recall_vote"} <= {e["event"] for e in L.archive})

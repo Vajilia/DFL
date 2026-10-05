@@ -23,6 +23,7 @@ from typing import Dict, List, Optional, Tuple
 
 import card_pools as CP
 import cards as C
+import living as LV
 import rules as R
 
 # ---- dials (PLACEHOLDER, not league rules) ---------------------------------------------------
@@ -46,7 +47,9 @@ OWNER_RETIRE_FROM, OWNER_MAX_AGE = 65, 85
 HEAT_DECAY = 0.6
 HEAT_EXILE = 0.0 
 FIRE_BASE, FIRE_PATIENCE = 0.15, 0.20    # coach is fired when heat > base + patience-based slack (patience 50 -> 0.25)
-LEGEND_FIRE_FACTOR = 2.0                 # owners trust a legend: it takes twice the heat to fire her
+ROPE_WEIGHT = 1.0                        # esteem buys rope: a coach at the legend bar takes twice the heat to fire (see recognition.esteem_ratio)
+GM_ROPE_WEIGHT = 0.5
+HALO_POINTS = 3.0                        # an owner sees a famous candidate's ratings this many points higher at the legend bar (her blind spot; the truth is unchanged)
 GM_FIRE_FACTOR = 1.5                     # GMs get more rope than coaches
 NEW_OWNER_CLEAN_HOUSE = 0.15             # chance (scaled by involvement) a new owner fires the coach and the GM on arrival
 # general manager levers (small and capped; sized against the fairness bands)
@@ -55,43 +58,8 @@ GM_RETENTION = 0.30              # a 100-rated negotiator cuts her team's yearly
 OWNER_ATTRS = ("patience", "ambition", "involvement", "popularity", "business")
 GM_ATTRS = ("scouting", "negotiation", "evaluation", "trades", "cap_sense")
 
-OWNER_TRAITS = {
-    "Legacy Builder": ("a dynasty with her name on it", "being recalled"),
-    "Penny-Pincher": ("a profitable franchise", "a league subsidy"),
-    "Glory Hunter": ("a title right now", "being a laughingstock"),
-    "Meddler": ("a hand in every decision", "being irrelevant"),
-    "Patient Steward": ("a slow, sound build", "panic"),
-    "Showwoman": ("spectacle and headlines", "boredom"),
-    "Local Hero": ("the town's love", "selling out"),
-    "Opportunist": ("a quick profit", "a long losing stretch"),
-}
-OWNER_PATHS = ["Founder's daughter", "Self-made industrialist", "Tech founder", "Media heiress", "Real-estate magnate",
-               "Former player turned investor", "Local business owner", "Consortium front-woman", "Sports-franchise veteran",
-               "Philanthropist"]
-OWNER_ARCHETYPES = {
-    "patience": ("Patient Steward", "Trigger-Happy"),
-    "ambition": ("Relentless Competitor", "Content With Mediocrity"),
-    "involvement": ("Hands-On Leader", "Absentee Owner"),
-    "popularity": ("Fan Favorite", "Despised"),
-    "business": ("Shrewd Operator", "Money Pit"),
-}
-GM_PATHS = ["Longtime scout", "Former player turned executive", "Analytics-driven executive", "Agent turned GM",
-            "Came up through the personnel department", "Coach's trusted lieutenant", "Cap specialist", "Hired away from another league"]
-GM_TRAITS = {
-    "Talent Hawk": ("the best young players", "missing on a first-round pick"),
-    "Dealmaker": ("the best contract in every negotiation", "being outmaneuvered"),
-    "Planner": ("a five-year roster plan", "a short-term panic"),
-    "Gambler": ("a high-risk, high-reward bet", "a boring middling roster"),
-    "Loyal Lieutenant": ("her owner's trust", "being replaced"),
-    "Cold Realist": ("decisions free of sentiment", "a veteran she cannot cut"),
-}
-GM_ARCHETYPES = {
-    "scouting": ("Draft Whisperer", "Draft-Day Disaster"),
-    "negotiation": ("Closer", "Poor Negotiator"),
-    "evaluation": ("Eye for Talent", "Misjudges Players"),
-    "trades": ("Master Trader", "Gets Fleeced"),
-    "cap_sense": ("Cap Wizard", "Cap Casualty"),
-}
+OWNER_TRAITS, OWNER_PATHS, OWNER_ARCHETYPES = CP.OWNER_TRAITS, CP.OWNER_PATHS, CP.OWNER_ARCHETYPES
+GM_PATHS, GM_TRAITS, GM_ARCHETYPES = CP.GM_PATHS, CP.GM_TRAITS, CP.GM_ARCHETYPES
 
 
 # ---- cards ---------------------------------------------------------------------------------
@@ -113,6 +81,20 @@ class OwnerCard:
     seasons_owned: int = 0
     status: str = "owner"                    # owner | recalled | retired
     teams_owned: List[int] = field(default_factory=list)   # the never-twice rule is checked against this
+    # the soul (fixed at birth) and the living parts (living.py)
+    soul_pos: str = ""
+    soul_neg: str = ""
+    family: List[str] = field(default_factory=list)
+    shape: Dict[str, float] = field(default_factory=dict)
+    anchor: Dict[str, float] = field(default_factory=dict)
+    ego: float = 0.0
+    temper: Dict[str, float] = field(default_factory=dict)
+    perceived: Dict[str, float] = field(default_factory=dict)
+    potential: float = 0.0
+    honors: List[dict] = field(default_factory=list)
+    esteem: float = 0.0
+    standing: str = ""
+    history: List[dict] = field(default_factory=list)
     relationships: Dict[str, int] = field(default_factory=dict)
     career: List[dict] = field(default_factory=list)
     decision_log: List[dict] = field(default_factory=list)
@@ -139,6 +121,22 @@ class GMCard:
     heat: float = 0.0
     seasons_with_team: int = 0
     status: str = "gm"                       # gm | fired | retired
+    idle_years: int = 0
+    ref: Optional[Dict[str, float]] = None
+    # the soul (fixed at birth) and the living parts (living.py)
+    soul_pos: str = ""
+    soul_neg: str = ""
+    family: List[str] = field(default_factory=list)
+    shape: Dict[str, float] = field(default_factory=dict)
+    anchor: Dict[str, float] = field(default_factory=dict)
+    ego: float = 0.0
+    temper: Dict[str, float] = field(default_factory=dict)
+    perceived: Dict[str, float] = field(default_factory=dict)
+    potential: float = 0.0
+    honors: List[dict] = field(default_factory=list)
+    esteem: float = 0.0
+    standing: str = ""
+    history: List[dict] = field(default_factory=list)
     relationships: Dict[str, int] = field(default_factory=dict)
     career: List[dict] = field(default_factory=list)
     decision_log: List[dict] = field(default_factory=list)
@@ -149,32 +147,30 @@ class GMCard:
 
     @property
     def scouting_points(self) -> float:
-        return (self.ratings["scouting"] - 50.0) / 50.0 * GM_SCOUTING_POINTS
+        return max(-GM_SCOUTING_POINTS, min(GM_SCOUTING_POINTS, LV.rel(self, "scouting") / 50.0 * GM_SCOUTING_POINTS))
 
     @property
     def retention_factor(self) -> float:
         """Multiplier on the share of her roster whose contracts expire each year (below 1 keeps more players)."""
-        return 1.0 - (self.ratings["negotiation"] - 50.0) / 50.0 * GM_RETENTION
+        return 1.0 - max(-GM_RETENTION, min(GM_RETENTION, LV.rel(self, "negotiation") / 50.0 * GM_RETENTION))
 
 
 def _ratings(r: random.Random, attrs) -> Dict[str, float]:
-    return {a: max(1.0, min(100.0, round(r.gauss(50.0, 14.0), 1))) for a in attrs}
+    return {a: max(1.0, min(100.0, round(r.gauss(50.0, LV.RATING_SD), 1))) for a in attrs}
 
 
 def make_owner_card(seed: int, oid: int, team_id: Optional[int] = None, age: Optional[int] = None,
                     new_owner: bool = False) -> OwnerCard:
     r = C._rng(seed, "owner", oid)
     first, last = C.make_name(seed + 41111, oid)
-    trait = r.choice(list(OWNER_TRAITS))
-    wants, fears = OWNER_TRAITS[trait]
     ratings = _ratings(r, OWNER_ATTRS)
     if age is None:
         age = r.randint(42, 72)
     c = OwnerCard(oid=oid, first=first, last=last, age=age, hometown=r.choice(CP.HOMETOWNS), path=r.choice(OWNER_PATHS),
-                  trait=trait, wants=wants, fears=fears, ratings=ratings,
-                  pressure={"recall": C._pressure(r, trait)["exile"], "media": C._pressure(r, trait)["spotlight"],
-                            "losing": max(5, min(95, round(r.gauss(50, 15)))), "subsidy": max(5, min(95, round(r.gauss(50, 15))))},
-                  team_id=team_id)
+                  trait="", wants="", fears="", ratings=ratings, pressure={}, team_id=team_id)
+    LV.give_soul(c, "owner", r, age)
+    c.pressure = {"recall": C._pressure(r, c.trait)["exile"], "media": C._pressure(r, c.trait)["spotlight"],
+                  "losing": max(5, min(95, round(r.gauss(50, 15)))), "subsidy": max(5, min(95, round(r.gauss(50, 15))))}
     if new_owner:
         c.approval = NEW_OWNER_APPROVAL + (ratings["popularity"] - 50.0) / 50.0 * 0.05
     else:
@@ -185,23 +181,20 @@ def make_owner_card(seed: int, oid: int, team_id: Optional[int] = None, age: Opt
 def make_gm_card(seed: int, gid: int, team_id: Optional[int] = None) -> GMCard:
     r = C._rng(seed, "gm", gid)
     first, last = C.make_name(seed + 57777, gid)
-    trait = r.choice(list(GM_TRAITS))
-    wants, fears = GM_TRAITS[trait]
-    return GMCard(gid=gid, first=first, last=last, age=r.randint(38, 66), hometown=r.choice(CP.HOMETOWNS), path=r.choice(GM_PATHS),
-                  trait=trait, wants=wants, fears=fears, ratings=_ratings(r, GM_ATTRS),
-                  pressure=C._pressure(r, trait), team_id=team_id)
+    age = r.randint(38, 66)
+    g = GMCard(gid=gid, first=first, last=last, age=age, hometown=r.choice(CP.HOMETOWNS), path=r.choice(GM_PATHS),
+               trait="", wants="", fears="", ratings=_ratings(r, GM_ATTRS), pressure={}, team_id=team_id)
+    LV.give_soul(g, "gm", r, age)
+    g.pressure = C._pressure(r, g.trait)
+    return g
 
 
-def owner_archetypes(ratings: Dict[str, float]):
-    best = max(OWNER_ATTRS, key=lambda a: ratings[a])
-    worst = min(OWNER_ATTRS, key=lambda a: ratings[a])
-    return OWNER_ARCHETYPES[best][0], OWNER_ARCHETYPES[worst][1]
+def owner_archetypes(card):
+    return LV.soul_labels(card, "owner")
 
 
-def gm_archetypes(ratings: Dict[str, float]):
-    best = max(GM_ATTRS, key=lambda a: ratings[a])
-    worst = min(GM_ATTRS, key=lambda a: ratings[a])
-    return GM_ARCHETYPES[best][0], GM_ARCHETYPES[worst][1]
+def gm_archetypes(card):
+    return LV.soul_labels(card, "gm")
 
 
 # ---- league wiring -----------------------------------------------------------------------------
@@ -226,6 +219,7 @@ def _hire_gm(lg, team, year: int):
     g.career.append({"year": year, "event": "hired", "team": team.id})
     team.gm = g
     lg.gms.append(g)
+    LV.seat_ref(lg, "gm", g)
     log(lg, year, "gm_hired", team=team.id, gm=g.name)
     return g
 
@@ -256,22 +250,25 @@ def _fire_threshold(owner: OwnerCard, factor: float = 1.0) -> float:
 # ---- decision points: the owner's staff review and her hires (Phase 4b pilot) -----------------------------------
 HIRE_POOL = 3                    # candidates an owner sees when she hires; the autopilot takes the first, as the old rule did
 CAND_BASE = 20000                # candidate cards that are not hired are numbered from here, clear of every real id
-LEGEND_CAP = 8                   # most legend coaches on the field at once; above this no legend is offered to an owner (legends stay rare whatever agents do)
 COACH_VIEW = ("offense", "defense", "development", "gamecraft", "discipline", "motivation")
 
 
 def _perceived(lg, o, card, year, attrs) -> dict:
-    """How the owner rates a person: the truth plus her own blind spots. A shrewd operator sees clearly; a money pit does not."""
+    """How the owner rates a person: the truth plus her own blind spots. A shrewd operator sees clearly; a money pit does not.
+    Fame is a blind spot too: the more famous the person, the better the owner thinks she is (a halo, never the truth)."""
+    import recognition as RC
     r = C._rng(lg.card_seed, "perceive", o.oid, year, card.first, card.last)
     sd = 4.0 + (100.0 - o.ratings["business"]) / 10.0
-    return {a: round(max(1.0, min(100.0, card.ratings[a] + r.gauss(0.0, sd))), 0) for a in attrs}
+    halo = HALO_POINTS * RC.esteem_ratio(card) / 1.0 if getattr(card, "esteem", 0.0) else 0.0
+    return {a: round(max(1.0, min(100.0, card.ratings[a] + halo + r.gauss(0.0, sd))), 0) for a in attrs}
 
 
 def _person_view(lg, o, card, year, attrs, is_coach: bool) -> dict:
-    v = dict(name=card.name, age=card.age, path=card.path, trait=card.trait, perceived=_perceived(lg, o, card, year, attrs))
-    if is_coach:
-        v["legend"] = card.legend
-    return v
+    h = {}
+    for e in card.honors:
+        h[e["honor"]] = h.get(e["honor"], 0) + 1
+    return dict(name=card.name, age=card.age, path=card.path, trait=card.trait, perceived=_perceived(lg, o, card, year, attrs),
+                reputation=card.standing or "unknown", honors=h, previous_jobs=sum(1 for e in card.career if e["event"] == "hired"))
 
 
 def _staff_review(lg, t, year, o, c, g, can_coach, default_fc, default_fg, new_boss, pct, rank, tid_voted, exiled) -> Tuple[bool, bool]:
@@ -305,70 +302,107 @@ def _rank_of(lg, t) -> int:
     return 1 + sum(1 for x in lg.teams if x.strength > t.strength)
 
 
-def _pool(lg, make, next_id: int, team_id: int, n: int):
-    cards = [make(lg.card_seed, next_id, team_id)]          # the card the old rule would have hired
-    for _ in range(n - 1):
+def _recently_fired_here(card, team_id: int, year: int) -> bool:
+    return any(e["event"] == "fired" and e.get("team") == team_id and year - e["year"] < 3 for e in card.career)
+
+
+def _candidates(lg, kind: str, make, t, year: int, o):
+    """The three people an owner sees: the card the old rule would have hired comes first, then people between jobs who are
+    still in the business (the carousel), then fresh people to fill the list."""
+    nxt = (lg._coach_ids if kind == "coach" else lg._gm_ids) + 1
+    pool = lg.free_coaches if kind == "coach" else lg.free_gms
+    cands = [make(lg.card_seed, nxt, t.id)]
+    avail = [c for c in pool if not _recently_fired_here(c, t.id, year)]
+    r = C._rng(lg.card_seed, "vets", kind, t.id, year, o.oid)
+    vets = r.sample(avail, min(len(avail), HIRE_POOL - 1)) if avail else []
+    cands += vets
+    while len(cands) < HIRE_POOL:
         lg._cand_ids += 1
-        cards.append(make(lg.card_seed, CAND_BASE + lg._cand_ids, team_id))
-    return cards
+        cands.append(make(lg.card_seed, CAND_BASE + lg._cand_ids, t.id))
+    return cands, set(id(v) for v in vets)
 
 
-def _passed_over(lg, card, idfield: str, team_id: int, year: int):
+def _idf(kind: str) -> str:
+    return "cid" if kind == "coach" else "gid"
+
+
+def _passed_over(lg, kind: str, card, team_id: int, year: int):
+    """A candidate who is not hired is still a person: she joins the people between jobs and may be offered again."""
+    idf = _idf(kind)
     lg._cand_ids += 1
-    setattr(card, idfield, CAND_BASE + lg._cand_ids)
+    setattr(card, idf, CAND_BASE + lg._cand_ids)
     card.team_id = None
+    card.idle_years = 0
     card.career.append({"year": year, "event": "passed_over", "team": team_id})
     lg.passed_over.append(card)
+    (lg.free_coaches if kind == "coach" else lg.free_gms).append(card)
+
+
+def _release(lg, kind: str, card, team_id: int, year: int):
+    """A fired coach or GM goes back to the people between jobs; she is not retired."""
+    card.team_id, card.idle_years = None, 0
+    if kind == "coach":
+        lg.free_coaches.append(card)
+    else:
+        card.status = "fired"
+        lg.free_gms.append(card)
+
+
+def _install(lg, kind: str, t, cands, vets, k: int, year: int):
+    """Everyone not chosen is passed over (the vets simply stay where they are); the chosen one takes the job."""
+    idf = _idf(kind)
+    pool_name = "free_coaches" if kind == "coach" else "free_gms"
+    new = cands[k]
+    first_time = getattr(new, idf) >= CAND_BASE or k == 0
+    for i, c in enumerate(cands):
+        if i != k and id(c) not in vets:
+            _passed_over(lg, kind, c, t.id, year)
+    if id(new) in vets:
+        setattr(lg, pool_name, [c for c in getattr(lg, pool_name) if c is not new])
+    if getattr(new, idf) >= CAND_BASE or k == 0:
+        setattr(new, idf, lg.new_coach_id() if kind == "coach" else lg.new_gm_id())
+    elif id(new) in vets:
+        lg.new_coach_id() if kind == "coach" else lg.new_gm_id()       # burn the id the unused first candidate was built with
+    new.team_id, new.idle_years, new.heat, new.seasons_with_team = t.id, 0, 0.0, 0
+    if kind == "coach":
+        new.retired = False
+    else:
+        new.status = "gm"
+    new.career.append({"year": year, "event": "hired", "team": t.id})
+    if first_time:
+        (lg.coaches if kind == "coach" else lg.gms).append(new)
+    LV.seat_ref(lg, kind, new)
+    return new
 
 
 def _hire_coach(lg, t, year: int, o):
     """The owner picks her new coach from three candidates."""
     import decisions as D
-    cands = _pool(lg, C.make_coach_card, lg._coach_ids + 1, t.id, HIRE_POOL)
-    if sum(1 for x in lg.teams if x.coach is not None and x.coach.legend) >= LEGEND_CAP:
-        # the guardrail: with the cap reached no legend is on offer; a legend candidate is replaced by an ordinary one
-        for i, c in enumerate(cands):
-            while c.legend:
-                lg.legend_cap_hits += 1
-                lg._cand_ids += 1
-                c = C.make_coach_card(lg.card_seed, CAND_BASE + lg._cand_ids, t.id)
-            cands[i] = c
-    opts = [dict(id=f"candidate_{i}", label=f"Hire {c.name}", tags={}, view=_person_view(lg, o, c, year, COACH_VIEW, True)) for i, c in enumerate(cands)]
+    cands, vets = _candidates(lg, "coach", C.make_coach_card, t, year, o)
+    opts = [dict(id=f"candidate_{i}", label=f"Hire {c.name}", tags={"between_jobs": id(c) in vets}, view=_person_view(lg, o, c, year, COACH_VIEW, True)) for i, c in enumerate(cands)]
     dp = D.DecisionPoint("hire_coach", year, t.id, "owner", o, dict(team_needs="a head coach"), opts, "candidate_0",
                          dict(team=t, owner=o, candidates={f"candidate_{i}": c for i, c in enumerate(cands)}, strength_rank=_rank_of(lg, t)))
     k = int(D.decide(lg, dp).split("_")[1])
-    for i, c in enumerate(cands):
-        if i != k:
-            _passed_over(lg, c, "cid", t.id, year)
-    new = cands[k]
-    new.cid = lg.new_coach_id()
-    new.team_id = t.id
-    new.career.append({"year": year, "event": "hired", "team": t.id})
+    others = [c.name for i, c in enumerate(cands) if i != k]
+    new = _install(lg, "coach", t, cands, vets, k, year)
     t.coach = new
-    lg.coaches.append(new)
     if k:
-        o.decision_log.append({"year": year, "interaction": dp.id, "action": f"hired coach {new.name}, passing on {', '.join(c.name for i, c in enumerate(cands) if i != k)}"})
+        o.decision_log.append({"year": year, "interaction": dp.id, "action": f"hired coach {new.name}, passing on {', '.join(others)}"})
 
 
 def _hire_gm_decision(lg, t, year: int, o):
     import decisions as D
-    cands = _pool(lg, make_gm_card, lg._gm_ids + 1, t.id, HIRE_POOL)
-    opts = [dict(id=f"candidate_{i}", label=f"Hire {g.name}", tags={}, view=_person_view(lg, o, g, year, tuple(GM_ATTRS), False)) for i, g in enumerate(cands)]
+    cands, vets = _candidates(lg, "gm", make_gm_card, t, year, o)
+    opts = [dict(id=f"candidate_{i}", label=f"Hire {g.name}", tags={"between_jobs": id(g) in vets}, view=_person_view(lg, o, g, year, tuple(GM_ATTRS), False)) for i, g in enumerate(cands)]
     dp = D.DecisionPoint("hire_gm", year, t.id, "owner", o, dict(team_needs="a general manager"), opts, "candidate_0",
                          dict(team=t, owner=o, candidates={f"candidate_{i}": g for i, g in enumerate(cands)}, strength_rank=_rank_of(lg, t)))
     k = int(D.decide(lg, dp).split("_")[1])
-    for i, g in enumerate(cands):
-        if i != k:
-            _passed_over(lg, g, "gid", t.id, year)
-    new = cands[k]
-    new.gid = lg.new_gm_id()
-    new.team_id = t.id
-    new.career.append({"year": year, "event": "hired", "team": t.id})
+    others = [g.name for i, g in enumerate(cands) if i != k]
+    new = _install(lg, "gm", t, cands, vets, k, year)
     t.gm = new
-    lg.gms.append(new)
     log(lg, year, "gm_hired", team=t.id, gm=new.name)
     if k:
-        o.decision_log.append({"year": year, "interaction": dp.id, "action": f"hired GM {new.name}, passing on {', '.join(g.name for i, g in enumerate(cands) if i != k)}"})
+        o.decision_log.append({"year": year, "interaction": dp.id, "action": f"hired GM {new.name}, passing on {', '.join(others)}"})
 
 
 def season_end(lg, year: int, pct: Dict[int, float], new_exiles, champion: int, playoff_teams, recall_div: int) -> dict:
@@ -405,6 +439,7 @@ def season_end(lg, year: int, pct: Dict[int, float], new_exiles, champion: int, 
             o.approval = max(0.0, min(1.0, o.approval))
         o.seasons_owned += 1
         o.age += 1
+        LV.grow(o, "owner", lg.card_seed, year, approval=o.approval)
         shortfall = 0.5 - pct.get(t.id, 0.5) + (HEAT_EXILE if t.id in new_exiles else 0.0)
         for who in (t.coach, t.gm):
             if who is not None:
@@ -468,26 +503,42 @@ def season_end(lg, year: int, pct: Dict[int, float], new_exiles, champion: int, 
     if fans_on:
         for t in lg.teams:
             FM.after_vote(t, t.id in out["new_owner_teams"])
-    # 4. coaches age (and some retire); then each owner decides about her coach and GM
-    pre = {t.id: t.coach for t in lg.teams}
-    C.coach_offseason(lg, year)
+    # 4. coaches and GMs age, grow or fade, and some retire; people between jobs live on; owners choose the replacements
+    retired_coach = C.coach_offseason(lg, year, hire=False)
+    retired_gm = {}
     for t in lg.teams:
-        if pre[t.id] is not t.coach:
-            out["coach_retired"].append(t.id)
-            log(lg, year, "coach_retired", team=t.id, coach=pre[t.id].name, replacement=t.coach.name)
-        if t.gm is not None:
-            t.gm.age += 1
-            t.gm.seasons_with_team += 1
+        g = t.gm
+        if g is None:
+            continue
+        g.age += 1
+        g.seasons_with_team += 1
+        LV.grow(g, "gm", lg.card_seed, year)
+        if LV.retires(g, "gm", lg.card_seed, year):
+            g.status, g.team_id = "retired", None
+            g.career.append({"year": year, "event": "retired", "age": g.age})
+            retired_gm[t.id] = g
+            t.gm = None
+    LV.free_pool_season(lg, year)
+    for tid, old in retired_coach.items():
+        t = lg.by_id[tid]
+        _hire_coach(lg, t, year, t.owner)
+        out["coach_retired"].append(tid)
+        log(lg, year, "coach_retired", team=tid, coach=old.name, replacement=t.coach.name)
+    for tid, old in retired_gm.items():
+        t = lg.by_id[tid]
+        _hire_gm_decision(lg, t, year, t.owner)
+        log(lg, year, "gm_retired", team=tid, gm=old.name, replacement=t.gm.name)
     rank = {tid: i + 1 for i, tid in enumerate(sorted((t.id for t in lg.teams), key=lambda i: -lg.by_id[i].strength))}
     for t in lg.teams:
         o = t.owner
         r = C._rng(lg.card_seed, "firing", o.oid, year, t.id)
         new_boss = t.id in out["new_owner_teams"]
         clean = new_boss and r.random() < NEW_OWNER_CLEAN_HOUSE * o.ratings["involvement"] / 50.0
-        c, g = t.coach, t.gm
-        clean_coach = clean and not (c is not None and c.legend)          # nobody sweeps out a legend
-        thr_c = _fire_threshold(o, LEGEND_FIRE_FACTOR if c is not None and c.legend else 1.0)
-        thr_g = _fire_threshold(o, GM_FIRE_FACTOR)
+        c, g = t.coach, (None if t.id in retired_gm else t.gm)
+        import recognition as RC
+        clean_coach = clean and not (c is not None and RC.is_famous(c))          # nobody sweeps out a famous coach
+        thr_c = _fire_threshold(o, 1.0 + ROPE_WEIGHT * (RC.esteem_ratio(c) if c is not None else 0.0))
+        thr_g = _fire_threshold(o, GM_FIRE_FACTOR * (1.0 + GM_ROPE_WEIGHT * (RC.esteem_ratio(g) if g is not None else 0.0)))
         can_coach = c is not None and t.id not in out["coach_retired"]
         default_fc = can_coach and (clean_coach or c.heat > thr_c)         # the autopilot's rule, unchanged
         default_fg = g is not None and (clean or g.heat > thr_g)
@@ -496,7 +547,7 @@ def season_end(lg, year: int, pct: Dict[int, float], new_exiles, champion: int, 
             reason = ("new owner cleaned house" if clean_coach and c.heat <= thr_c else "results") if default_fc else "owner's judgment"
             log(lg, year, "coach_fired", team=t.id, coach=c.name, heat=round(c.heat, 3), by=o.name, reason=reason)
             c.career.append({"year": year, "event": "fired", "team": t.id})
-            c.team_id, c.retired = None, True
+            _release(lg, "coach", c, t.id, year)
             t.coach = None
             _hire_coach(lg, t, year, o)
             out["coach_fired"].append(t.id)
@@ -505,7 +556,7 @@ def season_end(lg, year: int, pct: Dict[int, float], new_exiles, champion: int, 
             reason = ("new owner cleaned house" if clean and g.heat <= thr_g else "results") if default_fg else "owner's judgment"
             log(lg, year, "gm_fired", team=t.id, gm=g.name, heat=round(g.heat, 3), by=o.name)
             g.career.append({"year": year, "event": "fired", "team": t.id})
-            g.status, g.team_id = "fired", None
+            _release(lg, "gm", g, t.id, year)
             t.gm = None
             _hire_gm_decision(lg, t, year, o)
             out["gm_fired"].append(t.id)
@@ -517,32 +568,49 @@ def season_end(lg, year: int, pct: Dict[int, float], new_exiles, champion: int, 
 
 
 # ---- text rendering ------------------------------------------------------------------------------
+def _mood(card) -> str:
+    conf = LV.confidence(card)
+    return f"{'overconfident' if conf > 0.25 else 'full of doubt' if conf < -0.25 else 'clear-eyed'} ({conf:+.2f})"
+
+
+def _rating_line(card, a: str, eff: str = "") -> str:
+    d = card.perceived[a] - card.ratings[a]
+    view = f"  (sees herself at {card.perceived[a]:.0f}{'' if abs(d) < 2 else ', overrating' if d > 0 else ', doubting'})"
+    return f"  - {a}: {card.ratings[a]:.0f}{view}{eff}"
+
+
 def render_owner(o: OwnerCard, lg=None) -> str:
     team = lg.by_id[o.team_id].name if (lg is not None and o.team_id is not None) else "unattached"
-    pos, neg = owner_archetypes(o.ratings)
-    L = [f"### Owner {o.name}  ({team}, {o.status})", "```yaml"]
+    pos, neg = owner_archetypes(o)
+    tag = f"  -  {o.standing.upper()}" if o.standing in ("legend", "Hall of Famer") else ""
+    L = [f"### Owner {o.name}  ({team}, {o.status})" + tag, "```yaml"]
     L.append(f"IDENTITY: [{o.name}, age {o.age}, from {o.hometown}; {o.path}]")
+    L.append(f"SOUL (fixed): [+ {pos}, - {neg}]")
     L.append(f"PERSONALITY: [{o.trait}] wants {o.wants}; fears {o.fears}")
-    L.append(f"ARCHETYPES: [+ {pos}, - {neg}]")
+    L.append(f"  - allowed by her soul: {', '.join(o.family)}; right now she is {_mood(o)}")
     L.append("RATINGS:")
     for a in OWNER_ATTRS:
-        L.append(f"  - {a}: {o.ratings[a]:.0f}")
+        L.append(_rating_line(o, a))
     L.append(f"  - fan approval right now: {100 * o.approval:.0f}%  (a recall vote is triggered under {100 * R.RECALL_APPROVAL_THRESHOLD:.0f}%)")
     L.append("  - pressure thresholds: " + ", ".join(f"{k} {v}" for k, v in o.pressure.items()))
+    L.append("TRAJECTORY: " + C.trajectory_text(o))
+    L.append("RECOGNITION: " + C.recognition_text(o))
     L.append("RELATIONSHIPS: " + C.rel_text(o, lg))
-    L.append("CAREER: [" + "; ".join(f"{e['event']} {e['year']}" for e in o.career) + "]")
+    L.append("CAREER: [" + C.career_text(o) + "]")
     L.append("DECISION_LOG: " + C.decisions_text(o))
     L.append("```")
     return "\n".join(L)
 
 
 def render_gm(g: GMCard, lg=None) -> str:
-    team = lg.by_id[g.team_id].name if (lg is not None and g.team_id is not None) else "unattached"
-    pos, neg = gm_archetypes(g.ratings)
-    L = [f"### GM {g.name}  ({team}, {g.status})", "```yaml"]
+    team = lg.by_id[g.team_id].name if (lg is not None and g.team_id is not None) else ("retired" if g.status == "retired" else "between jobs")
+    pos, neg = gm_archetypes(g)
+    tag = f"  -  {g.standing.upper()}" if g.standing in ("legend", "Hall of Famer") else ""
+    L = [f"### GM {g.name}  ({team}, {g.status})" + tag, "```yaml"]
     L.append(f"IDENTITY: [{g.name}, age {g.age}, from {g.hometown}; {g.path}]")
+    L.append(f"SOUL (fixed): [+ {pos}, - {neg}]")
     L.append(f"PERSONALITY: [{g.trait}] wants {g.wants}; fears {g.fears}")
-    L.append(f"ARCHETYPES: [+ {pos}, - {neg}]")
+    L.append(f"  - allowed by her soul: {', '.join(g.family)}; right now she is {_mood(g)}")
     L.append("RATINGS:")
     for a in GM_ATTRS:
         if a == "scouting":
@@ -552,10 +620,12 @@ def render_gm(g: GMCard, lg=None) -> str:
                    else f"   -> {100 * (g.retention_factor - 1):.0f}% more contract expiries")
         else:
             eff = "   (no on-field effect yet)"
-        L.append(f"  - {a}: {g.ratings[a]:.0f}{eff}")
+        L.append(_rating_line(g, a, eff))
     L.append("  - pressure thresholds: " + ", ".join(f"{k} {v}" for k, v in g.pressure.items()))
+    L.append("TRAJECTORY: " + C.trajectory_text(g))
+    L.append("RECOGNITION: " + C.recognition_text(g))
     L.append("RELATIONSHIPS: " + C.rel_text(g, lg))
-    L.append("CAREER: [" + "; ".join(f"{e['event']} {e['year']}" for e in g.career) + "]")
+    L.append("CAREER: [" + C.career_text(g) + "]")
     L.append("DECISION_LOG: " + C.decisions_text(g))
     L.append("```")
     return "\n".join(L)
