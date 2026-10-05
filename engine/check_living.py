@@ -143,7 +143,7 @@ cand.esteem = RC.LEGEND_BAR["coach"]
 p1 = S._perceived(L, o, cand, 5, S.COACH_VIEW)
 check("fame is a halo in how an owner sees a candidate, never in the candidate's ratings", all(p1[a] - p0[a] == round(S.HALO_POINTS) or abs((p1[a] - p0[a]) - S.HALO_POINTS) <= 1 for a in p0) and all(v == v for v in cand.ratings.values()))
 import decisions as D  # noqa: E402
-cands, vets = S._candidates(L, "coach", C.make_coach_card, L.teams[0], 61, o)
+cands, vets = S._candidates(L, "coach", C.make_coach_card, L.teams[0], 61, o, L._coach_ids + 1, set())
 dp = D.DecisionPoint("hire_coach", 61, 1, "owner", o, {}, [dict(id=f"candidate_{i}", label="x", tags={}, view=S._person_view(L, o, c, 61, S.COACH_VIEW, True)) for i, c in enumerate(cands)], "candidate_0")
 check("an agent sees each candidate's reputation and honors", all("reputation" in x["view"] and "honors" in x["view"] for x in dp.public()["options"]))
 
@@ -157,7 +157,7 @@ db = os.path.join(tmp, "dfl.db")
 r1 = random.Random(21)
 A = new_league(r1, rosters=True)
 resA = [run_season(A, y, r1, opt()) for y in range(1, 21)]
-size = store.save(db, A, r1, 20)
+size = store.save(db, A, r1, 20, snapshot=True)
 B, r2, yB = store.load(db)
 resB = [run_season(B, y, r2, opt()) for y in range(yB + 1, 41)]
 resA2 = [run_season(A, y, r1, opt()) for y in range(21, 41)]            # the uninterrupted league keeps going

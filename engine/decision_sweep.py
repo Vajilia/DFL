@@ -13,6 +13,7 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import adversaries as ADV  # noqa: E402
+import agents as AG  # noqa: E402
 import decisions as D  # noqa: E402
 import fairness  # noqa: E402
 from coach_sweep import footprint  # noqa: E402
@@ -30,6 +31,14 @@ VARIANTS = [
     ("H. Worst case: every owner recycles the same people between jobs", lambda: ADV.CarouselRider()),
 ]
 
+# the stand-in agent (agents.py) reads only what a real agent is shown; a dozen at a time through the real pool
+AGENT_VARIANTS = [
+    ("A. Autopilot (the rules as they were before agents)", lambda: D.PolicyDriver()),
+    ("I. A stand-in agent in all 48 owners' seats (cards decide, a dozen at a time)", lambda: D.AgentDriver(AG.StandIn(), workers=12)),
+    ("J. Agents in 12 seats (every fourth team), the autopilot in the other 36", lambda: AG.seats(range(1, 49, 4), AG.StandIn())),
+    ("K. The same agent, but a quarter of its answers are lost or invalid (the autopilot steps in)", lambda: D.AgentDriver(AG.Flaky(AG.StandIn(), every=4), workers=12)),
+]
+
 
 def main():
     ap = argparse.ArgumentParser()
@@ -37,15 +46,24 @@ def main():
     ap.add_argument("--seasons", type=int, default=48)
     ap.add_argument("--only", default="")
     ap.add_argument("--out", default="")
+    ap.add_argument("--agents", action="store_true", help="the stand-in agent rows instead of the adversary rows")
     a = ap.parse_args()
+    variants = AGENT_VARIANTS if a.agents else VARIANTS
     keep = {x.strip() for x in a.only.split(",") if x.strip()}
-    out = ["# Whatever the agents choose: fairness under the worst legal play\n",
+    if a.agents:
+        out = ["# Agents in the owners' seats: fairness with a stand-in agent\n",
+               "A stand-in agent (agents.py) reads only the view a real agent would be shown (the deciding card, her notes, the options with the ratings "
+               "she perceives) and chooses from the engine's options; owners with different personalities choose differently. It is a rulebook, not a "
+               "model, so this tests the machinery and the bands, not the quality of a real agent's judgment. Rows: all 48 seats, a dozen seats, and "
+               "an agent whose answers are often lost or invalid.\n"]
+    else:
+      out = ["# Whatever the agents choose: fairness under the worst legal play\n",
            "The principle: the road has guardrails and traffic controls, the character card is the driver, and what the driver does with the car "
            "always stays inside the fair-competitiveness bands. The first owner choice to go through a Decision Point is keep, fire or hire "
            "for the coach and the GM (the hire is one of three candidates). The autopilot row reproduces the league as it was before agents. "
            "The other rows replace the owners' choices with random play and with adversaries that see the TRUE ratings of every candidate "
            "(no real agent can) and play the legal limit. Everything they do is a legal option; the guard would reject anything else.\n"]
-    for label, mk in VARIANTS:
+    for label, mk in variants:
         if keep and label[0] not in keep:
             continue
         per, rows = fairness.run("fast", range(100, 100 + a.leagues), a.seasons, driver=mk())
@@ -61,7 +79,7 @@ def main():
         print("    title conc:", round(v["max_titles_in_20"], 2), v["worst_league_titles"], " corr:", round(v["year_to_year_corr"], 3),
               " best-team odds:", round(v["best_team_title_odds"], 3), " repeat:", round(v["repeat_champion_rate"], 3),
               " stuck:", round(v["stuck_at_bottom"], 3), " exile fx:", round(v["exile_effect"], 2), flush=True)
-    path = a.out or os.path.join(ROOT, "reports", "decision_fairness_study.md")
+    path = a.out or os.path.join(ROOT, "reports", "agent_fairness_study.md" if a.agents else "decision_fairness_study.md")
     open(path, "w").write("\n".join(out))
     print("wrote", path)
 

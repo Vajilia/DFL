@@ -193,6 +193,7 @@ class CoachCard:
     esteem: float = 0.0                      # what the league thinks of her career (recognition.py)
     standing: str = ""                       # what the media calls her: known, respected, star, contested, legend, Hall of Famer
     history: List[dict] = field(default_factory=list)     # her overall level by year (living.grow)
+    notes: List[dict] = field(default_factory=list)       # her own notes to herself, written through the guard (decisions.py), capped
     relationships: Dict[str, int] = field(default_factory=dict)
     career: List[dict] = field(default_factory=list)
     decision_log: List[dict] = field(default_factory=list)
@@ -565,6 +566,8 @@ def render_coach(c: CoachCard, lg=None) -> str:
         L.append(f"  - {a}: {c.ratings[a]:.0f}{view}{eff}")
     L.append("  - pressure thresholds: " + ", ".join(f"{k} {v}" for k, v in c.pressure.items()))
     L.append("TRAJECTORY: " + trajectory_text(c))
+    if c.notes:
+        L.append("NOTES TO SELF: " + " | ".join(n["text"] for n in c.notes[-3:]))
     L.append("RECOGNITION: " + recognition_text(c))
     L.append("RELATIONSHIPS: " + rel_text(c, lg))
     L.append(f"CAREER: [{career_text(c) or 'none recorded'}]")

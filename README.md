@@ -24,10 +24,11 @@ A league engine with no AI (Phase 2 adds 47-player rosters, a drive-by-drive gam
 | `engine/cards.py`, `card_pools.py` | Character cards: player souls (archetypes), perception and personality; head coaches who develop players |
 | `engine/living.py` | The living bones shared by coaches, GMs and owners: souls, careers, perception, personality inside the soul's family, the league reference, free agents |
 | `engine/recognition.py` | Honors, esteem, what the media calls people (legends emerge, nobody is designated) and the league Hall of Fame |
-| `engine/store.py` | Persistence: SQLite snapshots that resume exactly, and plain queryable tables |
+| `engine/store.py` | Persistence: the cards are the save (one SQLite file, rebuilt from the cards, resumes exactly); optional yearly snapshots; export/import one coach or GM |
 | `engine/emergence_study.py` | Plays long leagues and reports how legends and the Hall of Fame emerge; writes `reports/emergence_study.md` |
 | `engine/staff_cards.py` | Owner and GM cards; recall votes, hiring and firing; the Archive's first entries |
 | `engine/decisions.py` | Decision Points: the one door for every choice (options, drivers, guard, choice log) |
+| `engine/agents.py` | A stand-in agent (reads only the public view), a flaky wrapper and seats for agents in some chairs, to rehearse the machinery without a model |
 | `engine/adversaries.py` | Worst-case drivers used to test the fairness bands |
 | `engine/interactions.py` | The Interaction system, first slice: firing, recall vote and exile determination scenes (claims, evidence, relationships, decision logs) |
 | `engine/fan_media_cards.py` | Fanbase cards (culture, ratings, approval, Fan Capital) and media outlet cards (voice, ratings, Credibility, forecasts) |
@@ -57,6 +58,8 @@ A league engine with no AI (Phase 2 adds 47-player rosters, a drive-by-drive gam
     python engine/check_fans.py            # fanbase and media cards
     python engine/check_decisions.py       # decision points, the guard, replay, the autopilot's exactness
     python engine/check_living.py          # living cards, recognition, the Hall of Fame, saving and resuming a league
+    python engine/check_store.py           # the cards are the save: rebuild, resume exactly, export/import a card
+    python engine/check_agents.py          # a dozen agents at once, notes to self, bounded views, a stand-in agent, seats
     python engine/decision_sweep.py        # fairness under random and worst-case choices (slow)
     python engine/check_interactions.py    # firing, recall and exile scenes (and proof they change no outcome)
     python engine/fan_media_sweep.py       # fairness study for the fan and media cards (slow)
