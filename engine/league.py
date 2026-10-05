@@ -24,6 +24,7 @@ class Team:
     owner: object = None      # staff_cards.OwnerCard
     gm: object = None         # staff_cards.GMCard
     fans: object = None       # fan_media_cards.FanbaseCard (belongs to the franchise, outlives its owners)
+    bank: float = 0.0         # cap room banked from last season, $ millions (economy.py)
 
     @property
     def division_id(self) -> int:
@@ -67,6 +68,7 @@ class League:
         self._media_ids = 0
         self._owner_ids = 0
         self._gm_ids = 0
+        self.pool = 0.0                    # the league's cap pool: forfeited room and floor shortfalls in, exiled teams' absorbed payroll out (economy.py)
 
     def new_owner_id(self) -> int:
         self._owner_ids += 1
@@ -151,6 +153,8 @@ def give_rosters(lg: League, rng: random.Random):
     lg.has_rosters = True
     import cards
     cards.init_league_cards(lg, 0)
+    import economy
+    economy.init_contracts(lg)
     refresh_strengths(lg)
     for div_id in range(R.TOTAL_DIVISIONS):
         act = sorted(lg.active_in_division(div_id), key=lambda t: -t.strength)

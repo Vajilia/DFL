@@ -27,6 +27,7 @@ A league engine with no AI (Phase 2 adds 47-player rosters, a drive-by-drive gam
 | `engine/store.py` | Persistence: the cards are the save (one SQLite file, rebuilt from the cards, resumes exactly); optional yearly snapshots; export/import one coach or GM |
 | `engine/emergence_study.py` | Plays long leagues and reports how legends and the Hall of Fame emerge; writes `reports/emergence_study.md` |
 | `engine/staff_cards.py` | Owner and GM cards; recall votes, hiring and firing; the Archive's first entries |
+| `engine/economy.py` | Pay and the salary cap: contracts, the $100M cap, banking up to $125M, forfeits to the pool, the 90% floor, exile absorption |
 | `engine/tables.py`, `engine/interviews.py` | Negotiation tables (a bounded conversation of Decision Points where each party has her own say) and the first one, the job interview with guaranteed seasons |
 | `engine/decisions.py` | Decision Points: the one door for every choice (options, drivers, guard, choice log) |
 | `engine/agents.py` | A stand-in agent (reads only the public view), a flaky wrapper and seats for agents in some chairs, to rehearse the machinery without a model |
@@ -60,6 +61,8 @@ A league engine with no AI (Phase 2 adds 47-player rosters, a drive-by-drive gam
     python engine/check_decisions.py       # decision points, the guard, replay, the autopilot's exactness
     python engine/check_living.py          # living cards, recognition, the Hall of Fame, saving and resuming a league
     python engine/check_store.py           # the cards are the save: rebuild, resume exactly, export/import a card
+    python engine/economy_report.py        # writes reports/cap_report.md: payrolls, banked room, the pool, what the cap costs teams
+    python engine/check_economy.py         # pay and the cap: banking, forfeits, the floor, exile absorption, the hard limit over 40 seasons, saving
     python engine/check_tables.py          # the interview table: guarantees, walking away, what each side sees, parallel tables
     python engine/check_agents.py          # a dozen agents at once, notes to self, bounded views, a stand-in agent, seats
     python engine/decision_sweep.py        # fairness under random and worst-case choices (slow)

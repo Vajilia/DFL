@@ -37,7 +37,7 @@ def everything(lg):
     reg = store._registry(lg)
     cards = [(k, store._dump(store._plain(c))) for k, c in sorted(reg.items(), key=lambda kv: kv[0])]
     players = [(p.id, store._dump(store._body(p)), store._dump(store._plain(p.card)), p.ovr) for p in sorted(store._players(lg), key=lambda p: p.id)]
-    teams = [(t.id, t.name, t.conf, t.div, t.status, t.tier, t.strength, [p.id for p in t.roster or ()],
+    teams = [(t.id, t.name, t.conf, t.div, t.status, t.tier, t.strength, t.bank, [p.id for p in t.roster or ()],
               t.coach and t.coach.cid, t.gm and t.gm.gid, t.owner and t.owner.oid) for t in lg.teams]
     lists = [[c.cid if hasattr(c, "cid") else c.gid for c in lg.passed_over], [c.cid for c in lg.coaches], [g.gid for g in lg.gms], [o.oid for o in lg.owners],
              [c.cid for c in lg.free_coaches], [g.gid for g in lg.free_gms], [p.id for p in lg.free_agents], [p.id for p in lg.retired_players]]

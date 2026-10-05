@@ -52,7 +52,7 @@ CREATE TABLE IF NOT EXISTS teams(id INTEGER PRIMARY KEY, name TEXT, status TEXT,
 FORMAT = "2"                                   # version of the file layout; a different one is refused rather than guessed at
 
 # what the league record holds beyond the lists of people: every plain attribute of the League, so a new one cannot be forgotten
-PLAIN = ("has_rosters", "card_seed", "staff_on", "coaches_on", "fans_on", "interactions_on", "_coach_ids", "_owner_ids", "_gm_ids", "_cand_ids", "_media_ids")
+PLAIN = ("has_rosters", "card_seed", "staff_on", "coaches_on", "fans_on", "interactions_on", "_coach_ids", "_owner_ids", "_gm_ids", "_cand_ids", "_media_ids", "pool")
 LISTS = ("teams", "by_id", "free_agents", "new_id", "coaches", "retired_players", "owners", "gms", "archive", "driver", "choice_log", "passed_over",
          "free_coaches", "free_gms", "hall", "fanbases", "media", "refs", "prev_pct")
 INT_KEYED = ("forecasts",)                     # card fields whose keys are numbers (JSON turns them into text)
@@ -188,7 +188,7 @@ def _league_record(lg, rng, year) -> dict:
     st = rng.getstate()
     rec = {"year": year, "rng": [st[0], list(st[1]), st[2]], "next_id": lg.new_id.next, "refs": lg.refs, "prev_pct": {str(k): v for k, v in lg.prev_pct.items()}}
     rec.update({k: getattr(lg, k) for k in PLAIN})
-    rec["teams"] = [dict(id=t.id, name=t.name, conf=t.conf, div=t.div, status=t.status, tier=t.tier, strength=t.strength,
+    rec["teams"] = [dict(id=t.id, name=t.name, conf=t.conf, div=t.div, status=t.status, tier=t.tier, strength=t.strength, bank=t.bank,
                          roster=None if t.roster is None else [p.id for p in t.roster],
                          coach=t.coach.cid if t.coach else None, owner=t.owner.oid if t.owner else None, gm=t.gm.gid if t.gm else None,
                          fans=t.fans.team_id if t.fans else None) for t in lg.teams]
@@ -303,6 +303,7 @@ def _rebuild(db: sqlite3.Connection):
     teams = []
     for t in rec["teams"]:
         tm = Team(id=t["id"], name=t["name"], conf=t["conf"], div=t["div"], status=t["status"], tier=t["tier"], strength=t["strength"])
+        tm.bank = t["bank"]
         tm.roster = None if t["roster"] is None else [player(i) for i in t["roster"]]
         tm.coach = card("coach", t["coach"]) if t["coach"] is not None else None
         tm.owner = card("owner", t["owner"]) if t["owner"] is not None else None

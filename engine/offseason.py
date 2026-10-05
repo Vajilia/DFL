@@ -14,8 +14,9 @@ from typing import Dict, List
 import rules as R
 from league import League, refresh_strengths
 from players import Player, clamp, make_player, random_age
-from positions import POSITIONS, ROSTER_COUNTS, STARTERS
+from positions import POSITIONS, ROSTER_COUNTS, ROSTER_SIZE, STARTERS
 from roster_model import RosterModel
+import economy as EC
 import staff_cards as SC
 
 # Years of aging offset by position: quarterbacks, kickers and punters last longer.
@@ -127,7 +128,9 @@ def run_roster_offseason(lg: League, rng: random.Random, rm: RosterModel, year: 
                          pick_of: Dict[int, int], returners: List[int]) -> dict:
     """Update every roster for next season. `pick_of` maps team id -> draft pick (1-48);
     `returners` are the teams coming back from exile. Returns a small log of what happened."""
-    log = dict(retired=0, expired=0, signed=0, premium=0, released=0, rookies=0, street=0)
+    log = dict(retired=0, expired=0, signed=0, premium=0, released=0, rookies=0, street=0, resigned=0, cap_blocked=0, cap_cuts=0)
+    log["cap"] = EC.close_season(lg, returners, year)       # this season's accounts, before anything changes
+    SC.log(lg, year, "cap_close", **{k: v for k, v in log["cap"].items() if k != "year"})
     teams = lg.teams
     # injuries heal over the offseason
     for t in teams:
@@ -160,17 +163,32 @@ def run_roster_offseason(lg: League, rng: random.Random, rm: RosterModel, year: 
         else:
             pool.append(p)
 
-    # 3. contracts end: some players reach the market (stars are likelier to be re-signed)
+    # 3. contracts run down. Players whose contracts end are re-signed (at today's market price) or reach the market: stars are likelier to
+    # be kept and a good negotiator GM keeps more, but a team can only keep who it can afford this season (the cap is a hard limit)
     for t in teams:
-        keep = []
         for p in t.roster:
-            q = rm.fa_entry_rate * (rm.fa_star_protect if p.ovr >= 70 else 1.0) * SC.gm_retention_factor(t)
-            if rng.random() < q:
+            p.years_left -= 1
+        keep = [p for p in t.roster if p.years_left > 0]
+        expiring = sorted((p for p in t.roster if p.years_left <= 0), key=lambda p: -p.ovr)
+        lim, committed = EC.limit(t), sum(p.salary for p in keep)
+        rookie = EC.rookie_salary(pick_of[t.id])
+        for p in expiring:
+            q = EC.RESIGN_BASE * (rm.fa_star_protect if p.ovr >= 70 else 1.0) * SC.gm_retention_factor(t)
+            wants = rng.random() >= q
+            cost = EC.market_salary(p.pos, p.ovr)
+            slots_after = max(0, ROSTER_SIZE - (len(keep) + 1) - 1)          # the rest of the roster and the rookie still to come
+            if wants and committed + cost + rookie + slots_after * EC.MIN_SALARY <= lim:
+                p.salary, p.years_left = cost, EC.contract_years(p)
+                keep.append(p)
+                committed += cost
+                log["resigned"] += 1
+            else:
+                if wants:
+                    log["cap_blocked"] += 1
                 p.team_id, p.fa_years = None, 0
+                p.salary = p.years_left = 0
                 pool.append(p)
                 log["expired"] += 1
-            else:
-                keep.append(p)
         t.roster = keep
     pool.extend(_undrafted(lg, rm, rng))
 
@@ -181,6 +199,7 @@ def run_roster_offseason(lg: League, rng: random.Random, rm: RosterModel, year: 
         p = make_player(rng, lg.new_id(), pos, clamp(rookie_ovr(pick, rm, rng) + SC.gm_scouting_bonus(t), 30, 95), rng.choice((22, 22, 22, 23)), t.id,
                         draft_year=year, draft_pick=pick)
         p.years_in_league = 0
+        p.salary, p.years_left = EC.rookie_salary(pick), EC.ROOKIE_YEARS
         t.roster.append(p)
         log["rookies"] += 1
     # trim positions that are over the limit (the weakest are released to the market)
@@ -193,6 +212,16 @@ def run_roster_offseason(lg: League, rng: random.Random, rm: RosterModel, year: 
                 pool.append(p)
                 log["released"] += 1
 
+    # 4b. cap casualties. Banked room is a one-season allowance: a team that spent it on multi-year contracts comes back to the $100M cap and must
+    # shed the players who cost the most beyond their market price until it can fill its roster at the minimum wage inside its limit
+    for t in teams:
+        while EC.payroll(t) + max(0, ROSTER_SIZE - len(t.roster)) * EC.MIN_SALARY > EC.limit(t) + 1e-9:
+            w = max(t.roster, key=lambda p: (p.salary - EC.market_salary(p.pos, p.ovr), p.id))
+            t.roster.remove(w)
+            w.team_id, w.fa_years = None, 0
+            pool.append(w)
+            log["cap_cuts"] += 1
+
     # 5. free agency, worst team first. Returning teams go first and get premium signings.
     ret = set(returners)
     quick = {t.id: _quick_strength(t.roster) for t in teams}
@@ -203,11 +232,25 @@ def run_roster_offseason(lg: League, rng: random.Random, rm: RosterModel, year: 
     for pos in POSITIONS:
         by_pos[pos].sort(key=lambda p: -p.ovr)
 
-    def take(t, p):
+    def room_for(t) -> float:
+        """What this team can pay the next signing: this season's limit less its payroll, keeping the minimum salary back for every other open slot."""
+        return EC.limit(t) - EC.payroll(t) - max(0, ROSTER_SIZE - len(t.roster) - 1) * EC.MIN_SALARY
+
+    def take(t, p, price=None):
         by_pos[p.pos].remove(p)
         p.team_id, p.fa_years = t.id, 0
+        p.salary = EC.market_salary(p.pos, p.ovr) if price is None else price
+        p.years_left = EC.contract_years(p)
         t.roster.append(p)
         log["signed"] += 1
+
+    def affordable(t, pos):
+        """The best player on the market at a position that this team can afford (an asking price is the market price)."""
+        room = room_for(t)
+        for c in by_pos[pos]:
+            if EC.market_salary(c.pos, c.ovr) <= room:
+                return c
+        return None
 
     def release_worst(t, pos):
         at = sorted((p for p in t.roster if p.pos == pos), key=lambda p: p.ovr)
@@ -226,9 +269,9 @@ def run_roster_offseason(lg: League, rng: random.Random, rm: RosterModel, year: 
         for _ in range(n):
             best, best_gain = None, 0.0
             for pos in POSITIONS:
-                if not by_pos[pos]:
+                c = affordable(t, pos)
+                if c is None:
                     continue
-                c = by_pos[pos][0]
                 g = _gain(t.roster, c)
                 if g > best_gain:
                     best, best_gain = c, g
@@ -250,18 +293,21 @@ def run_roster_offseason(lg: League, rng: random.Random, rm: RosterModel, year: 
                 continue
             best, best_gain = None, -1e9
             for pos in open_pos:
-                if not by_pos[pos]:
+                c = affordable(t, pos)
+                if c is None:
                     continue
-                g = _gain(t.roster, by_pos[pos][0])
+                g = _gain(t.roster, c)
                 if g > best_gain:
-                    best, best_gain = by_pos[pos][0], g
-            if best is None:                                # market empty at every open position
+                    best, best_gain = c, g
+            price = None
+            if best is None:                                # no one on the market at an open position that the team can afford: a street free agent at the minimum
                 pos = open_pos[0]
                 best = make_player(rng, lg.new_id(), pos, clamp(rng.gauss(46.0, 5.0), 28, 70),
                                    rng.choice((22, 23, 24)), None)
                 by_pos[pos].append(best)
+                price = EC.MIN_SALARY
                 log["street"] += 1
-            take(t, best)
+            take(t, best, price)
             progressed = True
         if not progressed:
             break

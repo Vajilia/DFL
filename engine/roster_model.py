@@ -12,13 +12,13 @@ class RosterModel:
     # free agency
     fa_entry_rate: float = 0.15           # share of each roster whose contract runs out and who reach the market
     fa_star_protect: float = 0.5          # high-rated players are this much likelier to be re-signed
-    fa_priority_noise: float = 2.0        # randomness in the order teams pick (rating points)
+    fa_priority_noise: float = 0.5        # randomness in the order teams pick (rating points)
     undrafted_per_year: int = 170         # new unsigned players added to the market each year
     undrafted_mean: float = 50.0
     undrafted_sd: float = 6.0
     # exile relief: signing priority and a number of premium signings for a team coming back
     exile_fa_priority: bool = False       # returners pick first in free agency (else ordered like any other team)
-    exile_premium_signings: float = 0.05  # average number (fractions are chances) of top-of-market signings
+    exile_premium_signings: float = 0.0   # was 0.05, a stand-in for the 50% cap relief; the relief is now real (economy.close_season), so this is 0
     # draft: one rookie per team per year; quality by pick
     rookie_base: float = 52.0
     rookie_span: float = 22.0

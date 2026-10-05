@@ -42,6 +42,8 @@ class Player:
     ovr: float = 0.0
     card: object = None                  # cards.PlayerCard, attached by cards.ensure_cards
     display_name: str = ""               # the card's name once the card exists
+    salary: float = 0.0                  # $ millions a year (economy.py)
+    years_left: int = 0                  # seasons left on the contract; at 0 she is re-signed or reaches the market
 
     def __post_init__(self):
         self.recompute()
