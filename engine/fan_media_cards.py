@@ -344,8 +344,8 @@ def render_fanbase(fb: FanbaseCard, lg=None) -> str:
     L.append(f"  - Fan Capital: {fb.capital:.2f}  (recall immunity; worth {100 * CAPITAL_RECALL_WEIGHT * max(0.0, fb.capital - CAPITAL_FLOOR):.1f} points on a recall vote)")
     L.append(f"  - what the press did to approval last season: {100 * fb.last_sway:+.1f} points")
     L.append("  - pressure thresholds: " + ", ".join(f"{k} {v}" for k, v in fb.pressure.items()))
-    L.append("RELATIONSHIPS: {}  # none yet; filled by Interactions")
-    L.append("DECISION_LOG: [none yet]")
+    L.append("RELATIONSHIPS: " + C.rel_text(fb, lg))
+    L.append("DECISION_LOG: " + C.decisions_text(fb))
     L.append("```")
     return "\n".join(L)
 
@@ -364,7 +364,7 @@ def render_outlet(m: MediaCard, lg=None) -> str:
     if m.record:
         L.append("  - forecast record (mean miss, win%): " + ", ".join(f"{e['year']}: {e['error']:.2f}" for e in m.record[-6:]))
     L.append("  - pressure thresholds: " + ", ".join(f"{k} {v}" for k, v in m.pressure.items()))
-    L.append("RELATIONSHIPS: {}  # none yet; filled by Interactions")
-    L.append("DECISION_LOG: [none yet]")
+    L.append("RELATIONSHIPS: " + C.rel_text(m, lg))
+    L.append("DECISION_LOG: " + C.decisions_text(m))
     L.append("```")
     return "\n".join(L)

@@ -52,6 +52,8 @@ class League:
         self.gms: list = []
         self.archive: list = []            # plain-fact event log (recalls, firings, hirings); the Archive proper comes later
         self.fans_on = True                # fanbase and media cards decide owner approval (turn off for the old placeholder model)
+        self.interactions_on = True        # Required interactions are written up as scenes (never changes an outcome)
+        self.prev_pct: dict = {}           # last season's win% by team, for the scenes' evidence
         self.fanbases: list = []
         self.media: list = []              # every media outlet ever founded, folded ones included
         self._media_ids = 0
@@ -97,7 +99,7 @@ class League:
         return {t.id: (t.status, t.tier, round(t.strength, 3)) for t in self.teams}
 
 
-def new_league(rng: random.Random, rosters: bool = False, coaches: bool = True, staff: bool = True, fans: bool = True) -> League:
+def new_league(rng: random.Random, rosters: bool = False, coaches: bool = True, staff: bool = True, fans: bool = True, interactions: bool = True) -> League:
     """ASSUMED starting league: random strengths, one random team per division starts
     in exile, and the rest take tiers 1-5 in order of strength."""
     teams: List[Team] = []
@@ -124,6 +126,7 @@ def new_league(rng: random.Random, rosters: bool = False, coaches: bool = True, 
     lg.coaches_on = coaches
     lg.staff_on = coaches and staff        # owners and GMs (and firing); needs the coaches
     lg.fans_on = lg.staff_on and fans      # fanbases and media; they feed owner approval
+    lg.interactions_on = lg.staff_on and interactions   # scenes for firings, recall votes and exile determinations
     if rosters:
         give_rosters(lg, rng)
     return lg

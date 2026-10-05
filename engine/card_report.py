@@ -13,6 +13,7 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import cards as C  # noqa: E402
 import fan_media_cards as FM  # noqa: E402
+import interactions as IX  # noqa: E402
 import staff_cards as S  # noqa: E402
 from league import new_league  # noqa: E402
 from positions import POSITIONS  # noqa: E402
@@ -33,7 +34,7 @@ def main():
     out = ["# Character cards: samples\n",
            f"Seed {a.seed}, after {a.seasons} seasons. Names, hometowns and backgrounds come from placeholder word lists "
            "(engine/card_pools.py) that you can replace. Ratings, archetypes and the coach effect are real: they come from "
-           "the engine. Relationships and the decision log start empty on purpose; the Interaction system will fill them.\n",
+           "the engine. Relationships and the decision log start empty and fill as the Interaction system plays scenes (firings, recall votes and exile determinations so far).\n",
            "## How to read a card\n",
            "- **Soul (archetypes)** is fixed for life. It is read from the rating profile she is born with: her best attribute names the positive archetype and her weakest the negative one. Her development is bent to stay true to it.",
            "- **Personality** is how her soul shows up. Her archetype allows four personalities; which one she shows depends on her temperament and on how she rates herself. Her self-image lags the truth, so a declining veteran overrates herself and a rising rookie undersells herself. When her confidence moves enough, her personality can shift, but only inside the four her soul allows.",
@@ -94,6 +95,21 @@ def main():
         ev = next((e for e in lg.archive if e["event"] == "outlet_folded"), None)
         if ev:
             out.append("```\n" + "\n".join(f"{k}: {v}" for k, v in ev.items()) + "\n```\n")
+    out.append("\n## Scenes as the Archive records them\n")
+    out.append("Each firing, recall vote and exile determination is a scene: every party gives its own claim, and the evidence section says, from the engine's own numbers, which claims hold. "
+               "The scenes never change an outcome (the check script proves a league plays out identically with them on or off); they explain it, and they move relationships and decision logs.\n")
+    sc = [e for e in lg.archive if e["event"] == "interaction"]
+    def pick(pred, label):
+        e = next((x for x in reversed(sc) if pred(x)), None)
+        if e:
+            out.append(f"**{label}**\n")
+            out.append("```\n" + IX.render_scene(e, lg) + "\n```\n")
+    pick(lambda x: x["kind"] == "exile_determination", "An exile determination")
+    pick(lambda x: x["kind"] == "firing" and x["evidence"].get("ruling") == "fair", "A firing the record backs")
+    pick(lambda x: x["kind"] == "firing" and x["evidence"].get("ruling") == "harsh", "A harsh firing (the roster explains the record)")
+    pick(lambda x: x["kind"] == "firing" and x["evidence"].get("ruling") == "sweep", "A new owner's sweep")
+    pick(lambda x: x["kind"] == "recall_vote" and "recalled;" in x["outcome"], "A recall vote that removes an owner")
+    pick(lambda x: x["kind"] == "recall_vote" and x["outcome"].endswith("survives"), "A recall vote the owner survives")
     out.append("\n## How the cards spread across the league\n")
     tc = collections.Counter(p.card.trait for p in active)
     out.append("**Core personalities (all rostered players):** " + ", ".join(f"{k} {v}" for k, v in tc.most_common()) + "\n")
@@ -115,6 +131,9 @@ def main():
     cr = [m.credibility for m in live]
     out.append(f"**Outlets:** {len(live)} active ({FM.N_NATIONAL} national, one local beat per team); credibility averages {st.mean(cr):.0f}, "
                f"from {min(cr):.0f} to {max(cr):.0f}; {len(gone)} have folded and been replaced in {a.seasons} seasons.\n")
+    rul = collections.Counter(e["evidence"]["ruling"] for e in sc if e["kind"] == "firing")
+    out.append(f"**Scenes:** {len(sc)} in {a.seasons} seasons ({collections.Counter(e['kind'] for e in sc).most_common()}). "
+               f"Firings by ruling: {', '.join(f'{k} {v}' for k, v in rul.most_common())}.\n")
     yrs = a.seasons
     nv = len(votes)
     nr = sum(e["result"] == "recalled" for e in votes)

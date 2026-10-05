@@ -229,6 +229,42 @@ def _pressure(r: random.Random, trait: str, loyal_traits=("Loyalist",), money_tr
             "spotlight": draw(65 if trait in spot_traits else 50), "loyalty": draw(70 if trait in loyal_traits else 50)}
 
 
+# ---- shared by every card's printout: relationships and decision log ------------------------------------------
+def _who(lg, key: str) -> str:
+    kind, _, ident = key.partition(":")
+    try:
+        n = int(ident)
+    except ValueError:
+        return key
+    if lg is None:
+        return key
+    pools = {"owner": ("owners", "oid"), "coach": ("coaches", "cid"), "gm": ("gms", "gid"), "press": ("media", "mid")}
+    if kind == "fans":
+        t = lg.by_id.get(n)
+        return f"{t.name} fans" if t is not None else key
+    if kind in pools:
+        attr, idf = pools[kind]
+        for c in getattr(lg, attr, []):
+            if getattr(c, idf) == n:
+                return f"{c.name} ({kind})"
+    return key
+
+
+def rel_text(card, lg=None) -> str:
+    if not card.relationships:
+        return "{}  # none yet; filled by Interactions"
+    items = sorted(card.relationships.items(), key=lambda kv: kv[1])
+    return "{" + ", ".join(f"{_who(lg, k)}: {v:+d}" for k, v in items) + "}"
+
+
+def decisions_text(card) -> str:
+    if not card.decision_log:
+        return "[none yet]"
+    last = card.decision_log[-6:]
+    more = f"{len(card.decision_log) - 6} earlier; " if len(card.decision_log) > 6 else ""
+    return "[" + more + "; ".join(f"{d['year']}: {d['action']}" for d in last) + "]"
+
+
 # ---- the soul and the mind -----------------------------------------------------------------------
 def birth_archetypes(pos: str, ratings: Dict[str, float]):
     """Read the soul off the profile she is born with: (positive label, positive attribute or None,
@@ -453,13 +489,13 @@ def render_player(p, lg=None) -> str:
     for a in ATTRS[p.pos]:
         L.append(f"  - {a}: {_view(p, a)}")
     L.append("  - pressure thresholds: " + ", ".join(f"{k} {v}" for k, v in c.pressure.items()))
-    L.append("RELATIONSHIPS: " + (str(c.relationships) if c.relationships else "{}  # none yet; filled by Interactions"))
+    L.append("RELATIONSHIPS: " + rel_text(c, lg))
     def ev(e):
         if e["event"] == "personality_shift":
             return f"became {e['to']} (was {e['from']}) {e['year']}"
         return f"{e['event']} {e['year']}" + (f" (pick {e['pick']})" if e.get("pick") else "")
     L.append("CAREER: [" + ("; ".join(ev(e) for e in c.career) or "none recorded") + "]")
-    L.append("DECISION_LOG: [" + ("; ".join(str(d) for d in c.decision_log) if c.decision_log else "none yet") + "]")
+    L.append("DECISION_LOG: " + decisions_text(c))
     L.append("```")
     return "\n".join(L)
 
@@ -483,9 +519,9 @@ def render_coach(c: CoachCard, lg=None) -> str:
             eff = "   (no on-field effect yet)"
         L.append(f"  - {a}: {c.ratings[a]:.0f}{eff}")
     L.append("  - pressure thresholds: " + ", ".join(f"{k} {v}" for k, v in c.pressure.items()))
-    L.append("RELATIONSHIPS: {}  # none yet; filled by Interactions")
+    L.append("RELATIONSHIPS: " + rel_text(c, lg))
     career = "; ".join(f"{e['event']} {e['year']}" for e in c.career)
     L.append(f"CAREER: [{career or 'none recorded'}]")
-    L.append("DECISION_LOG: [none yet]")
+    L.append("DECISION_LOG: " + decisions_text(c))
     L.append("```")
     return "\n".join(L)

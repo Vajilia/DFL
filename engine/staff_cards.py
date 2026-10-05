@@ -258,7 +258,11 @@ def season_end(lg, year: int, pct: Dict[int, float], new_exiles, champion: int, 
     `pct` is every team's win percentage this season (the exiled teams' come from the Ambassador Season).
     Returns what happened, for reports."""
     out = dict(votes=[], recalled=[], survived=[], owner_retired=[], coach_fired=[], gm_fired=[], coach_retired=[],
-               approval={}, new_owner_teams=[])
+               approval={}, new_owner_teams=[], vote_details=[], firing_details=[], scenes=[])
+    scenes_on = getattr(lg, "interactions_on", False)
+    if scenes_on:
+        import interactions as IX
+        ctx = IX.snapshot(lg, year, pct)
     new_exiles = set(new_exiles)
     fans_on = getattr(lg, "fans_on", False)
     if fans_on:
@@ -300,6 +304,7 @@ def season_end(lg, year: int, pct: Dict[int, float], new_exiles, champion: int, 
         share = max(0.0, min(1.0, (1.0 - o.approval - RECALL_NEUTRAL - buffer) + r.gauss(0.0, RECALL_NOISE)))
         why = ("approval" if o.approval < R.RECALL_APPROVAL_THRESHOLD else "exile" if tid in new_exiles else "rotation")
         out["votes"].append(tid)
+        pre_bounce = o.approval
         if share > 0.5:
             cands = [make_owner_card(lg.card_seed, lg.new_owner_id(), tid, new_owner=True) for _ in range(R.RECALL_REPLACEMENT_CANDIDATES)]
             if fans_on:
@@ -317,6 +322,8 @@ def season_end(lg, year: int, pct: Dict[int, float], new_exiles, champion: int, 
                 **({"capital": round(t.fans.capital, 3)} if fans_on else {}))
             out["recalled"].append(tid)
             out["new_owner_teams"].append(tid)
+            out["vote_details"].append(dict(team=tid, trigger=why, approval=pre_bounce, share=share, result="recalled", owner=o,
+                                            new_owner=pick, candidates=cands))
         else:
             o.approval = min(1.0, o.approval + SURVIVE_BOUNCE)
             if fans_on:
@@ -324,6 +331,8 @@ def season_end(lg, year: int, pct: Dict[int, float], new_exiles, champion: int, 
             log(lg, year, "recall_vote", team=tid, trigger=why, approval=round(o.approval, 3), recall_share=round(share, 3),
                 result="survived", owner=o.name)
             out["survived"].append(tid)
+            out["vote_details"].append(dict(team=tid, trigger=why, approval=pre_bounce, share=share, result="survived", owner=o,
+                                            new_owner=None, candidates=[]))
     # 3. owners who are not voted out may still age out; the replacement is a new owner with no vote
     for t in lg.teams:
         o = t.owner
@@ -366,6 +375,8 @@ def season_end(lg, year: int, pct: Dict[int, float], new_exiles, champion: int, 
             t.coach = None
             C._hire(lg, t, year)
             out["coach_fired"].append(t.id)
+            out["firing_details"].append(dict(team=t.id, who="coach", card=c, heat=c.heat, owner=o,
+                                              reason="new owner cleaned house" if clean_coach and c.heat <= _fire_threshold(o, LEGEND_FIRE_FACTOR if c.legend else 1.0) else "results"))
         g = t.gm
         if g is not None and (clean or g.heat > _fire_threshold(o, GM_FIRE_FACTOR)):
             log(lg, year, "gm_fired", team=t.id, gm=g.name, heat=round(g.heat, 3), by=o.name)
@@ -374,6 +385,10 @@ def season_end(lg, year: int, pct: Dict[int, float], new_exiles, champion: int, 
             t.gm = None
             _hire_gm(lg, t, year)
             out["gm_fired"].append(t.id)
+            out["firing_details"].append(dict(team=t.id, who="gm", card=g, heat=g.heat, owner=o,
+                                              reason="new owner cleaned house" if clean and g.heat <= _fire_threshold(o, GM_FIRE_FACTOR) else "results"))
+    if scenes_on:
+        out["scenes"] = IX.season_scenes(lg, year, ctx, out, new_exiles)
     return out
 
 
@@ -390,9 +405,9 @@ def render_owner(o: OwnerCard, lg=None) -> str:
         L.append(f"  - {a}: {o.ratings[a]:.0f}")
     L.append(f"  - fan approval right now: {100 * o.approval:.0f}%  (a recall vote is triggered under {100 * R.RECALL_APPROVAL_THRESHOLD:.0f}%)")
     L.append("  - pressure thresholds: " + ", ".join(f"{k} {v}" for k, v in o.pressure.items()))
-    L.append("RELATIONSHIPS: {}  # none yet; filled by Interactions")
+    L.append("RELATIONSHIPS: " + C.rel_text(o, lg))
     L.append("CAREER: [" + "; ".join(f"{e['event']} {e['year']}" for e in o.career) + "]")
-    L.append("DECISION_LOG: [none yet]")
+    L.append("DECISION_LOG: " + C.decisions_text(o))
     L.append("```")
     return "\n".join(L)
 
@@ -415,8 +430,8 @@ def render_gm(g: GMCard, lg=None) -> str:
             eff = "   (no on-field effect yet)"
         L.append(f"  - {a}: {g.ratings[a]:.0f}{eff}")
     L.append("  - pressure thresholds: " + ", ".join(f"{k} {v}" for k, v in g.pressure.items()))
-    L.append("RELATIONSHIPS: {}  # none yet; filled by Interactions")
+    L.append("RELATIONSHIPS: " + C.rel_text(g, lg))
     L.append("CAREER: [" + "; ".join(f"{e['event']} {e['year']}" for e in g.career) + "]")
-    L.append("DECISION_LOG: [none yet]")
+    L.append("DECISION_LOG: " + C.decisions_text(g))
     L.append("```")
     return "\n".join(L)

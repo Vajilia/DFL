@@ -1,6 +1,6 @@
 # Character cards: samples
 
-Seed 1, after 14 seasons. Names, hometowns and backgrounds come from placeholder word lists (engine/card_pools.py) that you can replace. Ratings, archetypes and the coach effect are real: they come from the engine. Relationships and the decision log start empty on purpose; the Interaction system will fill them.
+Seed 1, after 14 seasons. Names, hometowns and backgrounds come from placeholder word lists (engine/card_pools.py) that you can replace. Ratings, archetypes and the coach effect are real: they come from the engine. Relationships and the decision log start empty and fill as the Interaction system plays scenes (firings, recall votes and exile determinations so far).
 
 ## How to read a card
 
@@ -181,9 +181,9 @@ RATINGS:
   - discipline: 81   (no on-field effect yet)
   - motivation: 85   (no on-field effect yet)
   - pressure thresholds: exile 55, contract 78, spotlight 64, loyalty 33
-RELATIONSHIPS: {}  # none yet; filled by Interactions
+RELATIONSHIPS: {Chloe Villanueva (owner): -10, Ines Garrison (owner): -5, Mila Pemberton (gm): +0, Lara Espinoza (gm): +0}
 CAREER: [hired 0]
-DECISION_LOG: [none yet]
+DECISION_LOG: [11: was exiled with her team]
 ```
 ### Coach Stella Landry  (Team 44)
 ```yaml
@@ -215,9 +215,9 @@ RATINGS:
   - discipline: 39   (no on-field effect yet)
   - motivation: 56   (no on-field effect yet)
   - pressure thresholds: exile 50, contract 86, spotlight 56, loyalty 86
-RELATIONSHIPS: {}  # none yet; filled by Interactions
+RELATIONSHIPS: {Roxanne Lambert (owner): -5}
 CAREER: [hired 10]
-DECISION_LOG: [none yet]
+DECISION_LOG: [13: was exiled with her team]
 ```
 
 ## An owner, a GM, and the Archive's first entries
@@ -235,9 +235,9 @@ RATINGS:
   - business: 64
   - fan approval right now: 66%  (a recall vote is triggered under 40%)
   - pressure thresholds: recall 62, media 69, losing 51, subsidy 48
-RELATIONSHIPS: {}  # none yet; filled by Interactions
+RELATIONSHIPS: {Antonia Grantham (gm): -30, Brenna Maldonado (coach): -10, Team 01 fans: +11}
 CAREER: [bought 0]
-DECISION_LOG: [none yet]
+DECISION_LOG: [1: survived a recall vote; 6: blamed Antonia Grantham for the exile; 6: survived a recall vote; 8: blamed Antonia Grantham for the exile; 8: survived a recall vote; 9: survived a recall vote]
 ```
 ### Owner Junie Gentry  (Team 29, recalled)
 ```yaml
@@ -252,9 +252,9 @@ RATINGS:
   - business: 41
   - fan approval right now: 28%  (a recall vote is triggered under 40%)
   - pressure thresholds: recall 46, media 51, losing 68, subsidy 42
-RELATIONSHIPS: {}  # none yet; filled by Interactions
+RELATIONSHIPS: {Team 29 fans: -38, Alina Fairbanks (coach): -25, Ruth Jacobsen (gm): -5}
 CAREER: [elected 11; recalled 14]
-DECISION_LOG: [none yet]
+DECISION_LOG: [11: was elected by the fans of team 29; 13: blamed Alina Fairbanks for the exile; 13: survived a recall vote; 13: fired coach Alina Fairbanks (results); 14: was recalled]
 ```
 ### GM Treasure Wagner  (Team 28, gm)
 ```yaml
@@ -268,9 +268,9 @@ RATINGS:
   - trades: 12   (no on-field effect yet)
   - cap_sense: 61   (no on-field effect yet)
   - pressure thresholds: exile 63, contract 61, spotlight 46, loyalty 70
-RELATIONSHIPS: {}  # none yet; filled by Interactions
+RELATIONSHIPS: {Mirabel Leclair (owner): -5, Katya Winslow (owner): -5}
 CAREER: [hired 0]
-DECISION_LOG: [none yet]
+DECISION_LOG: [8: was exiled with her team; 14: was exiled with her team]
 ```
 **A recall vote as the Archive logs it:**
 
@@ -306,8 +306,8 @@ RATINGS:
   - Fan Capital: 0.67  (recall immunity; worth 5.2 points on a recall vote)
   - what the press did to approval last season: +0.1 points
   - pressure thresholds: exile 40, losing 22, scandal 62, spotlight 47
-RELATIONSHIPS: {}  # none yet; filled by Interactions
-DECISION_LOG: [none yet]
+RELATIONSHIPS: {Aria Dalton (owner): +5}
+DECISION_LOG: [2: kept the owner; 10: kept the owner]
 ```
 ### Fanbase of Team 48  (Gloomy Realists)
 ```yaml
@@ -324,8 +324,8 @@ RATINGS:
   - Fan Capital: 0.38  (recall immunity; worth 0.0 points on a recall vote)
   - what the press did to approval last season: -1.6 points
   - pressure thresholds: exile 59, losing 59, scandal 60, spotlight 53
-RELATIONSHIPS: {}  # none yet; filled by Interactions
-DECISION_LOG: [none yet]
+RELATIONSHIPS: {Dominique Winslow (owner): -48, Julia Dubois (owner): -33, Kasey Rourke (owner): -33, Thea Hargrove (owner): +4, Amelia Trevino (owner): +18}
+DECISION_LOG: [1 earlier; 3: voted to recall the owner; 4: kept the owner; 5: voted to recall the owner; 7: voted to recall the owner; 8: kept the owner; 12: kept the owner]
 ```
 ### Fanbase of Team 40  (Die-Hards)
 ```yaml
@@ -342,8 +342,8 @@ RATINGS:
   - Fan Capital: 0.71  (recall immunity; worth 6.3 points on a recall vote)
   - what the press did to approval last season: +0.1 points
   - pressure thresholds: exile 63, losing 32, scandal 45, spotlight 67
-RELATIONSHIPS: {}  # none yet; filled by Interactions
-DECISION_LOG: [none yet]
+RELATIONSHIPS: {Sadie Lovett (owner): -45, Lacey Dunmore (owner): -23, Nova Sheridan (owner): -1, Lola Nightingale (owner): +20}
+DECISION_LOG: [2: voted to recall the owner; 4: kept the owner; 7: kept the owner]
 ```
 ### The Tiara Times  (national, league-wide; active)
 ```yaml
@@ -426,6 +426,84 @@ replacement: Team 14 Sports Desk
 ```
 
 
+## Scenes as the Archive records them
+
+Each firing, recall vote and exile determination is a scene: every party gives its own claim, and the evidence section says, from the engine's own numbers, which claims hold. The scenes never change an outcome (the check script proves a league plays out identically with them on or off); they explain it, and they move relationships and decision logs.
+
+**An exile determination**
+
+```
+EVENT 14-exile_determination-47-1  (Team 47; exile determination; finished fifth in the division)
+├── Owner claims: Paloma Saunders (Legacy Builder): "Fifth in the division, and I will say who is to blame: Fatima Calloway. She built a roster that was 0.5 deviations below the league's average."  [supported by the record]
+├── Coach claims: Roxanne Schaefer (Developer): "I was handed a roster 1.1 deviations below average and the schedule did the rest."  [supported, but overstated]
+├── GM claims: Fatima Calloway (Cold Realist): "The roster was 4 of 5 in this division on paper. The record, 28%, was 18% below what it should have been."  [supported by the record]
+├── The fans claim: Team 47 fans: "They finished 28%. We wanted a good time and we feared boredom; that is what we got."  [supported by the record]
+├── Press claims: Team 47 Courier (Watchdog): "We had them at 49%. They finished 28%. Nobody saw this coming."  [not supported by the record]
+└── Evidence supports: Exile followed a thin roster and under-delivery against the roster.  (record 28%, roster predicts 45%, roster -0.5 deviations from average)
+    Outcome: Team 47 is exiled for next season
+```
+
+**A firing the record backs**
+
+```
+EVENT 14-firing-47-1  (Team 47; firing; owner fired the coach (results))
+├── Owner claims: Mabel Rochester (Patient Steward): "28% is not what I bought this team for. I gave her 5 seasons; I was patient."  [supported by the record]
+├── Coach claims: Roxanne Schaefer (Developer): "You gave me a roster 1.1 deviations below the league's average and expected a contender."  [supported, but overstated]
+├── GM claims: Fatima Calloway (Cold Realist): "The roster was fine. The record was 28%, against 45% on paper."  [supported by the record]
+├── The fans claim: Team 47 fans: "They finished 28%. We wanted a good time and we feared boredom; that is what we got."  [supported by the record]
+├── Press claims: Team 47 Courier (Watchdog): "We had them at 49%. They finished 28%. Nobody saw this coming."  [not supported by the record]
+└── Evidence supports: The firing is backed by the record, and the roster does not excuse it: the team won well under what it was built to win.  (record 28%, roster predicts 45%, roster -0.5 deviations from average)
+    Outcome: Roxanne Schaefer fired; replaced by a new coach
+```
+
+**A harsh firing (the roster explains the record)**
+
+```
+EVENT 13-firing-37-2  (Team 37; firing; owner fired the gm (results))
+├── Owner claims: Mei Dubois (Meddler): "14% is not what I bought this team for. I trusted her with the roster; I was patient."  [supported by the record]
+├── GM claims: Alina Mikkelsen (Planner): "I built the roster and she lost games the roster should have won: 14% on a team that rates 67%."  [supported by the record]
+├── Coach claims: Oona Sandoval (Survivor): "I coached what I was handed, a roster 1.6 deviations above average."  [not supported by the record]
+├── The fans claim: Team 37 fans: "They finished 14%. We wanted a good time and we feared boredom; that is what we got."  [supported by the record]
+└── Evidence supports: A harsh firing: the record was poor (14%), but the roster she built was not thin, so the shortfall was on the field.  (record 14%, roster predicts 67%, roster +1.6 deviations from average)
+    Outcome: Alina Mikkelsen fired; replaced by a new gm
+```
+
+**A new owner's sweep**
+
+```
+EVENT 14-firing-24-2  (Team 24; firing; owner fired the gm (new owner cleaned house))
+├── Owner claims: Bryn Farrow (Showwoman): "New owner, new staff. I wanted spectacle and headlines and I wasn't going to ask Concetta Dunmore for it."  [supported by the record]
+├── GM claims: Concetta Dunmore (Loyal Lieutenant): "I built the roster and she lost games the roster should have won: 61% on a team that rates 51%."  [not supported by the record]
+├── Coach claims: Sylvie Carrow (Gambler): "I coached what I was handed, a roster 0.0 deviations above average."  [not supported by the record]
+├── The fans claim: Team 24 fans: "They finished 61%. We wanted winners and we feared a long losing stretch; we have no complaint about the record, but we are watching."  [not supported by the record]
+├── Press claims: Team 24 Insider (Hype Machine): "We had them at 62%. They finished 61%. We called it."  [supported by the record]
+└── Evidence supports: A sweep: the new owner cleared the staff on arrival, whatever the record (61% against 51% on paper).  (record 61%, roster predicts 51%, roster +0.0 deviations from average)
+    Outcome: Concetta Dunmore fired; replaced by a new gm
+```
+
+**A recall vote that removes an owner**
+
+```
+EVENT 14-recall_vote-47-1  (Team 47; recall vote; vote triggered by approval)
+├── Owner claims: Paloma Saunders (Legacy Builder): "I thought we were at 38%. The team lost, and the fans are blaming the person they can vote on."  [supported by the record]
+├── The fans claim: Team 47 fans: "They finished 28%. We wanted a good time and we feared boredom; that is what we got." We wanted an owner strong on involvement and we chose Mabel Rochester.  [supported by the record]
+├── Press claims: Team 47 Courier (Watchdog): "We had them at 49%. They finished 28%. Nobody saw this coming."  [not supported by the record]
+├── New owner claims: Mabel Rochester (Patient Steward): "Five of us stood. The fans wanted strength on involvement and picked me. I want a slow, sound build."  [not supported by the record]
+└── Evidence supports: 58.4% voted to recall (a majority of the 1,000,000 fans is needed): recalled.  (record 28%, roster predicts 45%, roster -0.5 deviations from average)
+    Outcome: Paloma Saunders recalled; Mabel Rochester elected from 5 candidates
+```
+
+**A recall vote the owner survives**
+
+```
+EVENT 14-recall_vote-44-1  (Team 44; recall vote; vote triggered by approval)
+├── Owner claims: Kimi Eberhardt (Showwoman): "I told you we were at 47%. The fans know what I stand for: spectacle and headlines."  [not supported by the record]
+├── The fans claim: Team 44 fans: "We stand by our own, and we have 54 points of goodwill banked. This town wanted a team that is theirs."  [not supported by the record]
+└── Evidence supports: 48.0% voted to recall (a majority of the 1,000,000 fans is needed): the owner survives.  (record 29%, roster predicts 47%, roster -0.3 deviations from average)
+    Outcome: Kimi Eberhardt survives
+```
+
+
 ## How the cards spread across the league
 
 **Core personalities (all rostered players):** Diplomat 507, Competitor 407, Perfectionist 372, Grinder 355, Showman 196, Quiet Leader 134, Free Spirit 132, Hothead 91, Mercenary 46, Loyalist 16
@@ -445,6 +523,8 @@ replacement: Team 14 Sports Desk
 **The press on approval, last season:** average 1.0 points either way, largest 3.8 (the cap is 3 before market size and trust).
 
 **Outlets:** 52 active (4 national, one local beat per team); credibility averages 40, from 18 to 65; 9 have folded and been replaced in 14 seasons.
+
+**Scenes:** 386 in 14 seasons ([('recall_vote', 195), ('exile_determination', 112), ('firing', 79)]). Firings by ruling: fair 58, sweep 16, harsh 4, unfounded 1.
 
 **Recall votes:** 195 in 14 seasons (13.9 a year); 61 owners recalled (4.4 a year), 31% of votes. Owners retire on their own too: 46 so far.
 
