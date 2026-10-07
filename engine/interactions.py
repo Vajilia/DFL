@@ -1,6 +1,6 @@
 """The Interaction system, first slice (Phase 4a): the three Required interactions as real scenes.
 
-From the rules text (CONFIRMED): when two cards collide in an Interaction they act in their own interests, each party
+From the rules text (the Commissioner's skeleton): when two cards collide in an Interaction they act in their own interests, each party
 gives its own claim, and the Archive records "Party A claims / Party B claims / Evidence supports". Evidence defaults to truth.
 Required interactions include Firing and Exile Determination, and the Recall Vote is a Crisis; all three already happened in
 the engine as plain log lines (staff_cards.py). This module turns each into a scene.

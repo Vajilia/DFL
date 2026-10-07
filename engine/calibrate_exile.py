@@ -1,6 +1,6 @@
-"""Calibrate the placeholder exile benefits to Jeph's design intent.
+"""Calibrate the placeholder exile benefits to the Commissioner's design intent.
 
-Design intent (Jeph, 2026-10-04): exile is relief, not punishment. A team coming back from
+Design intent (the Commissioner, 2026-10-04): exile is relief, not punishment. A team coming back from
 exile should have the potential to compete for 3rd place in its division: sometimes it will
 get there, sometimes it won't. That is the level of help exile should give.
 
@@ -85,7 +85,7 @@ def main():
     L = []
     w = L.append
     w("# Calibrating exile to the design intent\n")
-    w("**Design intent (Jeph):** exile is relief, not punishment. A team coming back should have the potential to compete for "
+    w("**Design intent (the Commissioner):** exile is relief, not punishment. A team coming back should have the potential to compete for "
       "**3rd place in its division**. Sometimes it gets there, sometimes it doesn't. Not a lock to contend, not a lock to flop.\n")
     w("**Target used:** average first-season-back division finish close to 3.0 (between 2.8 and 3.2), with every finish from 1st to 5th "
       "still possible. For reference, a team picked at random finishes 3.0 on average and gets exiled 20% of the time.\n")

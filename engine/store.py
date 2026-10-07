@@ -92,7 +92,7 @@ def _everyone(lg):
         if once(o):
             yield "owner", o.oid, o, o.status, o.team_id
     for t in lg.teams:
-        for p in t.roster or ():
+        for p in list(t.roster or ()) + list(t.practice_squad) + list(t.ir):
             if p.card is not None and once(p.card):
                 yield "player", p.id, p.card, "active", p.team_id
     for p in lg.free_agents:
@@ -175,7 +175,7 @@ def _registry(lg) -> dict:
 def _players(lg):
     """(player, where) for every player who has ever been in the league: on a team, a free agent, or retired."""
     for t in lg.teams:
-        for p in t.roster or ():
+        for p in list(t.roster or ()) + list(t.practice_squad) + list(t.ir):
             yield p
     yield from lg.free_agents
     yield from lg.retired_players
@@ -190,6 +190,8 @@ def _league_record(lg, rng, year) -> dict:
     rec.update({k: getattr(lg, k) for k in PLAIN})
     rec["teams"] = [dict(id=t.id, name=t.name, conf=t.conf, div=t.div, status=t.status, tier=t.tier, strength=t.strength, bank=t.bank,
                          roster=None if t.roster is None else [p.id for p in t.roster],
+                         practice_squad=[p.id for p in t.practice_squad], ir=[p.id for p in t.ir], ir_returns=t.ir_returns,
+                         dead_now=t.dead_now, dead_next=t.dead_next, designations=t.designations, cash=t.cash, topup=t.topup, fund_cash=t.fund_cash,
                          coach=t.coach.cid if t.coach else None, owner=t.owner.oid if t.owner else None, gm=t.gm.gid if t.gm else None,
                          fans=t.fans.team_id if t.fans else None) for t in lg.teams]
     rec["free_agents"] = [p.id for p in lg.free_agents]
@@ -305,6 +307,11 @@ def _rebuild(db: sqlite3.Connection):
         tm = Team(id=t["id"], name=t["name"], conf=t["conf"], div=t["div"], status=t["status"], tier=t["tier"], strength=t["strength"])
         tm.bank = t["bank"]
         tm.roster = None if t["roster"] is None else [player(i) for i in t["roster"]]
+        tm.practice_squad = [player(i) for i in t.get("practice_squad", ())]
+        tm.ir = [player(i) for i in t.get("ir", ())]
+        tm.ir_returns = t.get("ir_returns", 0)
+        tm.dead_now, tm.dead_next, tm.designations = t.get("dead_now", 0.0), t.get("dead_next", 0.0), t.get("designations", 0)
+        tm.cash, tm.topup, tm.fund_cash = list(t.get("cash", ())), list(t.get("topup", ())), t.get("fund_cash", 0.0)
         tm.coach = card("coach", t["coach"]) if t["coach"] is not None else None
         tm.owner = card("owner", t["owner"]) if t["owner"] is not None else None
         tm.gm = card("gm", t["gm"]) if t["gm"] is not None else None

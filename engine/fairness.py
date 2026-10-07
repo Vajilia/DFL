@@ -1,8 +1,8 @@
 """Fair competitiveness: the standard every test in this project is judged against.
 
-Jeph's rule (2026-10-04): a trend is a problem when it falls outside the expected / accepted range of
-"fair competitiveness". The ranges themselves live in rules.FAIR_COMPETITION_BANDS (ASSUMED until Jeph
-sets numbers). This module measures a simulated league history and says which trends are inside the bands.
+The Commissioner's rule (2026-10-04): a trend is a problem when it falls outside the expected / accepted range of
+"fair competitiveness". The ranges themselves live in rules.FAIR_COMPETITION_BANDS (proposed by the AI, accepted by the Commissioner as working limits; change them there).
+This module measures a simulated league history and says which trends are inside the bands.
 
     python engine/fairness.py [--engine fast] [--leagues 8] [--seasons 48]
 """
@@ -174,9 +174,9 @@ if __name__ == "__main__":
     if a.write:
         root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         out = ["# Fair competitiveness report\n",
-               "Standard (Jeph, 2026-10-04): a trend is a problem when it falls outside the expected / accepted range of "
-               "\"fair competitiveness\". The numeric ranges below are the AI's first proposal and are **assumed** until you set "
-               "your own (`FAIR_COMPETITION_BANDS` in `engine/rules.py`). Each league runs 48 seasons; the first 8 are thrown "
+               "Standard (the Commissioner, 2026-10-04): a trend is a problem when it falls outside the expected / accepted range of "
+               "\"fair competitiveness\". The numeric ranges below were proposed by the AI and are accepted by the Commissioner as "
+               "the working limits (`FAIR_COMPETITION_BANDS` in `engine/rules.py`; the rulebook's \"fair\" basis). Each league runs 48 seasons; the first 8 are thrown "
                "away while the league settles. Values are averaged over the leagues; the last column shows the spread.\n"]
         for eng, n in (("fast", 12), ("drives", 6)):
             per, rows = run(eng, range(100, 100 + n), 48)

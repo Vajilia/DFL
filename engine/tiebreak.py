@@ -1,4 +1,4 @@
-"""NFL-style tiebreaking procedures (Jeph, 2026-10-04: "all tie-breaking scenarios mirror the NFL").
+"""NFL-style tiebreaking procedures (the Commissioner, 2026-10-04: "all tie-breaking scenarios mirror the NFL").
 
 The procedures follow the NFL's published ones (checked against nfl.com on 2026-10-04):
 
@@ -12,7 +12,7 @@ The procedures follow the NFL's published ones (checked against nfl.com on 2026-
                         procedure, then head-to-head, common games (at least four), strength of victory, combined
                         ranking, net points, net touchdowns, coin toss. The worse team picks first at each step.
 
-Rules that go beyond what the NFL has to deal with are ASSUMED adaptations:
+Rules that go beyond what the NFL has to deal with are ADAPTED (the rulebook label):
   * three or more clubs: a step keeps the clubs with the best value; when two remain the two-club list restarts
     from step 1 (the NFL's restart rule); the process is repeated to rank everyone, not just pick a winner;
   * wild-card ties among clubs of one division are first settled by the division procedure;
@@ -48,13 +48,18 @@ class Ledger:
                 self.g[g.home].append((g.away, g.home_pts, g.away_pts, htd, atd))
             if g.away in self.idset:
                 self.g[g.away].append((g.home, g.away_pts, g.home_pts, atd, htd))
-        self.wins = {t: sum(pf > pa for _, pf, pa, _, _ in self.g[t]) for t in self.ids}
+        # win credit: a win is 1, a tie is 1/2
+        self.wins = {t: self._credit(self.g[t]) for t in self.ids}
         self.n = {t: len(self.g[t]) for t in self.ids}
         self._rank_cache: Dict[tuple, Dict[int, int]] = {}
 
     # basic helpers --------------------------------------------------------------
-    def pct(self, wins: int, n: int) -> Fraction:
-        return Fraction(wins, n) if n else Fraction(1, 2)
+    @staticmethod
+    def _credit(games) -> Fraction:
+        return sum((Fraction(1) if pf > pa else Fraction(1, 2) if pf == pa else Fraction(0) for _, pf, pa, _, _ in games), Fraction(0))
+
+    def pct(self, wins, n: int) -> Fraction:
+        return Fraction(wins) / n if n else Fraction(1, 2)
 
     def conf(self, t):
         return self.league.by_id[t].conf
@@ -67,7 +72,7 @@ class Ledger:
         return [x for x in self.g[t] if x[0] in s]
 
     def record_pct(self, games: List[tuple]) -> Fraction:
-        return self.pct(sum(pf > pa for _, pf, pa, _, _ in games), len(games))
+        return self.pct(self._credit(games), len(games))
 
     # metrics (higher = better) ------------------------------------------------------
     def m_h2h(self, t, group):
@@ -228,6 +233,8 @@ def _pick(L: Ledger, group: List[int], kind: str, rng: random.Random, log, conte
         cands = keep
         if len(cands) == 2 and was > 2:
             chain, i = _chain(kind, 2), 0                  # NFL restart rule
+        elif len(cands) == 3 and was > 3 and kind == "division":
+            chain, i = _chain(kind, 3), 0                  # NFL: three remain after a fourth is eliminated, start the three-club list again
     if log is not None:
         log.append({"context": context, "size": len(cands), "decided_by": "seeded_coin_flip", "teams": cands[:]})
     return rng.choice(cands)

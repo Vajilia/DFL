@@ -1,6 +1,6 @@
 # Calibrating exile to the design intent
 
-**Design intent (Jeph):** exile is relief, not punishment. A team coming back should have the potential to compete for **3rd place in its division**. Sometimes it gets there, sometimes it doesn't. Not a lock to contend, not a lock to flop.
+**Design intent (the Commissioner):** exile is relief, not punishment. A team coming back should have the potential to compete for **3rd place in its division**. Sometimes it gets there, sometimes it doesn't. Not a lock to contend, not a lock to flop.
 
 **Target used:** average first-season-back division finish close to 3.0 (between 2.8 and 3.2), with every finish from 1st to 5th still possible. For reference, a team picked at random finishes 3.0 on average and gets exiled 20% of the time.
 

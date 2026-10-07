@@ -1,6 +1,6 @@
 """Decision Points (Phase 4b): the one door every consequential choice goes through.
 
-The principle (Jeph, 2026-10-04): the road, its guardrails and its traffic controls are code; the car is a card's capability
+The principle (the Commissioner, 2026-10-04): the road, its guardrails and its traffic controls are code; the car is a card's capability
 (its ratings); the driver is the agent that chooses what to do with it. Agents choose actions, never outcomes, and whatever
 they choose, the league stays inside the fair-competitiveness bands.
 

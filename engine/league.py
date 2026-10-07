@@ -2,12 +2,12 @@
 from __future__ import annotations
 
 import random
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Dict, List, Optional
 
 import rules as R
 import placeholder_model as PM
-from players import IdSource, Player, build_roster
+from players import IdSource, Player, build_practice_squad, build_roster
 
 
 @dataclass
@@ -19,12 +19,21 @@ class Team:
     status: str               # "active" or "exiled"
     tier: Optional[int]       # 1..5 while active; None while exiled
     strength: float           # talent rating in points better than average (placeholder scalar, or the roster's power rating)
-    roster: List[Player] = None
+    roster: List[Player] = None          # the 53 (injured players included, players on injured reserve not)
+    practice_squad: List[Player] = field(default_factory=list)      # 16 (rosters.py)
+    ir: List[Player] = field(default_factory=list)                  # injured reserve
+    ir_returns: int = 0                  # players designated to return from injured reserve so far this season (at most 8)
     coach: object = None      # cards.CoachCard, the head coach
     owner: object = None      # staff_cards.OwnerCard
     gm: object = None         # staff_cards.GMCard
     fans: object = None       # fan_media_cards.FanbaseCard (belongs to the franchise, outlives its owners)
     bank: float = 0.0         # cap room banked from last season, $ millions (economy.py)
+    dead_now: float = 0.0     # dead money on this season's cap (economy.py)
+    dead_next: float = 0.0    # dead money pushed to next season by post-draft designations
+    designations: int = 0     # post-draft release designations used this league year (at most 2)
+    cash: List[float] = field(default_factory=list)      # payroll of each of the last four seasons played (exile seasons skipped), for the rolling floor
+    topup: List[float] = field(default_factory=list)     # floor top-ups paid to players in those seasons
+    fund_cash: float = 0.0    # net cash from the Equalization Fund: surplus shares received less levies paid
 
     @property
     def division_id(self) -> int:
@@ -68,7 +77,7 @@ class League:
         self._media_ids = 0
         self._owner_ids = 0
         self._gm_ids = 0
-        self.pool = 0.0                    # the league's cap pool: forfeited room and floor shortfalls in, exiled teams' absorbed payroll out (economy.py)
+        self.pool = 0.0                    # the Equalization Fund's cash balance: forfeited room in, exiled teams' absorbed payroll out (economy.py)
 
     def new_owner_id(self) -> int:
         self._owner_ids += 1
@@ -110,7 +119,7 @@ class League:
 
 
 def new_league(rng: random.Random, rosters: bool = False, coaches: bool = True, staff: bool = True, fans: bool = True, interactions: bool = True) -> League:
-    """ASSUMED starting league: random strengths, one random team per division starts
+    """MODEL starting league: random strengths, one random team per division starts
     in exile, and the rest take tiers 1-5 in order of strength."""
     teams: List[Team] = []
     n = 0
@@ -143,13 +152,15 @@ def new_league(rng: random.Random, rosters: bool = False, coaches: bool = True, 
 
 
 def give_rosters(lg: League, rng: random.Random):
-    """Build 47-player rosters. Each team's scalar strength is then replaced by its roster's
+    """Build 53-player rosters and 16-player practice squads. Each team's scalar strength is then replaced by its roster's
     power rating, and tiers follow that rating inside each division."""
     from lineup import build_lineup
     import power_rating as PR
     from players import TEAM_OFFSET_SD
     for t in lg.teams:
-        t.roster = build_roster(rng, lg.new_id, t.id, rng.gauss(0.0, TEAM_OFFSET_SD))
+        off = rng.gauss(0.0, TEAM_OFFSET_SD)
+        t.roster = build_roster(rng, lg.new_id, t.id, off)
+        t.practice_squad = build_practice_squad(rng, lg.new_id, t.id, off)
     lg.has_rosters = True
     import cards
     cards.init_league_cards(lg, 0)

@@ -1,6 +1,6 @@
 """The roster offseason: aging, retirement, contracts ending, the draft and free agency.
 
-Everything here is ASSUMED structure with PLACEHOLDER numbers (see roster_model.py). The one
+The lists, limits and draft here are the rulebook's (rosters.py has the lists); the numbers that make players are MODEL structure (a stand-in, not a league rule) with PLACEHOLDER numbers (see roster_model.py). The one
 confirmed design intent it serves: a team coming back from exile gets modest help (priority in
 free agency plus a few top-of-market signings, standing in for the 50% cap relief) so it has the
 potential to compete for about 3rd in its division.
@@ -16,6 +16,7 @@ from league import League, refresh_strengths
 from players import Player, clamp, make_player, random_age
 from positions import POSITIONS, ROSTER_COUNTS, ROSTER_SIZE, STARTERS
 from roster_model import RosterModel
+import rosters
 import economy as EC
 import staff_cards as SC
 
@@ -64,7 +65,9 @@ def progress(players: List[Player], rm: RosterModel, rng: random.Random, coach_o
 
 
 def rookie_ovr(pick: int, rm: RosterModel, rng: random.Random) -> float:
-    return clamp(rm.rookie_base + rm.rookie_span * math.exp(-(pick - 1) / rm.rookie_decay)
+    """Rating of the player taken at overall pick `pick` (1-336): steep over the first round, then a slow slide toward an undrafted player's."""
+    base = rm.rookie_base - rm.rookie_late_drop * min(1.0, (pick - 1) / (R.DRAFT_ROUNDS * R.TOTAL_TEAMS - 1))
+    return clamp(base + rm.rookie_span * math.exp(-(pick - 1) / rm.rookie_decay)
                  + rng.gauss(0.0, rm.rookie_sd), 30, 95)
 
 
@@ -75,13 +78,16 @@ def _team_counts(roster: List[Player]) -> Dict[str, int]:
     return c
 
 
-def _pick_rookie_position(roster: List[Player], rng: random.Random) -> str:
+def _pick_rookie_position(roster: List[Player], overall: int, rng: random.Random) -> str:
     counts = _team_counts(roster)
     w = []
     for pos in POSITIONS:
         need = ROSTER_COUNTS[pos] - counts[pos]
         if pos in ("K", "P"):
-            w.append(1.0 if need > 0 else 0.02)
+            x = 1.0 if need > 0 else 0.02
+            if overall <= 100:                       # no one spends a first- or second-round pick on a kicker or punter
+                x *= 0.05
+            w.append(x)
         else:
             w.append(max(0.15, need + 0.4) * ROSTER_COUNTS[pos])
     return rng.choices(POSITIONS, w)[0]
@@ -115,27 +121,68 @@ def _gain(roster: List[Player], cand: Player) -> float:
 
 
 def _undrafted(lg: League, rm: RosterModel, rng: random.Random) -> List[Player]:
+    """This year's undrafted rookies: the market for camp invitations. They have never been on a roster, so they have no card
+    until one makes a team's practice squad or roster or lands in the free-agent pool."""
     out = []
-    tot = sum(ROSTER_COUNTS.values())
     for _ in range(rm.undrafted_per_year):
         pos = rng.choices(POSITIONS, [ROSTER_COUNTS[p] for p in POSITIONS])[0]
         ovr = clamp(rng.gauss(rm.undrafted_mean, rm.undrafted_sd), 28, 80)
-        out.append(make_player(rng, lg.new_id(), pos, ovr, rng.choice((22, 22, 23, 24)), None))
+        p = make_player(rng, lg.new_id(), pos, ovr, rng.choice((22, 22, 23, 24)), None)
+        p.years_in_league = 0
+        p.accrued_seasons = p.credited_seasons = 0
+        out.append(p)
     return out
+
+
+def _pick_cut(t, players, emergency: bool = False):
+    """The player a team in cap trouble lets go: of the players whose release saves more than her replacement (at the highest minimum rung) would cost,
+    the most overpaid. A post-draft designation is used when one is left and the dead money is large. When nothing helps and the designations are
+    gone, the league lets the team defer the dead money to next season (emergency); this is the only way a team's cap can be put right, and the
+    study counts how often it happens. Returns (player, designate) or None."""
+    repl = EC.MIN_SALARY_SCALE[-1]
+    options = []
+    for p in players:
+        des = EC.can_designate(t) and EC.dead_charge(p) > 0.5 * p.salary
+        if emergency and not EC.can_designate(t):
+            des = True
+        now = min(EC.dead_charge(p), p.bonus) if des else EC.dead_charge(p)
+        if p.salary - now - repl > 0.005:
+            options.append((p.salary - EC.market_salary(p.pos, p.ovr, p.years_in_league) - 0.5 * now, p.id, p, des))
+    if not options:
+        return None
+    _, _, w, des = max(options, key=lambda o: (o[0], o[1]))
+    return w, des
+
+
+def _offseason_over(t, extra_slots: int = 0) -> float:
+    """What the team's cap count is in the offseason, with room held back for the places it still has to fill and for what the 51 rule does not count:
+    the 51 highest cap numbers, dead money, the rest of the 51 at the minimum, and the 52nd and 53rd places and the practice squad."""
+    count = EC.counted_51([p.salary for p in t.roster], t.dead_now)
+    return count + max(0, EC.OFFSEASON_COUNT - len(t.roster) - extra_slots) * EC.MIN_SALARY + EC.OFFSEASON_RESERVE
 
 
 def run_roster_offseason(lg: League, rng: random.Random, rm: RosterModel, year: int,
                          pick_of: Dict[int, int], returners: List[int]) -> dict:
-    """Update every roster for next season. `pick_of` maps team id -> draft pick (1-48);
-    `returners` are the teams coming back from exile. Returns a small log of what happened."""
-    log = dict(retired=0, expired=0, signed=0, premium=0, released=0, rookies=0, street=0, resigned=0, cap_blocked=0, cap_cuts=0)
+    """Update every roster for next season. `pick_of` maps team id -> its place in every round of the draft (1-48);
+    `returners` are the teams coming back from exile. Returns a small log of what happened.
+
+    The order: the season's accounts close; everyone under contract (the 53, the practice squad and injured reserve) becomes one squad;
+    everyone ages, some retire, contracts run down; the seven-round draft; cap casualties; free agency fills each position; every team
+    invites undrafted rookies and others until the camp holds 90; the cutdown takes each team to 53 plus a practice squad of 16."""
+    log = dict(retired=0, expired=0, signed=0, premium=0, released=0, rookies=0, street=0, resigned=0, cap_blocked=0, cap_cuts=0,
+               udfa=0, camp=0, cut=0, dropped=0, practice_squad=0, expired_roster=0)
     log["cap"] = EC.close_season(lg, returners, year)       # this season's accounts, before anything changes
     SC.log(lg, year, "cap_close", **{k: v for k, v in log["cap"].items() if k != "year"})
     teams = lg.teams
-    # injuries heal over the offseason
     for t in teams:
+        EC.new_year(t)                                       # a new league year: last season's dead money is gone, designations are fresh
+    # injuries heal over the offseason, injured reserve is over, and the practice squad joins the squad
+    ps_ids = {p.id for t in teams for p in t.practice_squad}
+    for t in teams:
+        t.roster = list(t.roster) + list(t.ir) + list(t.practice_squad)
+        t.ir, t.practice_squad, t.ir_returns = [], [], 0
         for p in t.roster:
-            p.weeks_out = 0
+            p.weeks_out, p.ir_games, p.ir_designated = 0, 0, False
     for p in lg.free_agents:
         p.weeks_out = 0
 
@@ -144,7 +191,7 @@ def run_roster_offseason(lg: League, rng: random.Random, rm: RosterModel, year: 
              {p.id: t.coach for t in teams if t.coach is not None for p in t.roster})
     progress(lg.free_agents, rm, rng)
 
-    # 2. retirement (rostered players and the unsigned)
+    # 2. retirement (the squad and the unsigned)
     for t in teams:
         keep = []
         for p in t.roster:
@@ -165,62 +212,65 @@ def run_roster_offseason(lg: League, rng: random.Random, rm: RosterModel, year: 
 
     # 3. contracts run down. Players whose contracts end are re-signed (at today's market price) or reach the market: stars are likelier to
     # be kept and a good negotiator GM keeps more, but a team can only keep who it can afford this season (the cap is a hard limit)
+    per = R.TOTAL_TEAMS
     for t in teams:
         for p in t.roster:
-            p.years_left -= 1
+            EC.run_down(p)
         keep = [p for p in t.roster if p.years_left > 0]
         expiring = sorted((p for p in t.roster if p.years_left <= 0), key=lambda p: -p.ovr)
-        lim, committed = EC.limit(t), sum(p.salary for p in keep)
-        rookie = EC.rookie_salary(pick_of[t.id])
+        lim = EC.limit(t)
+        rookie_pays = [EC.rookie_salary(rnd * per + pick_of[t.id]) for rnd in range(R.DRAFT_ROUNDS)]
         for p in expiring:
             q = EC.RESIGN_BASE * (rm.fa_star_protect if p.ovr >= 70 else 1.0) * SC.gm_retention_factor(t)
             wants = rng.random() >= q
-            cost = EC.market_salary(p.pos, p.ovr)
-            slots_after = max(0, ROSTER_SIZE - (len(keep) + 1) - 1)          # the rest of the roster and the rookie still to come
-            if wants and committed + cost + rookie + slots_after * EC.MIN_SALARY <= lim:
-                p.salary, p.years_left = cost, EC.contract_years(p)
+            cost = EC.market_salary(p.pos, p.ovr, p.years_in_league)
+            slots_after = max(0, EC.OFFSEASON_COUNT - (len(keep) + 1) - R.DRAFT_ROUNDS)      # the rest of the 51 and the rookies still to come
+            count = EC.counted_51([k.salary for k in keep] + [cost] + rookie_pays, t.dead_now)
+            if wants and count + slots_after * EC.MIN_SALARY + EC.OFFSEASON_RESERVE <= lim:
+                EC.sign(p, cost, EC.contract_years(p))
                 keep.append(p)
-                committed += cost
                 log["resigned"] += 1
             else:
                 if wants:
                     log["cap_blocked"] += 1
                 p.team_id, p.fa_years = None, 0
-                p.salary = p.years_left = 0
+                EC.clear_contract(p)
                 pool.append(p)
                 log["expired"] += 1
+                log["expired_roster"] += p.id not in ps_ids
         t.roster = keep
-    pool.extend(_undrafted(lg, rm, rng))
+    udfa = _undrafted(lg, rm, rng)
 
-    # 4. the draft: one rookie per team, quality by pick
-    for t in teams:
-        pick = pick_of[t.id]
-        pos = _pick_rookie_position(t.roster, rng)
-        p = make_player(rng, lg.new_id(), pos, clamp(rookie_ovr(pick, rm, rng) + SC.gm_scouting_bonus(t), 30, 95), rng.choice((22, 22, 22, 23)), t.id,
-                        draft_year=year, draft_pick=pick)
-        p.years_in_league = 0
-        p.salary, p.years_left = EC.rookie_salary(pick), EC.ROOKIE_YEARS
-        t.roster.append(p)
-        log["rookies"] += 1
-    # trim positions that are over the limit (the weakest are released to the market)
-    for t in teams:
-        for pos in POSITIONS:
-            at = sorted((p for p in t.roster if p.pos == pos), key=lambda p: -p.ovr)
-            for p in at[ROSTER_COUNTS[pos]:]:
-                t.roster.remove(p)
-                p.team_id, p.fa_years = None, 0
-                pool.append(p)
-                log["released"] += 1
+    # 4. the draft: seven rounds of 48 picks in the same order each round, quality by overall pick, a rookie-scale contract by pick
+    for rnd in range(R.DRAFT_ROUNDS):
+        for t in sorted(teams, key=lambda t: pick_of[t.id]):
+            overall = rnd * per + pick_of[t.id]
+            pos = _pick_rookie_position(t.roster, overall, rng)
+            p = make_player(rng, lg.new_id(), pos, clamp(rookie_ovr(overall, rm, rng) + SC.gm_scouting_bonus(t), 30, 95),
+                            rng.choice((22, 22, 22, 23)), t.id, draft_year=year, draft_pick=overall)
+            p.years_in_league = 0
+            p.accrued_seasons = p.credited_seasons = 0
+            EC.sign(p, EC.rookie_salary(overall), EC.ROOKIE_YEARS, share=EC.ROOKIE_BONUS_SHARE[rnd],
+                    guarantee_years=EC.ROOKIE_YEARS if rnd == 0 else 0, rookie=True)     # round-1 deals are fully guaranteed
+            t.roster.append(p)
+            log["rookies"] += 1
 
     # 4b. cap casualties. Banked room is a one-season allowance: a team that spent it on multi-year contracts comes back to the $100M cap and must
-    # shed the players who cost the most beyond their market price until it can fill its roster at the minimum wage inside its limit
+    # shed the players who cost the most beyond their market price until it can fill its squad at the minimum wage inside its limit
     for t in teams:
-        while EC.payroll(t) + max(0, ROSTER_SIZE - len(t.roster)) * EC.MIN_SALARY > EC.limit(t) + 1e-9:
-            w = max(t.roster, key=lambda p: (p.salary - EC.market_salary(p.pos, p.ovr), p.id))
+        while _offseason_over(t) > EC.limit(t) + 1e-9:
+            top = sorted(t.roster, key=lambda p: (-p.salary, p.id))[:EC.OFFSEASON_COUNT]        # only the 51 highest cap numbers count, so only they can help
+            pick = _pick_cut(t, top) or _pick_cut(t, top, emergency=True)
+            if pick is None:
+                break
+            w, des = pick
+            log["emergency"] = log.get("emergency", 0) + (des and not EC.can_designate(t))
             t.roster.remove(w)
+            EC.release(t, w, des)
             w.team_id, w.fa_years = None, 0
             pool.append(w)
             log["cap_cuts"] += 1
+            log["designated"] = log.get("designated", 0) + des
 
     # 5. free agency, worst team first. Returning teams go first and get premium signings.
     ret = set(returners)
@@ -234,13 +284,12 @@ def run_roster_offseason(lg: League, rng: random.Random, rm: RosterModel, year: 
 
     def room_for(t) -> float:
         """What this team can pay the next signing: this season's limit less its payroll, keeping the minimum salary back for every other open slot."""
-        return EC.limit(t) - EC.payroll(t) - max(0, ROSTER_SIZE - len(t.roster) - 1) * EC.MIN_SALARY
+        return EC.limit(t) - _offseason_over(t, extra_slots=1)
 
     def take(t, p, price=None):
         by_pos[p.pos].remove(p)
         p.team_id, p.fa_years = t.id, 0
-        p.salary = EC.market_salary(p.pos, p.ovr) if price is None else price
-        p.years_left = EC.contract_years(p)
+        EC.sign(p, EC.market_salary(p.pos, p.ovr, p.years_in_league) if price is None else price, EC.contract_years(p))
         t.roster.append(p)
         log["signed"] += 1
 
@@ -248,7 +297,7 @@ def run_roster_offseason(lg: League, rng: random.Random, rm: RosterModel, year: 
         """The best player on the market at a position that this team can afford (an asking price is the market price)."""
         room = room_for(t)
         for c in by_pos[pos]:
-            if EC.market_salary(c.pos, c.ovr) <= room:
+            if EC.market_salary(c.pos, c.ovr, c.years_in_league) <= room:
                 return c
         return None
 
@@ -256,6 +305,7 @@ def run_roster_offseason(lg: League, rng: random.Random, rm: RosterModel, year: 
         at = sorted((p for p in t.roster if p.pos == pos), key=lambda p: p.ovr)
         w = at[0]
         t.roster.remove(w)
+        EC.release(t, w)
         w.team_id, w.fa_years = None, 0
         by_pos[pos].append(w)
         by_pos[pos].sort(key=lambda p: -p.ovr)
@@ -283,7 +333,7 @@ def run_roster_offseason(lg: League, rng: random.Random, rm: RosterModel, year: 
             if counts[best.pos] > ROSTER_COUNTS[best.pos]:
                 release_worst(t, best.pos)
 
-    # 5b. fill every open slot, round by round
+    # 5b. fill every open slot at every position, round by round
     while True:
         progressed = False
         for t in order:
@@ -302,18 +352,123 @@ def run_roster_offseason(lg: League, rng: random.Random, rm: RosterModel, year: 
             price = None
             if best is None:                                # no one on the market at an open position that the team can afford: a street free agent at the minimum
                 pos = open_pos[0]
-                best = make_player(rng, lg.new_id(), pos, clamp(rng.gauss(46.0, 5.0), 28, 70),
-                                   rng.choice((22, 23, 24)), None)
+                best = rosters.street_player(lg, rng, pos)
                 by_pos[pos].append(best)
-                price = EC.MIN_SALARY
+                price = EC.min_salary(best.years_in_league)
                 log["street"] += 1
             take(t, best, price)
             progressed = True
         if not progressed:
             break
 
-    lg.free_agents = [p for pos in POSITIONS for p in by_pos[pos]]
+    # 6. the camp: every team invites undrafted rookies (three-year minimum contracts) and, when they run out at a position, unsigned veterans,
+    # round by round in the same order, until it holds 90
+    udfa_by_pos: Dict[str, List[Player]] = {pos: [] for pos in POSITIONS}
+    for p in udfa:
+        udfa_by_pos[p.pos].append(p)
+    for pos in POSITIONS:
+        udfa_by_pos[pos].sort(key=lambda p: -p.ovr)
+    weights = [ROSTER_COUNTS[pos] for pos in POSITIONS]
+    while True:
+        progressed = False
+        for t in order:
+            if len(t.roster) >= R.CAMP_LIMIT:
+                continue
+            for _ in range(4):                               # a few tries at positions the market has run out of
+                pos = rng.choices(POSITIONS, weights)[0]
+                if udfa_by_pos[pos]:
+                    p = udfa_by_pos[pos].pop(0)
+                    p.team_id = t.id
+                    EC.sign(p, EC.MIN_SALARY, EC.UNDRAFTED_YEARS)
+                    t.roster.append(p)
+                    log["udfa"] += 1
+                    progressed = True
+                    break
+                vet = next((q for q in by_pos[pos] if q.ovr <= rm.camp_vet_max_ovr), None)
+                if vet is not None:
+                    by_pos[pos].remove(vet)
+                    vet.team_id, vet.fa_years = t.id, 0
+                    EC.sign(vet, EC.min_salary(vet.years_in_league), 1)
+                    t.roster.append(vet)
+                    log["signed"] += 1
+                    progressed = True
+                    break
+        if not progressed:
+            break
+    leftovers = [p for pos in POSITIONS for p in udfa_by_pos[pos]]       # unsigned undrafted rookies join the market
+
+    # 7. the cutdown to 53, then each team's practice squad of 16 from the players it cut. A team keeps the best players at each position up to
+    # the roster table and, if that costs more than its limit, sheds its most overpaid player and chooses again.
+    cut: List[Player] = []
+    for t in order:
+        camp = sorted(t.roster, key=lambda p: (-p.ovr, p.id))
+        log["camp"] += len(camp)
+        while True:
+            sel, rest = [], []
+            taken = {pos: 0 for pos in POSITIONS}
+            for p in camp:
+                if taken[p.pos] < ROSTER_COUNTS[p.pos]:
+                    taken[p.pos] += 1
+                    sel.append(p)
+                else:
+                    rest.append(p)
+            short = [pos for pos in POSITIONS if taken[pos] < ROSTER_COUNTS[pos]]
+            if short:                                          # the camp ran out at a position: a street free agent at the minimum
+                for pos in short:
+                    for _ in range(ROSTER_COUNTS[pos] - taken[pos]):
+                        s = rosters.street_player(lg, rng, pos)
+                        s.team_id = t.id
+                        EC.sign(s, EC.min_salary(s.years_in_league), 1)
+                        camp.append(s)
+                        log["street"] += 1
+                camp.sort(key=lambda p: (-p.ovr, p.id))
+                continue
+            ps = rosters.choose_practice_squad(rest, [], R.PRACTICE_SQUAD_SIZE)
+            gone = [p for p in rest]                            # everyone not selected is released (the practice squad signs fresh one-year wages)
+            pay = sum(p.salary for p in sel) + EC.PRACTICE_SQUAD_SALARY * R.PRACTICE_SQUAD_SIZE + t.dead_now + sum(EC.dead_charge(p) for p in gone)
+            if pay <= EC.limit(t) + 1e-9:
+                break
+            pick = _pick_cut(t, sel) or _pick_cut(t, sel, emergency=True)
+            if pick is None:
+                break
+            w, des = pick
+            log["emergency"] = log.get("emergency", 0) + (des and not EC.can_designate(t))
+            camp.remove(w)
+            EC.release(t, w, des)
+            w.team_id, w.fa_years = None, 0
+            cut.append(w)
+            log["cap_cuts"] += 1
+            log["designated"] = log.get("designated", 0) + des
+        for p in rest:
+            EC.release(t, p)                                  # let go (the practice squad starts a new one-year contract)
+        for p in ps:
+            rosters.to_practice_squad(p)
+        ps_ids = {p.id for p in ps}
+        for p in rest:
+            if p.id not in ps_ids:
+                p.team_id, p.fa_years = None, 0
+                cut.append(p)
+                log["cut"] += 1
+        t.roster, t.practice_squad = sel, ps
+        log["practice_squad"] += len(ps)
+
+    # the market for next year: everyone not signed, the best of them kept (the rest leave football; players who were already part of the
+    # league leave as retired, so their cards are kept, and camp invitees who never made a roster are simply gone)
+    market = [p for pos in POSITIONS for p in by_pos[pos]] + leftovers + cut
+    market.sort(key=lambda p: (-p.ovr, p.id))
+    keep_market = market[:rm.market_size]
+    for p in market[rm.market_size:]:
+        if p.card is not None:                              # already part of the league: leaves as retired, her card kept
+            p.retired = True
+        elif p.draft_year is not None:                      # a draft pick who did not make it: she is on record, so she keeps a card
+            p.retired, p.team_id = True, None
+            lg.retired_players.append(p)
+        log["dropped"] += 1
+    lg.free_agents = keep_market
+    for t in order:
+        rosters.refill_practice_squad(lg, t, rng)
     for t in teams:
-        assert len(t.roster) == sum(ROSTER_COUNTS.values()), (t.id, len(t.roster))
+        assert len(t.roster) == ROSTER_SIZE, (t.id, len(t.roster))
+        assert len(t.practice_squad) == R.PRACTICE_SQUAD_SIZE, (t.id, len(t.practice_squad))
     refresh_strengths(lg)
     return log

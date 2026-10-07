@@ -1,14 +1,21 @@
 """Positions, roster sizes, starters and the ratings each position carries.
 
-Roster sizes and starter counts are structural choices for the game engine, not league rules
-Jeph has stated. They are tagged assumed in docs/decisions.md.
+The roster is the rulebook's 53 (rules.ROSTER_LIMIT), 48 of them active on game day, 90 in camp and 16 more on the practice squad
+(see rosters.py). The position table is the DFL's own split of the 53 across the 11 positions the engine models (the NFL's long snappers
+and fullbacks are folded into OL, TE and RB); starter counts are what the game engine puts on the field.
 """
+import rules as R
 
 POSITIONS = ("QB", "RB", "WR", "TE", "OL", "DL", "LB", "CB", "S", "K", "P")
 
-# Players kept per position (47 in all)
-ROSTER_COUNTS = {"QB": 3, "RB": 4, "WR": 6, "TE": 3, "OL": 8, "DL": 7, "LB": 5, "CB": 5, "S": 4, "K": 1, "P": 1}
+# Players kept per position (53 in all)
+ROSTER_COUNTS = {"QB": 3, "RB": 4, "WR": 6, "TE": 4, "OL": 9, "DL": 8, "LB": 6, "CB": 6, "S": 5, "K": 1, "P": 1}
 ROSTER_SIZE = sum(ROSTER_COUNTS.values())
+assert ROSTER_SIZE == R.ROSTER_LIMIT
+
+# The fewest healthy players of each position a team keeps on its 48-man game-day list (the rest of the 48 are the best of everyone else)
+ACTIVE_MINIMUMS = {"QB": 2, "RB": 2, "WR": 4, "TE": 2, "OL": 7, "DL": 5, "LB": 3, "CB": 4, "S": 3, "K": 1, "P": 1}
+assert sum(ACTIVE_MINIMUMS.values()) <= R.ACTIVE_LIMIT
 
 # Starters on the field (11 on offense, 11 on defense, plus kicker and punter)
 STARTERS = {"QB": 1, "RB": 1, "WR": 3, "TE": 1, "OL": 5, "DL": 4, "LB": 2, "CB": 3, "S": 2, "K": 1, "P": 1}

@@ -34,11 +34,25 @@ class Game:
     away_tds: Optional[int] = None
 
     @property
-    def winner(self) -> int:
+    def tied(self) -> bool:
+        return self.home_pts is not None and self.home_pts == self.away_pts
+
+    @property
+    def counts_ties(self) -> bool:
+        """Regular-season games (and the Ambassador round robin) may end level; playoff games and the Ambassador Bowl never do."""
+        return self.kind in ("nonconf", "division", "tier", "ambassador")
+
+    @property
+    def winner(self):
+        """Team id, or None if the game ended level."""
+        if self.home_pts == self.away_pts:
+            return None
         return self.home if self.home_pts > self.away_pts else self.away
 
     @property
-    def loser(self) -> int:
+    def loser(self):
+        if self.home_pts == self.away_pts:
+            return None
         return self.away if self.home_pts > self.away_pts else self.home
 
 

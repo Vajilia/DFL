@@ -8,7 +8,7 @@ Built on the same rules as every other card:
     decides recall votes, and a recall can change who fires the coach. That is the whole chain, and it is re-tested
     against the fair-competitiveness bands (reports/fan_media_fairness_study.md).
 
-From the rules text (CONFIRMED): the Media wants clicks and fears irrelevance; Fan Capital is the currency that gives an
+From the rules text (the Commissioner's skeleton): the Media wants clicks and fears irrelevance; Fan Capital is the currency that gives an
 owner recall immunity; Media Credibility is the currency that gives narrative control. The vote itself (1,000,000 fans,
 simple majority, 5 candidates, under 40% approval or exile) is in staff_cards.py.
 

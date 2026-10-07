@@ -59,6 +59,27 @@ check("three clubs tied on record (test set-up)", len(set(pcts.values())) == 1, 
 order = T.rank_division(L, [X, Y, Z], rng)
 check("three clubs tied: head-to-head orders them X, Y, Z", order == [X, Y, Z], str(order))
 
+# T2b: four clubs tied on record; the first step leaves three, and the NFL list starts again for those three (so the
+# three-club head-to-head, not a coin toss or a later step, decides who is first)
+q = [div0[0], div0[1], div0[2], div0[3]]
+qa, qb, qc, qd = q
+qe = div0[4]
+inner = [(qb, qa), (qc, qa), (qc, qa), (qd, qa), (qa, qd), (qc, qb), (qb, qc), (qd, qb), (qb, qd), (qd, qc)]    # (winner, loser)
+wins = {t: 0 for t in q}
+loss = {t: 0 for t in q}
+for wn, ls in inner:
+    wins[wn] += 1
+    loss[ls] += 1
+W, Lo = max(wins.values()), max(loss.values())
+g = [game(wn, ls, 20, 10) for wn, ls in inner]
+for t in q:                                     # pad with games against a fifth club (not division games) so all four finish level
+    g += [game(t, qe, 20, 10, "tier") for _ in range(W - wins[t])] + [game(qe, t, 20, 10, "tier") for _ in range(Lo - loss[t])]
+L = ledger(g, q + [qe])
+st_ = compute_stats(lg, g, q + [qe])
+check("four clubs tied on record (test set-up)", len({st_[t].pct for t in q}) == 1, str({t: float(st_[t].pct) for t in q}))
+firsts = {T.rank_division(L, q, random.Random(k))[0] for k in range(12)}
+check("four clubs tied, three left after the first step: the three-club head-to-head decides, not a coin toss", firsts == {qd}, str(firsts))
+
 # T3: the NFL draft rule: lower strength of schedule picks first
 x, y, s_, w, z, q = div0[0], div0[1], div1[0], div1[1], div1[2], div1[3]
 g = [game(s_, x, 20, 10, "tier"), game(s_, q, 20, 10, "tier"), game(w, y, 20, 10, "tier"), game(z, w, 20, 10, "tier")]

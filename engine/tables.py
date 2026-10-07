@@ -1,6 +1,6 @@
 """Negotiation tables: the few places where each party must have an independent say.
 
-Jeph's design (2026-10-05): not every interaction needs a meeting space. A table exists only where two or more parties each act for
+The Commissioner's design (2026-10-05): not every interaction needs a meeting space. A table exists only where two or more parties each act for
 themselves and a deal needs both of them: a job interview, a contract negotiation, a trade. Team meetings, owner lunches and the
 relationships between a coach and her players stay generalized (the cards and the scenes in interactions.py carry them).
 

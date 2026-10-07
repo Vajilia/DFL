@@ -4,7 +4,7 @@ A fictional 48-team football simulation. Rules live in `engine/rules.py`; the ru
 
 ## What exists (Phases 0, 1, 2 and the first character cards)
 
-A league engine with no AI (Phase 2 adds 47-player rosters, a drive-by-drive game engine, injuries and a roster offseason; run it with `new_league(rng, rosters=True)`) and no characters. It builds legal 18-game schedules, plays them with a placeholder game model, ranks divisions with tiebreakers, runs the playoffs, exiles the five-place teams, plays the Ambassador Season, runs the lottery, drafts and sets up next year.
+A seeded league engine with 53-player rosters, character cards, a drive-by-drive game engine, injuries and a roster offseason (run it with `new_league(rng, rosters=True)`). Agent decision machinery exists, with stand-in policies; a real-model integration is still pending. It builds legal 18-game schedules, plays them with a placeholder game model, ranks divisions with tiebreakers, runs the playoffs, exiles the five-place teams, plays the Ambassador Season, runs the lottery, drafts and sets up next year.
 
 | File | What it does |
 | --- | --- |
@@ -27,7 +27,8 @@ A league engine with no AI (Phase 2 adds 47-player rosters, a drive-by-drive gam
 | `engine/store.py` | Persistence: the cards are the save (one SQLite file, rebuilt from the cards, resumes exactly); optional yearly snapshots; export/import one coach or GM |
 | `engine/emergence_study.py` | Plays long leagues and reports how legends and the Hall of Fame emerge; writes `reports/emergence_study.md` |
 | `engine/staff_cards.py` | Owner and GM cards; recall votes, hiring and firing; the Archive's first entries |
-| `engine/economy.py` | Pay and the salary cap: contracts, the $100M cap, banking up to $125M, forfeits to the pool, the 90% floor, exile absorption |
+| `engine/service.py`, `engine/check_service.py` | Earned accrued/credited service, expiration classification, boundary and save/resume checks; tender enforcement and use of service for salary/PS eligibility are still pending |
+| `engine/economy.py` | Pay and the salary cap: contracts with signing bonuses, guarantees and dead money, the minimum scale, the $100M cap, banking up to $125M, the 51 rule, the four-season 90% floor, exile absorption, the Equalization Fund |
 | `engine/tables.py`, `engine/interviews.py` | Negotiation tables (a bounded conversation of Decision Points where each party has her own say) and the first one, the job interview with guaranteed seasons |
 | `engine/decisions.py` | Decision Points: the one door for every choice (options, drivers, guard, choice log) |
 | `engine/agents.py` | A stand-in agent (reads only the public view), a flaky wrapper and seats for agents in some chairs, to rehearse the machinery without a model |
@@ -49,10 +50,11 @@ A league engine with no AI (Phase 2 adds 47-player rosters, a drive-by-drive gam
 | `engine/exile_study.py` | Does exile pay? Sensitivity study |
 | `engine/calibrate_exile.py` | Tunes the placeholder exile benefits to the design intent (a returning team can compete for about 3rd) |
 | `reports/` | Output of the two reports above |
-| `docs/decisions.md` | Confirmed rules, assumed rules, open questions |
+| `docs/decisions.md` | Decision log and build log; the authority is the Rulebook (living doc, `engine/rulebook.py`). The old decisions are archived in `docs/decisions_pre_rebase.md` |
 
 ## Commands
 
+    python engine/check_service.py         # earned service, expiration classes, paid lists, save/resume
     python engine/check_phase0.py          # do the rules agree with each other?
     python engine/check_tiebreaks.py       # NFL tiebreakers
     python engine/check_cards.py           # character cards and the coach effect
@@ -61,13 +63,16 @@ A league engine with no AI (Phase 2 adds 47-player rosters, a drive-by-drive gam
     python engine/check_decisions.py       # decision points, the guard, replay, the autopilot's exactness
     python engine/check_living.py          # living cards, recognition, the Hall of Fame, saving and resuming a league
     python engine/check_store.py           # the cards are the save: rebuild, resume exactly, export/import a card
-    python engine/economy_report.py        # writes reports/cap_report.md: payrolls, banked room, the pool, what the cap costs teams
+    python engine/economy_report.py        # writes reports/cap_report.md: payrolls, banked room, dead money, the Equalization Fund, what the cap costs teams
     python engine/check_economy.py         # pay and the cap: banking, forfeits, the floor, exile absorption, the hard limit over 40 seasons, saving
+    python engine/check_rulebook.py        # the code against the DFL Rulebook (engine/rulebook.py): every rule built / differs / missing; writes reports/rulebook_status.md
     python engine/check_tables.py          # the interview table: guarantees, walking away, what each side sees, parallel tables
     python engine/check_agents.py          # a dozen agents at once, notes to self, bounded views, a stand-in agent, seats
     python engine/decision_sweep.py        # fairness under random and worst-case choices (slow)
     python engine/check_interactions.py    # firing, recall and exile scenes (and proof they change no outcome)
     python engine/fan_media_sweep.py       # fairness study for the fan and media cards (slow)
+    python engine/check_rosters.py         # 53/48/16 rosters, injured reserve, the 90-man camp, the seven-round draft and rookie scale
+    python engine/check_contracts.py       # signing bonuses, guarantees, dead money, the minimum scale, the 51 rule, the four-season floor, the Equalization Fund
     python engine/check_phase2.py          # rosters, game engine, injuries, offseason
     python engine/calibrate_engine.py      # does the game look like football?
     python engine/phase2_report.py         # sample box score, league stats, exile target (about 2 minutes)

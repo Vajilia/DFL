@@ -72,19 +72,22 @@ lo, hi = R.DRAFT_PICKS["playoff_teams"]
 check("playoff picks = 14", hi - lo + 1 == R.PLAYOFF_TEAMS)
 
 # Owner accountability
-# Facts Jeph confirmed, written down independently of the formulas in rules.py
+# Facts the Commissioner confirmed, written down independently of the formulas in rules.py
 check("8 divisions in total", R.TOTAL_DIVISIONS == 8 and R.DIVISIONS_PER_CONFERENCE * len(R.CONFERENCES) == 8)
 check("recall cycle is 8 years (1 division league-wide per year)",
       R.RECALL_DIVISIONS_PER_YEAR == 1 and R.RECALL_CYCLE_YEARS == 8)
 check("lottery is 8 teams", R.LOTTERY_TEAMS == 8 and len(R.LOTTERY_WEIGHTS) == 8)
 check("lottery draws no more teams than there are exiles", R.LOTTERY_TEAMS == R.EXILED_TEAMS)
-check("every rule is tagged confirmed or assumed", all(v in (R.CONFIRMED, R.ASSUMED) for v in R.PROVENANCE.values()))
-check("lottery balls and lottery pool are tagged confirmed",
-      R.PROVENANCE["Lottery balls: best record of the eight holds 1 ball, next best 2, ... worst 8 (36 balls)"] == R.CONFIRMED
-      and R.PROVENANCE["Which 8 teams are in the lottery (the teams that just finished 5th)"] == R.CONFIRMED)
-check("tiebreakers mirror the NFL (confirmed); the adaptations are tagged assumed",
-      R.TIEBREAK_STYLE == "nfl" and R.PROVENANCE["Tiebreakers mirror the NFL"] == R.CONFIRMED
-      and R.PROVENANCE["NFL tiebreak adaptations (restart rule used to rank everyone, wild-card division reduction, Ambassador chain, estimated touchdowns)"] == R.ASSUMED)
+check("every rule carries a rulebook basis (skeleton, nfl, adapted, fair or model)",
+      all(v in (R.SKELETON, R.NFL, R.ADAPTED, R.FAIR, R.MODEL) for v in R.BASIS.values()))
+check("lottery balls and lottery pool are the Commissioner's own rules (skeleton)",
+      R.BASIS["Lottery balls: best record of the eight holds 1 ball, next best 2, ... worst 8 (36 balls)"] == R.SKELETON
+      and R.BASIS["Which 8 teams are in the lottery (the teams that just finished 5th)"] == R.SKELETON)
+check("tiebreakers mirror the NFL; the adaptations are labelled adapted",
+      R.TIEBREAK_STYLE == "nfl" and R.BASIS["Tiebreakers mirror the NFL"] == R.NFL
+      and R.BASIS["NFL tiebreak adaptations (restart rule used to rank everyone, wild-card division reduction, Ambassador chain, estimated touchdowns)"] == R.ADAPTED)
+check("ties are an NFL rule now: no entry says games are never tied",
+      not any("No tied games" in k for k in R.BASIS) and R.TIES_ALLOWED)
 check("forced-sale vote is a majority of 48", R.FORCED_SALE_VOTES_NEEDED > R.TOTAL_TEAMS // 2)
 check("season is 23 game weeks", R.GAME_WEEKS_TOTAL == 23)
 

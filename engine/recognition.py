@@ -1,6 +1,6 @@
 """Recognition (Phase 4c): honors, esteem, what the media calls people, and the league Hall of Fame.
 
-Jeph's rule (2026-10-04): no designated legends, and no limit on greatness. Legend is an emergent property the media notices,
+The Commissioner's rule (2026-10-04): no designated legends, and no limit on greatness. Legend is an emergent property the media notices,
 and the Hall of Fame (the media plus the owners) confers.
 
 How it works, and what it is allowed to touch:

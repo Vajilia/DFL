@@ -1,4 +1,6 @@
-[NOTE, 2026-10-04: this Foreword is a vestige of an earlier design and is not authoritative. See decisions.md; the confirmed rules win where they differ, e.g. exile is relief, not punishment.]
+[NOTE, 2026-10-06: this sheet is the Commissioner's original reference. It is NOT the rulebook; the authority is the living doc "DFL Rulebook: The Synthesis" and engine/rulebook.py. Three lines were corrected in place on 2026-10-06 and nothing else was changed: the lottery weights (now the Commissioner's 8-7-6-5-4-3-2-1 of 36 balls, not the placeholder percentages), the name of the final (Diamond Coronation, not "Super Bowl"), and this note. The Foreword is a vestige of an earlier design; the "2 weeks of real time" lines describe how the sim is run, not a football rule.]
+
+[NOTE, 2026-10-04: this Foreword is a vestige of an earlier design and is not authoritative. See the rulebook; its rules win where they differ, e.g. exile is relief, not punishment.]
 
 FOREWORD: THE STORY OF THE SYSTEM
 In 1988, you built an ant farm on graph paper. You moved the ants with dice and imagination. You were the only one who could see them.
@@ -38,7 +40,7 @@ Duration: One season
 Exiled Team Rights: Draft lottery, free agency (restricted), cap relief (50% absorption)
 Exiled Team Games: Ambassador Season (7-game round-robin + Ambassador Bowl)
 Return: As Tier 5 next season (easier schedule)
-Lottery: 8-team weighted, worst record to best record: 18% / 16% / 15% / 13% / 12% / 10% / 9% / 7% (total 100%) [PLACEHOLDER weights, not confirmed]
+Lottery: 8-team weighted, 36 balls, worst record to best record: 8 / 7 / 6 / 5 / 4 / 3 / 2 / 1 balls (the best record of the eight holds 1 ball); four balls are drawn for picks 1-4, the other four teams pick 5-8 by record
 THE SCHEDULE
 Tiers: Each active team is assigned a Tier (1-5) in its division. (Playoff "seeds" are separate and run 1-7.)
 Weeks	Matchup Type	Details
@@ -57,7 +59,7 @@ Field: Per conference, 4 division winners + 3 wild cards (7 seeds)
 Wild Card: Seeds 2-7 play (3 games), Seed 1 bye
 Divisional: 3 winners + Seed 1, re-seeded
 Championship: 1 game per conference
-Super Bowl: Last Sunday of calendar year
+Diamond Coronation (the final; the champion is presented with the Diamond Tiara): Last Sunday of calendar year
 THE DRAFT
 Picks	Teams
 1-8	Exiled teams (lottery)

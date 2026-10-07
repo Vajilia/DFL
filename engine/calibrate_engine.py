@@ -3,7 +3,7 @@
     python engine/calibrate_engine.py [--games 6000]
 
 The targets are rough NFL-style figures chosen by the AI as a stand-in for "looks like
-football". They are not league rules and not Jeph's decisions.
+football". They are not league rules and not the Commissioner's decisions.
 """
 import argparse
 import os

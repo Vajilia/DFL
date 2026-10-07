@@ -11,20 +11,21 @@ from schedule import Game
 
 
 class Stats:
-    __slots__ = ("wins", "losses", "pf", "pa", "div_w", "div_l", "conf_w", "conf_l", "h2h")
+    __slots__ = ("wins", "losses", "ties", "pf", "pa", "div_w", "div_l", "div_t", "conf_w", "conf_l", "conf_t", "h2h")
 
     def __init__(self):
-        self.wins = self.losses = self.pf = self.pa = 0
-        self.div_w = self.div_l = self.conf_w = self.conf_l = 0
-        self.h2h: Dict[int, List[int]] = defaultdict(lambda: [0, 0])
+        self.wins = self.losses = self.ties = self.pf = self.pa = 0
+        self.div_w = self.div_l = self.div_t = self.conf_w = self.conf_l = self.conf_t = 0
+        self.h2h: Dict[int, List[int]] = defaultdict(lambda: [0, 0, 0])     # [wins, losses, ties]
 
     @property
     def games(self) -> int:
-        return self.wins + self.losses
+        return self.wins + self.losses + self.ties
 
     @property
     def pct(self) -> Fraction:
-        return Fraction(self.wins, self.games) if self.games else Fraction(0)
+        """Win percentage, a tie counting as half a win."""
+        return Fraction(2 * self.wins + self.ties, 2 * self.games) if self.games else Fraction(0)
 
     @property
     def diff(self) -> int:
@@ -32,7 +33,7 @@ class Stats:
 
     @property
     def record(self) -> str:
-        return f"{self.wins}-{self.losses}"
+        return f"{self.wins}-{self.losses}" + (f"-{self.ties}" if self.ties else "")
 
 
 class StatsTable(dict):
@@ -59,30 +60,36 @@ def compute_stats(league, games: Iterable[Game], team_ids: Iterable[int]) -> Dic
             if tid not in stats:
                 continue
             s = stats[tid]
-            won = pf > pa
+            k = 0 if pf > pa else 2 if pf == pa else 1        # 0 win, 1 loss, 2 tie
             s.pf += pf
             s.pa += pa
-            if won:
+            if k == 0:
                 s.wins += 1
-            else:
+            elif k == 1:
                 s.losses += 1
-            s.h2h[opp][0 if won else 1] += 1
+            else:
+                s.ties += 1
+            s.h2h[opp][k] += 1
             a, b = league.by_id[tid], league.by_id[opp]
             if a.conf == b.conf:
-                if won:
+                if k == 0:
                     s.conf_w += 1
-                else:
+                elif k == 1:
                     s.conf_l += 1
+                else:
+                    s.conf_t += 1
                 if a.div == b.div:
-                    if won:
+                    if k == 0:
                         s.div_w += 1
-                    else:
+                    elif k == 1:
                         s.div_l += 1
+                    else:
+                        s.div_t += 1
     return stats
 
 
-def _pct(w, l):
-    return Fraction(w, w + l) if w + l else Fraction(1, 2)
+def _pct(w, l, t=0):
+    return Fraction(2 * w + t, 2 * (w + l + t)) if w + l + t else Fraction(1, 2)
 
 
 def _metric(name: str, tid: int, group: List[int], stats: Dict[int, Stats]):
@@ -90,11 +97,12 @@ def _metric(name: str, tid: int, group: List[int], stats: Dict[int, Stats]):
     if name == "head_to_head":
         w = sum(s.h2h[o][0] for o in group if o != tid and o in s.h2h)
         l = sum(s.h2h[o][1] for o in group if o != tid and o in s.h2h)
-        return _pct(w, l)
+        t = sum(s.h2h[o][2] for o in group if o != tid and o in s.h2h)
+        return _pct(w, l, t)
     if name == "division_record":
-        return _pct(s.div_w, s.div_l)
+        return _pct(s.div_w, s.div_l, s.div_t)
     if name == "conference_record":
-        return _pct(s.conf_w, s.conf_l)
+        return _pct(s.conf_w, s.conf_l, s.conf_t)
     if name == "point_differential":
         return Fraction(s.diff, s.games) if s.games else Fraction(0)    # per game, so 7- and 18-game records compare
     raise ValueError(name)

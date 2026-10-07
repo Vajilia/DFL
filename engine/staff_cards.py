@@ -8,7 +8,7 @@ Built on the same rules as the player and coach cards in cards.py:
     never touch a game directly. They change who coaches and who manages, and the general manager has two small levers
     (see GM_SCOUTING_POINTS and GM_RETENTION).
 
-From the rules text (CONFIRMED): one division's owners come up for a recall vote each year (so every owner is voted on once
+From the rules text (the Commissioner's skeleton): one division's owners come up for a recall vote each year (so every owner is voted on once
 every 8 years); a vote is also triggered when approval is under 40% or the team is exiled; the vote is 1,000,000 fans
 by simple majority; a recall brings 5 generated replacement candidates; no one may own a DFL team twice, ever.
 

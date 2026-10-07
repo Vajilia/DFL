@@ -1,6 +1,6 @@
 """Living cards (Phase 4c): the same bones for every coach, general manager and owner, as players already have.
 
-Jeph's rule (2026-10-04): the cards are living, persistent people. Each starts with ratings, an archetype (her soul) and a
+The Commissioner's rule (2026-10-04): the cards are living, persistent people. Each starts with ratings, an archetype (her soul) and a
 personality, and these change over time. There are no designated legends and no limit on greatness: a legend is something the
 media notices and the Hall of Fame confers (recognition.py), never a flag a person is born with.
 

@@ -55,7 +55,7 @@ for i in range(N):
         ry = sum(d.get("rush_yds", 0) for d in r.players.values() if d["team"] == side)
         if py != r.team[side]["pass_yds"] or ry != r.team[side]["rush_yds"]:
             bad_players += 1
-    if sum(d["secs"] for d in r.drives) > 3600 + 600 * (r.ot_periods or 0) + 1:
+    if sum(d["secs"] for d in r.drives) > 3600 + 60 * R.OVERTIME_MINUTES_POST * (r.ot_periods or 0) + 1:
         bad_clock += 1
 check("drive points add up to the final score in every game", bad_sum == 0, f"{N} games")
 check("no game ends in a tie", bad_tie == 0)
@@ -78,7 +78,7 @@ check("no playoff injuries were rolled", all(w <= R.REGULAR_SEASON_WEEKS for w, 
 check("rosters are still full after the offseason", all(len(t.roster) == ROSTER_SIZE for t in lg.teams))
 check("everyone is healthy at the start of a new season", all(p.weeks_out == 0 for t in lg.teams for p in t.roster))
 rookies = [p for t in lg.teams for p in t.roster if p.draft_year == 1]
-check("exactly one rookie per team came from the draft", len(rookies) <= 48 and len({p.team_id for p in rookies}) >= 40,
+check("drafted rookies make rosters across the league (seven rounds, 336 picks)", len(rookies) <= R.DRAFT_ROUNDS * R.TOTAL_TEAMS and len({p.team_id for p in rookies}) >= 40,
       f"{len(rookies)} rookies still rostered")
 picks = sorted(p.draft_pick for p in rookies)
 check("draft picks on rosters are distinct", len(picks) == len(set(picks)))

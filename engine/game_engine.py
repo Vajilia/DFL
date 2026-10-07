@@ -14,6 +14,7 @@ import random
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional
 
+import rules as R
 from lineup import Lineup
 
 
@@ -78,7 +79,8 @@ class EngineParams:
 
 
 Q_SECS = 900
-OT_SECS = 600
+OT_SECS = R.OVERTIME_MINUTES_REGULAR * 60       # regular season: one overtime period, a tie if still level
+OT_SECS_POST = R.OVERTIME_MINUTES_POST * 60     # postseason: periods of this length until someone wins
 MAX_OT = 4
 
 FIELDS_OFF = ("pass_att", "pass_cmp", "pass_yds", "pass_td", "pass_int", "sacked", "sack_yds", "rush_att",
@@ -107,8 +109,9 @@ class GameResult:
         self.coin_flip_tiebreak = False
 
     @property
-    def winner_index(self) -> int:
-        return 0 if self.score[0] > self.score[1] else 1
+    def winner_index(self):
+        """0 or 1; None for a tie (regular season only)."""
+        return None if self.score[0] == self.score[1] else (0 if self.score[0] > self.score[1] else 1)
 
 
 class _Game:
@@ -244,6 +247,7 @@ class _Game:
             # ---- fourth down decision
             if down == 4:
                 late_trail = (not self.in_ot and self.quarter == 4 and self.t < 420 and self.score[off] < self.score[1 - off])
+                ot_trail = self.in_ot and self.score[off] < self.score[1 - off]
                 fg_dist = dist_goal + 17
                 fg_max = 56 + (me.feats["k_pow"] - P.ref) * 0.12
                 kick_ok = fg_dist <= fg_max
@@ -254,9 +258,13 @@ class _Game:
                         go = True
                     if late_trail and trailing_by > 3 and self.t < 240:
                         go = True
+                    if ot_trail and trailing_by > 3:
+                        go = True                       # in overtime a field goal does not catch a team more than 3 down
                 else:
                     if pos >= 40 and to_go <= 2 and rng.random() < P.go_short_prob:
                         go = True
+                    if ot_trail and pos >= 25 and to_go <= 8:
+                        go = True                       # a trailing team in overtime has no use for a punt
                     if late_trail and pos >= 30:
                         go = True
                 if not go:
@@ -487,8 +495,9 @@ class _Game:
 
 
 def simulate_game(home: Lineup, away: Lineup, rng: random.Random, params: EngineParams = None,
-                  neutral: bool = False, record_plays: bool = False) -> GameResult:
-    """Play a whole game. Index 0 is the home team, 1 the away team."""
+                  neutral: bool = False, record_plays: bool = False, allow_tie: bool = False) -> GameResult:
+    """Play a whole game. Index 0 is the home team, 1 the away team. allow_tie=True is a regular-season game, which can end level
+    after overtime; the default plays on until someone wins (postseason)."""
     P = params or EngineParams()
     g = _Game(home, away, rng, P, neutral, record_plays)
     res = g.res
@@ -511,9 +520,9 @@ def simulate_game(home: Lineup, away: Lineup, rng: random.Random, params: Engine
                 continue
             break
 
-    # ---- overtime (no ties: the rules text allows none)
+    # ---- overtime (NFL rule: both teams get a possession; regular season ends in a tie if still level)
     if g.score[0] == g.score[1]:
-        _overtime(g, rng)
+        _overtime(g, rng, allow_tie)
 
     # attach team labels to player stat blocks
     side_of = {}
@@ -527,39 +536,38 @@ def simulate_game(home: Lineup, away: Lineup, rng: random.Random, params: Engine
     return res
 
 
-def _overtime(g: _Game, rng: random.Random):
+def _overtime(g: _Game, rng: random.Random, allow_tie: bool = False):
+    """NFL overtime. Each team gets a possession even if the first scores a touchdown (a defensive touchdown on the first possession
+    ends it); once both have had one, the next score wins. Regular season: one 10-minute period, a tie if still level. Postseason:
+    15-minute periods until someone leads when a period ends (a seeded kick-off decides after MAX_OT periods, recorded as such)."""
     res = g.res
     g.in_ot = True
-    first = rng.randrange(2)
-    off = first
+    off = rng.randrange(2)
     start = g._kick_start()
     possessions = 0
-    for period in range(1, MAX_OT + 1):
+    periods = 1 if allow_tie else MAX_OT
+    secs = OT_SECS if allow_tie else OT_SECS_POST
+    for period in range(1, periods + 1):
         res.ot_periods = period
-        g.t = OT_SECS
+        g.t = secs
         g.period_over = False
         if start is None:
             start = g._kick_start()
         while True:
-            before = list(g.score)
             d = g.drive(off, start)
             possessions += 1
             off, start = g.next_off, g.next_start
-            scored_by = [g.score[i] - before[i] for i in (0, 1)]
             if possessions == 1:
-                # a touchdown on the first possession wins; defensive scores also end it
-                if d["result"] in ("TD", "INT_TD", "FUMBLE_TD"):
+                if d["result"] in ("INT_TD", "FUMBLE_TD"):
                     return
-            elif possessions == 2:
-                if g.score[0] != g.score[1]:
-                    return
-            else:
-                if g.score[0] != g.score[1]:
-                    return
+            elif g.score[0] != g.score[1]:
+                return
             if g.period_over:
                 break
-        if g.score[0] != g.score[1] and possessions >= 2:
+        if g.score[0] != g.score[1]:
             return
+    if allow_tie:
+        return                                          # level after the period: a tie
     # still level after the extra periods: decided by a seeded kick-off, recorded as such
     res.coin_flip_tiebreak = True
     i = rng.randrange(2)

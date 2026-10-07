@@ -37,6 +37,11 @@ class Player:
     draft_year: Optional[int] = None
     draft_pick: Optional[int] = None
     years_in_league: int = 0
+    accrued_seasons: Optional[int] = None # six qualifying games; None migrates founding/older players
+    credited_seasons: Optional[int] = None # three qualifying games; used by future salary integration
+    service_year: Optional[int] = None
+    service_weeks: List[int] = field(default_factory=list)
+    service_settled_year: Optional[int] = None
     retired: bool = False
     fa_years: int = 0                    # seasons spent unsigned
     ovr: float = 0.0
@@ -44,8 +49,19 @@ class Player:
     display_name: str = ""               # the card's name once the card exists
     salary: float = 0.0                  # $ millions a year (economy.py)
     years_left: int = 0                  # seasons left on the contract; at 0 she is re-signed or reaches the market
+    bonus: float = 0.0                   # the year's share of her signing bonus (part of `salary`, the cap number)
+    bonus_years: int = 0                 # years of that bonus still to be spread out
+    guaranteed: float = 0.0              # base pay still guaranteed, $ millions in all (economy.py)
+    ir_games: int = 0                    # games since she went on injured reserve
+    ir_designated: bool = False          # designated to return from injured reserve this season (uses one of the team's 8)
 
     def __post_init__(self):
+        # Prior game histories are unavailable for founding players and pre-step-6 saves.
+        # Preserve their existing service estimate; subsequent service is earned from games.
+        if self.accrued_seasons is None:
+            self.accrued_seasons = self.years_in_league
+        if self.credited_seasons is None:
+            self.credited_seasons = self.years_in_league
         self.recompute()
 
     @property
@@ -81,6 +97,19 @@ class IdSource:
         v = self.next
         self.next += 1
         return v
+
+
+def build_practice_squad(rng: random.Random, new_id: IdSource, team_id: int, team_offset: float) -> List[Player]:
+    """A founding team's practice squad: 16 young players, mostly in their first or second season, well below the roster's backups."""
+    out: List[Player] = []
+    for i in range(R.PRACTICE_SQUAD_SIZE):
+        pos = POSITIONS[i % len(POSITIONS)] if i < len(POSITIONS) else rng.choices(POSITIONS, [ROSTER_COUNTS[x] for x in POSITIONS])[0]
+        age = rng.choice((22, 22, 23, 23, 24))
+        p = make_player(rng, new_id(), pos, clamp(rng.gauss(46.0, 5.0) + team_offset * 0.25, 30, 70), age, team_id)
+        p.years_in_league = age - 22
+        p.accrued_seasons = p.credited_seasons = 0
+        out.append(p)
+    return out
 
 
 def build_roster(rng: random.Random, new_id: IdSource, team_id: int, team_offset: float) -> List[Player]:

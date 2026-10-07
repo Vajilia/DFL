@@ -76,6 +76,7 @@ def run_season(league: League, year: int, rng: random.Random, opt: Options = Non
         if league.staff_on and league.fans_on:
             import fan_media_cards
             fan_media_cards.forecast(league, year)      # the press forecasts the season from each team's strength
+    runner.service_year = year
     games = build_schedule(league, rng)
     if opt.validate_schedule:
         errs = check_schedule(league, games)
@@ -107,7 +108,7 @@ def run_season(league: League, year: int, rng: random.Random, opt: Options = Non
         division_ranks[div_id] = rank_by_style("division", ids, stats, rng, log, "division")
     new_exiles = [ranks[R.EXILE_TRIGGER_FINISH - 1] for ranks in division_ranks.values()]
 
-    # ---- playoffs (ASSUMED: no new injuries in the playoffs; existing injuries stay as they are)
+    # ---- playoffs (MODEL: no new injuries in the playoffs; existing injuries stay as they are)
     seeds, playoff_games, exits, champion = play_playoffs(league, division_ranks, stats, rng, runner, log)
 
     # ---- draft
@@ -117,7 +118,7 @@ def run_season(league: League, year: int, rng: random.Random, opt: Options = Non
         stats=all_stats, rng=rng, log=log, lottery_pool=opt.lottery_pool, weights=opt.lottery_weights,
         returner_slot=opt.returner_slot)
 
-    # ---- owner recall workload (ASSUMED rotation: division 0, 1, ... 7, repeat)
+    # ---- owner recall workload (ADAPTED rotation: division 0, 1, ... 7, repeat)
     recall_div = (year - 1) % R.TOTAL_DIVISIONS
     votes = {t.id for t in league.division(recall_div)}
     if R.RECALL_ON_EXILE:
@@ -137,6 +138,8 @@ def run_season(league: League, year: int, rng: random.Random, opt: Options = Non
     off_log = None
     staff_log = None
     if league.has_rosters:
+        import service
+        service.settle_season(league, year)
         from offseason import run_roster_offseason
         import recognition
         pct = {tid: float(s.pct) for tid, s in stats.items()}
@@ -144,7 +147,8 @@ def run_season(league: League, year: int, rng: random.Random, opt: Options = Non
         playoff_teams = {tid for ids in seeds.values() for tid in ids}
         if league.coaches_on:
             recognition.season_honors(league, year, pct, champion, playoff_teams)      # honors, esteem and the media's verdict, before anyone moves
-        before = [p for t in league.teams for p in t.roster] + list(league.free_agents)
+        import rosters
+        before = [p for t in league.teams for p in rosters.squad(t)] + list(league.free_agents)
         off_log = run_roster_offseason(league, rng, opt.roster_model, year, pick_of, returners)
         import cards
         league.retired_players.extend(p for p in before if p.retired)

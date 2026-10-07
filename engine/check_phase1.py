@@ -69,7 +69,7 @@ def mk(wins, losses, pf=0, pa=0, h2h=None, div=(0, 0)):
     s.wins, s.losses, s.pf, s.pa = wins, losses, pf, pa
     s.div_w, s.div_l = div
     for opp, (w, l) in (h2h or {}).items():
-        s.h2h[opp] = [w, l]
+        s.h2h[opp] = [w, l, 0]
     return s
 
 r = random.Random(1)
@@ -174,8 +174,10 @@ for cfg_name, opt in configs:
                  all(s.games == 18 for s in res.stats.values()), tag)
             tw = sum(s.wins for s in res.stats.values())
             tl = sum(s.losses for s in res.stats.values())
-            flag("league wins = league losses = 360", tw == tl == 360, f"{tag}: {tw}/{tl}")
-            flag("no tied games", all(g.home_pts != g.away_pts for g in res.games + res.playoff_games), tag)
+            tt = sum(s.ties for s in res.stats.values())
+            flag("league wins = league losses, and every game is a win-loss or a tie (360 games, a tie counts for two teams)",
+                 tw == tl and 2 * tw + tt == 720 and tt % 2 == 0, f"{tag}: {tw}/{tl}/{tt}")
+            flag("no tied playoff games (NFL: postseason overtime plays on)", all(g.home_pts != g.away_pts for g in res.playoff_games), tag)
             # exile
             flag("8 teams exiled, exactly one 5th-place team per division",
                  len(res.new_exiles) == 8 and len(set(res.new_exiles)) == 8 and
