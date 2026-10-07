@@ -38,9 +38,10 @@ class Player:
     draft_pick: Optional[int] = None
     years_in_league: int = 0
     accrued_seasons: Optional[int] = None # six qualifying games; None migrates founding/older players
-    credited_seasons: Optional[int] = None # three qualifying games; used by future salary integration
+    credited_seasons: Optional[int] = None # three salary-qualifying games; IR is excluded
     service_year: Optional[int] = None
     service_weeks: List[int] = field(default_factory=list)
+    credited_service_weeks: Optional[List[int]] = None # None migrates older partial-year histories once
     service_settled_year: Optional[int] = None
     retired: bool = False
     fa_years: int = 0                    # seasons spent unsigned
@@ -62,6 +63,9 @@ class Player:
             self.accrued_seasons = self.years_in_league
         if self.credited_seasons is None:
             self.credited_seasons = self.years_in_league
+        if self.credited_service_weeks is None:
+            # Older saves did not distinguish roster games from IR games.
+            self.credited_service_weeks = list(self.service_weeks)
         self.recompute()
 
     @property

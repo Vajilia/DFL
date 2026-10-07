@@ -195,6 +195,9 @@ check("her personality is always one her soul allows", all(c.trait in c.family f
 check("some coaches changed personality over their careers", sum(any(e["event"] == "personality_shift" for e in c.career) for c in L.coaches) > 5)
 check("a coach's self-image lags the truth (the average gap is real but small)", all(abs(LV.confidence_gap(c)) < 20 for c in L.coaches))
 seated = [t.coach for t in L.teams]
+# Staff turnover follows the roster refresh. Re-center at the same boundary as
+# the next season; cached references still describe the preceding staff pool.
+LV.refresh_refs(L)
 check("the average coach on the job has zero effect (effects are measured against the league's current average)",
       abs(st.mean(c.offense_points for c in seated)) < 0.05 and abs(st.mean(c.development_points for c in seated)) < 0.02,
       f"{st.mean(c.offense_points for c in seated):+.3f} and {st.mean(c.development_points for c in seated):+.3f}")

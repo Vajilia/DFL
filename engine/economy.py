@@ -70,7 +70,7 @@ INIT_PAYROLL = (92.0, 99.5)  # where a founding team's payroll is put (contracts
 
 
 def min_salary(seasons: int) -> float:
-    """The minimum salary by credited seasons (rungs for 0, 1, 2, 3, 4-6 and 7 or more; seasons in the league stand in until build step 6)."""
+    """The minimum salary by credited seasons (rungs for 0, 1, 2, 3, 4-6 and 7 or more)."""
     i = 0 if seasons <= 0 else seasons if seasons <= 3 else 4 if seasons <= 6 else 5
     return MIN_SALARY_SCALE[i]
 
@@ -129,15 +129,30 @@ def sign(p, salary: float, years: int, share=None, guarantee_years: int = 1, roo
     5 years) and the base are its two parts; `guarantee_years` of the base are guaranteed (veterans one year, round-1 rookies all four).
     Contracts that are small or a single year carry no bonus and, for veterans, no guarantee."""
     years = max(1, min(CONTRACT_YEARS_MAX, int(years)))
-    salary = round(min(MAX_SALARY, salary), 2)
-    p.salary, p.years_left = salary, years
+    salary = round(min(MAX_SALARY, max(min_salary(p.credited_seasons), salary)), 2)
     big = salary >= BONUS_MIN_SALARY
     if share is None:
         share = VETERAN_BONUS_SHARE if (big and years >= 2) else 0.0
-    p.bonus = round(salary * share, 4)
+    if not 0.0 <= share <= 1.0:
+        raise ValueError("bonus share must be between zero and one")
+    p.salary, p.years_left = salary, years
+    # The rookie scale is a cap number; bonus cannot consume the base minimum.
+    p.bonus = round(min(salary * share, max(0.0, salary - min_salary(p.credited_seasons))), 4)
     p.bonus_years = min(years, BONUS_PRORATION_MAX_YEARS) if p.bonus > 0 else 0
     base = salary - p.bonus
     p.guaranteed = round(base * min(guarantee_years, years), 4) if (big or rookie) else 0.0
+
+
+def enforce_minimum(p):
+    """Raise next year's base pay to the earned credited-service floor.
+
+    Applies to continuing roster contracts, never practice-squad wages. Existing
+    bonus proration and guaranteed dollars remain unchanged. This changes cap
+    cost, so the caller must run the usual cap/cutdown checks afterwards.
+    """
+    if p.years_left <= 0:
+        return
+    p.salary = round(max(p.salary, min_salary(p.credited_seasons) + p.bonus), 4)
 
 
 def run_down(p):
@@ -193,9 +208,10 @@ def init_contracts(lg):
     for t in lg.teams:
         for p in t.roster:
             r = C._rng(lg.card_seed, "contract", p.id)
-            p.salary = market_salary(p.pos, p.ovr)
+            p.salary = market_salary(p.pos, p.ovr, p.credited_seasons)
             p.years_left = r.randint(1, contract_years(p))
         raw = [p.salary for p in t.roster]
+        minimums = [min_salary(p.credited_seasons) for p in t.roster]
         for p in t.practice_squad:
             clear_contract(p)
             p.salary, p.years_left = PRACTICE_SQUAD_SALARY, 1
@@ -203,12 +219,12 @@ def init_contracts(lg):
         a, b = 0.0, 10.0                                  # scale so the payroll lands on target even after the minimum wage is applied
         for _ in range(60):
             k = (a + b) / 2
-            if sum(max(MIN_SALARY, x * k) for x in raw) < target:
+            if sum(max(floor, x * k) for x, floor in zip(raw, minimums)) < target:
                 a = k
             else:
                 b = k
         for p, x in zip(t.roster, raw):
-            sal = max(MIN_SALARY, round(x * a, 2))
+            sal = max(min_salary(p.credited_seasons), round(x * a, 2))
             sign(p, sal, p.years_left)                        # the founding contracts have their bonus and guarantee like any other
             p.years_left = max(1, min(p.years_left, CONTRACT_YEARS_MAX))
         t.bank = 0.0

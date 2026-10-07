@@ -32,15 +32,40 @@ class ServiceChecks(unittest.TestCase):
         self.games(range(1, 6))
         service.settle_season(self.lg, 1)
         self.assertEqual((self.p.accrued_seasons, self.p.credited_seasons), (0, 1))
-        self.assertEqual((self.ir.accrued_seasons, self.ir.credited_seasons), (0, 1))
+        self.assertEqual((self.ir.accrued_seasons, self.ir.credited_seasons), (0, 0))
         self.assertEqual((self.ps.accrued_seasons, self.ps.credited_seasons), (0, 0))
         self.games(range(1, 7), year=2)
         service.settle_season(self.lg, 2)
         self.assertEqual((self.p.accrued_seasons, self.p.credited_seasons), (1, 2))
         service.settle_season(self.lg, 2)
         self.assertEqual(self.p.accrued_seasons, 1)
+        self.assertEqual((self.ir.accrued_seasons, self.ir.credited_seasons), (1, 0))
         with self.assertRaises(ValueError):
             self.games([7], year=2)
+
+    def test_salary_credit_tracks_roster_ir_moves_and_legacy_partial_year(self):
+        self.games([1, 2])
+        self.t.roster.remove(self.p)
+        self.t.ir.append(self.p)
+        self.games([3, 4, 5, 6])
+        service.settle_season(self.lg, 1)
+        self.assertEqual((self.p.accrued_seasons, self.p.credited_seasons), (1, 0))
+        self.assertEqual(self.p.credited_service_weeks, [1, 2])
+        self.t.ir.remove(self.p)
+        self.t.roster.append(self.p)
+        self.games([1, 2, 3], year=2)
+        self.t.roster.remove(self.p)
+        self.t.ir.append(self.p)
+        self.games([4, 5, 6], year=2)
+        service.settle_season(self.lg, 2)
+        self.assertEqual((self.p.accrued_seasons, self.p.credited_seasons), (2, 1))
+        # Old partial-year saves have no IR/roster distinction: retain a one-time estimate.
+        from dataclasses import asdict
+        from players import Player
+        old = asdict(self.p)
+        del old['credited_service_weeks']
+        restored = Player(**old)
+        self.assertEqual(restored.credited_service_weeks, self.p.service_weeks)
 
     def test_bowl_playoffs_and_byeless_calendar(self):
         self.games([1, 2], "ambassador")

@@ -147,7 +147,7 @@ def _pick_cut(t, players, emergency: bool = False):
             des = True
         now = min(EC.dead_charge(p), p.bonus) if des else EC.dead_charge(p)
         if p.salary - now - repl > 0.005:
-            options.append((p.salary - EC.market_salary(p.pos, p.ovr, p.years_in_league) - 0.5 * now, p.id, p, des))
+            options.append((p.salary - EC.market_salary(p.pos, p.ovr, p.credited_seasons) - 0.5 * now, p.id, p, des))
     if not options:
         return None
     _, _, w, des = max(options, key=lambda o: (o[0], o[1]))
@@ -216,6 +216,8 @@ def run_roster_offseason(lg: League, rng: random.Random, rm: RosterModel, year: 
     for t in teams:
         for p in t.roster:
             EC.run_down(p)
+            if p.years_left > 0:
+                EC.enforce_minimum(p)
         keep = [p for p in t.roster if p.years_left > 0]
         expiring = sorted((p for p in t.roster if p.years_left <= 0), key=lambda p: -p.ovr)
         lim = EC.limit(t)
@@ -223,7 +225,7 @@ def run_roster_offseason(lg: League, rng: random.Random, rm: RosterModel, year: 
         for p in expiring:
             q = EC.RESIGN_BASE * (rm.fa_star_protect if p.ovr >= 70 else 1.0) * SC.gm_retention_factor(t)
             wants = rng.random() >= q
-            cost = EC.market_salary(p.pos, p.ovr, p.years_in_league)
+            cost = EC.market_salary(p.pos, p.ovr, p.credited_seasons)
             slots_after = max(0, EC.OFFSEASON_COUNT - (len(keep) + 1) - R.DRAFT_ROUNDS)      # the rest of the 51 and the rookies still to come
             count = EC.counted_51([k.salary for k in keep] + [cost] + rookie_pays, t.dead_now)
             if wants and count + slots_after * EC.MIN_SALARY + EC.OFFSEASON_RESERVE <= lim:
@@ -289,7 +291,7 @@ def run_roster_offseason(lg: League, rng: random.Random, rm: RosterModel, year: 
     def take(t, p, price=None):
         by_pos[p.pos].remove(p)
         p.team_id, p.fa_years = t.id, 0
-        EC.sign(p, EC.market_salary(p.pos, p.ovr, p.years_in_league) if price is None else price, EC.contract_years(p))
+        EC.sign(p, EC.market_salary(p.pos, p.ovr, p.credited_seasons) if price is None else price, EC.contract_years(p))
         t.roster.append(p)
         log["signed"] += 1
 
@@ -297,7 +299,7 @@ def run_roster_offseason(lg: League, rng: random.Random, rm: RosterModel, year: 
         """The best player on the market at a position that this team can afford (an asking price is the market price)."""
         room = room_for(t)
         for c in by_pos[pos]:
-            if EC.market_salary(c.pos, c.ovr, c.years_in_league) <= room:
+            if EC.market_salary(c.pos, c.ovr, c.credited_seasons) <= room:
                 return c
         return None
 
@@ -354,7 +356,7 @@ def run_roster_offseason(lg: League, rng: random.Random, rm: RosterModel, year: 
                 pos = open_pos[0]
                 best = rosters.street_player(lg, rng, pos)
                 by_pos[pos].append(best)
-                price = EC.min_salary(best.years_in_league)
+                price = EC.min_salary(best.credited_seasons)
                 log["street"] += 1
             take(t, best, price)
             progressed = True
@@ -388,7 +390,7 @@ def run_roster_offseason(lg: League, rng: random.Random, rm: RosterModel, year: 
                 if vet is not None:
                     by_pos[pos].remove(vet)
                     vet.team_id, vet.fa_years = t.id, 0
-                    EC.sign(vet, EC.min_salary(vet.years_in_league), 1)
+                    EC.sign(vet, EC.min_salary(vet.credited_seasons), 1)
                     t.roster.append(vet)
                     log["signed"] += 1
                     progressed = True
@@ -418,7 +420,7 @@ def run_roster_offseason(lg: League, rng: random.Random, rm: RosterModel, year: 
                     for _ in range(ROSTER_COUNTS[pos] - taken[pos]):
                         s = rosters.street_player(lg, rng, pos)
                         s.team_id = t.id
-                        EC.sign(s, EC.min_salary(s.years_in_league), 1)
+                        EC.sign(s, EC.min_salary(s.credited_seasons), 1)
                         camp.append(s)
                         log["street"] += 1
                 camp.sort(key=lambda p: (-p.ovr, p.id))

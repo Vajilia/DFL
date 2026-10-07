@@ -8,7 +8,7 @@ Everything here is the autopilot's "road": the lists, the limits and the weekly 
 inactive, who goes on injured reserve, who is promoted) follow plain formulas by rating and need. When agents choose, they choose among
 what these functions allow.
 
-Known simplifications (the rulebook rows say so): seasons in the league stand in for accrued seasons until build step 6; practice-squad
+Known simplifications (the rulebook rows say so): practice-squad
 players are not elevated to game day for single games; an exiled team's injured reserve works on the same calendar as everyone's.
 """
 from __future__ import annotations
@@ -58,8 +58,8 @@ def game_roster(t) -> List[Player]:
 
 # ---- the practice squad -----------------------------------------------------------------------------------------------------
 def seasons_of(p: Player) -> int:
-    """Seasons in the league (stands in for accrued seasons until build step 6)."""
-    return p.years_in_league
+    """Earned accrued seasons, with the one-time legacy estimate on old saves."""
+    return p.accrued_seasons
 
 
 def ps_rookie_slot(p: Player) -> bool:
@@ -99,6 +99,8 @@ def street_player(lg, rng: random.Random, pos: str, young: bool = False) -> Play
     age = rng.choice((22, 23, 24)) if young else rng.choice((23, 24, 25, 26))
     p = make_player(rng, lg.new_id(), pos, clamp(rng.gauss(46.0, 5.0), 28, 70), age, None)
     p.years_in_league = max(0, age - 22)
+    # A generated street player has no documented prior qualifying games.
+    p.accrued_seasons = p.credited_seasons = 0
     return p
 
 
@@ -153,7 +155,7 @@ def fill_roster(lg, t, rng: random.Random, log: Optional[dict] = None):
                 pick = street_player(lg, rng, pos)
         pick.team_id = t.id
         t.roster.append(pick)
-        EC.sign(pick, EC.min_salary(pick.years_in_league), 1)
+        EC.sign(pick, EC.min_salary(pick.credited_seasons), 1)
         if log is not None and at:
             log["promoted"] = log.get("promoted", 0) + 1
     refill_practice_squad(lg, t, rng)

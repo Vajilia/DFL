@@ -27,7 +27,7 @@ A seeded league engine with 53-player rosters, character cards, a drive-by-drive
 | `engine/store.py` | Persistence: the cards are the save (one SQLite file, rebuilt from the cards, resumes exactly); optional yearly snapshots; export/import one coach or GM |
 | `engine/emergence_study.py` | Plays long leagues and reports how legends and the Hall of Fame emerge; writes `reports/emergence_study.md` |
 | `engine/staff_cards.py` | Owner and GM cards; recall votes, hiring and firing; the Archive's first entries |
-| `engine/service.py`, `engine/check_service.py` | Earned accrued/credited service, expiration classification, boundary and save/resume checks; tender enforcement and use of service for salary/PS eligibility are still pending |
+| `engine/service.py`, `engine/check_service.py` | Earned accrued/credited service, expiration classification, boundary and save/resume checks; service now controls salary/PS eligibility; tender enforcement is still pending |
 | `engine/economy.py` | Pay and the salary cap: contracts with signing bonuses, guarantees and dead money, the minimum scale, the $100M cap, banking up to $125M, the 51 rule, the four-season 90% floor, exile absorption, the Equalization Fund |
 | `engine/tables.py`, `engine/interviews.py` | Negotiation tables (a bounded conversation of Decision Points where each party has her own say) and the first one, the job interview with guaranteed seasons |
 | `engine/decisions.py` | Decision Points: the one door for every choice (options, drivers, guard, choice log) |
@@ -90,6 +90,8 @@ Same seed gives the same league every time.
 - `docs/` rules text and decisions
 - `reports/` generated reports
 
-## Step 6a verification and handoff
+## Step 6 verification and handoff
 
 See [verification results](reports/verification_step6a.md) for baseline and changed-branch check coverage, and [handoff](docs/step6a_handoff.md) for recovery, publication state and the remaining player-movement work. Matching rulebook constants do not imply complete rights enforcement.
+
+Step 6b integrates service into minimum base pay and practice-squad eligibility, with checks in `engine/check_service_pay.py`. See [current verification](reports/verification_step6b.md), [decision rationale](docs/decisions.md) and [remaining implementation order](docs/step6_remaining_plan.md). Step 6 remains unfinished.

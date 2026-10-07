@@ -57,7 +57,7 @@ EC.sign(rk, 4.4, EC.ROOKIE_YEARS, share=EC.ROOKIE_BONUS_SHARE[0], guarantee_year
 check("a first-round rookie's whole contract is guaranteed", abs(EC.dead_charge(rk) - 4.4 * EC.ROOKIE_YEARS) < 1e-3, f"{EC.dead_charge(rk):.2f} of {4.4 * EC.ROOKIE_YEARS:.2f}")
 late = player("WR", 45, 22, 0)
 EC.sign(late, 0.3, EC.ROOKIE_YEARS, share=EC.ROOKIE_BONUS_SHARE[6], guarantee_years=0, rookie=True)
-check("a late-round rookie has a small bonus and nothing else guaranteed", abs(EC.dead_charge(late) - 0.3 * EC.ROOKIE_BONUS_SHARE[6] * EC.ROOKIE_YEARS) < 1e-3)
+check("a late-round rookie keeps her credited-service base minimum, with only the remaining cap value available for a bonus", abs(EC.dead_charge(late) - 0.01 * EC.ROOKIE_YEARS) < 1e-3 and late.salary - late.bonus >= EC.min_salary(late.credited_seasons) - 1e-9)
 
 # ---- each season of the contract is paid
 x = player("OL", 80)

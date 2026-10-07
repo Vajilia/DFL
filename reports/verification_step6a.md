@@ -1,4 +1,4 @@
-# Step 6a verification
+# Step 6a verification (historical checkpoint)
 
 ## Scope and outcome
 
@@ -50,6 +50,10 @@ These Step 6a runs match the existing golden values exactly. No fingerprints wer
 
 The rulebook reports 32 matching constant rows, 1 differs and 14 missing. `fa.classes` is a partial mechanism: service and expiration classification are built, while tenders and rights enforcement, minimum-pay integration and practice-squad eligibility integration remain pending. Historical service uses a one-time founding/old-save estimate. NFI/PUP, suspensions, holdouts and injury settlements are not modeled. These limitations are recorded in the README, decision log, handoff and Drive synthesis/status copies.
 
-GitHub `step6-service` remains at snapshot `13702e1`, whose tree `919676c7271ec18e4cb730a09c085f0178471ad9` matches local `744678d`. GitHub main is unchanged at `02490ab`. This verification/documentation follow-up is committed locally and retained in the verified bundle; a further GitHub push requires explicit approval under the project handoff rule.
+At this historical checkpoint, GitHub `step6-service` was at snapshot `13702e1`, whose tree `919676c7271ec18e4cb730a09c085f0178471ad9` matches local `744678d`. GitHub main is unchanged at `02490ab`. This verification/documentation follow-up is committed locally and retained in the verified bundle; a further GitHub push requires explicit approval under the project handoff rule.
 
 The Drive handoff, README, decision log, rulebook status and synthesis were updated. Existing heading/list/table topology was preserved and checked on readback. The original Commissioner reference and historical cap/fairness studies retain their source content. The separate historical Claude artifact was not edited.
+
+The Step 6a documentation follow-up was subsequently published as `31eedf0`, matching local `dcf1e7e`. For the newer salary/eligibility increment, see `verification_step6b.md`.
+
+Primary-source correction in Step 6b: the CBA excludes IR from salary-credited service. Step 6a used a shared roster/IR counter for both clocks; that historical implementation was corrected before Step 6b final verification.

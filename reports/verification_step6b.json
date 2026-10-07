@@ -1,0 +1,229 @@
+{
+  "scope": "corrected Step 6b full 20-script suite",
+  "results": [
+    {
+      "check": "engine/check_agents.py",
+      "exit": 0,
+      "seconds": 51.8,
+      "log_sha256": "d57092aad22ea1a87a5199f3e6df097157c7e37b8c26c2ab5b693c87a8f1e0f7"
+    },
+    {
+      "check": "engine/check_cards.py",
+      "exit": 0,
+      "seconds": 17.3,
+      "rerun_reason": "Corrected test measurement boundary; simulation code unchanged",
+      "log_sha256": "683aa2fac88e15da8c8008d1339afaf7053d81359e62ba8a942ca1f801042084"
+    },
+    {
+      "check": "engine/check_contracts.py",
+      "exit": 0,
+      "seconds": 9.0,
+      "log_sha256": "ba1966a4171edb62d6ad4594e21fb51a2c7b889ee1aae982ed4cc60f89603f14"
+    },
+    {
+      "check": "engine/check_decisions.py",
+      "exit": 0,
+      "seconds": 186.7,
+      "log_sha256": "27f892f8511635dbd0a8a64ed110fb35317c4d848973ec5259bd180f8f74a621"
+    },
+    {
+      "check": "engine/check_economy.py",
+      "exit": 0,
+      "seconds": 103.6,
+      "log_sha256": "cddc62c49754c94b68c1dd1afe86fce65269a922d0fbf90f85b48fdecf3cb703"
+    },
+    {
+      "check": "engine/check_fans.py",
+      "exit": 0,
+      "seconds": 111.0,
+      "rerun_reason": "Corrected test measurement boundary; simulation code unchanged",
+      "log_sha256": "f02313edd04c6055da5c0575e9ac7ca6149ce01f94c37db10999b1af74d34f08"
+    },
+    {
+      "check": "engine/check_interactions.py",
+      "exit": 0,
+      "seconds": 50.1,
+      "log_sha256": "1a4a6e22ced60773db7ff401f064e13b6ec2a3f99962914bc9c6fe64ef901293"
+    },
+    {
+      "check": "engine/check_living.py",
+      "exit": 0,
+      "seconds": 296.7,
+      "log_sha256": "7269e35ad5c3a861c78212e21282a311e8e28dadfbd2bbff2ecbf022bef37f41"
+    },
+    {
+      "check": "engine/check_phase0.py",
+      "exit": 0,
+      "seconds": 0.0,
+      "log_sha256": "5f8917a9fbcb894748c4466d43d4c3e9eaf6079bfc949d19e427b858491089e2"
+    },
+    {
+      "check": "engine/check_phase1.py",
+      "exit": 0,
+      "seconds": 2.4,
+      "log_sha256": "86a0ac3cfdd593e6a2ac6ac6292b45c11d029b8d4d6464c0f387864f37af42bd"
+    },
+    {
+      "check": "engine/check_phase2.py",
+      "exit": 0,
+      "seconds": 399.7,
+      "log_sha256": "ed40f46687514ec9d66d468cb2c7c2544cf99088e822d2497a71c4ba957b11e8"
+    },
+    {
+      "check": "engine/check_rosters.py",
+      "exit": 0,
+      "seconds": 1.0,
+      "log_sha256": "5e544eaaa91255eecfcdc847ebcfdb4cb607742797e4feab5bd8404017ea6bef"
+    },
+    {
+      "check": "engine/check_rulebook.py",
+      "exit": 0,
+      "seconds": 0.0,
+      "log_sha256": "fc0c8f188e126700789dedd00e36031a37ceca9adddb315a2219e4672fcb8e18"
+    },
+    {
+      "check": "engine/check_service.py",
+      "exit": 0,
+      "seconds": 1.9,
+      "log_sha256": "c432af132e0cadbaf802137f8492814f07ccd82dfc81c7f2645eb491fde74b63"
+    },
+    {
+      "check": "engine/check_service_pay.py",
+      "exit": 0,
+      "seconds": 30.6,
+      "log_sha256": "3d6b637c5ae99ab00e4c8be92dd719f3088c3efadf31737f5ce6a86a2548905e"
+    },
+    {
+      "check": "engine/check_staff.py",
+      "exit": 0,
+      "seconds": 28.4,
+      "log_sha256": "799f9539f21ac519f7a322425aef777ab37007cda113f2440e7a7143f3d006de"
+    },
+    {
+      "check": "engine/check_store.py",
+      "exit": 0,
+      "seconds": 586.2,
+      "log_sha256": "5be3409dd59bdd683c9aa09123847cbfa2bf516711d15e6b57e5b845a6789a6b"
+    },
+    {
+      "check": "engine/check_tables.py",
+      "exit": 0,
+      "seconds": 141.3,
+      "log_sha256": "12a0e46453462695ae4691b93b79180448822a90f2e940fee7656bd8b35e5ee5"
+    },
+    {
+      "check": "engine/check_tiebreaks.py",
+      "exit": 0,
+      "seconds": 5.8,
+      "log_sha256": "486fb44316815cf5abca32820dc9a4fe59eb1c16d969c2ca73b0c220112881b6"
+    },
+    {
+      "check": "engine/check_ties.py",
+      "exit": 0,
+      "seconds": 5.0,
+      "log_sha256": "a575037460d6f1686c99b661f9f96a7955d89c99f02f6f9b0e535ebe3f8be040"
+    }
+  ],
+  "initial_run_results": [
+    {
+      "check": "engine/check_living.py",
+      "exit": 0,
+      "seconds": 296.7
+    },
+    {
+      "check": "engine/check_store.py",
+      "exit": 0,
+      "seconds": 586.2
+    },
+    {
+      "check": "engine/check_phase2.py",
+      "exit": 0,
+      "seconds": 399.7
+    },
+    {
+      "check": "engine/check_decisions.py",
+      "exit": 0,
+      "seconds": 186.7
+    },
+    {
+      "check": "engine/check_fans.py",
+      "exit": 1,
+      "seconds": 109.7
+    },
+    {
+      "check": "engine/check_economy.py",
+      "exit": 0,
+      "seconds": 103.6
+    },
+    {
+      "check": "engine/check_tables.py",
+      "exit": 0,
+      "seconds": 141.3
+    },
+    {
+      "check": "engine/check_cards.py",
+      "exit": 1,
+      "seconds": 17.0
+    },
+    {
+      "check": "engine/check_rulebook.py",
+      "exit": 0,
+      "seconds": 0.0
+    },
+    {
+      "check": "engine/check_service.py",
+      "exit": 0,
+      "seconds": 1.9
+    },
+    {
+      "check": "engine/check_ties.py",
+      "exit": 0,
+      "seconds": 5.0
+    },
+    {
+      "check": "engine/check_phase1.py",
+      "exit": 0,
+      "seconds": 2.4
+    },
+    {
+      "check": "engine/check_contracts.py",
+      "exit": 0,
+      "seconds": 9.0
+    },
+    {
+      "check": "engine/check_tiebreaks.py",
+      "exit": 0,
+      "seconds": 5.8
+    },
+    {
+      "check": "engine/check_agents.py",
+      "exit": 0,
+      "seconds": 51.8
+    },
+    {
+      "check": "engine/check_service_pay.py",
+      "exit": 0,
+      "seconds": 30.6
+    },
+    {
+      "check": "engine/check_phase0.py",
+      "exit": 0,
+      "seconds": 0.0
+    },
+    {
+      "check": "engine/check_rosters.py",
+      "exit": 0,
+      "seconds": 1.0
+    },
+    {
+      "check": "engine/check_interactions.py",
+      "exit": 0,
+      "seconds": 50.1
+    },
+    {
+      "check": "engine/check_staff.py",
+      "exit": 0,
+      "seconds": 28.4
+    }
+  ]
+}

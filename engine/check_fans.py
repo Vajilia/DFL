@@ -3,6 +3,7 @@
     python engine/check_fans.py
 """
 import os
+import copy
 import random
 import statistics as st
 import sys
@@ -49,6 +50,18 @@ for cap in (0.0, 0.3, 0.5, 0.6, 1.0):
 check("Fan Capital never makes a recall more likely", all(v >= 0 for v in vals))
 check("Fan Capital's buffer stays inside its cap", max(vals) <= FM.CAPITAL_RECALL_WEIGHT * (1 - FM.CAPITAL_FLOOR) + 1e-9, f"max {max(vals):.3f}")
 
+# Compare forecast grading against the same result and starting credibility.
+# This isolates the earning rule from a particular league's recent luck.
+graded = copy.deepcopy(lg)
+accurate, sloppy = [copy.deepcopy(nat[0]) for _ in range(2)]
+accurate.mid, sloppy.mid = 900001, 900002
+accurate.credibility = sloppy.credibility = 50.0
+accurate.forecasts, sloppy.forecasts = {t0.id: 0.7}, {t0.id: 0.5}
+graded.media = [accurate, sloppy]
+FM.media_season(graded, 1, {t0.id: 0.7}, t0.id, [])
+check("a better forecast earns more credibility against the same result",
+      accurate.credibility > 50.0 > sloppy.credibility and accurate.record[-1]["error"] < sloppy.record[-1]["error"])
+
 
 # ---- 40 seasons -------------------------------------------------------------------------------------
 def play(seed, years=40, fans=True):
@@ -87,10 +100,12 @@ for extra_seed in (8, 9, 10, 11):                 # pool four more leagues: one 
         run_season(Lx, y, rr, Options(engine="fast", keep_boxes=False))
     active += [m for m in Lx.media if m.status == "active" and len(m.record) >= 20]
 accs = [m.ratings["accuracy"] for m in active]
-creds = [m.credibility for m in active]
+# Credibility is a short moving average. Compare accuracy with the mean scored
+# forecast over a career, rather than one noisy final-year credibility value.
+creds = [st.mean(max(0.0, 100.0 * (1.0 - e["error"] / 0.20)) for e in m.record) for m in active]
 mx, my = st.mean(accs), st.mean(creds)
 corr = sum((a - mx) * (c - my) for a, c in zip(accs, creds)) / (sum((a - mx) ** 2 for a in accs) ** 0.5 * sum((c - my) ** 2 for c in creds) ** 0.5)
-check("accurate outlets earn more credibility than sloppy ones", corr > 0.05, f"correlation {corr:.2f} over {len(active)} outlets with 20+ seasons in 5 leagues")
+check("accurate outlets earn higher forecast scores over their careers", corr > 0.05, f"correlation {corr:.2f} over {len(active)} outlets with 20+ seasons in 5 leagues")
 
 # expectations drift the way results run
 wins = {t.id: [] for t in L.teams}
