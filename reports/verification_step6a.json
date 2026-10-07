@@ -1,0 +1,180 @@
+{
+  "scope": "full recovered baseline and seven targeted Step 6a scripts",
+  "results": [
+    {
+      "checkout": "Step-5 baseline",
+      "check": "engine/check_agents.py",
+      "exit": 0,
+      "seconds": 47.5,
+      "log_sha256": "e09e550edd256f65c0960bc1aa9ba7ff62e20505ddea3cb0cf8382fb47076682"
+    },
+    {
+      "checkout": "Step-5 baseline",
+      "check": "engine/check_cards.py",
+      "exit": 0,
+      "seconds": 15.7,
+      "log_sha256": "90a5b413cffdc8e30d6488da7598f0467b9b84a65cef8a2f6bbee892e79ec4f4"
+    },
+    {
+      "checkout": "Step-5 baseline",
+      "check": "engine/check_contracts.py",
+      "exit": 0,
+      "seconds": 8.3,
+      "log_sha256": "30fdbbd801d2d0e0ed9bf11ad12f1992dec01f9df845aca1b2fb00fe61ab1507"
+    },
+    {
+      "checkout": "Step-5 baseline",
+      "check": "engine/check_decisions.py",
+      "exit": 0,
+      "seconds": 168.1,
+      "log_sha256": "dda724aaef92ca204ddcdceebfa1f82e3054f5cd4c21f8f9cddacd68ce8fa738"
+    },
+    {
+      "checkout": "Step-5 baseline",
+      "check": "engine/check_economy.py",
+      "exit": 0,
+      "seconds": 89.3,
+      "log_sha256": "a5ab53cccb42029fb4d72dd55905cfdef2f6d9d2a131760ba2dc1b45aa448aaf"
+    },
+    {
+      "checkout": "Step-5 baseline",
+      "check": "engine/check_fans.py",
+      "exit": 0,
+      "seconds": 101.9,
+      "log_sha256": "ee7181adb343469534db2645fc6e4e42890b507beea30e8e706a49c92a25ffcb"
+    },
+    {
+      "checkout": "Step-5 baseline",
+      "check": "engine/check_interactions.py",
+      "exit": 0,
+      "seconds": 45.3,
+      "log_sha256": "c5fdceb8e7b181fa68b4928e4b7e237c54f58cc17c11139b1a675f9a167a9471"
+    },
+    {
+      "checkout": "Step-5 baseline",
+      "check": "engine/check_living.py",
+      "exit": 0,
+      "seconds": 246.9,
+      "log_sha256": "928b8609315717a33759cc927fe2646832bde169552ed615b5b25a5d4b6c0377"
+    },
+    {
+      "checkout": "Step-5 baseline",
+      "check": "engine/check_phase0.py",
+      "exit": 0,
+      "seconds": 0.0,
+      "log_sha256": "5f8917a9fbcb894748c4466d43d4c3e9eaf6079bfc949d19e427b858491089e2"
+    },
+    {
+      "checkout": "Step-5 baseline",
+      "check": "engine/check_phase1.py",
+      "exit": 0,
+      "seconds": 2.3,
+      "log_sha256": "86a0ac3cfdd593e6a2ac6ac6292b45c11d029b8d4d6464c0f387864f37af42bd"
+    },
+    {
+      "checkout": "Step-5 baseline",
+      "check": "engine/check_phase2.py",
+      "exit": 0,
+      "seconds": 367.1,
+      "log_sha256": "35ce7eb74b955e920817ed8f3aeddc6113ed7bf95596562db1889618b37862d4"
+    },
+    {
+      "checkout": "Step-5 baseline",
+      "check": "engine/check_rosters.py",
+      "exit": 0,
+      "seconds": 0.9,
+      "log_sha256": "5d9030fef42b10111198bd43acffb88524a94457c2411f73ac16690b588a1526"
+    },
+    {
+      "checkout": "Step-5 baseline",
+      "check": "engine/check_rulebook.py",
+      "exit": 0,
+      "seconds": 0.0,
+      "log_sha256": "d6d52ae6f78e31332ada71612b029022c8a397acfef3b0781456f1c8f097e4fc"
+    },
+    {
+      "checkout": "Step-5 baseline",
+      "check": "engine/check_staff.py",
+      "exit": 0,
+      "seconds": 26.4,
+      "log_sha256": "108b2d92c04c77571495fcffe9cb2c9fdc558a5e36364ec30554dc05b246902d"
+    },
+    {
+      "checkout": "Step-5 baseline",
+      "check": "engine/check_store.py",
+      "exit": 0,
+      "seconds": 486.9,
+      "log_sha256": "0d6ef90afd69b30d6a4e8b8ac90d51857684a9dd8cd15bb2cf4ee95b79f85cd4"
+    },
+    {
+      "checkout": "Step-5 baseline",
+      "check": "engine/check_tables.py",
+      "exit": 0,
+      "seconds": 132.7,
+      "log_sha256": "feb196bb27b3238a4061681dd8f6c3d7888c403b2ebcce901228d6de0e3a90bd"
+    },
+    {
+      "checkout": "Step-5 baseline",
+      "check": "engine/check_tiebreaks.py",
+      "exit": 0,
+      "seconds": 5.6,
+      "log_sha256": "32156ba95604f6d06a74a8777689ecd4e8fa6efa1df217776c623e5b01ba90b1"
+    },
+    {
+      "checkout": "Step-5 baseline",
+      "check": "engine/check_ties.py",
+      "exit": 0,
+      "seconds": 4.9,
+      "log_sha256": "a575037460d6f1686c99b661f9f96a7955d89c99f02f6f9b0e535ebe3f8be040"
+    },
+    {
+      "checkout": "Step 6a",
+      "check": "check_service",
+      "exit": 0,
+      "seconds": 1.8,
+      "log_sha256": "cf46826d0229af2cf660a41dc3d16b6147ee707fd199ed5612d0fb7baecd4857"
+    },
+    {
+      "checkout": "Step 6a",
+      "check": "check_rulebook",
+      "exit": 0,
+      "seconds": 0.0,
+      "log_sha256": "c8562512fe4a2d5f1290af2eafe54511645f9fe6d2b6d4612ea6e990b2bbe713"
+    },
+    {
+      "checkout": "Step 6a",
+      "check": "check_phase0",
+      "exit": 0,
+      "seconds": 0.0,
+      "log_sha256": "5f8917a9fbcb894748c4466d43d4c3e9eaf6079bfc949d19e427b858491089e2"
+    },
+    {
+      "checkout": "Step 6a",
+      "check": "check_phase1",
+      "exit": 0,
+      "seconds": 2.3,
+      "log_sha256": "86a0ac3cfdd593e6a2ac6ac6292b45c11d029b8d4d6464c0f387864f37af42bd"
+    },
+    {
+      "checkout": "Step 6a",
+      "check": "check_rosters",
+      "exit": 0,
+      "seconds": 0.9,
+      "log_sha256": "5d9030fef42b10111198bd43acffb88524a94457c2411f73ac16690b588a1526"
+    },
+    {
+      "checkout": "Step 6a",
+      "check": "check_store",
+      "exit": 0,
+      "seconds": 581.7,
+      "log_sha256": "2acb62e52600d70aa0b6bf0d9fa84f903efb997f4fa621a658328e0527d5b699"
+    },
+    {
+      "checkout": "Step 6a",
+      "check": "check_living",
+      "exit": 0,
+      "seconds": 296.3,
+      "log_sha256": "84b1967d87386c1b8a9561af22f9936dec5de020c4503af68ab0e942213123cd"
+    }
+  ]
+}

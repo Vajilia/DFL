@@ -89,3 +89,7 @@ Same seed gives the same league every time.
 - `archive/` event log (the Archive, empty so far)
 - `docs/` rules text and decisions
 - `reports/` generated reports
+
+## Step 6a verification and handoff
+
+See [verification results](reports/verification_step6a.md) for baseline and changed-branch check coverage, and [handoff](docs/step6a_handoff.md) for recovery, publication state and the remaining player-movement work. Matching rulebook constants do not imply complete rights enforcement.

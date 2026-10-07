@@ -120,7 +120,7 @@ ROWS = [
          rule="53 on the roster, with the DFL's own split across the 11 modelled positions (QB 3, RB 4, WR 6, TE 4, OL 9, DL 8, LB 6, CB 6, S 5, K 1, P 1)",
          expect={"economy.ROSTER_SIZE": 53, "rules.ROSTER_LIMIT": 53}, covers=["economy.SQUAD_SIZE"]),
     dict(id="roster.lists", area="Rosters", basis=NFL, status="built", mechanism="partial",
-         rule="90 in camp cut to 53, 48 active on game day, practice squad of 16 (rookies and second-year players, at most 6 veterans), up to 8 injured-reserve returns a season after at least 4 games; exiled teams keep the same lists. Seasons in the league stand in for accrued seasons until step 6, and practice-squad elevations to game day are not modelled.",
+         rule="90 in camp cut to 53, 48 active on game day, practice squad of 16 (rookies and second-year players, at most 6 veterans), up to 8 injured-reserve returns a season after at least 4 games; exiled teams keep the same lists. Earned accrued service is tracked, but practice-squad eligibility still uses calendar years pending Step 6 integration; practice-squad elevations to game day are not modelled.",
          expect={"rules.CAMP_LIMIT": 90, "rules.ACTIVE_LIMIT": 48, "rules.PRACTICE_SQUAD_SIZE": 16, "rules.PRACTICE_SQUAD_SEASONS": 2,
                  "rules.PRACTICE_SQUAD_VETERANS_MAX": 6, "rules.IR_RETURNS_MAX": 8, "rules.IR_MIN_GAMES": 4}),
 
@@ -142,7 +142,7 @@ ROWS = [
          rule="Minimum salary by credited seasons, NFL 2026 x 0.332: $0.29M, 0.33, 0.36, 0.38, 0.40, 0.43M. The lowest rung ($0.29M, a rookie) is the least anyone can be paid.",
          expect={"economy.MIN_SALARY": 0.29}),
     dict(id="salary.minimum_scale", area="Cap", basis=NFL, status="built", mechanism="partial",
-         rule="The scale itself, by credited seasons 0, 1, 2, 3, 4-6, 7+ (seasons in the league stand in for credited seasons until step 6)",
+         rule="The scale itself, by credited seasons 0, 1, 2, 3, 4-6, 7+ (earned credited service is tracked, but minimum pay still uses calendar years pending Step 6 integration)",
          expect={"economy.MIN_SALARY_SCALE": (0.29, 0.33, 0.36, 0.38, 0.40, 0.43)}),
     dict(id="salary.maximum", area="Cap", basis=FAIR, status="built", mechanism="built",
          rule="Table limit: no contract's yearly cap value above 25% of the cap",
