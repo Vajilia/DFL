@@ -31,6 +31,7 @@ A seeded league engine with 53-player rosters, character cards, a drive-by-drive
 | `engine/movement.py`, `engine/check_movement.py` | Step 6c/6d: the draft-pick ledger (original club, owner, slot, reservation, selection), tenders and rights, funded offers with five-day matching and compensation, their own SQLite tables (save format 3), and twelve checks including atomicity, boundaries, migration and save/resume |
 | `engine/transactions.py`, `engine/check_transactions.py` | Step 6e to 6h: the waiver wire and in-season records for priority, full trades (cap, bonus acceleration, roster limits, deadline), compensatory-pick awards; with `movement.py` (franchise and transition tags) and `contracts.py`, 56 checks |
 | `engine/finance.py`, `engine/check_finance.py`, `engine/finance_report.py` | Step 7: club revenue (national pool, the 34% ticket pool, local money by market, fans and success), the CEO's draw capped at $100M with the excess to the Equalization Fund, subsidies from CEOs' draws, the fans' say on spending as a capped approval nudge, 10 to 20 year CEO tenure and the forced-sale vote; writes `reports/finance_report.md` |
+| `engine/injuries.py`, `engine/check_injuries.py` | Step 8a: injury kinds, NFL-scale rates and lengths, concussion protocol, the weekly injury report |
 | `engine/contracts.py` | Step 6i: the contract table (club general manager, player, DFLPA representative guard) and the club's value-to-price rule that replaced the re-signing dice |
 | `engine/economy.py` | Pay and the salary cap: contracts with signing bonuses, guarantees and dead money, the minimum scale, the $100M cap, banking up to $125M, the 51 rule, the four-season 90% floor, exile absorption, the Equalization Fund |
 | `engine/tables.py`, `engine/interviews.py` | Negotiation tables (a bounded conversation of Decision Points where each party has her own say) and the first one, the job interview with guaranteed seasons |
@@ -61,6 +62,7 @@ A seeded league engine with 53-player rosters, character cards, a drive-by-drive
     python engine/check_service.py         # earned service, expiration classes, paid lists, save/resume
     python engine/check_movement.py        # pick ownership, tenders, funded offers, five-day match, compensation, format 3 save and migration
     python engine/check_transactions.py    # waivers, tags, trades, compensatory picks, contract tables
+    python engine/check_injuries.py        # injury kinds, NFL-scale rates, concussions, the weekly report
     python engine/check_finance.py         # CEO draw cap, tenure, ticket pool, subsidies, forced sales, the books
     python engine/check_phase0.py          # do the rules agree with each other?
     python engine/check_tiebreaks.py       # NFL tiebreakers

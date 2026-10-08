@@ -14,8 +14,8 @@ Written by `engine/check_rulebook.py`. The prose rulebook is the living doc "DFL
 | Finance | 1 | 0 | 0 |
 | Governance | 0 | 0 | 4 |
 | DFLPA | 0 | 0 | 1 |
-| Health | 0 | 0 | 1 |
-| **All** | 41 | 0 | 7 |
+| Health | 1 | 0 | 0 |
+| **All** | 42 | 0 | 6 |
 
 ## The code differs from the rulebook
 
@@ -32,7 +32,6 @@ Written by `engine/check_rulebook.py`. The prose rulebook is the living doc "DFL
 | `dflpa.representative` | skeleton | No independent agents. The DFLPA gives every player and coach a representative who advises her and ensures DFL rules, the CBA and fair competitiveness are respected; she may hold a deal back but never sets terms. The contract table has her as a guard that removes illegal terms from both sides' options; she is not yet a character with a card, and there is no trade table (trades are an API). |
 | `discipline` | nfl | Conduct, substance and gambling policy, tampering and cap-circumvention penalties (up to 10% of the cap in a season), game-integrity penalties; every Commissioner penalty is a reduction and autopilot applies the baseline |
 | `hiring` | skeleton | No decision, agent or text can read a character's demographics (names and portraits only); every head-coach or GM search interviews at least two external candidates; an audit fails if any outcome depends on demographics |
-| `health` | nfl | Injury report, concussion protocol (mandatory removal), injured lists. The engine has per-game injuries with placeholder rates only. |
 
 ## The code matches the rulebook
 
@@ -79,6 +78,7 @@ Written by `engine/check_rulebook.py`. The prose rulebook is the living doc "DFL
 | `forced_sale` | skeleton | Two or more subsidised quarters in any rolling four; 25 of 48 owners vote, the owner concerned recused; immediate and final. Built in engine/finance.py: a year's loss is spread over four quarters and a club's subsidised quarters are the share of the loss other CEOs paid; the 47 other CEOs vote by a private, seeded rule (payers of subsidy lean to sell). Gap: the window is one season, not a true rolling four quarters; CEOs vote by a formula, not a decision point. |
 | `revenue` | nfl | National revenue shared equally among 48 teams; 34% of each team's ticket revenue goes into a pool shared equally; local revenue kept; four fiscal quarters on an accrual basis. Built in engine/finance.py: the national pool and the ticket pool are exact; the dollar levels are model dials; the books are yearly (the four quarters exist only inside the forced-sale rule). |
 | `ceo` | skeleton | Owners are CEOs with a 10 to 20 year tenure; a CEO's personal draw is capped at $100M a year and the excess goes to the Equalization Fund; subsidies to weaker clubs come out of CEOs' draws; each fanbase card is a million fans and has a say in spending. Built in engine/finance.py. Gap: the fans' say is one capped approval nudge, not a decision point; the CEO's reinvestment, reserve and subsidy shares are formulas by her card. |
+| `health` | nfl | Injury report, concussion protocol (mandatory removal), injured lists. Built (engine/injuries.py): twelve injury kinds with their own lengths, position risk, about 33 injuries and 127 player-games lost per club a season (NFL: roughly 95 to 250 games lost, 37 to 56 injuries for the most injured clubs), concussions about 7% of injuries and always at least one game out, a weekly injury report (runner.injury_reports) and injured reserve as before. Gaps: a player hurt in a game plays out that game, so a concussion is removed from the next game rather than mid-game; the report has no game-day designations (questionable, doubtful); owners and fans do not yet react to the report. |
 
 ## Constants match but the behaviour is not all there (hand-kept note)
 
@@ -100,3 +100,4 @@ Written by `engine/check_rulebook.py`. The prose rulebook is the living doc "DFL
 | `forced_sale` | partial | Two or more subsidised quarters in any rolling four; 25 of 48 owners vote, the owner concerned recused; immediate and final. Built in engine/finance.py: a year's loss is spread over four quarters and a club's subsidised quarters are the share of the loss other CEOs paid; the 47 other CEOs vote by a private, seeded rule (payers of subsidy lean to sell). Gap: the window is one season, not a true rolling four quarters; CEOs vote by a formula, not a decision point. |
 | `revenue` | partial | National revenue shared equally among 48 teams; 34% of each team's ticket revenue goes into a pool shared equally; local revenue kept; four fiscal quarters on an accrual basis. Built in engine/finance.py: the national pool and the ticket pool are exact; the dollar levels are model dials; the books are yearly (the four quarters exist only inside the forced-sale rule). |
 | `ceo` | partial | Owners are CEOs with a 10 to 20 year tenure; a CEO's personal draw is capped at $100M a year and the excess goes to the Equalization Fund; subsidies to weaker clubs come out of CEOs' draws; each fanbase card is a million fans and has a say in spending. Built in engine/finance.py. Gap: the fans' say is one capped approval nudge, not a decision point; the CEO's reinvestment, reserve and subsidy shares are formulas by her card. |
+| `health` | partial | Injury report, concussion protocol (mandatory removal), injured lists. Built (engine/injuries.py): twelve injury kinds with their own lengths, position risk, about 33 injuries and 127 player-games lost per club a season (NFL: roughly 95 to 250 games lost, 37 to 56 injuries for the most injured clubs), concussions about 7% of injuries and always at least one game out, a weekly injury report (runner.injury_reports) and injured reserve as before. Gaps: a player hurt in a game plays out that game, so a concussion is removed from the next game rather than mid-game; the report has no game-day designations (questionable, doubtful); owners and fans do not yet react to the report. |

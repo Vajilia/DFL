@@ -196,9 +196,9 @@ def run_roster_offseason(lg: League, rng: random.Random, rm: RosterModel, year: 
         t.roster = list(t.roster) + list(t.ir) + list(t.practice_squad)
         t.ir, t.practice_squad, t.ir_returns = [], [], 0
         for p in t.roster:
-            p.weeks_out, p.ir_games, p.ir_designated = 0, 0, False
+            p.weeks_out, p.ir_games, p.ir_designated, p.injury = 0, 0, False, ""
     for p in lg.free_agents:
-        p.weeks_out = 0
+        p.weeks_out, p.injury = 0, ""
 
     # 1. everybody ages and changes
     progress([p for t in teams for p in t.roster], rm, rng,

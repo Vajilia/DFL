@@ -77,7 +77,8 @@ class GameRunner:
         self.record_plays = record_plays          # option 3: keep every play (off by default)
         self._cache: Dict[int, object] = {}
         self._new_hurt: set = set()
-        self.injury_log: list = []                # (week, team id, player id, games out)
+        self.injury_log: list = []                # (week, team id, player id, games out, kind)
+        self.injury_reports: list = []            # one weekly injury report per week (injuries.injury_report)
         self.player_totals: Dict[int, dict] = {}  # season totals, drive engine only
         self.team_totals: Dict[int, dict] = {}
         self.games_played = 0
@@ -161,10 +162,10 @@ class GameRunner:
             lu = self.lineup(tid)
             starters = ([lu.qb, lu.te, lu.k, lu.p] + lu.rbs + lu.wrs + lu.ol + lu.dl + lu.lb + lu.cb + lu.s)
             import rosters
-            for p, n in roll_injuries(rosters.active_list(self.league.by_id[tid]), starters, self.rng):
-                p.weeks_out = n
+            for p, n, kind in roll_injuries(rosters.active_list(self.league.by_id[tid]), starters, self.rng):
+                p.weeks_out, p.injury = n, kind
                 self._new_hurt.add(p.id)
-                self.injury_log.append((game.week, tid, p.id, n))
+                self.injury_log.append((game.week, tid, p.id, n, kind))
 
     # ---- the weekly clock ---------------------------------------------------
     def end_week(self):
@@ -180,5 +181,8 @@ class GameRunner:
                 import transactions
                 wire = transactions.new_wire(self.league, self.service_year, self.week, self.record)
             self.ir_log.append(rosters.manage_week(self.league, self.rng, R.REGULAR_SEASON_WEEKS - self.week, wire))
+            if self.injuries:
+                from injuries import injury_report
+                self.injury_reports.append(injury_report(self.league, self.week))      # the weekly injury report, after the week's moves
         self._new_hurt = set()
         self._cache.clear()

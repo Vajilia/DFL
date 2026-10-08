@@ -247,7 +247,7 @@ ROWS = [
     dict(id="hiring", area="Governance", basis=SKELETON, status="missing", mechanism="partial",
          rule="No decision, agent or text can read a character's demographics (names and portraits only); every head-coach or GM search interviews at least two external candidates; an audit fails if any outcome depends on demographics",
          expect={"rules.EXTERNAL_INTERVIEWS_MIN": 2}),
-    dict(id="health", area="Health", basis=NFL, status="missing", mechanism="partial",
-         rule="Injury report, concussion protocol (mandatory removal), injured lists. The engine has per-game injuries with placeholder rates only.",
+    dict(id="health", area="Health", basis=NFL, status="built", mechanism="partial",
+         rule="Injury report, concussion protocol (mandatory removal), injured lists. Built (engine/injuries.py): twelve injury kinds with their own lengths, position risk, about 33 injuries and 127 player-games lost per club a season (NFL: roughly 95 to 250 games lost, 37 to 56 injuries for the most injured clubs), concussions about 7% of injuries and always at least one game out, a weekly injury report (runner.injury_reports) and injured reserve as before. Gaps: a player hurt in a game plays out that game, so a concussion is removed from the next game rather than mid-game; the report has no game-day designations (questionable, doubtful); owners and fans do not yet react to the report.",
          expect={}),
 ]

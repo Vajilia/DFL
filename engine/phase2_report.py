@@ -147,7 +147,7 @@ def main():
     out.append("")
     out.append("## Injuries\n")
     out.append(f"- About {st.mean(inj):.0f} injuries per season league-wide, roughly {st.mean(inj) / 48:.1f} per team. "
-               "Rates and lengths are placeholder dials in injuries.py.\n")
+               "Rates and lengths are model dials in injuries.py (about the NFL's, Step 8).\n")
     out.append("## Roster offseason (per year, whole league)\n")
     out.append("| Retirements | Contracts ended | Free-agent signings | Premium (exile relief) signings | Rookies drafted | Street free agents needed |")
     out.append("| --- | --- | --- | --- | --- | --- |")

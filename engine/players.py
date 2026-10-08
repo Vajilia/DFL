@@ -34,6 +34,7 @@ class Player:
     ratings: Dict[str, float]
     team_id: Optional[int] = None        # None = free agent or retired
     weeks_out: int = 0                   # injured: games still to miss
+    injury: str = ""                     # what hurt her (injuries.KIND_NAMES), while she is out
     draft_year: Optional[int] = None
     draft_pick: Optional[int] = None
     years_in_league: int = 0
