@@ -12,10 +12,11 @@ from collections import Counter, defaultdict
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import economy  # noqa: E402
+import finance  # noqa: E402
 import rulebook as RB  # noqa: E402
 import rules  # noqa: E402
 
-MODULES = {"rules": rules, "economy": economy}
+MODULES = {"rules": rules, "economy": economy, "finance": finance}
 failures = []
 ABSENT = object()
 

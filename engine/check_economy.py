@@ -98,8 +98,9 @@ check("no team ever has a payroll above its limit at the start of a season (40 s
 check("every roster is full, every salary is between the minimum and a quarter of the cap, and every contract has one to five seasons left", size_bad == over_max == under_min == lens_bad == 0)
 caps = [e for e in L.archive if e["event"] == "cap_close"]
 check("the Archive records each season's accounts", len(caps) == 40 and all({"forfeited", "shortfall", "absorbed", "levy", "payout", "pool"} <= set(e) for e in caps))
-check("the Fund's books add up: the balance is every forfeit less every absorbed payroll, plus levies, less payouts", abs(L.pool - sum(e["forfeited"] - e["absorbed"] + e["levy"] - e["payout"] for e in caps)) < 1.0, f"fund {L.pool:.0f}M")
-check("the Fund pays out only above its reserve, and what teams were paid and charged matches the books", L.pool <= EC.FUND_RESERVE + 1e-6
+check("the Fund's books add up: the balance is every forfeit less every absorbed payroll, plus levies, less payouts", abs(L.pool - sum(e["forfeited"] - e["absorbed"] + e["levy"] - e["payout"] for e in caps)
+                                                                                                         - sum(e["to_fund"] for e in L.archive if e["event"] == "finance_close")) < 1.0, f"fund {L.pool:.0f}M")
+check("the Fund pays out only above its reserve, and what teams were paid and charged matches the books", L.pool <= EC.FUND_RESERVE + [e["to_fund"] for e in L.archive if e["event"] == "finance_close"][-1] + 1e-6   # the CEOs' excess arrives after the year's payout
       and abs(sum(t.fund_cash for t in L.teams) - sum(e["payout"] - e["levy"] for e in caps)) < 1.0, f"net team cash {sum(t.fund_cash for t in L.teams):.0f}M")
 check("the cap matters: teams do bank room, teams do sometimes end below the floor, and room is not always full", 1.0 < st.mean(banked[10:]) < 24.9 and floor_n > 0, f"mean banked {st.mean(banked[10:]):.1f}M a team, {floor_n} team-seasons below the floor")
 mean_pay = st.mean(e["payroll_mean"] for e in caps[10:])

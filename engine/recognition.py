@@ -240,7 +240,7 @@ def _with_teams(lg):
         if g.status == "retired" and g.esteem >= RUNGS[0][0] * LEGEND_BAR["gm"] and g.standing != "Hall of Famer":
             yield g, None
     for o in lg.owners:
-        if o.status in ("retired", "recalled") and o.esteem >= RUNGS[0][0] * LEGEND_BAR["owner"] and o.standing != "Hall of Famer":
+        if o.status in ("retired", "recalled", "sold") and o.esteem >= RUNGS[0][0] * LEGEND_BAR["owner"] and o.standing != "Hall of Famer":
             yield o, None
     for p in lg.retired_players:
         if p.card is not None and p.card.esteem >= RUNGS[0][0] * LEGEND_BAR["player"] and p.card.standing != "Hall of Famer":
@@ -282,7 +282,7 @@ def hall_vote(lg, year: int):
             card = c.card if kind == "player" else c
             if card is None or card.standing == "Hall of Famer":
                 continue
-            if kind == "coach" and not c.retired or kind == "gm" and c.status != "retired" or kind == "owner" and c.status not in ("retired", "recalled"):
+            if kind == "coach" and not c.retired or kind == "gm" and c.status != "retired" or kind == "owner" and c.status not in ("retired", "recalled", "sold"):
                 continue
             ry = _retired_year(card)
             if ry is None or not (ry + HOF_WAIT <= year < ry + HOF_WAIT + HOF_BALLOTS):

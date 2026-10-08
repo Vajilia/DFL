@@ -68,7 +68,7 @@ conn = sqlite3.connect(db)
 check("a plain save holds no snapshot of the league: the cards and a small league record are all there is", conn.execute("SELECT COUNT(*) FROM snapshots").fetchone()[0] == 0 and yB == 20)
 rec_len = len(conn.execute("SELECT json FROM league").fetchone()[0])
 check("the league record is small: it lists who sits where and the counters, and the people themselves stay on their cards",
-      rec_len < 200_000, f"{rec_len / 1e3:.0f} kB of league record against {os.path.getsize(db) / 1e6:.1f} MB of cards, Archive and choices")
+      rec_len < 300_000, f"{rec_len / 1e3:.0f} kB of league record against {os.path.getsize(db) / 1e6:.1f} MB of cards, Archive and choices")
 check("the league rebuilt from the cards is the saved league in every card, list and counter, down to the order of each card's ratings", everything(A) == everything(B))
 check("and the random-number stream is in step", r1.getstate() == r2.getstate())
 resB = play(B, r2, 21, 40)

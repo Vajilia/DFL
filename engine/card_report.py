@@ -89,7 +89,7 @@ def main():
     out.append("\n## An owner, a GM, and the Archive's first entries\n")
     top = max(lg.teams, key=lambda t: t.owner.seasons_owned)
     out.append(S.render_owner(top.owner, lg))
-    recalled = [o for o in lg.owners if o.status == "recalled"]
+    recalled = [o for o in lg.owners if o.status in ("recalled", "sold")]
     if recalled:
         out.append(S.render_owner(recalled[-1], lg))
     out.append(S.render_gm(max(lg.teams, key=lambda t: abs(t.gm.scouting_points) + abs(1 - t.gm.retention_factor)).gm, lg))

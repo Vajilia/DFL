@@ -152,11 +152,15 @@ def run_season(league: League, year: int, rng: random.Random, opt: Options = Non
         off_log = run_roster_offseason(league, rng, opt.roster_model, year, pick_of, returners)
         import cards
         league.retired_players.extend(p for p in before if p.retired)
+        import finance
+        off_log["finance"] = finance.close_books(league, year, pct, playoff_teams, champion, returners, off_log["cap"])    # the clubs' books, before the owners' review
+        off_log["forced_sales"] = finance.forced_sales(league, year, off_log["finance"]) if league.staff_on else []
         if league.staff_on:
             import staff_cards
             staff_log = staff_cards.season_end(league, year, pct, new_exiles, champion, playoff_teams, recall_div)
             votes = set(staff_log["votes"])
             cards.ensure_cards(league, year)
+            finance.apply_nudges(league)         # the fans' view of the spending reaches the owner who earned it, for next year's approval
         else:
             cards.offseason_cards(league, year)
         if league.coaches_on:

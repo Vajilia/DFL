@@ -58,7 +58,7 @@ READABLE = ("2", "3")                          # layouts it can open: version 2 
                                                # and the first save upgrades the file to version 3; any other version is refused rather than guessed at
 
 # what the league record holds beyond the lists of people: every plain attribute of the League, so a new one cannot be forgotten
-PLAIN = ("has_rosters", "card_seed", "staff_on", "coaches_on", "fans_on", "interactions_on", "_coach_ids", "_owner_ids", "_gm_ids", "_cand_ids", "_media_ids", "pool")
+PLAIN = ("has_rosters", "card_seed", "staff_on", "coaches_on", "fans_on", "interactions_on", "_coach_ids", "_owner_ids", "_gm_ids", "_cand_ids", "_media_ids", "pool", "finance_nudge")
 LISTS = ("teams", "by_id", "free_agents", "new_id", "coaches", "retired_players", "owners", "gms", "archive", "driver", "choice_log", "passed_over",
          "free_coaches", "free_gms", "hall", "fanbases", "media", "refs", "prev_pct", "movement")
 INT_KEYED = ("forecasts",)                     # card fields whose keys are numbers (JSON turns them into text)
@@ -197,7 +197,7 @@ def _league_record(lg, rng, year) -> dict:
     rec["teams"] = [dict(id=t.id, name=t.name, conf=t.conf, div=t.div, status=t.status, tier=t.tier, strength=t.strength, bank=t.bank,
                          roster=None if t.roster is None else [p.id for p in t.roster],
                          practice_squad=[p.id for p in t.practice_squad], ir=[p.id for p in t.ir], ir_returns=t.ir_returns,
-                         dead_now=t.dead_now, dead_next=t.dead_next, designations=t.designations, cash=t.cash, topup=t.topup, fund_cash=t.fund_cash,
+                         dead_now=t.dead_now, dead_next=t.dead_next, designations=t.designations, cash=t.cash, topup=t.topup, fund_cash=t.fund_cash, reserve=t.reserve, books=t.books,
                          coach=t.coach.cid if t.coach else None, owner=t.owner.oid if t.owner else None, gm=t.gm.gid if t.gm else None,
                          fans=t.fans.team_id if t.fans else None) for t in lg.teams]
     rec["free_agents"] = [p.id for p in lg.free_agents]
@@ -319,6 +319,7 @@ def _rebuild(db: sqlite3.Connection):
         tm.ir_returns = t.get("ir_returns", 0)
         tm.dead_now, tm.dead_next, tm.designations = t.get("dead_now", 0.0), t.get("dead_next", 0.0), t.get("designations", 0)
         tm.cash, tm.topup, tm.fund_cash = list(t.get("cash", ())), list(t.get("topup", ())), t.get("fund_cash", 0.0)
+        tm.reserve, tm.books = t.get("reserve", 0.0), list(t.get("books", ()))
         tm.coach = card("coach", t["coach"]) if t["coach"] is not None else None
         tm.owner = card("owner", t["owner"]) if t["owner"] is not None else None
         tm.gm = card("gm", t["gm"]) if t["gm"] is not None else None

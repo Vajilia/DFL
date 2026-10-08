@@ -79,7 +79,9 @@ class OwnerCard:
     team_id: Optional[int] = None
     approval: float = 0.5
     seasons_owned: int = 0
-    status: str = "owner"                    # owner | recalled | retired
+    status: str = "owner"                    # owner | recalled | sold (forced sale, finance.py) | retired
+    tenure: int = 0                          # a CEO's tenure in years, drawn at birth (finance.TENURE_MIN..MAX); 0 on old saves, which keep the age rule
+    draws: float = 0.0                       # what she has taken out of her club, $ millions (finance.py)
     teams_owned: List[int] = field(default_factory=list)   # the never-twice rule is checked against this
     # the soul (fixed at birth) and the living parts (living.py)
     soul_pos: str = ""
@@ -178,6 +180,7 @@ def make_owner_card(seed: int, oid: int, team_id: Optional[int] = None, age: Opt
         c.approval = NEW_OWNER_APPROVAL + (ratings["popularity"] - 50.0) / 50.0 * 0.05
     else:
         c.approval = max(0.30, min(0.75, r.gauss(START_APPROVAL_MEAN, START_APPROVAL_SD)))
+    c.tenure = r.randint(10, 20)             # after every other draw, so the rest of the card is unchanged (finance.TENURE_MIN, TENURE_MAX)
     return c
 
 
@@ -562,7 +565,9 @@ def season_end(lg, year: int, pct: Dict[int, float], new_exiles, champion: int, 
             continue
         r = C._rng(lg.card_seed, "ownerret", o.oid, year)
         p = 0.02 if o.age < OWNER_RETIRE_FROM else min(1.0, 0.02 + 0.05 * (o.age - OWNER_RETIRE_FROM + 1))
-        if o.age >= OWNER_MAX_AGE or r.random() < p:
+        # a CEO serves out her tenure (10 to 20 years, drawn at birth); owners on old saves (tenure 0) keep the age rule
+        done = o.tenure > 0 and o.seasons_owned >= o.tenure
+        if o.age >= OWNER_MAX_AGE or done or (o.tenure == 0 and r.random() < p):
             o.status = "retired"
             o.career.append({"year": year, "event": "retired", "age": o.age})
             log(lg, year, "owner_retired", team=t.id, owner=o.name, age=o.age)

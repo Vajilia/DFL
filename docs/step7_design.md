@@ -1,6 +1,6 @@
 # Step 7 design: CEOs, fan cards and the Equalization Fund
 
-Status: DESIGN ONLY (no engine code yet). Written 2026-10-08 for the Commissioner's review. Labels follow the rulebook: Skeleton / NFL / Adapted / Fair / Model.
+Status: BUILT (see docs/decisions.md, "Step 7"); the four open questions were answered with the recommendations below. Written 2026-10-08 for the Commissioner's review. Labels follow the rulebook: Skeleton / NFL / Adapted / Fair / Model.
 
 ## What the Commissioner has said (Skeleton)
 - Owners become CEOs with a 10 to 20 year tenure.
