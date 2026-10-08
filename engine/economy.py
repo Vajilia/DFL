@@ -65,6 +65,10 @@ VETERAN_BONUS_SHARE = 0.25      # share of a veteran contract's yearly cap numbe
 BONUS_MIN_SALARY = 1.0          # veterans below this cap number sign no bonus and have nothing guaranteed
 ROOKIE_BONUS_SHARE = (0.50, 0.30, 0.10, 0.10, 0.10, 0.10, 0.10)   # by draft round
 FUND_RESERVE = 100.0            # $ millions the Equalization Fund keeps before it pays a surplus
+# Restricted-free-agent tenders: first-round, second-round, original-round and right-of-first-refusal, NFL 2026 x 0.332 (rulebook). A tender is never
+# below 110% of the player's prior base salary (the NFL rule; the DFL applies it to all four levels and to the exclusive-rights tender).
+RFA_TENDERS = (2.69, 1.93, 1.22, 1.18)
+TENDER_PRIOR_BASE_FACTOR = 1.10
 RESIGN_BASE = 0.45           # chance an expiring player reaches the market (stars half, a good negotiator GM lower): about 1 in 3 expire a year, so about 15% reach the market, as before
 INIT_PAYROLL = (92.0, 99.5)  # where a founding team's payroll is put (contracts are scaled to it)
 
@@ -98,6 +102,14 @@ def contract_years(p) -> int:
     return base + (1 if p.ovr >= 70 else 0)
 
 
+def tender_price(level: str, prior_base: float, credited_seasons: int = 0) -> float:
+    """The one-year price of a tender. `level` is "first", "second", "original", "refusal" (restricted) or "exclusive" (exclusive rights, which is
+    the minimum salary of her earned rung). Never below 110% of her prior base salary, never above the maximum contract."""
+    levels = ("first", "second", "original", "refusal")
+    base = min_salary(credited_seasons) if level == "exclusive" else RFA_TENDERS[levels.index(level)]
+    return round(min(MAX_SALARY, max(base, TENDER_PRIOR_BASE_FACTOR * prior_base)), 2)
+
+
 def payroll(t) -> float:
     """What counts against the cap this season: everyone under contract (the roster, the practice squad and injured reserve) plus dead money."""
     return round(sum(p.salary for p in t.roster) + sum(p.salary for p in t.practice_squad) + sum(p.salary for p in t.ir) + t.dead_now, 2)
@@ -110,6 +122,13 @@ OFFSEASON_RESERVE = (ROSTER_SIZE - OFFSEASON_COUNT) * MIN_SALARY + PRACTICE_SQUA
 def counted_51(salaries, dead: float = 0.0) -> float:
     """The offseason count of a list of cap numbers: the 51 highest, plus dead money."""
     return round(sum(sorted(salaries, reverse=True)[:OFFSEASON_COUNT]) + dead, 4)
+
+
+def offseason_over(t, extra_slots: int = 0) -> float:
+    """What the team's cap count is in the offseason, with room held back for the places it still has to fill and for what the 51 rule does not count:
+    the 51 highest cap numbers, dead money, the rest of the 51 at the minimum, and the 52nd and 53rd places and the practice squad."""
+    count = counted_51([p.salary for p in t.roster], t.dead_now)
+    return count + max(0, OFFSEASON_COUNT - len(t.roster) - extra_slots) * MIN_SALARY + OFFSEASON_RESERVE
 
 
 def offseason_payroll(t) -> float:

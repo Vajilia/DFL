@@ -1,0 +1,142 @@
+{
+  "branch": "step6-rebuild",
+  "base": "61d49d6",
+  "full_suite": {
+    "check_rulebook": {
+      "exit": 0,
+      "seconds": 0,
+      "sha256": "f0e613f04dcdac2a0a66dc7da5978b342fcfaa886e067b84a5cfca6cf1ea30c5"
+    },
+    "check_agents": {
+      "exit": 0,
+      "seconds": 78,
+      "sha256": "1d660d77af1a6dbac73f6a87ff78cf03f8e880a0fdc0abc890bb2fa43791a702"
+    },
+    "check_cards": {
+      "exit": 0,
+      "seconds": 24,
+      "sha256": "388ded528087bd20aefe3bcea6084f9195200f51d0ba110fb4afbd2c9f4e0f2c"
+    },
+    "check_contracts": {
+      "exit": 0,
+      "seconds": 13,
+      "sha256": "3caf31f3654a2640c6e11945df969b8ac4e8f31167c727589672c8013bff7db0"
+    },
+    "check_decisions": {
+      "exit": 0,
+      "seconds": 275,
+      "sha256": "ffc0a73c782736ce67a06293e29699b2603f3522b9ee437e3572850b90cdbdfa"
+    },
+    "check_economy": {
+      "exit": 0,
+      "seconds": 70,
+      "sha256": "de91835da52334ac80e98f652ea3bd1733260533442d1ba19eb3fa566f4e213b"
+    },
+    "check_fans": {
+      "exit": 0,
+      "seconds": 167,
+      "sha256": "ec46386ca03ddba53fb1237b7d17f549fad512285e515b66c93ee96293ea9032"
+    },
+    "check_interactions": {
+      "exit": 0,
+      "seconds": 72,
+      "sha256": "29f316ab21d3e765f3daf2c2e2e62b90af66c83b18df4fbdb96f639b62830a2d"
+    },
+    "check_living": {
+      "exit": 0,
+      "seconds": 194,
+      "sha256": "94a6249e63d2269deca0bd54e4a1c2650ea81817b5bc5a496ccc8e43bc41e96d"
+    },
+    "check_movement": {
+      "exit": 0,
+      "seconds": 10,
+      "sha256": "e96d89f0bb530ba3e2c611750e52e8d100815675c270aa3ff9be2245a6b58947"
+    },
+    "check_phase0": {
+      "exit": 0,
+      "seconds": 0,
+      "sha256": "5f8917a9fbcb894748c4466d43d4c3e9eaf6079bfc949d19e427b858491089e2"
+    },
+    "check_phase1": {
+      "exit": 0,
+      "seconds": 3,
+      "sha256": "86a0ac3cfdd593e6a2ac6ac6292b45c11d029b8d4d6464c0f387864f37af42bd"
+    },
+    "check_phase2": {
+      "exit": 0,
+      "seconds": 552,
+      "sha256": "e1b799831a21c5e714d250a5325572d50efb328d3ebc832059651bac64eca41b"
+    },
+    "check_rosters": {
+      "exit": 0,
+      "seconds": 1,
+      "sha256": "fb3121cb1d3dee25f244b6d21636e2d4f006d27c386a0920c55c490671ac4468"
+    },
+    "check_service": {
+      "exit": 0,
+      "seconds": 3,
+      "sha256": "a1735b5aebaf63855e27c966d42652813d8d0b6e8efbdb905e662551bf0009a5"
+    },
+    "check_service_pay": {
+      "exit": 0,
+      "seconds": 15,
+      "sha256": "a3d875ac051063decc674246f7e043aa9db8efa0f36c6ba96a4fc77ca021488a"
+    },
+    "check_staff": {
+      "exit": 0,
+      "seconds": 45,
+      "sha256": "aa28d6a6d98e7a1cdb9b6ad99518e0a7a85cabf415e17adefe8fee312535f3fa"
+    },
+    "check_store": {
+      "exit": 0,
+      "seconds": 169,
+      "sha256": "30e48e8179c73a9a64188e99cb3da0a5f6dcfcb162d6fed571809e292c0e76e3"
+    },
+    "check_tables": {
+      "exit": 0,
+      "seconds": 184,
+      "sha256": "d75b8d37abee8898cc875a3f8dd8bcbb2d7317a67b6239b31a9376243022fa58"
+    },
+    "check_tiebreaks": {
+      "exit": 0,
+      "seconds": 8,
+      "sha256": "5b2b0bf1922df0da557ee28374006c843043bbb827d5fd2bf0499830f297eb14"
+    },
+    "check_ties": {
+      "exit": 0,
+      "seconds": 8,
+      "sha256": "a575037460d6f1686c99b661f9f96a7955d89c99f02f6f9b0e535ebe3f8be040"
+    }
+  },
+  "rerun_after_review_fixes": {
+    "check_rulebook": {
+      "exit": 0,
+      "sha256": "fa91950cf16ce54d5d14a28a72d8d7650dda24eaf52a93fe1aef60a0cc6699be"
+    },
+    "check_rosters": {
+      "exit": 0,
+      "sha256": "fb3121cb1d3dee25f244b6d21636e2d4f006d27c386a0920c55c490671ac4468"
+    },
+    "check_store": {
+      "exit": 0,
+      "sha256": "94eaba5376b3d01fa9de67dc6916538480a1c67e5dcd6284bf30783a26faa26d"
+    },
+    "check_decisions": {
+      "exit": 0,
+      "sha256": "ffc0a73c782736ce67a06293e29699b2603f3522b9ee437e3572850b90cdbdfa"
+    },
+    "check_tables": {
+      "exit": 0,
+      "sha256": "e9ddd266e4a090733ff27ba54febaacdce4a45701d3ff9d76a6f52e6cd1f725e"
+    },
+    "check_movement": {
+      "exit": 0,
+      "sha256": "5aac17c0b8ba812dcbe173739f81b45ba2e3f34e8debb820548bc6a64a51c661"
+    }
+  },
+  "fingerprints_40_seasons": {
+    "33": "64cd68524123cb93",
+    "5": "90ee43bb0cf4022c",
+    "21": "da1bd9214c9d4e96"
+  }
+}

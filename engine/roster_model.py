@@ -13,6 +13,9 @@ class RosterModel:
     fa_entry_rate: float = 0.15           # share of each roster whose contract runs out and who reach the market
     fa_star_protect: float = 0.5          # high-rated players are this much likelier to be re-signed
     fa_priority_noise: float = 0.5        # randomness in the order teams pick (rating points)
+    tender_reach: float = 1.5             # a restricted player worth more than this many times her tender is signed at the market (or lost), not tendered
+    exile_veteran_dice: bool = True       # an exiled club's expiring veteran (4+ accrued seasons, restricted only by the exile rule) is tendered only if the club wants her, by the same dice as any re-signing
+    rfa_offer_prob: float = 0.10          # chance a tendered restricted free agent worth well over her tender draws an offer sheet from a club that can afford one (offer sheets are rare)
     undrafted_per_year: int = 1000        # undrafted rookies each year: the market for camp invitations (the camp holds 90, so most camp places go to them)
     market_size: int = 700                # the best of the unsigned who stay on the market for next year (the rest leave football)
     camp_vet_max_ovr: float = 56.0        # camp invitations to unsigned veterans go only to players no better than this (better ones are paid the market price in free agency)

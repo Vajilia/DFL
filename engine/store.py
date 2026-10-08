@@ -13,6 +13,8 @@ Everything about a person lives on her own card, so the save is the cards:
   SNAPSHOTS (optional, save(..., snapshot=True)) a whole-league pickle kept per year so that an earlier year can be reopened. A
            snapshot is tied to the code that wrote it; the cards are not. The save is the cards by default.
   TABLES   people, honors and the other readable views of the same data for SQL, rewritten at every save.
+  MOVEMENT picks (original club, owner, slot, reservation, selection), tenders, offers and their event log: their own authoritative tables
+           (movement.py), format 3. A version-2 file opens with every pick at its original club and is upgraded by the next save.
 
 The choice log plus the league seed is the canonical record of history; the cards are what each person remembers.
 
@@ -35,6 +37,8 @@ import subprocess
 import time
 from typing import List, Tuple
 
+import movement
+
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS meta(key TEXT PRIMARY KEY, value TEXT);
 CREATE TABLE IF NOT EXISTS snapshots(year INTEGER PRIMARY KEY, saved_at TEXT, code_version TEXT, blob BLOB);
@@ -48,13 +52,15 @@ CREATE TABLE IF NOT EXISTS choices(seq INTEGER PRIMARY KEY, id TEXT, year INTEGE
     status TEXT, reason TEXT, json TEXT);
 CREATE TABLE IF NOT EXISTS hall(seq INTEGER PRIMARY KEY, year INTEGER, kind TEXT, id INTEGER, name TEXT, esteem REAL, share REAL, honors TEXT, json TEXT);
 CREATE TABLE IF NOT EXISTS teams(id INTEGER PRIMARY KEY, name TEXT, status TEXT, tier INTEGER, strength REAL, coach INTEGER, gm INTEGER, owner INTEGER);
-"""
-FORMAT = "2"                                   # version of the file layout; a different one is refused rather than guessed at
+""" + movement.SCHEMA
+FORMAT = "3"                                   # version of the file layout this code writes
+READABLE = ("2", "3")                          # layouts it can open: version 2 has no movement tables, so it opens with every pick at its original club,
+                                               # and the first save upgrades the file to version 3; any other version is refused rather than guessed at
 
 # what the league record holds beyond the lists of people: every plain attribute of the League, so a new one cannot be forgotten
 PLAIN = ("has_rosters", "card_seed", "staff_on", "coaches_on", "fans_on", "interactions_on", "_coach_ids", "_owner_ids", "_gm_ids", "_cand_ids", "_media_ids", "pool")
 LISTS = ("teams", "by_id", "free_agents", "new_id", "coaches", "retired_players", "owners", "gms", "archive", "driver", "choice_log", "passed_over",
-         "free_coaches", "free_gms", "hall", "fanbases", "media", "refs", "prev_pct")
+         "free_coaches", "free_gms", "hall", "fanbases", "media", "refs", "prev_pct", "movement")
 INT_KEYED = ("forecasts",)                     # card fields whose keys are numbers (JSON turns them into text)
 
 
@@ -240,6 +246,7 @@ def _write_tables(db: sqlite3.Connection, lg, rng, year: int):
                                                                          e["status"], e["reason"], _dump(e)) for i, e in enumerate(lg.choice_log)])
     db.executemany("INSERT INTO hall VALUES(?,?,?,?,?,?,?,?,?)", [(i, h["year"], h["kind"], h["id"], h["name"], h["esteem"], h["share"], _dump(h["honors"]), _dump(h))
                                                                   for i, h in enumerate(lg.hall)])
+    movement.write(db, lg.movement)
     db.executemany("INSERT INTO teams VALUES(?,?,?,?,?,?,?,?)", [(t.id, t.name, t.status, t.tier, t.strength,
                                                                  t.coach.cid if t.coach else None, t.gm.gid if t.gm else None, t.owner.oid if t.owner else None)
                                                                 for t in lg.teams])
@@ -255,8 +262,8 @@ def save(path: str, lg, rng: random.Random, year: int, note: str = "", snapshot:
     try:
         db.executescript(SCHEMA)
         have = db.execute("SELECT value FROM meta WHERE key='format'").fetchone()
-        if have and have[0] != FORMAT:
-            raise ValueError(f"{path} is a version {have[0]} save; this code writes version {FORMAT}")
+        if have and have[0] not in READABLE:
+            raise ValueError(f"{path} is a version {have[0]} save; this code writes version {FORMAT} and reads {', '.join(READABLE)}")
         db.execute("INSERT OR REPLACE INTO meta VALUES('format', ?)", (FORMAT,))
         if snapshot:
             driver, lg.driver = lg.driver, None
@@ -281,8 +288,8 @@ def _rebuild(db: sqlite3.Connection):
     from league import League, Team
     from players import IdSource, Player
     row = db.execute("SELECT value FROM meta WHERE key='format'").fetchone()
-    if not row or row[0] != FORMAT:
-        raise ValueError(f"not a version {FORMAT} save")
+    if not row or row[0] not in READABLE:
+        raise ValueError(f"not a version {' or '.join(READABLE)} save")
     rec = json.loads(db.execute("SELECT json FROM league WHERE key='record'").fetchone()[0])
     cards = {(k, i): json.loads(j) for k, i, j in db.execute("SELECT kind, id, json FROM cards")}
     made = {}
@@ -336,6 +343,7 @@ def _rebuild(db: sqlite3.Connection):
     lg.archive = [json.loads(j) for (j,) in db.execute("SELECT json FROM archive ORDER BY seq")]
     lg.choice_log = [json.loads(j) for (j,) in db.execute("SELECT json FROM choices ORDER BY seq")]
     lg.hall = [json.loads(j) for (j,) in db.execute("SELECT json FROM hall ORDER BY seq")]
+    lg.movement = movement.read(db)                  # picks, rights and offers; a version-2 file has none, which means every pick is at its original club
     rng = random.Random()
     st = rec["rng"]
     rng.setstate((st[0], tuple(st[1]), st[2]))
@@ -357,7 +365,10 @@ def load(path: str, year: int = None) -> Tuple[object, random.Random, int]:
     state = pickle.loads(row[1])
     rng = random.Random()
     rng.setstate(state["rng_state"])
-    return state["league"], rng, state["year"]
+    lg = state["league"]
+    if not hasattr(lg, "movement"):                  # a snapshot taken before the movement ledger existed
+        lg.movement = movement.Movement()
+    return lg, rng, state["year"]
 
 
 def years(path: str) -> List[int]:

@@ -7,6 +7,7 @@ from typing import Dict, List, Optional
 
 import rules as R
 import placeholder_model as PM
+from movement import Movement
 from players import IdSource, Player, build_practice_squad, build_roster
 
 
@@ -77,6 +78,7 @@ class League:
         self._media_ids = 0
         self._owner_ids = 0
         self._gm_ids = 0
+        self.movement = Movement()         # draft-pick ownership, tenders and offers (movement.py); saved in its own tables
         self.pool = 0.0                    # the Equalization Fund's cash balance: forfeited room in, exiled teams' absorbed payroll out (economy.py)
 
     def new_owner_id(self) -> int:

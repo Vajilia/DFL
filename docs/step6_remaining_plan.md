@@ -2,6 +2,10 @@
 
 Decision standard: NFL reasoning adapted to the DFL structure, fair competitiveness, then the Commissioner-elect for unresolved design choices. Existing skeleton rules remain fixed. A rule is complete only when legal actions execute in the season loop, illegal actions are rejected, state survives saves and the corresponding behavior is tested.
 
+## Done in the 6c/6d rebuild (engine/movement.py): pick ownership, tenders, funded offers, matching and compensation
+
+Built and tested: the pick ledger, the simulation day clock for the five-day match (survives a mid-window save), qualifying tenders, funded and reserved offers with own-or-better compensation, atomic commit, and format-3 storage. The sections below still describe the design intent; what remains is everything about tags, waivers, trades, compensatory awards, contract tables and the transaction clock for free-agency opening, waivers and the trade deadline.
+
 ## Next: transaction clock and pick ownership
 
 Give every pick a stable identity: draft year, round, original club, and kind (ordinary or compensatory). Track current owner separately from the club whose draft position determines the slot. Resolve the existing lottery/bands before evaluating pick order. Preserve the original slot and rookie scale when ownership changes. A pick may have one owner, one reservation and one eventual selection; spending or trading it twice must fail without changing state. Persist the ledger through `League` and the explicit `store` allowlist, with a migration for old saves. Track the current draft and the frozen three-drafts-ahead horizon.

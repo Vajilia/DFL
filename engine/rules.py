@@ -216,6 +216,7 @@ ACCRUED_SEASON_GAMES = 6
 CREDITED_SEASON_GAMES = 3
 UFA_SEASONS = 4
 RFA_SEASONS = 3
+RFA_MATCH_DAYS = 5                 # NFL: the prior club has five days to match an offer sheet (the DFL keeps it; unverified against the CBA text)
 
 # ---- Where each rule came from (the labels of engine/rulebook.py; MODEL marks simulation stand-ins that are not rules) ----
 SKELETON = "skeleton"   # the Commissioner's own rule

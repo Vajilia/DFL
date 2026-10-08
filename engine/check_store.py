@@ -14,6 +14,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import agents as AG  # noqa: E402
 import decisions as D  # noqa: E402
 import fingerprint as FP  # noqa: E402
+import movement as MV  # noqa: E402
 import store  # noqa: E402
 from league import new_league  # noqa: E402
 from season import Options, run_season  # noqa: E402
@@ -42,7 +43,7 @@ def everything(lg):
     lists = [[c.cid if hasattr(c, "cid") else c.gid for c in lg.passed_over], [c.cid for c in lg.coaches], [g.gid for g in lg.gms], [o.oid for o in lg.owners],
              [c.cid for c in lg.free_coaches], [g.gid for g in lg.free_gms], [p.id for p in lg.free_agents], [p.id for p in lg.retired_players]]
     return store._dump([cards, players, teams, lists, lg.archive, lg.choice_log, lg.hall, lg.refs, lg.prev_pct, lg.new_id.next,
-                        [getattr(lg, k) for k in store.PLAIN]])
+                        [getattr(lg, k) for k in store.PLAIN], MV.dump(lg.movement)])
 
 
 def play(lg, rng, a, b, driver=None):
