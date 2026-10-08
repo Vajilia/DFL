@@ -175,11 +175,15 @@ def refill_practice_squad(lg, t, rng: random.Random):
         t.practice_squad.append(p)
 
 
-def manage_week(lg, rng: random.Random, weeks_left: int) -> dict:
+def manage_week(lg, rng: random.Random, weeks_left: int, wire=None) -> dict:
     """Called at the end of each regular-season week, after the injuries have ticked. For every team: players who have healed and are
     allowed back return from injured reserve (the weakest surplus player is released to make room), players newly out for 4 or more
     games go on injured reserve (designated to return if they could come back this season and the team still has a return left;
-    otherwise only if the season is over for them), and the roster is filled back to 53."""
+    otherwise only if the season is over for them), and the roster is filled back to 53.
+
+    With a waiver `wire` (transactions.Wire), a released player who is subject to waivers goes on the wire instead of straight to free agency; the wire is
+    settled once every club's injured reserve is done and before any club fills its open places, so a claim can take the place of a signing."""
+    import transactions as T
     log = {"ir_placed": 0, "ir_returned": 0, "promoted": 0, "signed": 0}
     for t in lg.teams:
         for p in t.ir:
@@ -191,7 +195,11 @@ def manage_week(lg, rng: random.Random, weeks_left: int) -> dict:
             p.ir_games, p.ir_designated = 0, False
             log["ir_returned"] += 1
             if len(t.roster) > ROSTER_SIZE:
-                _release(lg, t, _weakest_surplus(t))
+                out = _weakest_surplus(t)
+                if wire is not None and T.subject_to_waivers(out, wire.week):
+                    T.waive(lg, t, out, wire)
+                else:
+                    _release(lg, t, out)
         hurt = sorted((p for p in t.roster if p.weeks_out >= R.IR_MIN_GAMES), key=lambda p: -p.ovr)
         for p in hurt:
             season_ending = p.weeks_out >= weeks_left
@@ -203,8 +211,12 @@ def manage_week(lg, rng: random.Random, weeks_left: int) -> dict:
                 if p.ir_designated:
                     t.ir_returns += 1
                 log["ir_placed"] += 1
-        # a player who is out for the season and can never return this year does not need a designation; one who has been on injured
-        # reserve and is healed but was not designated stays there until the offseason
+    if wire is not None:
+        T.resolve(lg, wire)
+        log["waived"], log["claimed"] = wire.waived, wire.claimed
+    # a player who is out for the season and can never return this year does not need a designation; one who has been on injured
+    # reserve and is healed but was not designated stays there until the offseason
+    for t in lg.teams:
         if len(t.roster) < ROSTER_SIZE:
             fill_roster(lg, t, rng, log)
     return log

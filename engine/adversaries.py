@@ -26,7 +26,7 @@ def _best(dp, worst=False):
 def _table(dp) -> bool:
     """A negotiation table's turn (interviews.py). The staffing adversaries below play only the owner's review and hire choices and leave
     the tables to the rules."""
-    return dp.kind.startswith("interview")
+    return dp.kind.startswith(("interview", "contract"))
 
 
 def _most_fires(dp):

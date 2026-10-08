@@ -45,7 +45,7 @@ class StandIn:
         r = random.Random(f"standin-{payload['id']}")
         if payload["kind"] == "staff_review":
             return self._review(payload, me, r)
-        if payload["kind"].startswith("interview"):
+        if payload["kind"].startswith("interview") or payload["kind"].startswith("contract"):
             return getattr(self, "_" + payload["kind"])(payload, me, r)
         return self._hire(payload, me, r)
 
@@ -102,6 +102,36 @@ class StandIn:
         base = OFFER_LIMIT.get(me["trait"], 1)
         famous = candidate.get("reputation") in ("legend", "Hall of Famer", "star")
         return max(0, min(3, base + (1 if famous else 0) + (1 if alternatives == 0 else 0)))
+
+    # ---- the contract table (step 6i): a stand-in that bargains a little, always inside the options the rep leaves
+    def _contract_offer(self, p, me, r):
+        ctx = p["context"]
+        std = ctx["standard_length_years"]
+        have = {(o["tags"]["pct"], o["tags"]["years"]) for o in p["options"]}
+        cheap = me["trait"] in ("Penny-Pincher", "Opportunist")
+        pct = 90 if cheap and (90, std) in have else 100 if (100, std) in have else max(c for c, _ in have)
+        pick = f"offer_{pct}_{std}" if (pct, std) in have else f"offer_{pct}_{next(y for c, y in sorted(have) if c == pct)}"
+        return dict(choice=pick, reason=f"{me['trait']} opens at {pct}%", note=f"Offered {pct}% to {ctx['player']['position']} rated {ctx['player']['rating']}." if self.notes else "")
+
+    def _contract_reply(self, p, me, r):
+        offer = next(o["tags"]["pct"] for o in p["options"] if o["id"] == "accept")
+        counters = sorted(o["tags"]["pct"] for o in p["options"] if o["id"].startswith("counter_"))
+        if offer >= 100 or not counters:
+            pick = "accept"
+        elif offer <= 90 and me["pressure"].get("contract", 50) >= 70 and r.random() < 0.2:
+            pick = "walk"
+        else:
+            pick = f"counter_{counters[0]}"
+        return dict(choice=pick, reason=f"offered {offer}%", note=f"Bargained over pay: {pick}." if self.notes else "")
+
+    def _contract_counter(self, p, me, r):
+        ask = next(o["tags"]["pct"] for o in p["options"] if o["id"] == "accept")
+        pick = "accept" if ask <= 100 else "hold"
+        return dict(choice=pick, reason=f"she asks {ask}%", note="")
+
+    def _contract_final(self, p, me, r):
+        offer = next(o["tags"]["pct"] for o in p["options"] if o["id"] == "accept")
+        return dict(choice="accept" if offer >= 90 else "walk", reason=f"held at {offer}%", note="")
 
     def _interview_offer(self, p, me, r):
         ctx = p["context"]

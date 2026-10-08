@@ -12,15 +12,20 @@ Three things live here, and they are saved together in their own SQLite tables (
             The prior club has five days to match every represented term. A match releases both holds. If it does not match, the player and the
             compensation change hands together or not at all.
 
+TAGS      one franchise (non-exclusive or exclusive) or transition tag a club a year on an expiring unrestricted player. The tag price is a table lookup
+            (the top-7 or top-15 average at her position, 120% of her last cap number, escalating if the same club tags her again), and the tag is a
+            one-year guaranteed contract. A non-exclusive franchise tag and a transition tag take offers like a restricted tender; the franchise
+            tag carries two first-round picks as compensation, the transition tag none. An exclusive franchise takes no offers.
+
 What this slice does not do (recorded in the rulebook rows): NFL incentives and special contract clauses, competing offer sheets for one player,
-unsigned-rights carryover, tags, waivers, full trades, compensatory awards. `transfer_pick` is the one door a trade will use for picks.
+unsigned-rights carryover, full trades, compensatory awards. `transfer_pick` is the one door a trade will use for picks.
 
     "Days" are the league's offseason calendar: an offer made on day d can be matched through day d + 5; at day d + 6 it is committed.
 """
 from __future__ import annotations
 
 import sqlite3
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass, asdict, field
 from typing import Dict, List, Optional, Tuple
 
 import economy as EC
@@ -30,6 +35,14 @@ from positions import STARTERS
 HORIZON = 3                                  # NFL: picks can be traded for the coming draft and up to three drafts ahead (draft.trading row)
 LEVELS = ("first", "second", "original", "refusal")
 MATCH_TOLERANCE = 0.20                       # MODEL: the prior club matches an offer up to this far above the player's market price
+TAG_MATCH_TOLERANCE = 0.40                   # MODEL: a club matches further above market for a player it franchised or transitioned
+TAG_TYPES = ("franchise", "exclusive", "transition")
+TAG_KIND = {"franchise": "franchise", "exclusive": "franchise_x", "transition": "transition"}
+FRANCHISE_PICKS = 2                          # NFL: a franchise-tagged player carries two first-round picks as compensation
+FRANCHISE_KINDS = ("franchise", "franchise_x")
+OFFERABLE = ("restricted", "franchise", "transition")     # the rights that take another club's offer sheet
+TAG_MAX_STREAK = 3                           # NFL: the same player may be tagged at most three times in a row by her club
+COMP_BASE = 100                              # a compensatory pick's "original" is COMP_BASE + its place in the round, never a club id (clubs are 0..47)
 PICK_RECORD_YEARS = 1                        # MODEL: finished drafts older than this many years are dropped from the ledger
 
 
@@ -57,8 +70,8 @@ class Right:
     year: int
     player_id: int
     club: int
-    kind: str                                # "exclusive" or "restricted"
-    level: str                               # "exclusive" or one of LEVELS
+    kind: str                                # "exclusive" (rights), "restricted", "franchise", "franchise_x" (exclusive franchise) or "transition"
+    level: str                               # "exclusive" or one of LEVELS for tenders; the tag type for tags
     price: float                             # the one-year tender
     comp_round: Optional[int]                # the round of compensation an offer must carry (None: none)
     status: str                              # "tendered" (window open), "kept", "matched", "transferred"
@@ -79,6 +92,11 @@ class Offer:
     day: int
     deadline: int
     status: str                              # "pending", "matched", "transferred", "void" (lapsed: could no longer be completed)
+    extra: List[Tuple[int, int, int]] = field(default_factory=list)      # keys of further compensation picks (a franchise tag carries two)
+
+    @property
+    def keys(self) -> List[Tuple[int, int, int]]:
+        return ([self.pick] if self.pick else []) + list(self.extra)
 
 
 class Movement:
@@ -106,12 +124,19 @@ class Movement:
         self.ensure_picks(lg, year)
         for k, pk in self.picks.items():
             if k[0] == year:
-                pk.slot = (pk.rnd - 1) * R.DRAFT_PICKS_PER_ROUND + pick_of[pk.original]
-        for k in [k for k in self.rights if k[0] < year - 1]:
+                if pk.original >= COMP_BASE:               # a compensatory pick comes after the round's 48 regular picks and is paid the round's last rung
+                    pk.slot = pk.rnd * R.DRAFT_PICKS_PER_ROUND
+                else:
+                    pk.slot = (pk.rnd - 1) * R.DRAFT_PICKS_PER_ROUND + pick_of[pk.original]
+        for k in [k for k, r in self.rights.items() if k[0] < year - (TAG_MAX_STREAK if r.kind in FRANCHISE_KINDS else 1)]:
             del self.rights[k]
 
     def owned(self, year: int, club: int) -> List[Pick]:
         return sorted((p for p in self.picks.values() if p.year == year and p.owner == club), key=lambda p: (p.rnd, p.original))
+
+    def comp_picks(self, year: int, rnd: int) -> List[Pick]:
+        """The compensatory picks of a round, in the order they are made (best value first)."""
+        return sorted((p for p in self.picks.values() if p.year == year and p.rnd == rnd and p.original >= COMP_BASE), key=lambda p: p.original)
 
     def slots_owned(self, year: int, club: int) -> List[int]:
         return [p.slot for p in self.owned(year, club) if p.slot is not None and p.selected is None]
@@ -191,6 +216,85 @@ class Movement:
         self._event("tender", year=year, player=p.id, club=club.id, level=level, price=right.price, comp_round=comp)
         return right
 
+    # ---- tags ------------------------------------------------------------------------------------------------------------------------------
+    @staticmethod
+    def tag_table(lg, min_years_left: int = 1) -> Dict[str, List[float]]:
+        """Cap numbers of players under contract past this offseason's expirations, by position, highest first. `min_years_left` is 1 once contracts have
+        run down and 2 before they have (so the same players count either way)."""
+        table: Dict[str, List[float]] = {}
+        for t in lg.teams:
+            for p in list(t.roster) + list(t.ir):
+                if p.years_left >= min_years_left:
+                    table.setdefault(p.pos, []).append(p.salary)
+        for v in table.values():
+            v.sort(reverse=True)
+        return table
+
+    def tag_of(self, year: int, club: int) -> Optional["Right"]:
+        """The tag a club has used this year, if any."""
+        for r in self.rights.values():
+            if r.year == year and r.club == club and r.kind in FRANCHISE_KINDS + ("transition",):
+                return r
+        return None
+
+    def tag_streak(self, year: int, club: int, player_id: int) -> int:
+        """How many years in a row, up to the one before `year`, this club has franchise-tagged her."""
+        n = 0
+        while True:
+            r = self.rights.get((year - 1 - n, player_id))
+            if r is None or r.club != club or r.kind not in FRANCHISE_KINDS:
+                return n
+            n += 1
+
+    def tag_price(self, p, tag_type: str, year: int, club: int, table: Dict[str, List[float]]) -> float:
+        """The one-year price. Franchise (either kind): the average of the top 7 cap numbers at her position or 120% of her last cap number, whichever is more;
+        her club's second consecutive tag is at least 120% of the first, its third at least 144% of the second and at least the quarterback number and 120% of the
+        position number. A transition tag: the average of the top 15 or 120% of her last cap number. Never above the maximum contract."""
+        if tag_type not in TAG_TYPES:
+            raise MovementError(f"unknown tag {tag_type!r}")
+        n = EC.TRANSITION_TAG_TOP_N if tag_type == "transition" else EC.FRANCHISE_TAG_TOP_N
+        top = table.get(p.pos, [])[:n]
+        avg = sum(top) / len(top) if top else 0.0
+        price = max(avg, EC.TAG_PRIOR_FACTOR * p.salary)
+        if tag_type != "transition":
+            streak = self.tag_streak(year, club, p.id)
+            if streak >= TAG_MAX_STREAK:
+                raise MovementError("a club may tag the same player at most three years in a row")
+            if streak >= 1:
+                prev = self.rights[(year - 1, p.id)].price
+                price = max(price, EC.TAG_PRIOR_FACTOR * prev)
+            if streak >= 2:
+                qb_top = table.get("QB", [])[:EC.FRANCHISE_TAG_TOP_N]
+                qb = sum(qb_top) / len(qb_top) if qb_top else 0.0
+                price = max(price, EC.TAG_THIRD_FACTOR * prev, qb, EC.TAG_PRIOR_FACTOR * avg)
+        return round(min(EC.MAX_SALARY, price), 2)
+
+    def tag(self, lg, p, tag_type: str, year: int, exiled: bool = False, table: Optional[Dict[str, List[float]]] = None) -> "Right":
+        """A club tags an expiring unrestricted player: one tag a club a year, a one-year guaranteed contract at the tag price. Illegal tags raise before anything
+        changes. An exiled club may tag. A franchise tag takes offers with two first-round picks as compensation; a transition tag takes offers with none; an
+        exclusive franchise takes none."""
+        import service
+        club = lg.by_id.get(p.team_id)
+        if club is None or p not in club.roster:
+            raise MovementError("only a player on a club's 53 can be tagged")
+        if p.years_left > 0:
+            raise MovementError("her contract has not run out")
+        if (year, p.id) in self.rights:
+            raise MovementError("already tendered or tagged this year")
+        if service.expiry_class(p) != "unrestricted":
+            raise MovementError("only an unrestricted player takes a tag; the others take a tender")
+        if self.tag_of(year, club.id) is not None:
+            raise MovementError("a club has one tag a year")
+        price = self.tag_price(p, tag_type, year, club.id, table if table is not None else self.tag_table(lg))
+        EC.clear_contract(p)
+        EC.sign(p, price, 1, share=0.0, guarantee_years=1)            # the tag is signed as a one-year contract and is guaranteed once signed
+        kind = TAG_KIND[tag_type]
+        comp = 1 if tag_type == "franchise" else None
+        right = Right(year, p.id, club.id, kind, tag_type, p.salary, comp, "kept" if tag_type == "exclusive" else "tendered")
+        self.rights[(year, p.id)] = right
+        self._event("tag", year=year, player=p.id, club=club.id, type=tag_type, price=right.price)
+        return right
+
     # ---- cap and pick reservations ---------------------------------------------------------------------------------------------------------
     def reserved_cap(self, club: int) -> float:
         return round(sum(o.salary for o in self.offers.values() if o.status == "pending" and o.offering == club), 4)
@@ -210,13 +314,26 @@ class Movement:
                 return held[0]
         raise MovementError(f"club {offering} owns no available pick in round {comp_round} or better")
 
+    def compensation_picks(self, year: int, offering: int, right: "Right") -> List[Pick]:
+        """Every pick an offer for this right must carry. A restricted tender: one, own-or-better. A franchise tag: two first-round picks, the offering club's
+        earliest (this draft's, then the next draft's). A transition tag: none."""
+        if right.comp_round is None:
+            return []
+        if right.kind != "franchise":
+            return [self.compensation_pick(year, offering, right.comp_round)]
+        firsts = [p for y in range(year, year + HORIZON + 1) for p in self.owned(y, offering)
+                  if p.rnd == 1 and p.reserved_by is None and p.selected is None]
+        if len(firsts) < FRANCHISE_PICKS:
+            raise MovementError(f"club {offering} does not own two first-round picks to put up for a franchise-tagged player")
+        return firsts[:FRANCHISE_PICKS]
+
     # ---- offers ----------------------------------------------------------------------------------------------------------------------------
     def make_offer(self, lg, offering: int, player_id: int, salary: float, years: int, year: int,
                    share: Optional[float] = None, guarantee_years: int = 1) -> Offer:
         """A binding, funded offer to a restricted free agent whose tender window is open. Everything is checked before anything is reserved."""
         right = self.rights.get((year, player_id))
-        if right is None or right.kind != "restricted" or right.status != "tendered":
-            raise MovementError("no open restricted tender for that player")
+        if right is None or right.kind not in OFFERABLE or right.status != "tendered":
+            raise MovementError("no open tender that takes an offer for that player")
         if offering == right.club:
             raise MovementError("a club cannot make an offer sheet to its own player")
         if offering not in lg.by_id:
@@ -236,16 +353,17 @@ class Movement:
             raise MovementError("bonus share must be between zero and one")
         if self.room(lg, offering) + 1e-9 < salary:
             raise MovementError("the offer is not funded: the cap room is not there")
-        pk = self.compensation_pick(year, offering, right.comp_round)
+        pks = self.compensation_picks(year, offering, right)
         # all checks passed: reserve
         o = Offer(self.next_offer, year, player_id, offering, right.club, salary, int(years),
-                  -1.0 if share is None else float(share), int(guarantee_years), pk.key if pk else None, self.day, self.day + R.RFA_MATCH_DAYS, "pending")
+                  -1.0 if share is None else float(share), int(guarantee_years), pks[0].key if pks else None, self.day, self.day + R.RFA_MATCH_DAYS, "pending",
+                  [p.key for p in pks[1:]])
         self.next_offer += 1
         self.offers[o.id] = o
-        if pk:
+        for pk in pks:
             pk.reserved_by = o.id
         self._event("offer", offer=o.id, year=year, player=player_id, offering=offering, original=right.club, salary=salary, years=o.years,
-                    pick=list(o.pick) if o.pick else None, deadline=o.deadline)
+                    pick=list(o.pick) if o.pick else None, picks=[list(k) for k in o.keys], deadline=o.deadline)
         return o
 
     def _terms(self, o: Offer, p):
@@ -285,8 +403,8 @@ class Movement:
 
     def _release(self, o: Offer, status: str):
         o.status = status
-        if o.pick:
-            pk = self.picks[o.pick]
+        for key in o.keys:
+            pk = self.picks[key]
             if pk.reserved_by == o.id:
                 pk.reserved_by = None
 
@@ -301,11 +419,12 @@ class Movement:
         p = self._player(lg, o.player_id, o.original)
         if p is None or right is None or right.status != "tendered":
             raise MovementError("the player is no longer on the tender")
-        pk = None
-        if o.pick:
-            pk = self.picks.get(o.pick)
+        held = []
+        for key in o.keys:
+            pk = self.picks.get(key)
             if pk is None or pk.reserved_by != o.id or pk.owner != o.offering or pk.selected is not None:
                 raise MovementError("the compensation pick is no longer held for this offer")
+            held.append(pk)
         # the offering club's room, counting the hold as its own money (the player is added in the place the hold was kept for)
         if EC.limit(off) - EC.offseason_over(off, extra_slots=1) - (self.reserved_cap(o.offering) - o.salary) + 1e-9 < o.salary:
             raise MovementError("the offering club can no longer fund the offer")
@@ -316,12 +435,12 @@ class Movement:
         EC.sign(p, terms["salary"], terms["years"], share=terms["share"], guarantee_years=terms["guarantee_years"])
         p.team_id, p.fa_years = off.id, 0
         off.roster.append(p)
-        if pk:
+        for pk in held:
             pk.owner = o.original
         self._release(o, "transferred")
         right.status = "transferred"
         self._event("transfer", offer=o.id, year=o.year, player=o.player_id, from_club=o.original, to_club=o.offering,
-                    pick=list(o.pick) if o.pick else None)
+                    pick=list(o.pick) if o.pick else None, picks=[list(k) for k in o.keys])
 
     def pass_on(self, lg, offer_id: int):
         """The prior club declines to match: committed at once."""
@@ -385,7 +504,7 @@ class Movement:
         """The restricted market, once a year, before the draft: a few clubs send offers; the prior clubs match or not; five days pass; whatever
         stands is committed. Rare, as in the NFL (rm.rfa_offer_prob)."""
         import rosters as RS
-        rights = [r for r in self.rights.values() if r.year == year and r.kind == "restricted" and r.status == "tendered"]
+        rights = [r for r in self.rights.values() if r.year == year and r.kind in OFFERABLE and r.status == "tendered"]
         by_id = {}
         for t in lg.teams:
             for p in t.roster:
@@ -395,12 +514,13 @@ class Movement:
         for r in rights:
             p = by_id[r.player_id]
             market = EC.market_salary(p.pos, p.ovr, p.credited_seasons)
-            if market < 1.25 * r.price:
+            tagged = r.kind != "restricted"
+            if market < (1.0 if tagged else 1.25) * r.price:
                 continue
-            if rng.random() >= rm.rfa_offer_prob:
+            if rng.random() >= (rm.tag_offer_prob if tagged else rm.rfa_offer_prob):
                 continue
             premium = 1.0 + rng.uniform(0.05, 0.40)
-            salary = round(min(EC.MAX_SALARY, market * premium), 2)
+            salary = round(min(EC.MAX_SALARY, max(r.price, market * premium)), 2)
             best, best_gain = None, 0.0
             for t in lg.teams:
                 if t.id == r.club or t.id in busy:
@@ -413,7 +533,7 @@ class Movement:
                 if self.room(lg, t.id) + 1e-9 < salary:
                     continue
                 try:
-                    self.compensation_pick(year, t.id, r.comp_round)
+                    self.compensation_picks(year, t.id, r)
                 except MovementError:
                     continue
                 best, best_gain = t, gain
@@ -429,7 +549,8 @@ class Movement:
         for o in sorted((o for o in self.offers.values() if o.status == "pending"), key=lambda o: o.id):
             p = by_id[o.player_id]
             market = EC.market_salary(p.pos, p.ovr, p.credited_seasons)
-            if o.salary <= market * (1.0 + MATCH_TOLERANCE):
+            tol = TAG_MATCH_TOLERANCE if self.rights[(o.year, o.player_id)].kind != "restricted" else MATCH_TOLERANCE
+            if o.salary <= market * (1.0 + tol):
                 try:
                     self.match(lg, o.id)
                     log["matched"] = log.get("matched", 0) + 1
@@ -449,6 +570,7 @@ CREATE TABLE IF NOT EXISTS movement_rights(year INTEGER, player_id INTEGER, club
     PRIMARY KEY(year, player_id));
 CREATE TABLE IF NOT EXISTS movement_offers(id INTEGER PRIMARY KEY, year INTEGER, player_id INTEGER, offering INTEGER, original INTEGER, salary REAL, years INTEGER,
     share REAL, guarantee_years INTEGER, pick_year INTEGER, pick_rnd INTEGER, pick_original INTEGER, day INTEGER, deadline INTEGER, status TEXT);
+CREATE TABLE IF NOT EXISTS movement_offer_extra(offer_id INTEGER, seq INTEGER, year INTEGER, rnd INTEGER, original INTEGER, PRIMARY KEY(offer_id, seq));
 CREATE TABLE IF NOT EXISTS movement_events(seq INTEGER PRIMARY KEY, day INTEGER, kind TEXT, json TEXT);
 """
 
@@ -456,7 +578,7 @@ CREATE TABLE IF NOT EXISTS movement_events(seq INTEGER PRIMARY KEY, day INTEGER,
 def write(db: sqlite3.Connection, mv: Movement):
     """Replace the movement tables with this ledger. The caller commits."""
     import json                                  # the tables are created with the rest of the schema (store.SCHEMA), so this stays inside one transaction
-    for tbl in ("movement_state", "movement_picks", "movement_rights", "movement_offers", "movement_events"):
+    for tbl in ("movement_state", "movement_picks", "movement_rights", "movement_offers", "movement_offer_extra", "movement_events"):
         db.execute(f"DELETE FROM {tbl}")
     db.executemany("INSERT INTO movement_state VALUES(?,?)", [("day", str(mv.day)), ("next_offer", str(mv.next_offer))])
     db.executemany("INSERT INTO movement_picks VALUES(?,?,?,?,?,?,?)",
@@ -467,6 +589,8 @@ def write(db: sqlite3.Connection, mv: Movement):
                    [(o.id, o.year, o.player_id, o.offering, o.original, o.salary, o.years, o.share, o.guarantee_years,
                      o.pick[0] if o.pick else None, o.pick[1] if o.pick else None, o.pick[2] if o.pick else None, o.day, o.deadline, o.status)
                     for _, o in sorted(mv.offers.items())])
+    db.executemany("INSERT INTO movement_offer_extra VALUES(?,?,?,?,?)",
+                   [(o.id, i, k[0], k[1], k[2]) for _, o in sorted(mv.offers.items()) for i, k in enumerate(o.extra)])
     db.executemany("INSERT INTO movement_events VALUES(?,?,?,?)", [(e["seq"], e["day"], e["kind"], json.dumps(e, sort_keys=True)) for e in mv.events])
 
 
@@ -490,6 +614,9 @@ def read(db: sqlite3.Connection) -> Movement:
             "SELECT id, year, player_id, offering, original, salary, years, share, guarantee_years, pick_year, pick_rnd, pick_original, day, deadline, status "
             "FROM movement_offers"):
         mv.offers[i] = Offer(i, y, pid, off, orig, sal, yrs, sh, gy, (py, pr, po) if py is not None else None, day, dl, status)
+    if "movement_offer_extra" in have:
+        for oid, _, y, rnd, orig in db.execute("SELECT offer_id, seq, year, rnd, original FROM movement_offer_extra ORDER BY offer_id, seq"):
+            mv.offers[oid].extra.append((y, rnd, orig))
     mv.events = [json.loads(j) for (j,) in db.execute("SELECT json FROM movement_events ORDER BY seq")]
     return mv
 

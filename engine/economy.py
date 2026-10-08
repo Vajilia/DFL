@@ -47,7 +47,7 @@ MIN_SALARY = MIN_SALARY_SCALE[0]       # the lowest rung (a rookie): the least a
 PRACTICE_SQUAD_SALARY = 0.10 # NFL 2025 weekly scale about $13-20k x 18 weeks x 0.332; counts against the cap like any contract
 SQUAD_SIZE = ROSTER_SIZE + _rules.PRACTICE_SQUAD_SIZE     # everyone under contract to a team in a normal year
 MAX_SALARY = 0.25 * CAP      # table limit (rulebook): no contract's yearly cap value above a quarter of the cap
-PAY_SCALE = 12.5             # $ millions for a 90-rated player at a position with factor 1
+PAY_SCALE = 11.5             # $ millions for a 90-rated player at a position with factor 1
 PAY_POWER = 2.5              # how fast pay rises with rating (stars cost much more than starters)
 POS_PAY = {"QB": 1.8, "RB": 0.8, "WR": 1.0, "TE": 0.8, "OL": 1.0, "DL": 1.2, "LB": 0.9, "CB": 1.1, "S": 0.9, "K": 0.35, "P": 0.3}
 # The rookie scale by overall pick (NFL slot scale x 0.332, rulebook): pick 1 about $4.4M, $1.2M at the end of round 1, $0.65M at the end of round 2,
@@ -69,6 +69,13 @@ FUND_RESERVE = 100.0            # $ millions the Equalization Fund keeps before 
 # below 110% of the player's prior base salary (the NFL rule; the DFL applies it to all four levels and to the exclusive-rights tender).
 RFA_TENDERS = (2.69, 1.93, 1.22, 1.18)
 TENDER_PRIOR_BASE_FACTOR = 1.10
+# Franchise and transition tags (NFL: the average of the top 5 salaries at the position for the franchise tag and of the top 10 for the transition tag, or 120% of
+# the player's prior salary if more; DFL: 48 clubs, so top 7 and top 15 -- the rulebook rows say these are scaled). A second consecutive franchise tag is at
+# least 120% of the first, a third at least 144% of the second and never below the quarterback franchise number; no tag above the maximum contract.
+FRANCHISE_TAG_TOP_N = 7
+TRANSITION_TAG_TOP_N = 15
+TAG_PRIOR_FACTOR = 1.20
+TAG_THIRD_FACTOR = 1.44
 RESIGN_BASE = 0.45           # chance an expiring player reaches the market (stars half, a good negotiator GM lower): about 1 in 3 expire a year, so about 15% reach the market, as before
 INIT_PAYROLL = (92.0, 99.5)  # where a founding team's payroll is put (contracts are scaled to it)
 

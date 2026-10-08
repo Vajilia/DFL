@@ -16,6 +16,16 @@ class RosterModel:
     tender_reach: float = 1.5             # a restricted player worth more than this many times her tender is signed at the market (or lost), not tendered
     exile_veteran_dice: bool = True       # an exiled club's expiring veteran (4+ accrued seasons, restricted only by the exile rule) is tendered only if the club wants her, by the same dice as any re-signing
     rfa_offer_prob: float = 0.10          # chance a tendered restricted free agent worth well over her tender draws an offer sheet from a club that can afford one (offer sheets are rare)
+    contract_tables: bool = True          # step 6i: the club's value-to-price rule decides who is kept and important deals are made at a table; False = the old re-signing dice
+    keep_g0: float = -12.0                # the value rule: kept when her gain to the club is at least g0 + g1 x her price (+ the general manager's shift)
+    keep_g1: float = 0.3
+    keep_gm_shift: float = 20.0
+    cap_headroom: float = 3.0             # $ millions a club keeps back from its limit when it re-signs and signs free agents (NFL clubs rarely spend to the last dollar)
+    table_min_ovr: float = 70.0           # players rated this or better are signed at a contract table
+    tag_prob: float = 0.35                # chance a club tags its best expiring unrestricted player rated tag_min_ovr or better (a tag is a premium one-year deal)
+    tag_min_ovr: float = 70.0
+    tag_franchise_ovr: float = 78.0       # a tagged player rated this or better gets the franchise tag; below it, the transition tag
+    tag_offer_prob: float = 0.05          # chance a franchise- or transition-tagged player worth at least her tag price draws an offer sheet
     undrafted_per_year: int = 1000        # undrafted rookies each year: the market for camp invitations (the camp holds 90, so most camp places go to them)
     market_size: int = 700                # the best of the unsigned who stay on the market for next year (the rest leave football)
     camp_vet_max_ovr: float = 56.0        # camp invitations to unsigned veterans go only to players no better than this (better ones are paid the market price in free agency)

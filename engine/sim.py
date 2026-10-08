@@ -84,6 +84,7 @@ class GameRunner:
         self.service_year = None                  # set by run_season; direct game calls need no service accounting
         self.week = 0                             # regular-season weeks finished (the injured-reserve calendar)
         self.ir_log: list = []                    # one rosters.manage_week summary per week
+        self.record: Dict[int, list] = {}         # team id -> [wins, losses, ties] over the games that count (waiver priority)
 
     # ---- lineups ----------------------------------------------------------
     def lineup(self, tid: int):
@@ -101,6 +102,12 @@ class GameRunner:
 
     # ---- one game ---------------------------------------------------------
     def play(self, game: Game, neutral: bool = False, injuries: bool = True) -> Game:
+        game = self._play(game, neutral, injuries)
+        import transactions
+        transactions.note_result(self.record, game)
+        return game
+
+    def _play(self, game: Game, neutral: bool = False, injuries: bool = True) -> Game:
         if self.service_year is not None:
             import service
             service.record_game(self.league, game, self.service_year)
@@ -168,6 +175,10 @@ class GameRunner:
             for t in self.league.teams:
                 tick_week(list(t.roster) + list(t.ir), self._new_hurt)
             self.week += 1
-            self.ir_log.append(rosters.manage_week(self.league, self.rng, R.REGULAR_SEASON_WEEKS - self.week))
+            wire = None
+            if self.service_year is not None:
+                import transactions
+                wire = transactions.new_wire(self.league, self.service_year, self.week, self.record)
+            self.ir_log.append(rosters.manage_week(self.league, self.rng, R.REGULAR_SEASON_WEEKS - self.week, wire))
         self._new_hurt = set()
         self._cache.clear()

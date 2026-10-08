@@ -218,6 +218,14 @@ UFA_SEASONS = 4
 RFA_SEASONS = 3
 RFA_MATCH_DAYS = 5                 # NFL: the prior club has five days to match an offer sheet (the DFL keeps it; unverified against the CBA text)
 
+# ---- Waivers, trades, tags, compensatory picks (NFL; Step 6e to 6h) ----
+WAIVER_HOURS = 24                  # NFL: a released player under 4 accrued seasons is on waivers for a day; the sim resolves a week's waivers within the week
+WAIVER_DRAFT_ORDER_WEEKS = 3       # NFL: through Week 3 waiver priority follows the last draft's order (the earliest pick first); after it, the lower win percentage first
+TRADE_DEADLINE_WEEK = 9            # NFL: trades are allowed until the Tuesday after Week 9. After it a vested veteran who is released goes on waivers like anyone else
+PICK_TRADE_YEARS_AHEAD = 3         # NFL: picks tradable for the coming draft and up to three drafts ahead
+COMP_PICKS_MAX = 48                # ADAPTED: NFL awards at most 32 a year (one per club); scaled to 48 clubs
+COMP_PICKS_PER_TEAM_MAX = 4        # NFL: no club receives more than four
+
 # ---- Where each rule came from (the labels of engine/rulebook.py; MODEL marks simulation stand-ins that are not rules) ----
 SKELETON = "skeleton"   # the Commissioner's own rule
 NFL = "nfl"             # the NFL rule, as is

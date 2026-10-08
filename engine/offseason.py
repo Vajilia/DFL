@@ -18,7 +18,11 @@ from positions import POSITIONS, ROSTER_COUNTS, ROSTER_SIZE, STARTERS
 from roster_model import RosterModel
 import rosters
 import economy as EC
+import contracts as CT
+import movement as MV
+import tables as TB
 import staff_cards as SC
+import transactions as T
 
 # Years of aging offset by position: quarterbacks, kickers and punters last longer.
 AGE_SHIFT = {"QB": 2, "K": 5, "P": 5, "RB": -1}
@@ -159,6 +163,16 @@ def _offseason_over(t, extra_slots: int = 0) -> float:
     return EC.offseason_over(t, extra_slots)
 
 
+def _keep_rule_factory(rm, rng):
+    def keep_rule(t, keep, p, cost) -> bool:
+        """Does the club want her back at her price? The value-to-price rule (contracts.club_wants); the old re-signing dice when tables are off."""
+        if rm.contract_tables:
+            return CT.club_wants(CT.club_gain(keep + [p], p), cost, SC.gm_retention_factor(t), rm.keep_g0, rm.keep_g1, rm.keep_gm_shift)
+        q = EC.RESIGN_BASE * (rm.fa_star_protect if p.ovr >= 70 else 1.0) * SC.gm_retention_factor(t)
+        return rng.random() >= q
+    return keep_rule
+
+
 def run_roster_offseason(lg: League, rng: random.Random, rm: RosterModel, year: int,
                          pick_of: Dict[int, int], returners: List[int]) -> dict:
     """Update every roster for next season. `pick_of` maps team id -> its place in every round of the draft (1-48);
@@ -216,6 +230,11 @@ def run_roster_offseason(lg: League, rng: random.Random, rm: RosterModel, year: 
     # likelier to be kept and a good negotiator GM keeps more, but a team can only keep who it can afford this season (the cap is a hard limit)
     import service
     per = R.TOTAL_TEAMS
+    keep_rule = _keep_rule_factory(rm, rng)
+    pending: List[tuple] = []                # important re-signings waiting for their contract table: (club, player, market price, standard years, class, rookie pays, limit)
+    comp_lost: Dict[int, tuple] = {}         # player id -> (club she left, weeks she played): unrestricted players who reached the market
+    signed_by: Dict[int, tuple] = {}         # player id -> (club that signed her, her new yearly pay) for each of them another club signed
+    tag_tbl = mv.tag_table(lg, 2)          # tag prices are read off the contracts that run past this offseason, fixed before any club's contracts run down
     for t in teams:
         for p in t.roster:
             EC.run_down(p)
@@ -223,10 +242,25 @@ def run_roster_offseason(lg: League, rng: random.Random, rm: RosterModel, year: 
                 EC.enforce_minimum(p)
         keep = [p for p in t.roster if p.years_left > 0]
         expiring = sorted((p for p in t.roster if p.years_left <= 0), key=lambda p: -p.ovr)
-        lim = EC.limit(t)
+        lim = EC.limit(t) - rm.cap_headroom          # a club keeps a little room back; the hard limit still applies at the cut-downs
         rookie_pays = [EC.rookie_salary(s) for s in mv.slots_owned(year, t.id)]
         exiled = t.status == "exiled"
+        # the club's one tag: its best expiring unrestricted player, if she is good enough, the dice say so and the tag fits under the cap
+        tag_cand = next((q for q in expiring if not exiled and q.id not in ps_ids and q.ovr >= rm.tag_min_ovr and service.expiry_class(q) == "unrestricted"), None)
+        tag_roll = tag_cand is not None and rng.random() < rm.tag_prob
         for p in expiring:
+            if tag_roll and p is tag_cand:
+                ttype = "franchise" if p.ovr >= rm.tag_franchise_ovr else "transition"
+                if ttype == "franchise" and mv.tag_streak(year, t.id, p.id) >= MV.TAG_MAX_STREAK:
+                    ttype = "transition"                         # a club may franchise-tag the same player only three years running
+                price = mv.tag_price(p, ttype, year, t.id, tag_tbl)
+                slots_t = max(0, EC.OFFSEASON_COUNT - (len(keep) + 1) - len(rookie_pays))
+                if EC.counted_51([k.salary for k in keep] + [price] + rookie_pays, t.dead_now) + slots_t * EC.MIN_SALARY + EC.OFFSEASON_RESERVE <= lim:
+                    mv.tag(lg, p, ttype, year, table=tag_tbl)
+                    keep.append(p)
+                    log["tagged"] = log.get("tagged", 0) + 1
+                    continue
+                log["tag_cap_blocked"] = log.get("tag_cap_blocked", 0) + 1
             cls = service.expiry_class(p, exiled=exiled)
             cost = EC.market_salary(p.pos, p.ovr, p.credited_seasons)
             slots_after = max(0, EC.OFFSEASON_COUNT - (len(keep) + 1) - len(rookie_pays))      # the rest of the 51 and the rookies still to come
@@ -237,7 +271,8 @@ def run_roster_offseason(lg: League, rng: random.Random, rm: RosterModel, year: 
                     # exile rights on a veteran who would otherwise be a free agent: the club still has to want her (the same dice as any re-signing);
                     # what the rights add is the tender's protection and price, not a guaranteed keep (MODEL: roster_model.exile_veteran_dice)
                     q = EC.RESIGN_BASE * (rm.fa_star_protect if p.ovr >= 70 else 1.0) * SC.gm_retention_factor(t)
-                    wants = rng.random() >= q
+                    dice = rng.random() >= q
+                    wants = dice and (keep_rule(t, keep, p, cost) if rm.contract_tables else True)    # both the dice and the value rule must say yes
                 level = mv.choose_level(p, cls, cost, prior_base, rm.tender_reach) if wants is not False else None
                 if level != "extend":
                     if level is not None:
@@ -259,22 +294,60 @@ def run_roster_offseason(lg: League, rng: random.Random, rm: RosterModel, year: 
                     continue
                 log["extended"] = log.get("extended", 0) + 1             # no tender fits (worth less than the lowest, or far more than the top fit): negotiated at the market, like an unrestricted player
             if wants is None:
-                q = EC.RESIGN_BASE * (rm.fa_star_protect if p.ovr >= 70 else 1.0) * SC.gm_retention_factor(t)
-                wants = rng.random() >= q
+                wants = keep_rule(t, keep, p, cost)
             count = EC.counted_51([k.salary for k in keep] + [cost] + rookie_pays, t.dead_now)
+            deal = None
             if wants and count + slots_after * EC.MIN_SALARY + EC.OFFSEASON_RESERVE <= lim:
-                EC.sign(p, cost, EC.contract_years(p))
+                deal = (cost, EC.contract_years(p))
+                if rm.contract_tables and p.ovr >= rm.table_min_ovr and p.id not in ps_ids:         # an important deal is made at a table (below), with the DFLPA representative present
+                    pending.append((t, p, cost, deal[1], cls, rookie_pays, lim))
+            if deal is not None:
+                EC.sign(p, deal[0], deal[1])
                 keep.append(p)
                 log["resigned"] += 1
             else:
                 if wants:
                     log["cap_blocked"] += 1
+                if cls == "unrestricted" and p.id not in ps_ids:         # a compensatory free agent if another club signs her (exile-class and restricted players are not)
+                    weeks = len(p.service_weeks) if p.service_year == year else 0
+                    comp_lost[p.id] = (t.id, weeks)
                 p.team_id, p.fa_years = None, 0
                 EC.clear_contract(p)
                 pool.append(p)
                 log["expired"] += 1
                 log["expired_roster"] += p.id not in ps_ids
         t.roster = keep
+    # 3a. contract tables: every important re-signing (rated table_min_ovr or better) was provisionally signed at her market price above; the tables for all of
+    # them now run together, each club's general manager against the player, the DFLPA representative holding back what the rules or the cap forbid
+    if pending:
+        def fits_for(t, p, rookie_pays, lim):
+            def fits(x):
+                sal = [k.salary for k in t.roster if k is not p] + [x]
+                slots = max(0, EC.OFFSEASON_COUNT - len(t.roster) - len(rookie_pays))
+                return EC.counted_51(sal + rookie_pays, t.dead_now) + slots * EC.MIN_SALARY + EC.OFFSEASON_RESERVE <= lim + 1e-9
+            return fits
+        tbs = [CT.ContractTable(lg, year, t, p, cost, yrs, fits_for(t, p, rp, lim)) for (t, p, cost, yrs, _, rp, lim) in pending]
+        TB.run_tables(lg, tbs)
+        for (t, p, cost, yrs, cls, rp, lim), tb in zip(pending, tbs):
+            log["tables"] = log.get("tables", 0) + 1
+            deal = tb.deal
+            if deal is not None and not fits_for(t, p, rp, lim)(deal[0]):
+                deal = (cost, yrs)                                  # an earlier deal at this club used the room: she signs at the market price the cap was reserved for
+            if deal is None:                                         # she (or the club) walked: she reaches the market
+                log["table_walks"] = log.get("table_walks", 0) + 1
+                log["resigned"] -= 1
+                log["expired"] += 1
+                log["expired_roster"] += 1                               # only players on the 53 are tabled (a practice-squad wage is for the year)
+                t.roster.remove(p)
+                if cls == "unrestricted":
+                    comp_lost[p.id] = (t.id, len(p.service_weeks) if p.service_year == year else 0)
+                p.team_id, p.fa_years = None, 0
+                EC.clear_contract(p)
+                pool.append(p)
+            else:
+                if not tb.plain():
+                    log["table_changes"] = log.get("table_changes", 0) + 1
+                EC.sign(p, deal[0], deal[1])
     udfa = _undrafted(lg, rm, rng)
 
     # 3b. the restricted market: offer sheets, five days to match, compensation (movement.py), all settled before the draft
@@ -283,25 +356,32 @@ def run_roster_offseason(lg: League, rng: random.Random, rm: RosterModel, year: 
 
     # 4. the draft: seven rounds of 48 picks in the same order each round, quality by overall pick, a rookie-scale contract by pick.
     # The club that owns a pick makes the selection (it may be another club's original pick); the slot and the rookie price are the pick's.
+    def draft_pick_made(pk, overall, rnd):
+        t = lg.by_id[pk.owner]
+        mv.check_free(pk.key)                              # before anything is made for it: a used or held pick stops the draft cleanly
+        pos = _pick_rookie_position(t.roster, overall, rng)
+        p = make_player(rng, lg.new_id(), pos, clamp(rookie_ovr(overall, rm, rng) + SC.gm_scouting_bonus(t), 30, 95),
+                        rng.choice((22, 22, 22, 23)), t.id, draft_year=year, draft_pick=overall)
+        p.years_in_league = 0
+        p.accrued_seasons = p.credited_seasons = 0
+        EC.sign(p, EC.rookie_salary(overall), EC.ROOKIE_YEARS, share=EC.ROOKIE_BONUS_SHARE[rnd],
+                guarantee_years=EC.ROOKIE_YEARS if rnd == 0 else 0, rookie=True)     # round-1 deals are fully guaranteed
+        t.roster.append(p)
+        mv.select(pk.key, p.id)
+        log["rookies"] += 1
+        if pk.original >= MV.COMP_BASE:
+            log["comp_rookies"] = log.get("comp_rookies", 0) + 1
+        elif pk.owner != pk.original:
+            log["traded_picks_used"] = log.get("traded_picks_used", 0) + 1
+
     for rnd in range(R.DRAFT_ROUNDS):
         for orig in sorted(teams, key=lambda t: pick_of[t.id]):
             pk = mv.picks[(year, rnd + 1, orig.id)]
-            t = lg.by_id[pk.owner]
             overall = rnd * per + pick_of[orig.id]
             assert pk.slot == overall, (pk.key, pk.slot, overall)
-            mv.check_free(pk.key)                              # before anything is made for it: a used or held pick stops the draft cleanly
-            pos = _pick_rookie_position(t.roster, overall, rng)
-            p = make_player(rng, lg.new_id(), pos, clamp(rookie_ovr(overall, rm, rng) + SC.gm_scouting_bonus(t), 30, 95),
-                            rng.choice((22, 22, 22, 23)), t.id, draft_year=year, draft_pick=overall)
-            p.years_in_league = 0
-            p.accrued_seasons = p.credited_seasons = 0
-            EC.sign(p, EC.rookie_salary(overall), EC.ROOKIE_YEARS, share=EC.ROOKIE_BONUS_SHARE[rnd],
-                    guarantee_years=EC.ROOKIE_YEARS if rnd == 0 else 0, rookie=True)     # round-1 deals are fully guaranteed
-            t.roster.append(p)
-            mv.select(pk.key, p.id)
-            log["rookies"] += 1
-            if pk.owner != pk.original:
-                log["traded_picks_used"] = log.get("traded_picks_used", 0) + 1
+            draft_pick_made(pk, overall, rnd)
+        for pk in mv.comp_picks(year, rnd + 1):             # compensatory picks come at the end of rounds 3 to 7, best value first
+            draft_pick_made(pk, pk.slot, rnd)
 
     # 4b. cap casualties. Banked room is a one-season allowance: a team that spent it on multi-year contracts comes back to the $100M cap and must
     # shed the players who cost the most beyond their market price until it can fill its squad at the minimum wage inside its limit
@@ -332,7 +412,7 @@ def run_roster_offseason(lg: League, rng: random.Random, rm: RosterModel, year: 
 
     def room_for(t) -> float:
         """What this team can pay the next signing: this season's limit less its payroll, keeping the minimum salary back for every other open slot."""
-        return EC.limit(t) - _offseason_over(t, extra_slots=1)
+        return EC.limit(t) - rm.cap_headroom - _offseason_over(t, extra_slots=1)
 
     def take(t, p, price=None):
         by_pos[p.pos].remove(p)
@@ -340,6 +420,8 @@ def run_roster_offseason(lg: League, rng: random.Random, rm: RosterModel, year: 
         EC.sign(p, EC.market_salary(p.pos, p.ovr, p.credited_seasons) if price is None else price, EC.contract_years(p))
         t.roster.append(p)
         log["signed"] += 1
+        if p.id in comp_lost and comp_lost[p.id][0] != t.id:
+            signed_by[p.id] = (t.id, p.salary)
 
     def affordable(t, pos):
         """The best player on the market at a position that this team can afford (an asking price is the market price)."""
@@ -408,6 +490,17 @@ def run_roster_offseason(lg: League, rng: random.Random, rm: RosterModel, year: 
             progressed = True
         if not progressed:
             break
+
+    # 5c. compensatory picks for the next draft: the club that lost more (or better) unrestricted players than it signed
+    lost_list, signed_list = [], []
+    for pid, (club, wk) in sorted(comp_lost.items()):
+        who = signed_by.get(pid)
+        if who is not None:
+            v = T.comp_value(who[1], wk)
+            lost_list.append((club, pid, v))
+            signed_list.append((who[0], pid, v))
+    awards = T.award_compensatory(lg, year, lost_list, signed_list)
+    log["comp_picks"] = len(awards)
 
     # 6. the camp: every team invites undrafted rookies (three-year minimum contracts) and, when they run out at a position, unsigned veterans,
     # round by round in the same order, until it holds 90
