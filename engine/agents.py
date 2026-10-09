@@ -47,7 +47,15 @@ class StandIn:
             return self._review(payload, me, r)
         if payload["kind"].startswith("interview") or payload["kind"].startswith("contract"):
             return getattr(self, "_" + payload["kind"])(payload, me, r)
+        if payload["kind"] == "fan_demand":
+            return self._fan_demand(payload, r)
         return self._hire(payload, me, r)
+
+    # ---- the fans' yearly ask: press hard on an unpopular CEO, ease off a popular one
+    def _fan_demand(self, p, r):
+        ap = p["context"]["ceo_approval"]
+        pick = "demanding" if ap < 0.45 else "modest" if ap > 0.70 else "fair"
+        return dict(choice=pick, reason=f"approval of the CEO is {ap:.0%}", note=f"asked for the {pick} level in {p['year']}" if self.notes else "")
 
     # ---- the yearly review: keep, or fire the coach, the GM or both
     def _review(self, p, me, r):
