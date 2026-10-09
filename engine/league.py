@@ -36,6 +36,7 @@ class Team:
     topup: List[float] = field(default_factory=list)     # floor top-ups paid to players in those seasons
     fund_cash: float = 0.0    # net cash from the Equalization Fund: surplus shares received less levies paid
     reserve: float = 0.0      # the club's cash reserve, $ millions (finance.py): a CEO's reinvested profit; it only covers the club's own losses
+    fines: float = 0.0        # fines this year, $ millions (discipline.py); held against the year in finance.py
     books: List[dict] = field(default_factory=list)    # the last few years' accounts (finance.py)
 
     @property
@@ -81,6 +82,8 @@ class League:
         self._owner_ids = 0
         self._gm_ids = 0
         self.movement = Movement()         # draft-pick ownership, tenders and offers (movement.py); saved in its own tables
+        self.proposals_made = 0            # votes held (governance.py)
+        self.committee: list = []          # the Competition Committee (governance.py)
         self.finance_nudge: dict = {}      # team id -> (owner id, approval nudge) from the year's books, applied after the owners' review (finance.py)
         self.pool = 0.0                    # the Equalization Fund's cash balance: forfeited room in, exiled teams' absorbed payroll out (economy.py)
 

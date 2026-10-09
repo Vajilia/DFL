@@ -38,7 +38,7 @@ def counts(players) -> Dict[str, int]:
 def active_list(t) -> List[Player]:
     """Game day: at most 48 healthy players from the 53. Healthy players beyond 48 are inactive: the weakest ones, but never below the
     position minimums (ACTIVE_MINIMUMS), so a team never leaves out the only kicker or a third of its line."""
-    healthy = [p for p in t.roster if p.weeks_out == 0]
+    healthy = [p for p in t.roster if p.weeks_out == 0 and p.suspended == 0]
     surplus = len(healthy) - R.ACTIVE_LIMIT
     if surplus <= 0:
         return healthy
@@ -53,7 +53,7 @@ def active_list(t) -> List[Player]:
 
 def game_roster(t) -> List[Player]:
     """What the depth chart is built from: the active players, then the injured (who fill in only if too few are healthy)."""
-    return active_list(t) + [p for p in t.roster if p.weeks_out > 0]
+    return active_list(t) + [p for p in t.roster if p.weeks_out > 0] + [p for p in t.roster if p.suspended > 0 and p.weeks_out == 0]
 
 
 # ---- the practice squad -----------------------------------------------------------------------------------------------------

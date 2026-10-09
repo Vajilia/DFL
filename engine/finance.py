@@ -121,10 +121,10 @@ def close_books(lg, year: int, pct: Dict[int, float], playoff_teams, champion: i
         pay = EC.payroll(t) * ((1.0 - EC.ABSORPTION) if exiled else 1.0)
         fund = (0.0 if exiled else payout_each) - levy_each
         staff = SP.staff_payroll(t)
-        surplus = rev["national"] + rev["local"] - pay - OPERATING_COST - staff["total"] + fund
+        surplus = rev["national"] + rev["local"] - pay - OPERATING_COST - staff["total"] + fund - t.fines
         lines[t.id] = dict(team=t.id, year=year, exiled=exiled, national=round(rev["national"], 2), local=round(rev["local"], 2),
                            ticket_pool_in=round(pool_share, 2), ticket_pool_out=round(out_t, 2), payroll=round(pay, 2),
-                           operating=OPERATING_COST, staff=staff["total"], staff_clamped=staff["clamped"], fund=round(fund, 2), surplus=round(surplus, 2))
+                           operating=OPERATING_COST, staff=staff["total"], staff_clamped=staff["clamped"], fines=round(t.fines, 3), fund=round(fund, 2), surplus=round(surplus, 2))
     # profits: the reserve share, then the draw, capped; losses: the reserve first
     need: Dict[int, float] = {}
     willing: Dict[int, float] = {}
@@ -192,6 +192,7 @@ def close_books(lg, year: int, pct: Dict[int, float], playoff_teams, champion: i
             nudge[t.id] = (t.owner.oid, n)
             t.owner.draws = round(getattr(t.owner, "draws", 0.0) + max(0.0, ln["draw"]), 2)
         t.books = (list(t.books) + [ln])[-BOOKS_YEARS:]
+        t.fines = 0.0                                   # the year's fines are in the books; a new year starts clean
     lg.finance_nudge = nudge
     import staff_cards as SC
     SC.log(lg, year, "finance_close", to_fund=round(to_fund, 4), subsidy=round(paid, 4), draw_total=round(sum(max(0.0, l["draw"]) for l in lines.values()), 2))

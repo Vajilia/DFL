@@ -126,3 +126,17 @@ Built on branch `step6-rebuild` after the 6c/6d rebuild. The Commissioner author
 
 **What changed.** Goldens regenerated (surplus and approval nudges move a little). All 13 fairness bands are re-checked in the final run. Rulebook: salary.staff and hiring are now built (partial); 44 built, 0 differ, 4 missing (votes, commissioner, dflpa.representative, discipline).
 
+## Step 8c: governance, the Commissioner, the DFLPA representative and discipline (2026-10-09)
+
+The Commissioner asked for the recommended defaults on the four remaining rulebook rows and authorised me to finish the NFL adaptations in priority order (what the NFL would do, then fair competitiveness, then the Commissioner).
+
+**Votes** (`engine/governance.py`). 36 of 48 for rule changes (NFL: 3/4 of clubs), 32 of 48 for a Commissioner's successor (2/3), eight Competition Committee seats, one owner per division, re-chosen yearly on popularity and business sense. How an owner votes is a model formula (a base 55% chance, a market-size tilt, a 20-point lift from a committee endorsement, a little more for ambitious owners on rule changes), drawn from a private seeded stream. The autopilot proposes nothing, so no rule changes in an autopilot league; a person or agent proposes through `governance.propose`.
+
+**The Commissioner is shrink-only.** Four powers (reject, cap, delay, reduce) are rulings; `shrink_only` is an audit that rejects any ruling in which a club gets more than it asked for or a penalty grows. `review_trade` rejects a trade that breaks a rule (every reason from `transactions.check_trade`) or that an installed fairness guard objects to. No fairness guard is installed by default (a band-guard would need a long simulation per trade); the hook exists.
+
+**The DFLPA representative** (`engine/dflpa.py`). A light character (name, advocacy, caution) generated from the league seed and the client's id, so there is nothing to store. She sits at every contract table beside the cap guard; a protective one (advocacy 70 or more, about 14% of reps) also holds back an offer under 95% of market. She never names a price. The autopilot offers 100% of market, so nothing changes for it.
+
+**Discipline** (`engine/discipline.py`). About 45 player suspensions a year (about 1.8% of players): conduct 45%, substance 35%, performance-enhancing 17%, gambling 3%, with baseline lengths from 1 to 17 games; a suspended player is out of the lineup (the last resort fill-in, like an injured one) and keeps her place on the 53. Rare club cases (tampering 1%, cap circumvention 0.4%, game integrity 0.2% a club-year) are fined 0.5% to 8% of the cap into the Equalization Fund and held against the club's year; no club pays more than 10% of the cap in a season (NFL). Commissioner reductions apply to fines and unserved suspensions, never an increase.
+
+**Result.** Rulebook: 48 built, 0 differ, 0 missing. Goldens regenerated (suspensions and fines move outcomes a little). Gaps are in the rulebook rows: no suspended list or pay forfeiture, no pick forfeiture, no investigation process, no default fairness guard.
+

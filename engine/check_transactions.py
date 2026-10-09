@@ -808,7 +808,7 @@ class ContractTables(unittest.TestCase):
         dp = tb.next_point()
         self.assertEqual(sorted({o["tags"]["pct"] for o in dp.options}), [90, 100])
         self.assertIn("110%", " ".join(tb.held_back))
-        self.assertIn("unaffordable", dp.context["rep_note"])
+        self.assertIn("off the table", dp.context["rep_note"])
         tb.apply("offer_90_3")
         reply = tb.next_point()
         self.assertEqual([o["id"] for o in reply.options], ["accept", "counter_100", "walk"])

@@ -154,6 +154,8 @@ def run_season(league: League, year: int, rng: random.Random, opt: Options = Non
         league.retired_players.extend(p for p in before if p.retired)
         import finance
         off_log["finance"] = finance.close_books(league, year, pct, playoff_teams, champion, returners, off_log["cap"])    # the clubs' books, before the owners' review
+        import governance
+        off_log["meeting"] = governance.annual_meeting(league, year) if league.staff_on else None      # the Competition Committee is seated
         off_log["forced_sales"] = finance.forced_sales(league, year, off_log["finance"]) if league.staff_on else []
         if league.staff_on:
             import staff_cards

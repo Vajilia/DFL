@@ -190,6 +190,10 @@ FISCAL_QUARTERS = 4
 FORCED_SALE_SUBSIDY_QUARTERS = 2
 FORCED_SALE_VOTES_NEEDED = 25   # of 48 owners
 OWNER_MAY_OWN_TWICE = False
+RULE_CHANGE_VOTES = 36          # ADAPTED (NFL: 3/4 of clubs, 24 of 32): rule, bylaw and playing-rule changes need 3/4 of the 48 clubs
+COMMISSIONER_VOTES = 32         # ADAPTED (NFL: 2/3 of clubs): a Commissioner's successor needs 2/3 of the 48 clubs
+COMPETITION_COMMITTEE_SEATS = 8 # one per division
+CAP_PENALTY_MAX_PCT = 0.10      # NFL: cap-circumvention penalties up to 10% of the cap in a season
 EXTERNAL_INTERVIEWS_MIN = 2     # SKELETON: every head-coach or GM search interviews at least this many external candidates (a Rooney-style process rule; the outcome is never dictated)
 
 # ---- Agents / real-time clock ---------------------------------------------

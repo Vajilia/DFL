@@ -78,6 +78,7 @@ class GameRunner:
         self._cache: Dict[int, object] = {}
         self._new_hurt: set = set()
         self.injury_log: list = []                # (week, team id, player id, games out, kind)
+        self.suspension_log: list = []            # (week, team id, player id, kind, games) from discipline.weekly
         self.injury_reports: list = []            # one weekly injury report per week (injuries.injury_report)
         self.player_totals: Dict[int, dict] = {}  # season totals, drive engine only
         self.team_totals: Dict[int, dict] = {}
@@ -181,6 +182,9 @@ class GameRunner:
                 import transactions
                 wire = transactions.new_wire(self.league, self.service_year, self.week, self.record)
             self.ir_log.append(rosters.manage_week(self.league, self.rng, R.REGULAR_SEASON_WEEKS - self.week, wire))
+            if self.service_year is not None:
+                import discipline
+                discipline.weekly(self.league, self.service_year, self.week, self.suspension_log)
             if self.injuries:
                 from injuries import injury_report
                 self.injury_reports.append(injury_report(self.league, self.week))      # the weekly injury report, after the week's moves

@@ -15,8 +15,8 @@ def depth_chart(roster: List[Player]) -> Dict[str, List[Player]]:
     chart: Dict[str, List[Player]] = {}
     for pos in POSITIONS:
         at = sorted((p for p in roster if p.pos == pos), key=lambda p: -p.ovr)
-        healthy = [p for p in at if p.weeks_out == 0]
-        hurt = [p for p in at if p.weeks_out > 0]
+        healthy = [p for p in at if p.weeks_out == 0 and p.suspended == 0]
+        hurt = [p for p in at if p.weeks_out > 0 or p.suspended > 0]
         chart[pos] = healthy + hurt
     return chart
 

@@ -33,6 +33,7 @@ A seeded league engine with 53-player rosters, character cards, a drive-by-drive
 | `engine/finance.py`, `engine/check_finance.py`, `engine/finance_report.py` | Step 7: club revenue (national pool, the 34% ticket pool, local money by market, fans and success), the CEO's draw capped at $100M with the excess to the Equalization Fund, subsidies from CEOs' draws, the fans' say on spending as a capped approval nudge, 10 to 20 year CEO tenure and the forced-sale vote; writes `reports/finance_report.md` |
 | `engine/injuries.py`, `engine/check_injuries.py` | Step 8a: injury kinds, NFL-scale rates and lengths, concussion protocol, the weekly injury report |
 | `engine/staff_pay.py`, `engine/check_hiring.py` | Step 8b: football-staff pay inside two limits (one contract 8% of the cap, the staff 20%), the two-interview hiring rule and the demographics audit (schema scan plus a name-blind replay) |
+| `engine/governance.py`, `engine/dflpa.py`, `engine/discipline.py`, `engine/check_governance.py` | Step 8c: the owners' votes (36 of 48 for rules, 32 for a Commissioner's successor), the Competition Committee, the Commissioner's shrink-only powers, the DFLPA representative as a character at every contract table, player suspensions and club fines |
 | `engine/contracts.py` | Step 6i: the contract table (club general manager, player, DFLPA representative guard) and the club's value-to-price rule that replaced the re-signing dice |
 | `engine/economy.py` | Pay and the salary cap: contracts with signing bonuses, guarantees and dead money, the minimum scale, the $100M cap, banking up to $125M, the 51 rule, the four-season 90% floor, exile absorption, the Equalization Fund |
 | `engine/tables.py`, `engine/interviews.py` | Negotiation tables (a bounded conversation of Decision Points where each party has her own say) and the first one, the job interview with guaranteed seasons |
@@ -63,6 +64,7 @@ A seeded league engine with 53-player rosters, character cards, a drive-by-drive
     python engine/check_service.py         # earned service, expiration classes, paid lists, save/resume
     python engine/check_movement.py        # pick ownership, tenders, funded offers, five-day match, compensation, format 3 save and migration
     python engine/check_transactions.py    # waivers, tags, trades, compensatory picks, contract tables
+    python engine/check_governance.py      # votes, committee, shrink-only Commissioner, DFLPA representative, discipline
     python engine/check_hiring.py          # two-interview rule, name-blind audit, staff pay limits
     python engine/check_injuries.py        # injury kinds, NFL-scale rates, concussions, the weekly report
     python engine/check_finance.py         # CEO draw cap, tenure, ticket pool, subsidies, forced sales, the books

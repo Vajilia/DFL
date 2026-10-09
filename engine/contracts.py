@@ -78,6 +78,8 @@ class ContractTable(TB.Table):
         self.step, self.offer, self.ask, self.outcome = "offer", None, None, None
         self.steps: list = []
         self.held_back: list = []
+        import dflpa
+        self.rep = dflpa.rep_for(lg, "player", p.id)          # the player's DFLPA representative (a light character: name, advocacy, caution)
 
     # ---- the rep's guard
     def salary(self, pct: int) -> float:
@@ -90,7 +92,10 @@ class ContractTable(TB.Table):
         """The prices the rep lets onto the table: fundable under the club's cap."""
         out = []
         for pct in PRICE_STEPS:
-            if self.fits(self.salary(pct)):
+            if self.rep.holds_back(pct):                       # a protective representative holds back an offer under 95% of market; she names no price
+                if f"{pct}% (held back by {self.rep.name})" not in self.held_back:
+                    self.held_back.append(f"{pct}% (held back by {self.rep.name})")
+            elif self.fits(self.salary(pct)):
                 out.append(pct)
             elif f"{pct}%" not in self.held_back:
                 self.held_back.append(f"{pct}%")
@@ -103,8 +108,8 @@ class ContractTable(TB.Table):
         p = self.p
         return dict(dict(player=dict(position=p.pos, rating=round(p.ovr, 1), age=p.age, accrued_seasons=p.accrued_seasons),
                          market_salary_millions=self.market, standard_length_years=self.standard_years,
-                         rep_note="the DFLPA representative has removed every term the rules or the club's cap do not allow: " +
-                                  (f"prices {', '.join(self.held_back)} are unaffordable" if self.held_back else "nothing needed removing"),
+                         rep_note=f"{self.rep.name}, the DFLPA representative, has removed every term the rules or the club's cap do not allow: " +
+                                  (f"these prices are off the table: {', '.join(self.held_back)}" if self.held_back else "nothing needed removing"),
                          said_so_far=[dict(by=s["by"], move=s["move"]) for s in self.steps]), **kw)
 
     def next_point(self):
