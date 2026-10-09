@@ -200,7 +200,7 @@ Lc2, _, _ = play(5, 30, driver=ADV.CarouselRider())
 rehired = [c for c in Lc2.coaches if len({e["team"] for e in c.career if e["event"] == "hired"}) >= 2]
 check("owners who choose them re-hire people between jobs, who keep their one card and identity", len(rehired) > 5 and len({c.cid for c in Lc2.coaches}) == len(Lc2.coaches),
       f"{len(rehired)} coaches have worked for 2 or more teams")
-check("a re-hired coach keeps her ratings history and her soul (same card, same people)", all(c.soul_pos and c.career[0]["event"] in ("hired", "passed_over") for c in rehired))
+check("a re-hired coach keeps her ratings history and her soul (same card, same people)", all(c.soul_pos and c.career[0]["event"] in ("hired", "passed_over", "interviewed") for c in rehired))
 check("no one is ever on two teams at once", all(sum(1 for t in Lc2.teams if t.coach is c) <= 1 for c in Lc2.coaches) and len({id(t.coach) for t in Lc2.teams}) == 48 and len({id(t.gm) for t in Lc2.teams}) == 48)
 
 # ---- scenes still explain what happened, whoever decided -------------------------------------------------------------------

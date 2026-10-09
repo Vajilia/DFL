@@ -72,6 +72,10 @@ TENDER_PRIOR_BASE_FACTOR = 1.10
 # Franchise and transition tags (NFL: the average of the top 5 salaries at the position for the franchise tag and of the top 10 for the transition tag, or 120% of
 # the player's prior salary if more; DFL: 48 clubs, so top 7 and top 15 -- the rulebook rows say these are scaled). A second consecutive franchise tag is at
 # least 120% of the first, a third at least 144% of the second and never below the quarterback franchise number; no tag above the maximum contract.
+# Staff pay (Fair, the Commissioner's rulebook): outside the cap, but limited: no single staff contract above 8% of the cap, the whole football staff
+# (head coach, general manager and assistants) no more than 20% of the cap. Pay itself is a model formula (staff_pay.py).
+STAFF_CONTRACT_MAX_PCT = 0.08
+STAFF_PAYROLL_MAX_PCT = 0.20
 FRANCHISE_TAG_TOP_N = 7
 TRANSITION_TAG_TOP_N = 15
 TAG_PRIOR_FACTOR = 1.20

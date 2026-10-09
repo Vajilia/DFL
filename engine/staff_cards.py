@@ -448,7 +448,20 @@ def _hire_round(lg, year: int, jobs) -> list:
     for s in seats:
         kind, t, o, cands, vets, k = s["kind"], s["t"], s["o"], s["cands"], s["vets"], s["k"]
         others = [c.name for i, c in enumerate(cands) if i != k]
+        # SKELETON (rulebook, hiring): every search interviews at least R.EXTERNAL_INTERVIEWS_MIN external candidates. The candidates who refused were
+        # interviewed at tables; if the owner reached a deal sooner, she still sits down with the next candidates in her list (a process rule: the
+        # outcome is never dictated, and the courtesy interviews write nothing to the Archive or the relationships).
+        refused_n = len(s["refused"])
+        interviews = refused_n + (0 if s["assigned"] else 1)
+        if not s["assigned"]:
+            for i, c in enumerate(cands):
+                if interviews >= R.EXTERNAL_INTERVIEWS_MIN:
+                    break
+                if i != k and c.name not in s["refused"]:
+                    c.career.append({"year": year, "event": "interviewed", "team": t.id, "job": kind})
+                    interviews += 1
         new = _install(lg, kind, t, cands, vets, k, year)
+        new.career[-1]["interviews"] = interviews
         new.protected_until = year + s["g"]
         if kind == "coach":
             t.coach = new

@@ -28,6 +28,7 @@ from __future__ import annotations
 from typing import Dict, List, Optional
 
 import economy as EC
+import staff_pay as SP
 import cards as C
 import rules as R
 
@@ -43,7 +44,7 @@ LOCAL_MARKET = (0.40, 1.20)       # local money scales from LOCAL_MARKET[0] + LO
 LOCAL_PASSION = 0.30              # a 100-passion fanbase pays this much more local money than a 50 (a 1: this much less)
 LOCAL_SUCCESS = 0.45              # local money rises by this x (win% - .5) x 2 (a perfect year +45%, a winless one -45%)
 PLAYOFF_BONUS, TITLE_BONUS = 4.0, 8.0     # extra revenue for a playoff team and for the champion ($ millions)
-OPERATING_COST = 45.0             # non-player costs (staff, stadium, travel)
+OPERATING_COST = 33.2             # non-player, non-staff costs (stadium, travel, front office); the football staff is paid by staff_pay.py (about 12M, so the total is as before)
 EXILE_LOCAL_SHARE = 0.35          # an exiled club earns this share of its local money (short Ambassador Season) ...
 EXILE_NATIONAL_SHARE = 0.50       # ... and this share of the national pool
 REINVEST_BASE, REINVEST_AMBITION = 0.05, 0.25   # share of a profit the CEO puts back into the club: 5% plus up to 25% for a 100-ambition CEO
@@ -119,10 +120,11 @@ def close_books(lg, year: int, pct: Dict[int, float], playoff_teams, champion: i
         rev["local"] = rev["local"] - out_t + pool_share
         pay = EC.payroll(t) * ((1.0 - EC.ABSORPTION) if exiled else 1.0)
         fund = (0.0 if exiled else payout_each) - levy_each
-        surplus = rev["national"] + rev["local"] - pay - OPERATING_COST + fund
+        staff = SP.staff_payroll(t)
+        surplus = rev["national"] + rev["local"] - pay - OPERATING_COST - staff["total"] + fund
         lines[t.id] = dict(team=t.id, year=year, exiled=exiled, national=round(rev["national"], 2), local=round(rev["local"], 2),
                            ticket_pool_in=round(pool_share, 2), ticket_pool_out=round(out_t, 2), payroll=round(pay, 2),
-                           operating=OPERATING_COST, fund=round(fund, 2), surplus=round(surplus, 2))
+                           operating=OPERATING_COST, staff=staff["total"], staff_clamped=staff["clamped"], fund=round(fund, 2), surplus=round(surplus, 2))
     # profits: the reserve share, then the draw, capped; losses: the reserve first
     need: Dict[int, float] = {}
     willing: Dict[int, float] = {}

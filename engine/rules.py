@@ -190,6 +190,7 @@ FISCAL_QUARTERS = 4
 FORCED_SALE_SUBSIDY_QUARTERS = 2
 FORCED_SALE_VOTES_NEEDED = 25   # of 48 owners
 OWNER_MAY_OWN_TWICE = False
+EXTERNAL_INTERVIEWS_MIN = 2     # SKELETON: every head-coach or GM search interviews at least this many external candidates (a Rooney-style process rule; the outcome is never dictated)
 
 # ---- Agents / real-time clock ---------------------------------------------
 AGENT_WORKERS = 4

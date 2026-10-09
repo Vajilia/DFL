@@ -139,6 +139,7 @@ Lz, rz, _ = play(5, 25)
 check("with them on, reputation does change owners' choices (so the two roads differ)", FP.fingerprint_of(Lz, rz) != fx)
 fam = max((c for c in L.coaches), key=lambda c: c.esteem)
 cand = C.make_coach_card(3, 3)
+cand.ratings = {k: 50.0 for k in cand.ratings}      # mid-range, so the owner's noise never clips at 1 or 100 (which would hide the halo)
 o = L.teams[0].owner
 p0 = S._perceived(L, o, cand, 5, S.COACH_VIEW)
 cand.esteem = RC.LEGEND_BAR["coach"]
