@@ -49,6 +49,10 @@ class StandIn:
             return getattr(self, "_" + payload["kind"])(payload, me, r)
         if payload["kind"] == "fan_demand":
             return self._fan_demand(payload, r)
+        if payload["kind"] == "ceo_pledge":
+            return self._ceo_pledge(payload, me)
+        if payload["kind"] == "ceo_boycott":
+            return self._ceo_boycott(payload, me)
         return self._hire(payload, me, r)
 
     # ---- the fans' yearly ask: press hard on an unpopular CEO, ease off a popular one
@@ -56,6 +60,19 @@ class StandIn:
         ap = p["context"]["ceo_approval"]
         pick = "demanding" if ap < 0.45 else "modest" if ap > 0.70 else "fair"
         return dict(choice=pick, reason=f"approval of the CEO is {ap:.0%}", note=f"asked for the {pick} level in {p['year']}" if self.notes else "")
+
+    # ---- the CEO's yearly pledge: an ambitious CEO with restless fans gives more, a business-minded one with happy fans keeps more
+    def _ceo_pledge(self, p, me):
+        ap, rt = p["context"]["fan_approval_of_you"], me["ratings"]
+        pick = "generous" if rt["ambition"] >= 65 and ap < 0.55 else "lean" if rt["business"] >= 70 and ap > 0.65 else "standard"
+        return dict(choice=pick, reason=f"approval {ap:.0%}", note=f"pledged {pick} in {p['year']}" if self.notes else "")
+
+    # ---- her answer to a boycott: step aside near the end of her tenure, concede if she cares about the club, else hold
+    def _ceo_boycott(self, p, me):
+        ctx = p["context"]
+        left = ctx.get("your_tenure_ends_in")
+        pick = "step_aside" if left is not None and left <= 2 else "concede" if me["ratings"]["ambition"] >= 50 else "hold"
+        return dict(choice=pick, reason=f"boycott level {ctx['boycott_level']:.2f}", note=f"answered the boycott with {pick} in {p['year']}" if self.notes else "")
 
     # ---- the yearly review: keep, or fire the coach, the GM or both
     def _review(self, p, me, r):

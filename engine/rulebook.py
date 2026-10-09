@@ -37,6 +37,7 @@ EXEMPT = {
     "finance.SP": "an imported module, not a constant",
     "finance.EC": "an imported module, not a constant",
     "finance.FM": "an imported module, not a constant",
+    "finance.CEOC": "an imported module, not a constant",
     "finance.EXILE_LOCAL_SHARE": "club-finance model dial (engine/finance.py); not a rule",
     "finance.EXILE_NATIONAL_SHARE": "club-finance model dial (engine/finance.py); not a rule",
     "finance.FAN_DEMAND": "club-finance model dial (engine/finance.py); not a rule",
