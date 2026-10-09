@@ -1,11 +1,11 @@
 # Fanbase and media cards, and fair competitiveness
 
-> **Historical (2026-10-05):** this study was run before coaches, GMs and owners became living cards and before designated legends were removed. It is kept for what it shows about sizing the dials. The current proof is `decision_fairness_study.md` (autopilot, random and worst-case choices) and `living_fairness_drives_engine.md` (full drive engine).
+> **Historical (2026-10-05):** this study was run before coaches, GMs and CEOs became living cards and before designated legends were removed. It is kept for what it shows about sizing the dials. The current proof is `decision_fairness_study.md` (autopilot, random and worst-case choices) and `living_fairness_drives_engine.md` (full drive engine).
 
 
-Fans and the press never touch a game. A fanbase's culture and ratings decide how an owner's approval responds to a season (how patient, how demanding, how moody, how much it believes the press). The press moves approval by at most 3 points a year (more in a big market, to a trusting fanbase). Fan Capital, the slow store of goodwill, only ever buffers a recall vote. Approval decides recalls, and a recall can lead to a coach or GM being fired, so the only road to the field is long. The question for every row: does any trend leave its band?
+Fans and the press never touch a game. A fanbase's culture and ratings decide how a CEO's approval responds to a season (how patient, how demanding, how moody, how much it believes the press). The press moves approval by at most 3 points a year (more in a big market, to a trusting fanbase). Fan Capital, the slow store of goodwill, only ever buffers a recall vote. Approval decides recalls, and a recall can lead to a coach or GM being fired, so the only road to the field is long. The question for every row: does any trend leave its band?
 
-## A. Old placeholder approval model (owners, GMs and coaches, no fan or media cards)
+## A. Old placeholder approval model (CEOs, GMs and coaches, no fan or media cards)
 
 fast engine, 8 leagues x 48 seasons.
 
@@ -130,9 +130,9 @@ Legend-led teams: 100 team-seasons per league (about 2.5 legends on the field at
 As built (rows B and E) every trend is inside its band, on the fast engine (8 leagues of 48 seasons) and the full drive engine (6 leagues).
 Tripling the press and Fan Capital (row C) is still inside. At six times (row D) one trend, how often the strongest team on paper wins the title,
 reaches 0.253 against a band edge of 0.25, so the built dial sits well short of where it starts to matter. The road from fans and media to the
-field is long (press, approval, recall, a new owner, a fired coach), which is why the effect is small.
+field is long (press, approval, recall, a new CEO, a fired coach), which is why the effect is small.
 
 Two things to keep in view. First, these are samples of 6 to 8 leagues; row A (the old model, no fan cards) showed an exile effect of 0.47 here
 against 0.22 for row B, and the two models should not differ that much, so the exile effect is noisy in a sample this size (its band edge is 0.5). Second,
-the recall rate moved a little: about 4.3 recalls a year with the fan cards against 3.9 with the old formula, and average owner tenure about 5.3 years
+the recall rate moved a little: about 4.3 recalls a year with the fan cards against 3.9 with the old formula, and average CEO tenure about 5.3 years
 against 5.6. Both stay close to what the old formula gave.

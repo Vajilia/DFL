@@ -3,14 +3,14 @@
 Status: BUILT (see docs/decisions.md, "Step 7"); the four open questions were answered with the recommendations below. Written 2026-10-08 for the Commissioner's review. Labels follow the rulebook: Skeleton / NFL / Adapted / Fair / Model.
 
 ## What the Commissioner has said (Skeleton)
-- Owners become CEOs with a 10 to 20 year tenure.
+- CEOs become CEOs with a 10 to 20 year tenure.
 - A CEO's personal draw is capped at $100M a year; anything above goes to the Equalization Fund.
 - Each fanbase card stands for 1,000,000 fans and decides spending.
 - Subsidies (to weaker clubs) are paid out of the CEO's draw.
 
 ## What the engine has today
-- Only the cap economy exists: payroll, banking, dead money, the floor, and the Fund as a cash account (`economy.close_season`). Clubs have no revenue, profit or owner wealth.
-- The Fund now runs near break-even (inflow about $439M, outflow $387M a season). Owner cards have a `subsidy` pressure rating but it does nothing yet.
+- Only the cap economy exists: payroll, banking, dead money, the floor, and the Fund as a cash account (`economy.close_season`). Clubs have no revenue, profit or CEO wealth.
+- The Fund now runs near break-even (inflow about $439M, outflow $387M a season). CEO cards have a `subsidy` pressure rating but it does nothing yet.
 - Fans and media move one number (approval). They never touch a game.
 
 ## Proposed model (recommendations, every number a named dial)

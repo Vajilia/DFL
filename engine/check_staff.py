@@ -1,4 +1,4 @@
-"""Checks for owner and GM cards, recall votes, hiring and firing.
+"""Checks for CEO and GM cards, recall votes, hiring and firing.
 
     python engine/check_staff.py
 """
@@ -25,13 +25,13 @@ def check(label, ok, detail=""):
 
 # ---- a fresh league --------------------------------------------------------------------------------
 lg = new_league(random.Random(5), rosters=True)
-check("every team has an owner and a GM", all(t.owner is not None and t.gm is not None for t in lg.teams))
-check("owner and GM names are unique", len({t.owner.name for t in lg.teams}) == 48 and len({t.gm.name for t in lg.teams}) == 48)
+check("every team has a CEO and a GM", all(t.owner is not None and t.gm is not None for t in lg.teams))
+check("CEO and GM names are unique", len({t.owner.name for t in lg.teams}) == 48 and len({t.gm.name for t in lg.teams}) == 48)
 check("all staff ratings are between 1 and 100", all(1 <= v <= 100 for t in lg.teams for v in list(t.owner.ratings.values()) + list(t.gm.ratings.values())))
 check("starting approvals are sensible", all(0.3 <= t.owner.approval <= 0.75 for t in lg.teams))
 check("cards print in the template format", all(k in S.render_owner(lg.teams[0].owner, lg) for k in ("IDENTITY", "PERSONALITY", "SOUL", "RATINGS", "RECOGNITION", "RELATIONSHIPS")) and "GM" in S.render_gm(lg.teams[0].gm, lg))
 lg2 = new_league(random.Random(5), rosters=True)
-check("same seed gives the same owners and GMs", [(t.owner.name, t.gm.name) for t in lg.teams] == [(t.owner.name, t.gm.name) for t in lg2.teams])
+check("same seed gives the same CEOs and GMs", [(t.owner.name, t.gm.name) for t in lg.teams] == [(t.owner.name, t.gm.name) for t in lg2.teams])
 
 # ---- GM levers are small and capped ----------------------------------------------------------------
 gms = [S.make_gm_card(3, i) for i in range(1, 2001)]
@@ -55,30 +55,30 @@ def play(seed, years=40):
 
 
 L, hist = play(33)
-check("every team has an owner, a GM and a coach at all times", all(t.owner and t.gm and t.coach for t in L.teams))
+check("every team has a CEO, a GM and a coach at all times", all(t.owner and t.gm and t.coach for t in L.teams))
 seats = {}
 twice = False
 for o in L.owners:
     if len(set(o.teams_owned)) > 1:
         twice = True
-check("no owner has ever owned two teams", not twice, f"{len(L.owners)} owners and candidates generated")
-check("no recalled or retired owner owns a team now", all(t.owner.status == "owner" for t in L.teams))
-check("nobody owns a team twice (each seated owner is unique)", len({t.owner.oid for t in L.teams}) == 48)
+check("no CEO has ever owned two teams", not twice, f"{len(L.owners)} CEOs and candidates generated")
+check("no recalled or retired CEO owns a team now", all(t.owner.status == "owner" for t in L.teams))
+check("nobody owns a team twice (each seated CEO is unique)", len({t.owner.oid for t in L.teams}) == 48)
 rotation_ok = True
 for y in range(1, 41):
     div = (y - 1) % R.TOTAL_DIVISIONS
     voted = set(hist[y - 1].staff["votes"])
     rotation_ok &= all(t.id in voted for t in L.division(div))
-check("every owner in the rotation division is voted on every year (8-year cycle)", rotation_ok)
+check("every CEO in the rotation division is voted on every year (8-year cycle)", rotation_ok)
 exile_ok = all(set(h.new_exiles) <= set(h.staff["votes"]) for h in hist)
-check("every newly exiled team's owner faces a vote", exile_ok)
+check("every newly exiled team's CEO faces a vote", exile_ok)
 events = [e for e in L.archive if e["event"] == "recall_vote"]
 check("recall votes are logged with 5 candidates each", all(len(e["candidates"]) == R.RECALL_REPLACEMENT_CANDIDATES and e["replacement"] in e["candidates"] for e in events if e["result"] == "recalled"))
 check("a recall needs a majority (share above 50%), a survival does not reach it", all((e["recall_share"] >= 0.5) if e["result"] == "recalled" else (e["recall_share"] <= 0.5) for e in events))
-check("votes are not rubber stamps: some owners fall and some survive", any(e["result"] == "recalled" for e in events) and any(e["result"] == "survived" for e in events),
+check("votes are not rubber stamps: some CEOs fall and some survive", any(e["result"] == "recalled" for e in events) and any(e["result"] == "survived" for e in events),
       f"{sum(e['result'] == 'recalled' for e in events)} recalled, {sum(e['result'] == 'survived' for e in events)} survived of {len(events)}")
 low = [o for o in L.owners if o.status == "recalled"]
-check("recalled owners had fans against them", st.mean(next(e for e in o.career if e["event"] == "recalled")["approval"] for o in low) < 0.45, f"average approval {st.mean(next(e for e in o.career if e['event'] == 'recalled')['approval'] for o in low):.2f}")
+check("recalled CEOs had fans against them", st.mean(next(e for e in o.career if e["event"] == "recalled")["approval"] for o in low) < 0.45, f"average approval {st.mean(next(e for e in o.career if e['event'] == 'recalled')['approval'] for o in low):.2f}")
 per_year = [len(h.staff["recalled"]) for h in hist]
 check("recalls per year look sensible (some every year, never most of the league)", 0 < st.mean(per_year) < 10 and max(per_year) < 20, f"average {st.mean(per_year):.1f}, max {max(per_year)}")
 approvals = [a for h in hist[8:] for a in h.staff["approval"].values()]
@@ -89,7 +89,7 @@ gf = sum(len(h.staff["gm_fired"]) for h in hist) / 40
 check("GMs get fired, less often than coaches", 0.5 < gf < cf, f"{gf:.1f} firings a year")
 import recognition as RC  # noqa: E402
 o0 = L.teams[0].owner
-check("owners give a famous coach more rope (the firing threshold rises with esteem, to double at the legend bar)",
+check("CEOs give a famous coach more rope (the firing threshold rises with esteem, to double at the legend bar)",
       abs(S._fire_threshold(o0, 1.0 + S.ROPE_WEIGHT * 1.0) - 2.0 * S._fire_threshold(o0, 1.0)) < 1e-9 and S.ROPE_WEIGHT > 0)
 check("firing is not a coin flip on fame: coaches fired had less esteem than the ones kept, on average",
       st.mean(c.esteem for c in L.coaches if any(e["event"] == "fired" for e in c.career)) <
@@ -97,7 +97,7 @@ check("firing is not a coin flip on fame: coaches fired had less esteem than the
 fired = [c for c in L.coaches if any(e["event"] == "fired" for e in c.career)]
 check("fired coaches did worse than keepers (their heat was real)", st.mean(c.heat for c in fired) > st.mean(t.coach.heat for t in L.teams), "")
 check("the Archive records the firings and hirings", {"coach_fired", "gm_fired", "gm_hired", "recall_vote"} <= {e["event"] for e in L.archive})
-check("owners are not ancient", all(t.owner.age <= S.OWNER_MAX_AGE for t in L.teams))
+check("CEOs are not ancient", all(t.owner.age <= S.OWNER_MAX_AGE for t in L.teams))
 
 # ---- determinism and no effect on the engine's random stream ------------------------------------------------
 L2, _ = play(33, 12)

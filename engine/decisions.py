@@ -16,7 +16,7 @@ How a choice is made
   4. The choice is applied by the engine and written to the choice log, the canonical record of the league's history: the same
      seed and the same choice log give the same league.
 
-Many decisions in one season do not depend on each other (the 48 owners' yearly staff reviews, for example), so the engine hands them
+Many decisions in one season do not depend on each other (the 48 CEOs' yearly staff reviews, for example), so the engine hands them
 to the guard together (decide_many) and a driver that can work in parallel answers them together: a dozen agents, each given one card and
 one list of options at a time. An agent has no memory of its own. What a character remembers lives on her card: her career, her honors,
 her recent decisions and a short, capped "notes to self" that she alone writes (through the guard) and alone reads back.
@@ -72,7 +72,7 @@ def card_view(role: str, a) -> dict:
     for e in getattr(a, "honors", ()):
         honors[e["honor"]] = honors.get(e["honor"], 0) + 1
     career = getattr(a, "career", ())
-    return dict(role=role, name=a.name, trait=getattr(a, "trait", None), wants=getattr(a, "wants", None), fears=getattr(a, "fears", None),
+    return dict(role="ceo" if role == "owner" else role, name=a.name, trait=getattr(a, "trait", None), wants=getattr(a, "wants", None), fears=getattr(a, "fears", None),
                 ratings=dict(a.ratings), pressure=dict(a.pressure), age=getattr(a, "age", None),
                 reputation=getattr(a, "standing", "") or "unknown", honors=honors,
                 career_summary=dict(jobs=sum(1 for e in career if e.get("event") in ("hired", "bought", "elected")),
@@ -117,7 +117,7 @@ class ReplayDriver:
 
 
 class PerTeamDriver:
-    """Different drivers for different teams (for example, agents for some owners and the autopilot for the rest)."""
+    """Different drivers for different teams (for example, agents for some CEOs and the autopilot for the rest)."""
     name = "per-team"
 
     def __init__(self, drivers: Dict[int, object], default=None):

@@ -7,10 +7,10 @@ Seed 1, after 40 seasons. Names, hometowns and backgrounds come from placeholder
 - **Soul (archetypes)** is fixed for life. It is read from the rating profile she is born with: her best attribute names the positive archetype and her weakest the negative one. Her development is bent to stay true to it.
 - **Personality** is how her soul shows up. Her archetype allows four personalities; which one she shows depends on her temperament and on how she rates herself. Her self-image lags the truth, so a declining veteran overrates herself and a rising rookie undersells herself. When her confidence moves enough, her personality can shift, but only inside the four her soul allows.
 - **Pressure thresholds** (exile, contract, spotlight, loyalty) are how much each kind of pressure rattles her, 1 to 100. They do nothing yet; the Interaction system will use them.
-- **Fanbases and outlets**: a fanbase has a culture (its personality), five ratings and two stores: approval of the owner and Fan Capital (goodwill built by sustained success, which only ever buffers a recall). Its expectations drift with what the team delivers, inside a bound set at birth. An outlet has a voice, five ratings and Credibility, which rises when its forecasts come true and falls when they miss; one that stays irrelevant folds and is replaced. The press can move an owner's approval by at most 3 points a year.
+- **Fanbases and outlets**: a fanbase has a culture (its personality), five ratings and two stores: approval of the CEO and Fan Capital (goodwill built by sustained success, which only ever buffers a recall). Its expectations drift with what the team delivers, inside a bound set at birth. An outlet has a voice, five ratings and Credibility, which rises when its forecasts come true and falls when they miss; one that stays irrelevant folds and is replaced. The press can move a CEO's approval by at most 3 points a year.
 - **Coach ratings**: offense and defense lift the team (up to +/- 1.0 point of margin each); development adds up to 0.4 rating points a year to each young player. The other three are stored for later. Effects are measured against the league's current average coach, so the average coach does nothing.
-- **Living cards**: coaches, GMs and owners grow and fade over their careers (ratings move inside the shape their soul gave them), rate themselves with a lag, and can change personality inside the four traits their soul allows. People between jobs live on and can be offered to owners again. The TRAJECTORY line is their overall level by age.
-- **Recognition**: nobody is a legend by birth. Honors (titles, All-League, Coach of the Year...) build a career esteem; the 52 outlets read it with their own noise, and a credibility-weighted share calling someone a legend makes it so (or the media splits and she is *contested*). The Hall of Fame (outlets and owners) votes on people who retired a few years ago. There is no cap on either.
+- **Living cards**: coaches, GMs and CEOs grow and fade over their careers (ratings move inside the shape their soul gave them), rate themselves with a lag, and can change personality inside the four traits their soul allows. People between jobs live on and can be offered to CEOs again. The TRAJECTORY line is their overall level by age.
+- **Recognition**: nobody is a legend by birth. Honors (titles, All-League, Coach of the Year...) build a career esteem; the 52 outlets read it with their own noise, and a credibility-weighted share calling someone a legend makes it so (or the media splits and she is *contested*). The Hall of Fame (outlets and CEOs) votes on people who retired a few years ago. There is no cap on either.
 
 ## A franchise player at each position group
 
@@ -243,7 +243,7 @@ CAREER: [hired 40]
 DECISION_LOG: [none yet]
 ```
 
-**A coach between jobs (she lives on and may be offered to an owner again):**
+**A coach between jobs (she lives on and may be offered to a CEO again):**
 
 ### Coach Anneke Lockhart  (between jobs)
 ```yaml
@@ -291,7 +291,7 @@ year 17: legend recognized: Fiona Briggs (player), esteem 25.7, 100% of outlets
 |---|---|---|---|---|---|
 | 15 | player | Mabel Colburn | 29.2 | 97% | All-League x12, Player of the Year x3 |
 | 15 | player | Adriana Avery | 23.5 | 79% | All-League x9, Champion x2, Player of the Year x1 |
-| 16 | owner | Mirabel Leclair | 21.6 | 93% | Champion x2 |
+| 16 | CEO | Mirabel Leclair | 21.6 | 93% | Champion x2 |
 | 17 | player | Olive Caldwell | 27.5 | 96% | All-League x10, Player of the Year x3 |
 | 18 | coach | Tatiana Amundsen | 31.6 | 100% | Coach of the Year x1, Champion x2 |
 | 23 | coach | Corinne Crenshaw | 20.4 | 77% | Champion x2 |
@@ -301,7 +301,7 @@ year 17: legend recognized: Fiona Briggs (player), esteem 25.7, 100% of outlets
 | 30 | gm | Mika Holmgren | 17.6 | 85% | Champion x3 |
 | 31 | player | Bianca Davenport | 45.3 | 100% | All-League x10, Player of the Year x8 |
 | 35 | gm | Esme Ziegler | 16.9 | 80% | Champion x2 |
-| 36 | owner | Gwen Hutchins | 20.1 | 87% | Champion x2 |
+| 36 | CEO | Gwen Hutchins | 20.1 | 87% | Champion x2 |
 | 38 | player | Maya Robeson | 30.3 | 99% | All-League x7, Player of the Year x5 |
 
 **The most esteemed player:**
@@ -323,9 +323,9 @@ CAREER: [drafted 17 (pick 2); became Grinder (was Competitor) 18; became Competi
 DECISION_LOG: [none yet]
 ```
 
-## An owner, a GM, and the Archive's first entries
+## A CEO, a GM, and the Archive's first entries
 
-### Owner Treasure Calloway  (Team 02, owner)
+### CEO Treasure Calloway  (Team 02, CEO)
 ```yaml
 IDENTITY: [Treasure Calloway, age 64, from Calgary AB; Self-made industrialist]
 SOUL (fixed): [+ Relentless Competitor, - Money Pit]
@@ -345,7 +345,7 @@ RELATIONSHIPS: {Team 02 fans: +26}
 CAREER: [elected 18]
 DECISION_LOG: [18: was elected by the fans of team 2; 25: survived a recall vote; 33: survived a recall vote]
 ```
-### Owner Esperanza Caldwell  (Team 33, recalled)
+### CEO Esperanza Caldwell  (Team 33, recalled)
 ```yaml
 IDENTITY: [Esperanza Caldwell, age 55, from Providence RI; Consortium front-woman]
 SOUL (fixed): [+ Hands-On Leader, - Trigger-Happy]
@@ -579,7 +579,7 @@ EVENT 38-firing-28-2  (Team 28; firing; owner fired the gm (results))
     Outcome: Adriana Maynard fired; replaced by a new gm
 ```
 
-**A new owner's sweep**
+**A new CEO's sweep**
 
 ```
 EVENT 40-firing-33-2  (Team 33; firing; owner fired the gm (new owner cleaned house))
@@ -592,7 +592,7 @@ EVENT 40-firing-33-2  (Team 33; firing; owner fired the gm (new owner cleaned ho
     Outcome: Delphine Mikkelsen fired; replaced by a new gm
 ```
 
-**A recall vote that removes an owner**
+**A recall vote that removes a CEO**
 
 ```
 EVENT 40-recall_vote-33-1  (Team 33; recall vote; vote triggered by approval)
@@ -604,7 +604,7 @@ EVENT 40-recall_vote-33-1  (Team 33; recall vote; vote triggered by approval)
     Outcome: Esperanza Caldwell recalled; Amina Kawamoto elected from 5 candidates
 ```
 
-**A recall vote the owner survives**
+**A recall vote the CEO survives**
 
 ```
 EVENT 40-recall_vote-48-1  (Team 48; recall vote; vote triggered by rotation)
@@ -618,9 +618,9 @@ EVENT 40-recall_vote-48-1  (Team 48; recall vote; vote triggered by rotation)
 
 ## What an agent is shown, and what the log keeps
 
-Choices go through Decision Points. An agent is shown its own card, what it perceives (candidates' ratings as the owner sees them, with blind spots) and the legal options, and answers with one option id. The guard applies the choice (or the autopilot's choice if the answer is invalid or late) and logs it. Below: the two decisions an owner faces, as an agent receives them, and the log line.
+Choices go through Decision Points. An agent is shown its own card, what it perceives (candidates' ratings as the CEO sees them, with blind spots) and the legal options, and answers with one option id. The guard applies the choice (or the autopilot's choice if the answer is invalid or late) and logs it. Below: the two decisions a CEO faces, as an agent receives them, and the log line.
 
-**An owner's staff review, as an agent receives it:**
+**A CEO's staff review, as an agent receives it:**
 
 ```json
 {
@@ -871,7 +871,7 @@ Choices go through Decision Points. An agent is shown its own card, what it perc
 
 **Scenes:** 1106 in 40 seasons ([('recall_vote', 546), ('exile_determination', 320), ('firing', 240)]). Firings by ruling: fair 150, sweep 69, harsh 15, unfounded 6.
 
-**Recall votes:** 546 in 40 seasons (13.7 a year); 173 owners recalled (4.3 a year), 32% of votes. Owners retire on their own too: 151 so far.
+**Recall votes:** 546 in 40 seasons (13.7 a year); 173 CEOs recalled (4.3 a year), 32% of votes. CEOs retire on their own too: 151 so far.
 
 **Firings:** 154 coaches and 86 GMs fired in 40 seasons.
 

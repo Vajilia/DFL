@@ -58,7 +58,7 @@ class SeasonResult:
     next_tiers: Dict[int, int]
     runner: object = None               # GameRunner: player and team stat totals, injury log
     offseason: dict = None              # what the roster offseason did
-    staff: dict = None                  # owners, recalls, firings (None when the league has no staff)
+    staff: dict = None                  # CEOs, recalls, firings (None when the league has no staff)
 
 
 def run_season(league: League, year: int, rng: random.Random, opt: Options = None) -> SeasonResult:
@@ -126,7 +126,7 @@ def run_season(league: League, year: int, rng: random.Random, opt: Options = Non
         stats=all_stats, rng=rng, log=log, lottery_pool=opt.lottery_pool, weights=opt.lottery_weights,
         returner_slot=opt.returner_slot)
 
-    # ---- owner recall workload (ADAPTED rotation: division 0, 1, ... 7, repeat)
+    # ---- CEO recall workload (ADAPTED rotation: division 0, 1, ... 7, repeat)
     recall_div = (year - 1) % R.TOTAL_DIVISIONS
     votes = {t.id for t in league.division(recall_div)}
     if R.RECALL_ON_EXILE:
@@ -157,11 +157,15 @@ def run_season(league: League, year: int, rng: random.Random, opt: Options = Non
             recognition.season_honors(league, year, pct, champion, playoff_teams)      # honors, esteem and the media's verdict, before anyone moves
         import rosters
         before = [p for t in league.teams for p in rosters.squad(t)] + list(league.free_agents)
+        was_on = {p.id: p.team_id for p in before}
         off_log = run_roster_offseason(league, rng, opt.roster_model, year, pick_of, returners)
         import cards
         league.retired_players.extend(p for p in before if p.retired)
+        if getattr(league, "fans_on", False):
+            import fan_media_cards as FM
+            FM.note_events(league, year, returners, was_on)      # which clubs came home and which stars left, for the fans' memory
         import finance
-        off_log["finance"] = finance.close_books(league, year, pct, playoff_teams, champion, returners, off_log["cap"])    # the clubs' books, before the owners' review
+        off_log["finance"] = finance.close_books(league, year, pct, playoff_teams, champion, returners, off_log["cap"])    # the clubs' books, before the CEOs' review
         import governance
         off_log["meeting"] = governance.annual_meeting(league, year) if league.staff_on else None      # the Competition Committee is seated
         off_log["forced_sales"] = finance.forced_sales(league, year, off_log["finance"]) if league.staff_on else []
@@ -170,7 +174,7 @@ def run_season(league: League, year: int, rng: random.Random, opt: Options = Non
             staff_log = staff_cards.season_end(league, year, pct, new_exiles, champion, playoff_teams, recall_div)
             votes = set(staff_log["votes"])
             cards.ensure_cards(league, year)
-            finance.apply_nudges(league)         # the fans' view of the spending reaches the owner who earned it, for next year's approval
+            finance.apply_nudges(league)         # the fans' view of the spending reaches the CEO who earned it, for next year's approval
         else:
             cards.offseason_cards(league, year)
         if league.coaches_on:

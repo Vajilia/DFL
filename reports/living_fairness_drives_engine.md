@@ -1,6 +1,6 @@
 # Fanbase and media cards, and fair competitiveness
 
-Fans and the press never touch a game. A fanbase's culture and ratings decide how an owner's approval responds to a season (how patient, how demanding, how moody, how much it believes the press). The press moves approval by at most 3 points a year (more in a big market, to a trusting fanbase). Fan Capital, the slow store of goodwill, only ever buffers a recall vote. Approval decides recalls, and a recall can lead to a coach or GM being fired, so the only road to the field is long. The question for every row: does any trend leave its band?
+Fans and the press never touch a game. A fanbase's culture and ratings decide how a CEO's approval responds to a season (how patient, how demanding, how moody, how much it believes the press). The press moves approval by at most 3 points a year (more in a big market, to a trusting fanbase). Fan Capital, the slow store of goodwill, only ever buffers a recall vote. Approval decides recalls, and a recall can lead to a coach or GM being fired, so the only road to the field is long. The question for every row: does any trend leave its band?
 
 ## E. As built, full drive engine
 

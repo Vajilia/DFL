@@ -77,14 +77,14 @@ for e in scenes(La):
             ok, bad = False, (e["id"], c["role"], c["frame"])
 check("a claim is marked supported exactly when the engine's numbers back it", ok, str(bad) if bad else "")
 mand = [e for e in scenes(La, "recall_vote") if any(c["role"] == "new_owner" for c in e["claims"])]
-check("a new owner's mandate is supported exactly when she topped the candidates on the fans' taste",
+check("a new CEO's mandate is supported exactly when she topped the candidates on the fans' taste",
       all(("new_owner" in e["supports"]) == bool(e["evidence"]["elected_is_best_on_taste"]) for e in mand), f"{len(mand)} elections")
 fire = scenes(La, "firing")
 rul = [e["evidence"]["ruling"] for e in fire]
 check("every firing gets one ruling: sweep, fair, harsh or unfounded", set(rul) <= {"sweep", "fair", "harsh", "unfounded"})
-check("a sweep is only ever by a new owner, and only a new owner's sweep is called one",
+check("a sweep is only ever by a new CEO, and only a new CEO's sweep is called one",
       all((e["evidence"]["ruling"] == "sweep") == e["evidence"]["new_owner"] for e in fire))
-check("a firing is never called fair unless the record backs the owner", all("owner" in e["supports"] for e in fire if e["evidence"]["ruling"] == "fair"))
+check("a firing is never called fair unless the record backs the CEO", all("owner" in e["supports"] for e in fire if e["evidence"]["ruling"] == "fair"))
 # harsh runs 5 to 8% of firings; with ~200 firings a seed can dip just under 5%, so the floor is 3% and at least 5 cases
 check("the evidence really decides: fair and harsh firings both happen", all(rul.count(k) / len(rul) > 0.03 and rul.count(k) >= 5 for k in ("fair", "harsh")),
       ", ".join(f"{k} {rul.count(k)}" for k in ("sweep", "fair", "harsh", "unfounded")))
@@ -93,23 +93,23 @@ check("coaches who blame the roster exaggerate on average", len(gap) > 50 and st
 sup = [("coach" in e["supports"]) for e in scenes(La) if any(c["role"] == "coach" and c["frame"] == "talent" and "claimed_z" in c for c in e["claims"])]
 check("some of those excuses are true and some are not", 0.05 < sum(sup) / len(sup) < 0.95, f"{sum(sup)} of {len(sup)} backed")
 check("each scene's claims come from different parties", all(len({c["role"] for c in e["claims"]}) == len(e["claims"]) for e in scenes(La)))
-check("every scene has at least an owner claim and an evidence verdict", all(e["claims"] and e["claims"][0]["role"] == "owner" and e["verdict"] for e in scenes(La)))
+check("every scene has at least a CEO claim and an evidence verdict", all(e["claims"] and e["claims"][0]["role"] == "owner" and e["verdict"] for e in scenes(La)))
 
 # ---- relationships and decision logs -------------------------------------------------------------------------
 cards = list(La.owners) + list(La.coaches) + list(La.gms) + list(La.fanbases) + list(La.media)
 vals = [v for c in cards for v in c.relationships.values()]
 check("relationships stay between -100 and +100", vals and all(-100 <= v <= 100 for v in vals), f"{len(vals)} relationships")
 fired_coaches = [c for c in La.coaches if any(e["event"] == "fired" for e in c.career)]
-check("fired coaches hold a grudge against the owner who fired them", all(any(k.startswith("owner:") and v < 0 for k, v in c.relationships.items()) for c in fired_coaches),
+check("fired coaches hold a grudge against the CEO who fired them", all(any(k.startswith("owner:") and v < 0 for k, v in c.relationships.items()) for c in fired_coaches),
       f"{len(fired_coaches)} fired coaches")
 recalled = [o for o in La.owners if o.status == "recalled"]
-check("recalled owners hold a grudge against their fans (however much goodwill they had banked)", all(o.relationships.get(f"fans:{o.teams_owned[0]}", 0) < 0 for o in recalled), f"{len(recalled)} recalled owners")
-check("and the fans against them", all(La.by_id[o.teams_owned[0]].fans.relationships.get(f"owner:{o.oid}", 0) < 0 for o in recalled))
-check("an elected owner starts warm with her fans", any(o.relationships.get(f"fans:{o.teams_owned[0]}", 0) > 0 for o in La.owners if o.status == "owner" and any(e["event"] == "elected" for e in o.career)))
+check("recalled CEOs hold a grudge against their fans (however much goodwill they had banked)", all(o.relationships.get(f"fans:{o.teams_owned[0]}", 0) < 0 for o in recalled), f"{len(recalled)} recalled CEOs")
+check("and the fans against them", all(La.by_id[o.teams_owned[0]].fans.relationships.get(f"CEO:{o.oid}", 0) < 0 for o in recalled))
+check("an elected CEO starts warm with her fans", any(o.relationships.get(f"fans:{o.teams_owned[0]}", 0) > 0 for o in La.owners if o.status == "owner" and any(e["event"] == "elected" for e in o.career)))
 check("every card's relationship keys name real kinds of party", all(k.split(":")[0] in ("owner", "coach", "gm", "fans", "press") for c in cards for k in c.relationships))
 log_ids = {d["interaction"] for c in cards for d in c.decision_log}
 check("every exile, recall and firing scene is in at least one decision log", set(ids) <= log_ids, f"{len(set(ids) - log_ids)} missing")
-check("owners who fired someone logged the choice", all(any(d["action"].startswith("fired") for d in t.owner.decision_log) for t in La.teams if any(e["event"] == "coach_fired" and e["team"] == t.id and e["by"] == t.owner.name for e in La.archive)))
+check("CEOs who fired someone logged the choice", all(any(d["action"].startswith("fired") for d in t.owner.decision_log) for t in La.teams if any(e["event"] == "coach_fired" and e["team"] == t.id and e["by"] == t.owner.name for e in La.archive)))
 
 # ---- rendering ---------------------------------------------------------------------------------------------
 for kind in ("exile_determination", "recall_vote", "firing"):

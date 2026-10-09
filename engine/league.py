@@ -28,7 +28,7 @@ class Team:
     coach: object = None      # cards.CoachCard, the head coach
     owner: object = None      # staff_cards.OwnerCard
     gm: object = None         # staff_cards.GMCard
-    fans: object = None       # fan_media_cards.FanbaseCard (belongs to the franchise, outlives its owners)
+    fans: object = None       # fan_media_cards.FanbaseCard (belongs to the franchise, outlives its CEOs)
     bank: float = 0.0         # cap room banked from last season, $ millions (economy.py)
     dead_now: float = 0.0     # dead money on this season's cap (economy.py)
     dead_next: float = 0.0    # dead money pushed to next season by post-draft designations
@@ -58,15 +58,15 @@ class League:
         self.new_id: IdSource = IdSource()
         self.has_rosters = False
         self.card_seed = 0                 # seeds every character card; set from the league's own seed
-        self.staff_on = True               # owners, GMs, recalls, firings
+        self.staff_on = True               # CEOs, GMs, recalls, firings
         self.coaches_on = True             # head coaches nudge team strength (turn off to compare)
         self.coaches: list = []            # every head coach ever hired (the Archive keeps them)
         self.retired_players: list = []    # retired players keep their cards
         self._coach_ids = 0
-        self.owners: list = []             # every owner and recall candidate ever generated
+        self.owners: list = []             # every CEO and recall candidate ever generated
         self.gms: list = []
         self.archive: list = []            # plain-fact event log (recalls, firings, hirings); the Archive proper comes later
-        self.fans_on = True                # fanbase and media cards decide owner approval (turn off for the old placeholder model)
+        self.fans_on = True                # fanbase and media cards decide CEO approval (turn off for the old placeholder model)
         self.interactions_on = True        # Required interactions are written up as scenes (never changes an outcome)
         self.prev_pct: dict = {}           # last season's win% by team, for the scenes' evidence
         self.driver = None                 # who makes the choices (decisions.py); None means the autopilot
@@ -85,7 +85,7 @@ class League:
         self.movement = Movement()         # draft-pick ownership, tenders and offers (movement.py); saved in its own tables
         self.proposals_made = 0            # votes held (governance.py)
         self.committee: list = []          # the Competition Committee (governance.py)
-        self.finance_nudge: dict = {}      # team id -> (owner id, approval nudge) from the year's books, applied after the owners' review (finance.py)
+        self.finance_nudge: dict = {}      # team id -> (CEO id, approval nudge) from the year's books, applied after the CEOs' review (finance.py)
         self.pool = 0.0                    # the Equalization Fund's cash balance: forfeited room in, exiled teams' absorbed payroll out (economy.py)
 
     def new_owner_id(self) -> int:
@@ -152,8 +152,8 @@ def new_league(rng: random.Random, rosters: bool = False, coaches: bool = True, 
     lg = League(teams)
     lg.card_seed = hash(rng.getstate()[1]) % (2 ** 31)    # reads the generator without drawing from it
     lg.coaches_on = coaches
-    lg.staff_on = coaches and staff        # owners and GMs (and firing); needs the coaches
-    lg.fans_on = lg.staff_on and fans      # fanbases and media; they feed owner approval
+    lg.staff_on = coaches and staff        # CEOs and GMs (and firing); needs the coaches
+    lg.fans_on = lg.staff_on and fans      # fanbases and media; they feed CEO approval
     lg.interactions_on = lg.staff_on and interactions   # scenes for firings, recall votes and exile determinations
     if rosters:
         give_rosters(lg, rng)

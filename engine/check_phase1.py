@@ -251,7 +251,7 @@ for cfg_name, opt in configs:
                     tiebreak_counts[rec["decided_by"]] += 1
         # every division comes up once per 8 years
         first8 = Counter(res.recall_division for res in results[:8])
-        flag("every division faces owner recall once in each 8-year cycle",
+        flag("every division faces CEO recall once in each 8-year cycle",
              set(first8) == set(range(8)) and set(first8.values()) == {1}, f"{cfg_name} / seed {seed}")
 
 for name, ok in all_ok.items():

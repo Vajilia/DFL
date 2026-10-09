@@ -41,10 +41,10 @@ def main():
            "- **Soul (archetypes)** is fixed for life. It is read from the rating profile she is born with: her best attribute names the positive archetype and her weakest the negative one. Her development is bent to stay true to it.",
            "- **Personality** is how her soul shows up. Her archetype allows four personalities; which one she shows depends on her temperament and on how she rates herself. Her self-image lags the truth, so a declining veteran overrates herself and a rising rookie undersells herself. When her confidence moves enough, her personality can shift, but only inside the four her soul allows.",
            "- **Pressure thresholds** (exile, contract, spotlight, loyalty) are how much each kind of pressure rattles her, 1 to 100. They do nothing yet; the Interaction system will use them.",
-           "- **Fanbases and outlets**: a fanbase has a culture (its personality), five ratings and two stores: approval of the owner and Fan Capital (goodwill built by sustained success, which only ever buffers a recall). Its expectations drift with what the team delivers, inside a bound set at birth. An outlet has a voice, five ratings and Credibility, which rises when its forecasts come true and falls when they miss; one that stays irrelevant folds and is replaced. The press can move an owner's approval by at most 3 points a year.",
+           "- **Fanbases and outlets**: a fanbase has a culture (its personality), five ratings and two stores: approval of the CEO and Fan Capital (goodwill built by sustained success, which only ever buffers a recall). Its expectations drift with what the team delivers, inside a bound set at birth. An outlet has a voice, five ratings and Credibility, which rises when its forecasts come true and falls when they miss; one that stays irrelevant folds and is replaced. The press can move a CEO's approval by at most 3 points a year.",
            "- **Coach ratings**: offense and defense lift the team (up to +/- 1.0 point of margin each); development adds up to 0.4 rating points a year to each young player. The other three are stored for later. Effects are measured against the league's current average coach, so the average coach does nothing.",
-           "- **Living cards**: coaches, GMs and owners grow and fade over their careers (ratings move inside the shape their soul gave them), rate themselves with a lag, and can change personality inside the four traits their soul allows. People between jobs live on and can be offered to owners again. The TRAJECTORY line is their overall level by age.",
-           "- **Recognition**: nobody is a legend by birth. Honors (titles, All-League, Coach of the Year...) build a career esteem; the 52 outlets read it with their own noise, and a credibility-weighted share calling someone a legend makes it so (or the media splits and she is *contested*). The Hall of Fame (outlets and owners) votes on people who retired a few years ago. There is no cap on either.\n"]
+           "- **Living cards**: coaches, GMs and CEOs grow and fade over their careers (ratings move inside the shape their soul gave them), rate themselves with a lag, and can change personality inside the four traits their soul allows. People between jobs live on and can be offered to CEOs again. The TRAJECTORY line is their overall level by age.",
+           "- **Recognition**: nobody is a legend by birth. Honors (titles, All-League, Coach of the Year...) build a career esteem; the 52 outlets read it with their own noise, and a credibility-weighted share calling someone a legend makes it so (or the media splits and she is *contested*). The Hall of Fame (outlets and CEOs) votes on people who retired a few years ago. There is no cap on either.\n"]
     out.append("## A franchise player at each position group\n")
     active = [p for t in lg.teams for p in t.roster]
     for pos in ("QB", "WR", "OL", "DL", "CB", "K"):
@@ -70,7 +70,7 @@ def main():
     out.append(C.render_coach(ranked[len(ranked) // 2].coach, lg))
     out.append(C.render_coach(ranked[0].coach, lg))
     if lg.free_coaches:
-        out.append("\n**A coach between jobs (she lives on and may be offered to an owner again):**\n")
+        out.append("\n**A coach between jobs (she lives on and may be offered to a CEO again):**\n")
         out.append(C.render_coach(max(lg.free_coaches, key=lambda c: c.esteem), lg))
     out.append("\n## Recognition: who the media called a legend, and the Hall of Fame\n")
     out.append("Nobody was made a legend. These are the Archive's own entries, in order:\n")
@@ -86,7 +86,7 @@ def main():
     star = max(allp, key=lambda p: p.card.esteem)
     out.append("**The most esteemed player:**\n")
     out.append(C.render_player(star, lg))
-    out.append("\n## An owner, a GM, and the Archive's first entries\n")
+    out.append("\n## A CEO, a GM, and the Archive's first entries\n")
     top = max(lg.teams, key=lambda t: t.owner.seasons_owned)
     out.append(S.render_owner(top.owner, lg))
     recalled = [o for o in lg.owners if o.status in ("recalled", "sold")]
@@ -103,6 +103,8 @@ def main():
     out.append(FM.render_fanbase(max(lg.teams, key=drift).fans, lg))
     out.append(FM.render_fanbase(min(lg.teams, key=drift).fans, lg))
     out.append(FM.render_fanbase(max(lg.teams, key=lambda t: t.fans.capital).fans, lg))
+    out.append("The franchise's permanent card, with its own meters, memories and any boycott (the club with the longest memory):\n")
+    out.append(FM.render_fanbase(max(lg.teams, key=lambda t: (len(t.fans.meters), len(t.fans.memories), t.fans.boycott)).fans, lg))
     live = [m for m in lg.media if m.status == "active"]
     out.append(FM.render_outlet(max((m for m in live if m.kind == "national"), key=lambda m: m.credibility), lg))
     out.append(FM.render_outlet(min((m for m in live if m.kind == "national"), key=lambda m: m.credibility), lg))
@@ -126,12 +128,12 @@ def main():
     pick(lambda x: x["kind"] == "exile_determination", "An exile determination")
     pick(lambda x: x["kind"] == "firing" and x["evidence"].get("ruling") == "fair", "A firing the record backs")
     pick(lambda x: x["kind"] == "firing" and x["evidence"].get("ruling") == "harsh", "A harsh firing (the roster explains the record)")
-    pick(lambda x: x["kind"] == "firing" and x["evidence"].get("ruling") == "sweep", "A new owner's sweep")
-    pick(lambda x: x["kind"] == "recall_vote" and "recalled;" in x["outcome"], "A recall vote that removes an owner")
-    pick(lambda x: x["kind"] == "recall_vote" and x["outcome"].endswith("survives"), "A recall vote the owner survives")
+    pick(lambda x: x["kind"] == "firing" and x["evidence"].get("ruling") == "sweep", "A new CEO's sweep")
+    pick(lambda x: x["kind"] == "recall_vote" and "recalled;" in x["outcome"], "A recall vote that removes a CEO")
+    pick(lambda x: x["kind"] == "recall_vote" and x["outcome"].endswith("survives"), "A recall vote the CEO survives")
     out.append("\n## What an agent is shown, and what the log keeps\n")
-    out.append("Choices go through Decision Points. An agent is shown its own card, what it perceives (candidates' ratings as the owner sees them, with blind spots) and the legal options, and answers with one option id. "
-               "The guard applies the choice (or the autopilot's choice if the answer is invalid or late) and logs it. Below: the two decisions an owner faces, as an agent receives them, and the log line.\n")
+    out.append("Choices go through Decision Points. An agent is shown its own card, what it perceives (candidates' ratings as the CEO sees them, with blind spots) and the legal options, and answers with one option id. "
+               "The guard applies the choice (or the autopilot's choice if the answer is invalid or late) and logs it. Below: the two decisions a CEO faces, as an agent receives them, and the log line.\n")
     seen = []
 
     def spy(payload):
@@ -145,7 +147,7 @@ def main():
         run_season(lg2, y, rng2, Options(engine="fast", keep_boxes=False))
     rev = next(p for p in seen if p["kind"] == "staff_review")
     hire = next(p for p in seen if p["kind"] == "hire_coach")
-    out.append("**An owner's staff review, as an agent receives it:**\n")
+    out.append("**A CEO's staff review, as an agent receives it:**\n")
     out.append("```json\n" + json.dumps(rev, indent=1) + "\n```\n")
     out.append("**A coaching hire, as an agent receives it:**\n")
     out.append("```json\n" + json.dumps(hire, indent=1) + "\n```\n")
@@ -168,6 +170,14 @@ def main():
     cap = [t.fans.capital for t in lg.teams]
     out.append(f"**Fan Capital:** average {st.mean(cap):.2f}, from {min(cap):.2f} to {max(cap):.2f}; "
                f"the most it can buffer a recall vote is {100 * FM.CAPITAL_RECALL_WEIGHT * (1 - FM.CAPITAL_FLOOR):.0f} points.\n")
+    mk = collections.Counter(k for t in lg.teams for k in t.fans.meters)
+    out.append(f"**Fan meters:** every fanbase has {FM.BIRTH_METERS} from birth and can awaken up to {FM.MAX_METERS}; now {collections.Counter(len(t.fans.meters) for t in lg.teams).most_common()} (meters per club, clubs). "
+               f"Most common: {', '.join(f'{FM.METERS[k]['label']} {v}' for k, v in mk.most_common(4))}.\n")
+    mem = collections.Counter(m["kind"] for t in lg.teams for m in t.fans.memories)
+    out.append(f"**Fan memories** held now: {', '.join(f'{k} {v}' for k, v in mem.most_common())}. "
+               f"**Boycotts** on now: {sum(t.fans.boycott >= FM.BOYCOTT_START for t in lg.teams)} clubs; "
+               f"{sum(m['kind'] == 'boycott' for t in lg.teams for m in t.fans.memories)} begun within the memory window. "
+               f"A full boycott costs {100 * FM.BOYCOTT_MAX:.0f}% of local revenue.\n")
     sway = [abs(t.fans.last_sway) for t in lg.teams]
     out.append(f"**The press on approval, last season:** average {100 * st.mean(sway):.1f} points either way, largest {100 * max(sway):.1f} (the cap is {100 * FM.MEDIA_SWAY:.0f} before market size and trust).\n")
     cr = [m.credibility for m in live]
@@ -179,8 +189,8 @@ def main():
     yrs = a.seasons
     nv = len(votes)
     nr = sum(e["result"] == "recalled" for e in votes)
-    out.append(f"**Recall votes:** {nv} in {yrs} seasons ({nv / yrs:.1f} a year); {nr} owners recalled ({nr / yrs:.1f} a year), "
-               f"{100 * nr / max(1, nv):.0f}% of votes. Owners retire on their own too: {sum(o.status == 'retired' for o in lg.owners)} so far.\n")
+    out.append(f"**Recall votes:** {nv} in {yrs} seasons ({nv / yrs:.1f} a year); {nr} CEOs recalled ({nr / yrs:.1f} a year), "
+               f"{100 * nr / max(1, nv):.0f}% of votes. CEOs retire on their own too: {sum(o.status == 'retired' for o in lg.owners)} so far.\n")
     out.append(f"**Firings:** {sum(e['event'] == 'coach_fired' for e in lg.archive)} coaches and {sum(e['event'] == 'gm_fired' for e in lg.archive)} GMs fired in {yrs} seasons.\n")
     out.append(f"**Coaches so far:** {len(lg.coaches)} hired and {sum(c.retired for c in lg.coaches)} retired in {a.seasons} seasons; {len(lg.free_coaches)} coaches and {len(lg.free_gms)} GMs are between jobs right now.\n")
     out.append(f"**Players with cards:** {len(active) + len(lg.free_agents)} active or unsigned, {len(lg.retired_players)} retired.\n")

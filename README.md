@@ -22,18 +22,18 @@ A seeded league engine with 53-player rosters, character cards, a drive-by-drive
 | `engine/calibrate_engine.py` | Checks the engine looks like football |
 | `engine/phase2_report.py` | Writes `reports/phase2_report.md` |
 | `engine/cards.py`, `card_pools.py` | Character cards: player souls (archetypes), perception and personality; head coaches who develop players |
-| `engine/living.py` | The living bones shared by coaches, GMs and owners: souls, careers, perception, personality inside the soul's family, the league reference, free agents |
+| `engine/living.py` | The living bones shared by coaches, GMs and CEOs: souls, careers, perception, personality inside the soul's family, the league reference, free agents |
 | `engine/recognition.py` | Honors, esteem, what the media calls people (legends emerge, nobody is designated) and the league Hall of Fame |
 | `engine/store.py` | Persistence: the cards are the save (one SQLite file, rebuilt from the cards, resumes exactly); optional yearly snapshots; export/import one coach or GM |
 | `engine/emergence_study.py` | Plays long leagues and reports how legends and the Hall of Fame emerge; writes `reports/emergence_study.md` |
-| `engine/staff_cards.py` | Owner and GM cards; recall votes, hiring and firing; the Archive's first entries |
+| `engine/staff_cards.py` | CEO and GM cards; recall votes, hiring and firing; the Archive's first entries |
 | `engine/service.py`, `engine/check_service.py` | Earned accrued/credited service, expiration classification, boundary and save/resume checks; service now controls salary/PS eligibility |
 | `engine/movement.py`, `engine/check_movement.py` | Step 6c/6d: the draft-pick ledger (original club, owner, slot, reservation, selection), tenders and rights, funded offers with five-day matching and compensation, their own SQLite tables (save format 3), and twelve checks including atomicity, boundaries, migration and save/resume |
 | `engine/transactions.py`, `engine/check_transactions.py` | Step 6e to 6h: the waiver wire and in-season records for priority, full trades (cap, bonus acceleration, roster limits, deadline), compensatory-pick awards; with `movement.py` (franchise and transition tags) and `contracts.py`, 56 checks |
 | `engine/finance.py`, `engine/check_finance.py`, `engine/finance_report.py` | Step 7: club revenue (national pool, the 34% ticket pool, local money by market, fans and success), the CEO's draw capped at $100M with the excess to the Equalization Fund, subsidies from CEOs' draws, the fans' say on spending as a capped approval nudge, 10 to 20 year CEO tenure and the forced-sale vote; writes `reports/finance_report.md` |
 | `engine/injuries.py`, `engine/check_injuries.py` | Step 8a: injury kinds, NFL-scale rates and lengths, concussion protocol, the weekly injury report |
 | `engine/staff_pay.py`, `engine/check_hiring.py` | Step 8b: football-staff pay inside two limits (one contract 8% of the cap, the staff 20%), the two-interview hiring rule and the demographics audit (schema scan plus a name-blind replay) |
-| `engine/governance.py`, `engine/dflpa.py`, `engine/discipline.py`, `engine/check_governance.py` | Step 8c: the owners' votes (36 of 48 for rules, 32 for a Commissioner's successor), the Competition Committee, the Commissioner's shrink-only powers, the DFLPA representative as a character at every contract table, player suspensions and club fines |
+| `engine/governance.py`, `engine/dflpa.py`, `engine/discipline.py`, `engine/check_governance.py` | Step 8c: the CEOs' votes (36 of 48 for rules, 32 for a Commissioner's successor), the Competition Committee, the Commissioner's shrink-only powers, the DFLPA representative as a character at every contract table, player suspensions and club fines |
 | `engine/autotrade.py`, `engine/check_autotrade.py` | Step 9a: the autopilot's trade market (veterans for picks, pick swaps) on a draft-value chart, before the draft and at weeks 3 and 6, always legal and open to the Commissioner's reject-only review |
 | `engine/check_elevations.py`, `engine/check_extensions.py` | Step 9a: practice-squad elevations to game day (up to 2 a game, 3 a season each) and mid-contract extensions for good players with a year left |
 | `engine/contracts.py` | Step 6i: the contract table (club general manager, player, DFLPA representative guard) and the club's value-to-price rule that replaced the re-signing dice |
@@ -43,8 +43,8 @@ A seeded league engine with 53-player rosters, character cards, a drive-by-drive
 | `engine/agents.py` | A stand-in agent (reads only the public view), a flaky wrapper and seats for agents in some chairs, to rehearse the machinery without a model |
 | `engine/adversaries.py` | Worst-case drivers used to test the fairness bands |
 | `engine/interactions.py` | The Interaction system, first slice: firing, recall vote and exile determination scenes (claims, evidence, relationships, decision logs) |
-| `engine/fan_media_cards.py` | Fanbase cards (culture, ratings, approval, Fan Capital) and media outlet cards (voice, ratings, Credibility, forecasts) |
-| `engine/staff_sweep.py` | Tests owners, firings and the GM levers (and 3x, 6x stress versions) against the fairness bands; writes `reports/staff_fairness_study.md` |
+| `engine/fan_media_cards.py` | Fanbase cards (the franchise's permanent card: culture, ratings, approval of the CEO, Fan Capital, its own evolving meters, fading memories, a boycott level) and media outlet cards (voice, ratings, Credibility, forecasts) |
+| `engine/staff_sweep.py` | Tests CEOs, firings and the GM levers (and 3x, 6x stress versions) against the fairness bands; writes `reports/staff_fairness_study.md` |
 | `engine/card_report.py` | Writes `reports/card_samples.md` |
 | `engine/coach_sweep.py` | Sweeps the coach dials (team lift, player development) against the fairness bands; writes `reports/coach_fairness_study.md` |
 | `engine/tiebreak.py` | NFL-style tiebreaking procedures (division, wild card, draft order) |
@@ -76,7 +76,7 @@ A seeded league engine with 53-player rosters, character cards, a drive-by-drive
     python engine/check_phase0.py          # do the rules agree with each other?
     python engine/check_tiebreaks.py       # NFL tiebreakers
     python engine/check_cards.py           # character cards and the coach effect
-    python engine/check_staff.py           # owners, GMs, recall votes, firings
+    python engine/check_staff.py           # CEOs, GMs, recall votes, firings
     python engine/check_fans.py            # fanbase and media cards
     python engine/check_decisions.py       # decision points, the guard, replay, the autopilot's exactness
     python engine/check_living.py          # living cards, recognition, the Hall of Fame, saving and resuming a league
@@ -114,4 +114,4 @@ See [verification results](reports/verification_step6a.md) for baseline and chan
 
 Step 6b integrates service into minimum base pay and practice-squad eligibility, with checks in `engine/check_service_pay.py`. Step 6c/6d (rebuilt on branch `step6-rebuild`) adds pick ownership, tenders, funded offers, matching and compensation in `engine/movement.py`. See [current verification](reports/verification_step6cd.md), [decision rationale](docs/decisions.md) and [remaining implementation order](docs/step6_remaining_plan.md). Step 6e to 6i (same branch) finishes the player-movement rules: waivers, franchise and transition tags, full trades, compensatory picks and contract tables, with a value-to-price re-signing rule replacing the old dice. See [Step 6e to 6i verification](reports/verification_step6e_i.md) and the matching section of [decision rationale](docs/decisions.md). What is still open in Step 6 is listed there honestly (extensions mid-contract, trades by the autopilot, parallel tables for agents are not built).
 
-Step 7 (same branch) adds the money layer in `engine/finance.py`: every club earns national, ticket-pool and local revenue; its CEO (10 to 20 year tenure) reinvests part of a profit, saves a little and takes the rest as a draw capped at $100M, with the excess sent to the Equalization Fund; CEOs' draws pay subsidies to clubs whose losses the reserve cannot cover; two subsidised quarters can put an owner up for a forced-sale vote. Money never touches the cap or a game. See [the design note](docs/step7_design.md), the matching section of [decision rationale](docs/decisions.md) and `reports/finance_report.md`.
+Step 7 (same branch) adds the money layer in `engine/finance.py`: every club earns national, ticket-pool and local revenue; its CEO (10 to 20 year tenure) reinvests part of a profit, saves a little and takes the rest as a draw capped at $100M, with the excess sent to the Equalization Fund; CEOs' draws pay subsidies to clubs whose losses the reserve cannot cover; two subsidised quarters can put a CEO up for a forced-sale vote. Money never touches the cap or a game. See [the design note](docs/step7_design.md), the matching section of [decision rationale](docs/decisions.md) and `reports/finance_report.md`.

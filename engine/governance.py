@@ -1,12 +1,12 @@
-"""Governance (Step 8c): the owners' votes, the Competition Committee and the Commissioner's shrink-only powers.
+"""Governance (Step 8c): the CEOs' votes, the Competition Committee and the Commissioner's shrink-only powers.
 
 The Commissioner's rulebook:
   * votes (Adapted from the NFL): three-quarters of the clubs (36 of 48) for rule, bylaw and playing-rule changes; two-thirds (32 of 48) to choose a
-    Commissioner's successor; an eight-member Competition Committee, one owner per division;
+    Commissioner's successor; an eight-member Competition Committee, one CEO per division;
   * the Commissioner (Skeleton): every power is shrink-only: reject, cap, delay or reduce; never add. She reviews every trade and contract against the
     cap and the fair-competitiveness bands. The first Commissioner is the league's human operator.
 
-What is built: the vote counting and the seats are exact; how an owner votes is a MODEL formula (named dials); the autopilot makes no proposals (the
+What is built: the vote counting and the seats are exact; how a CEO votes is a MODEL formula (named dials); the autopilot makes no proposals (the
 league's rules change only when a person or an agent proposes), so the autopilot league is unchanged by this module except for the committee's seating,
 which is a private, seeded, read-only record. A Commissioner action is a `Ruling`; `shrink_only` is the audit that rejects any ruling that gives a club
 more than it asked for.
@@ -20,9 +20,9 @@ import cards as C
 import rules as R
 
 # ---- model dials (MODEL) -----------------------------------------------------------------------------------------------------
-BASE_SUPPORT = 0.55            # chance an owner backs a proposal that touches her club neither way
-TILT_WEIGHT = 0.35             # a proposal that favours small markets (tilt -1) or big markets (+1) moves a vote by this much for owners at the extremes
-COMMITTEE_BONUS = 0.20         # an endorsement from the Competition Committee adds this to every owner's chance
+BASE_SUPPORT = 0.55            # chance a CEO backs a proposal that touches her club neither way
+TILT_WEIGHT = 0.35             # a proposal that favours small markets (tilt -1) or big markets (+1) moves a vote by this much for CEOs at the extremes
+COMMITTEE_BONUS = 0.20         # an endorsement from the Competition Committee adds this to every CEO's chance
 COMMITTEE_SEAT_YEARS = 3       # a committee seat runs three years
 
 
@@ -48,7 +48,7 @@ def needed(kind: str) -> int:
 
 
 def owner_vote(lg, team, prop: Proposal) -> bool:
-    """One owner's vote. A formula by her card and her market; the seeded private stream gives each owner her own consistent mood."""
+    """One CEO's vote. A formula by her card and her market; the seeded private stream gives each CEO her own consistent mood."""
     o = team.owner
     if o is None:
         return False
@@ -75,9 +75,9 @@ def propose(lg, year: int, kind: str, text: str, tilt: float = 0.0, endorsed: bo
     return Proposal(pid=lg.proposals_made, year=year, kind=kind, text=text, tilt=tilt, endorsed=endorsed, candidate=candidate)
 
 
-# ---- the Competition Committee: one owner per division ----------------------------------------------------------------------------
+# ---- the Competition Committee: one CEO per division ----------------------------------------------------------------------------
 def seat_committee(lg, year: int) -> List[dict]:
-    """Each division's six owners choose one of their number for the Competition Committee: the owner others rate highest on a mix of popularity and business
+    """Each division's six CEOs choose one of their number for the Competition Committee: the CEO others rate highest on a mix of popularity and business
     sense, with a private seeded jitter. Returns the eight seats. A seat is re-chosen each year (a three-year term is a later refinement)."""
     seats = []
     for div in range(R.TOTAL_DIVISIONS):

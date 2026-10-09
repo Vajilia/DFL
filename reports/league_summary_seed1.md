@@ -75,9 +75,9 @@ The exile spot needed a tiebreaker in 37 of 160 division-seasons (23%). What fin
 The lottery covers the 8 teams that just finished 5th, with weights 18 / 16 / 15 / 13 / 12 / 10 / 9 / 7 (placeholder). 
 The worst-record team won pick 1 in 4 of 20 years; the best-record team of the eight won it 3 times. Average pick by record, worst to best: 4.3, 3.6, 3.9, 4.1, 4.2, 5.0, 5.7, 5.2 in this run, and 3.7, 3.9, 4.1, 4.3, 4.5, 4.9, 5.1, 5.5 expected over many lotteries. With these weights the worst team's edge over the best is only about two picks on average.
 
-## Owner recall workload (for the AI budget)
+## CEO recall workload (for the AI budget)
 
-Each year one division's owners come up for a vote (6 teams), and each exiled team's owner also faces one. That is exactly 13 owner votes a year. At 5 replacement candidates per vote that is at most about 65 generated owner cards a year, if every recall succeeds.
+Each year one division's CEOs come up for a vote (6 teams), and each exiled team's CEO also faces one. That is exactly 13 CEO votes a year. At 5 replacement candidates per vote that is at most about 65 generated CEO cards a year, if every recall succeeds.
 
 ## Does a team's tier predict how it does?
 

@@ -1,14 +1,14 @@
 """The job interview: the first negotiation table.
 
-Until now an owner chose a candidate and the candidate always said yes. Now the two sit at a table and each has her own say:
+Until now a CEO chose a candidate and the candidate always said yes. Now the two sit at a table and each has her own say:
 
-  1. The owner offers GUARANTEED SEASONS, 0 to 3: the owner cannot fire her in her first N reviews after she is hired (the engine
-     removes the firing options from the owner's yearly choice while the guarantee lasts, whoever owns the team by then). The
+  1. The CEO offers GUARANTEED SEASONS, 0 to 3: the CEO cannot fire her in her first N reviews after she is hired (the engine
+     removes the firing options from the CEO's yearly choice while the guarantee lasts, whoever owns the team by then). The
      autopilot offers 0, which is the league as it was.
   2. The candidate accepts, asks for more guaranteed seasons, or walks away.
-  3. If she asked for more, the owner accepts, holds at her last offer, or withdraws; if she held, the candidate accepts or walks.
+  3. If she asked for more, the CEO accepts, holds at her last offer, or withdraws; if she held, the candidate accepts or walks.
 
-A candidate who walks (or is withdrawn from) is not hired; the owner chooses again among the others, and each gets her own interview.
+A candidate who walks (or is withdrawn from) is not hired; the CEO chooses again among the others, and each gets her own interview.
 If all three refuse, the league office fills the seat by the old rule (the first candidate, no guarantee): a seat is never empty.
 Only the terms are negotiable; what a guarantee does is small, bounded and applied by the engine (see staff_cards.season_end).
 
@@ -23,7 +23,7 @@ import tables as TB
 MAX_GUARANTEE = 3                  # no one is ever guaranteed more than three reviews
 REL_DEAL = 4                       # goodwill (-100..100) a signed deal adds each way
 REL_COUNTER_DEAL = 2               # a little more if it took some bargaining
-WINDOW = 5                         # years of an owner's firing record a candidate can see
+WINDOW = 5                         # years of a CEO's firing record a candidate can see
 
 
 def recent_fires(lg, year: int) -> dict:
@@ -52,7 +52,7 @@ class Interview(TB.Table):
 
     # ---- what each side is shown
     def _job(self) -> dict:
-        """The candidate's view of the job: public facts plus how patient the owner looks to HER (the truth plus her own blind spots)."""
+        """The candidate's view of the job: public facts plus how patient the CEO looks to HER (the truth plus her own blind spots)."""
         t, o, lg = self.team, self.owner, self.lg
         r = C._rng(lg.card_seed, "readowner", o.oid, self.year, self.cand.first, self.cand.last)
         last = lg.prev_pct.get(t.id)
@@ -61,7 +61,7 @@ class Interview(TB.Table):
                     owner=dict(trait=o.trait, patience_as_you_read_her=round(max(1.0, min(100.0, o.ratings["patience"] + r.gauss(0.0, 8.0))), 0),
                                new_owner=o.seasons_owned <= 1, fired_coaches_or_gms_here_in_the_last_5_years=self.fires),
                     you_were_between_jobs=self.vet, other_candidates_the_owner_could_turn_to=self.alternatives,
-                    what_a_guarantee_means="the owner cannot fire you in your first N yearly reviews, whoever owns the team by then")
+                    what_a_guarantee_means="the CEO cannot fire you in your first N yearly reviews, whoever owns the team by then")
 
     def _said(self) -> list:
         return [dict(by=s["by"], move=s["move"]) for s in self.steps]
@@ -75,7 +75,7 @@ class Interview(TB.Table):
                        if_she_walks=f"you choose again among {self.alternatives} other candidate(s)" if self.alternatives else "no one else is left; the league office will fill the seat",
                        said_so_far=self._said())
             return D.DecisionPoint("interview_offer", year, t.id, "owner", self.owner, ctx, opts, "offer_0", internal)
-        if self.step == "counter":                     # the owner's turn: she sees what she is told and what she knows of the candidate, not the candidate's read of her
+        if self.step == "counter":                     # the CEO's turn: she sees what she is told and what she knows of the candidate, not the candidate's read of her
             ctx = dict(job="head coach" if self.job_kind == "coach" else "general manager", candidate=self.owner_sees, candidate_was_between_jobs=self.vet,
                        she_asks_for=_s(self.ask), your_last_offer=_s(self.offer), said_so_far=self._said(),
                        if_she_walks=f"you choose again among {self.alternatives} other candidate(s)" if self.alternatives else "no one else is left; the league office will fill the seat")

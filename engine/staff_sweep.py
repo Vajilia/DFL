@@ -1,7 +1,7 @@
-"""Do owners, GMs, recalls and firings keep the league inside the fair-competitiveness bands?
+"""Do CEOs, GMs, recalls and firings keep the league inside the fair-competitiveness bands?
 
-Same leagues and seeds in every row. The first row has no staff at all (coaches fixed for life, no owners or GMs).
-The rest turn on owners who fire coaches and GMs with small levers; the last rows make the GM levers 3x and 6x stronger
+Same leagues and seeds in every row. The first row has no staff at all (coaches fixed for life, no CEOs or GMs).
+The rest turn on CEOs who fire coaches and GMs with small levers; the last rows make the GM levers 3x and 6x stronger
 as a stress test. Writes reports/staff_fairness_study.md.
 
     python engine/staff_sweep.py [--leagues 8] [--seasons 48]
@@ -20,8 +20,8 @@ ROOT = os.path.dirname(os.path.abspath(__file__)).rsplit(os.sep, 1)[0]
 
 # (label, staff on?, GM scouting points, GM retention, engine)
 VARIANTS = [
-    ("A. Coaches only, as before (no owners, no GMs; coaches leave only by retiring)", False, 1.5, 0.30, "fast"),
-    ("B. Owners fire coaches, GMs on, as built", True, 1.5, 0.30, "fast"),
+    ("A. Coaches only, as before (no CEOs, no GMs; coaches leave only by retiring)", False, 1.5, 0.30, "fast"),
+    ("B. CEOs fire coaches, GMs on, as built", True, 1.5, 0.30, "fast"),
     ("C. Stress test: GM levers 3x", True, 4.5, 0.90, "fast"),
     ("D. Stress test: GM levers 6x", True, 9.0, 1.50, "fast"),
     ("E. As built, full drive engine", True, 1.5, 0.30, "drives"),
@@ -37,9 +37,9 @@ def main():
     ap.add_argument("--out", default="")
     a = ap.parse_args()
     keep = {x.strip() for x in a.only.split(",") if x.strip()}
-    out = ["# Owners, GMs, recalls and fair competitiveness\n",
-           "Owners never touch a game. What they change is who coaches and who manages: an owner whose team under-delivers builds up "
-           "\"heat\" and eventually fires her coach and GM, and a new owner sometimes sweeps the staff out. GMs have two small levers: "
+    out = ["# CEOs, GMs, recalls and fair competitiveness\n",
+           "CEOs never touch a game. What they change is who coaches and who manages: a CEO whose team under-delivers builds up "
+           "\"heat\" and eventually fires her coach and GM, and a new CEO sometimes sweeps the staff out. GMs have two small levers: "
            "they lift their team's rookie a little each year (a 100-rated scout is worth +1.5 rating points; a 1 costs the same) and "
            "they keep slightly more of the roster from reaching free agency (a 100-rated negotiator cuts contract expiries by 30%; a 1 raises them by 30%). "
            "The question for every row: does any trend leave its band?\n"]

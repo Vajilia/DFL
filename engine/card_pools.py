@@ -92,14 +92,14 @@ COACH_TRAITS = {
     "Players' Coach": ("a locker room that plays hard for her", "losing the room"),
     "Disciplinarian": ("order, rules and no excuses", "chaos and ego"),
     "Innovator": ("to change how the game is played", "being called old-fashioned"),
-    "Survivor": ("another contract year", "the owner's phone call"),
+    "Survivor": ("another contract year", "the CEO's phone call"),
     "Developer": ("to turn raw talent into stars", "wasting a prospect"),
     "Gambler": ("a fourth-down legend", "being second-guessed for the one that failed"),
     "Steady Hand": ("sustained quiet success", "a collapse nobody saw coming"),
 }
 
 
-# ---- owners, general managers and coaches: personalities, backgrounds and the soul labels of each rating ----
+# ---- CEOs, general managers and coaches: personalities, backgrounds and the soul labels of each rating ----
 OWNER_TRAITS = {
     "Legacy Builder": ("a dynasty with her name on it", "being recalled"),
     "Penny-Pincher": ("a profitable franchise", "a league subsidy"),
@@ -111,12 +111,12 @@ OWNER_TRAITS = {
     "Opportunist": ("a quick profit", "a long losing stretch"),
 }
 OWNER_PATHS = ["Founder's daughter", "Self-made industrialist", "Tech founder", "Media heiress", "Real-estate magnate",
-               "Former player turned investor", "Local business owner", "Consortium front-woman", "Sports-franchise veteran",
+               "Former player turned investor", "Local business CEO", "Consortium front-woman", "Sports-franchise veteran",
                "Philanthropist"]
 OWNER_ARCHETYPES = {
     "patience": ("Patient Steward", "Trigger-Happy"),
     "ambition": ("Relentless Competitor", "Content With Mediocrity"),
-    "involvement": ("Hands-On Leader", "Absentee Owner"),
+    "involvement": ("Hands-On Leader", "Absentee CEO"),
     "popularity": ("Fan Favorite", "Despised"),
     "business": ("Shrewd Operator", "Money Pit"),
 }
@@ -127,7 +127,7 @@ GM_TRAITS = {
     "Dealmaker": ("the best contract in every negotiation", "being outmaneuvered"),
     "Planner": ("a five-year roster plan", "a short-term panic"),
     "Gambler": ("a high-risk, high-reward bet", "a boring middling roster"),
-    "Loyal Lieutenant": ("her owner's trust", "being replaced"),
+    "Loyal Lieutenant": ("her CEO's trust", "being replaced"),
     "Cold Realist": ("decisions free of sentiment", "a veteran she cannot cut"),
 }
 GM_ARCHETYPES = {

@@ -12,7 +12,7 @@ Mean draw 47M. 0.8% of club-seasons hit the $100M cap (39 of 4608); the excess s
 
 ## Subsidies and forced sales
 
-Subsidies from CEOs' draws average 0.3M a season; CEOs put 0.0M a season of their own money into clubs the reserve and subsidies could not cover. 2 forced-sale votes were called in 96 league-seasons; 0 owners were forced to sell.
+Subsidies from CEOs' draws average 0.3M a season; CEOs put 0.0M a season of their own money into clubs the reserve and subsidies could not cover. 2 forced-sale votes were called in 96 league-seasons; 0 CEOs were forced to sell.
 
 ## Tenure
 

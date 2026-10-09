@@ -1,6 +1,6 @@
 # Whatever the agents choose: fairness under the worst legal play
 
-The principle: the road has guardrails and traffic controls, the character card is the driver, and what the driver does with the car always stays inside the fair-competitiveness bands. The first owner choice to go through a Decision Point is keep, fire or hire for the coach and the GM (the hire is one of three candidates). The autopilot row reproduces the league as it was before agents. The other rows replace the owners' choices with random play and with adversaries that see the TRUE ratings of every candidate (no real agent can) and play the legal limit. Everything they do is a legal option; the guard would reject anything else.
+The principle: the road has guardrails and traffic controls, the character card is the driver, and what the driver does with the car always stays inside the fair-competitiveness bands. The first CEO choice to go through a Decision Point is keep, fire or hire for the coach and the GM (the hire is one of three candidates). The autopilot row reproduces the league as it was before agents. The other rows replace the CEOs' choices with random play and with adversaries that see the TRUE ratings of every candidate (no real agent can) and play the legal limit. Everything they do is a legal option; the guard would reject anything else.
 
 *Re-run on 2026-10-05 with pay and the salary cap in place (6 leagues x 48 seasons per row).*
 
@@ -76,7 +76,7 @@ All trends inside the bands.
 
 Teams led by a coach the media calls a legend: 4 team-seasons per league (about 0.1 on the field at a time). They won 53.0% of their games (league average 50%), made the playoffs 45% of the time (14 of 40 teams = 35% on average) and won the title in 4.5% of seasons (1 in 40 = 2.5% on average).
 
-## D. Worst case: every owner fires everyone every year and hires the truly best candidate
+## D. Worst case: every CEO fires everyone every year and hires the truly best candidate
 
 fast engine, 6 leagues x 48 seasons.
 
@@ -172,7 +172,7 @@ All trends inside the bands.
 
 Teams led by a coach the media calls a legend: 1 team-seasons per league (about 0.0 on the field at a time). They won 46.5% of their games (league average 50%), made the playoffs 25% of the time (14 of 40 teams = 35% on average) and won the title in 0.0% of seasons (1 in 40 = 2.5% on average).
 
-## H. Worst case: every owner recycles the same people between jobs
+## H. Worst case: every CEO recycles the same people between jobs
 
 fast engine, 6 leagues x 48 seasons.
 

@@ -1,6 +1,6 @@
 # Emergent greatness: 6 leagues x 100 seasons
 
-Nobody is born a legend and nothing limits how many there can be. Each season the engine records honors and a career esteem; the 52 media outlets read each person's esteem with their own noise and a credibility-weighted share of them calling someone a legend makes it so; the Hall of Fame (the outlets and the 48 owners) votes on people who retired a few years ago. This study counts what comes out.
+Nobody is born a legend and nothing limits how many there can be. Each season the engine records honors and a career esteem; the 52 media outlets read each person's esteem with their own noise and a credibility-weighted share of them calling someone a legend makes it so; the Hall of Fame (the outlets and the 48 CEOs) votes on people who retired a few years ago. This study counts what comes out.
 
 ## How often the media names a legend
 
@@ -8,14 +8,14 @@ Nobody is born a legend and nothing limits how many there can be. Each season th
 |---|---|---|---|
 | coach | 8.5 | 0.8 | 8.3 |
 | gm | 4.3 | 0.4 | 4.2 |
-| owner | 5.5 | 0.6 | 4.8 |
+| CEO | 5.5 | 0.6 | 4.8 |
 | player | 14.2 | 1.4 | 14.3 |
 
 Across the 6 leagues: 264 times the media split on someone before (or instead of) agreeing, and 9 times a legend lost the title (a legend keeps it with a little extra room, so it rarely flickers).
 
 Hall of Fame: 32 inductees per 100-season league on average; the biggest single class in any league was 3; classes that year were empty in 73 of 100 seasons. There is no cap or quota: these numbers are what the voters decide.
 
-People the media called a legend at once, in all kinds, on the field (coach + GM + owner): mean 0.6, most 4, fewest 0. Nothing holds this number anywhere; it rises and falls with careers.
+People the media called a legend at once, in all kinds, on the field (coach + GM + CEO): mean 0.6, most 4, fewest 0. Nothing holds this number anywhere; it rises and falls with careers.
 
 ## Do teams led by a recognized-legend coach win more?
 
@@ -53,17 +53,17 @@ DECISION_LOG: [none yet]
 | 28 | gm | Kaia Goldberg | 15.7 | 77% | Champion x3 |
 | 31 | coach | Tatiana Wagner | 25.1 | 98% | Champion x2 |
 | 31 | player | Anika Cabrera | 24.9 | 85% | All-League x10, Player of the Year x5 |
-| 32 | owner | Britta Meyers | 19.2 | 83% | Champion x2 |
+| 32 | CEO | Britta Meyers | 19.2 | 83% | Champion x2 |
 | 36 | player | Liesel McAllister | 31.4 | 98% | All-League x10, Player of the Year x4 |
-| 40 | owner | Dahlia Yoder | 18.4 | 77% | Champion x2 |
+| 40 | CEO | Dahlia Yoder | 18.4 | 77% | Champion x2 |
 | 42 | player | Amara Cruz | 29.4 | 97% | All-League x7, Player of the Year x5 |
 | 43 | coach | Raina Jacobsen | 24.4 | 91% | Champion x3 |
 | 46 | gm | Janelle Benavides | 17.4 | 89% | Champion x2 |
 | 49 | coach | Imani Edmonds | 22.9 | 88% | Champion x2 |
-| 49 | owner | Odalys Okafor | 23.3 | 99% | Champion x2 |
+| 49 | CEO | Odalys Okafor | 23.3 | 99% | Champion x2 |
 | 49 | player | Yara Radcliffe | 27.5 | 92% | All-League x10, Player of the Year x3 |
 | 53 | player | Amelia Farrow | 25.5 | 88% | All-League x9, Player of the Year x3 |
-| 56 | owner | Hadley Kaplan | 21.0 | 97% | Champion x2 |
+| 56 | CEO | Hadley Kaplan | 21.0 | 97% | Champion x2 |
 | 58 | coach | Una Marchetti | 24.4 | 96% | Coach of the Year x1, Champion x2 |
 | 58 | player | Alba Vasquez | 23.7 | 77% | All-League x15 |
 | 59 | gm | Greta Trevino | 16.3 | 81% | Executive of the Year x1, Champion x2 |
@@ -74,8 +74,8 @@ DECISION_LOG: [none yet]
 | 69 | player | Leona Jarrett | 41.2 | 100% | All-League x9, Player of the Year x7 |
 | 72 | player | Dorothea Cardenas | 28.3 | 96% | Champion x1, All-League x8, Player of the Year x3 |
 | 82 | player | Linnea Andersen | 43.7 | 100% | All-League x10, Player of the Year x8 |
-| 88 | owner | Haruka Kirkland | 18.9 | 76% | Champion x2 |
+| 88 | CEO | Haruka Kirkland | 18.9 | 76% | Champion x2 |
 | 93 | player | Julia McAllister | 27.0 | 96% | All-League x7, Player of the Year x4 |
 | 96 | coach | Naomi Eberhardt | 21.2 | 77% | Champion x1 |
 | 97 | coach | Iris Rochester | 19.9 | 81% | Coach of the Year x1, Champion x1 |
-| 99 | owner | Lara Dubois | 18.5 | 76% | Champion x1 |
+| 99 | CEO | Lara Dubois | 18.5 | 76% | Champion x1 |

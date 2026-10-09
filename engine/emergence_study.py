@@ -52,7 +52,7 @@ def main():
     out = [f"# Emergent greatness: {a.leagues} leagues x {a.seasons} seasons\n",
            "Nobody is born a legend and nothing limits how many there can be. Each season the engine records honors and a career esteem; "
            "the 52 media outlets read each person's esteem with their own noise and a credibility-weighted share of them calling someone "
-           "a legend makes it so; the Hall of Fame (the outlets and the 48 owners) votes on people who retired a few years ago. "
+           "a legend makes it so; the Hall of Fame (the outlets and the 48 CEOs) votes on people who retired a few years ago. "
            "This study counts what comes out.\n"]
     tot = {k: [] for k in RC.KINDS}
     hall = {k: [] for k in RC.KINDS}
@@ -96,7 +96,7 @@ def main():
     out.append(f"Hall of Fame: {st.mean(s[0] for s in stats):.0f} inductees per {a.seasons}-season league on average; the biggest single class in any league was "
                f"{max(s[1] for s in stats)}; classes that year were empty in {st.mean(s[2] for s in stats):.0f} of {a.seasons} seasons. There is no cap or quota: "
                "these numbers are what the voters decide.\n")
-    out.append(f"People the media called a legend at once, in all kinds, on the field (coach + GM + owner): mean {st.mean(per_year):.1f}, "
+    out.append(f"People the media called a legend at once, in all kinds, on the field (coach + GM + CEO): mean {st.mean(per_year):.1f}, "
                f"most {max(per_year)}, fewest {min(per_year)}. Nothing holds this number anywhere; it rises and falls with careers.\n")
     out.append("## Do teams led by a recognized-legend coach win more?\n")
     if led["n"]:

@@ -60,7 +60,7 @@ check("votes are deterministic", GV.hold_vote(lg, GV.Proposal(pid=999, year=1, k
 # ---- the committee
 mt = res[-1].offseason["meeting"]
 check("the committee has eight seats, one per division", len(lg.committee) == R.COMPETITION_COMMITTEE_SEATS == 8 and sorted(s["division"] for s in lg.committee) == list(range(8)))
-check("each seat is held by an owner of a club in that division", all(lg.by_id[s["team"]].div_id == s["division"] if hasattr(lg.by_id[s["team"]], "div_id") else lg.by_id[s["team"]].division_id == s["division"] for s in lg.committee))
+check("each seat is held by a CEO of a club in that division", all(lg.by_id[s["team"]].div_id == s["division"] if hasattr(lg.by_id[s["team"]], "div_id") else lg.by_id[s["team"]].division_id == s["division"] for s in lg.committee))
 check("the autopilot makes no proposals", mt["proposals"] == 0)
 
 # ---- the Commissioner is shrink-only

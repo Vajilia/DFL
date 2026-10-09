@@ -1,4 +1,4 @@
-"""Living cards (Phase 4c): the same bones for every coach, general manager and owner, as players already have.
+"""Living cards (Phase 4c): the same bones for every coach, general manager and CEO, as players already have.
 
 The Commissioner's rule (2026-10-04): the cards are living, persistent people. Each starts with ratings, an archetype (her soul) and a
 personality, and these change over time. There are no designated legends and no limit on greatness: a legend is something the
@@ -46,7 +46,7 @@ DECLINE = 0.5
 LEVEL_NOISE, ATTR_NOISE = 0.8, 0.6
 COACH_RETIRE_FROM, GM_RETIRE_FROM = 60, 62
 COACH_MAX_AGE, GM_MAX_AGE = 74, 76
-# owners: ratings stay near where they began (an anchor), and her popularity follows her fans
+# CEOs: ratings stay near where they began (an anchor), and her popularity follows her fans
 OWNER_ANCHOR_PULL = 0.25
 OWNER_NOISE = 0.8
 OWNER_POPULARITY_FOLLOW = 2.0    # rating points a year per unit of approval above or below one half
@@ -176,7 +176,7 @@ def age_step(age: int, lv: float, potential: float) -> float:
 
 
 def grow(card, kind: str, seed: int, year: int, approval: float = None):
-    """One year of her career. Coaches and GMs follow the career curve; owners stay near their anchor, and an owner's popularity
+    """One year of her career. Coaches and GMs follow the career curve; CEOs stay near their anchor, and a CEO's popularity
     follows her fans. In both cases the ratings are pulled back to the shape the soul gave them. Then her mind moves."""
     r = rng(seed, "grow", kind, ident(card), year)
     attrs = KIND_ATTRS[kind]

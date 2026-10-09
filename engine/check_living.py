@@ -60,12 +60,12 @@ for kind, pool in (("coach", L.coaches), ("gm", L.gms), ("owner", [o for o in L.
           and abs(sum(c.shape.values())) < 1e-6 for c in pool))
     check(f"{kind}s' personalities always come from the four their soul allows", all(c.trait in c.family and len(c.family) == 4 for c in pool))
     shifted = sum(any(e["event"] == "personality_shift" for e in c.career) for c in pool)
-    # owners shift personality very rarely (3 of 1521 in the committed baseline), so one run can honestly show none; coaches and GMs shift often
-    check(f"some {kind}s change personality over their careers" + (" (rare for owners: not required in one run)" if kind == "owner" else ""),
+    # CEOs shift personality very rarely (3 of 1521 in the committed baseline), so one run can honestly show none; coaches and GMs shift often
+    check(f"some {kind}s change personality over their careers" + (" (rare for CEOs: not required in one run)" if kind == "owner" else ""),
           shifted > 0 or kind == "owner", f"{shifted} of {len(pool)}")
     check(f"{kind}s have the soul's archetype labels on their cards", all(LV.soul_labels(c, kind)[0] in str(LV.KIND_ARCH[kind]) for c in pool[:50]))
-check("GMs retire (they used to stay forever) and owners and coaches too", any(g.status == "retired" for g in L.gms) and any(c.retired for c in L.coaches) and any(o.status == "retired" for o in L.owners))
-check("owners' popularity follows their fans (more popular owners tend to have warmer fans)",
+check("GMs retire (they used to stay forever) and CEOs and coaches too", any(g.status == "retired" for g in L.gms) and any(c.retired for c in L.coaches) and any(o.status == "retired" for o in L.owners))
+check("CEOs' popularity follows their fans (more popular CEOs tend to have warmer fans)",
       st.mean(o.ratings["popularity"] - o.anchor["popularity"] for o in L.owners if o.approval > 0.6) > st.mean(o.ratings["popularity"] - o.anchor["popularity"] for o in L.owners if o.approval < 0.4))
 LV.refresh_refs(L)
 seated = [t.coach for t in L.teams]
@@ -75,7 +75,7 @@ check("effects stay measured against the league's average: the average seated co
 # ---- honors are facts the engine knows ---------------------------------------------------------------------------
 champ = {r.year: r.champion for r in res}
 coach_titles = [(h["year"], h["team"]) for c in L.coaches for h in c.honors if h["honor"] == "Champion"]
-check("every season's champion team's coach, GM and owner each got a Champion honor, and nobody else did",
+check("every season's champion team's coach, GM and CEO each got a Champion honor, and nobody else did",
       sorted(coach_titles) == sorted(champ.items()) and sum(h["honor"] == "Champion" for o in L.owners for h in o.honors) == YEARS and
       sum(h["honor"] == "Champion" for g in L.gms for h in g.honors) == YEARS)
 slots = sum(RC.ALL_LEAGUE_SLOTS.values())
@@ -100,7 +100,7 @@ check("nobody is ever called a legend with esteem far below the bar (the media r
 check("recognition is written into the Archive", {"legend_recognized", "hall_of_fame"} <= {e["event"] for e in L.archive})
 legends_now = [c for _, c in everyone if c.standing == "legend"]
 check("there is no number that legends are held to (the count on the field varies and nothing trims it)", True,
-      f"{len(legends_now)} coaches, GMs and owners are legends now; {sum(1 for p in allp if p.card.standing == 'legend')} players")
+      f"{len(legends_now)} coaches, GMs and CEOs are legends now; {sum(1 for p in allp if p.card.standing == 'legend')} players")
 slip = [e for e in L.archive if e["event"] == "legend_slipped"]
 check("legend status is sticky: recognitions far outnumber losses of the title", len(slip) < 0.5 * len(ev), f"{len(ev)} recognized, {len(slip)} slipped")
 check("a legend can be contested first (the media splits before it agrees)", any(e["event"] == "legend_contested" for e in L.archive))
@@ -122,7 +122,7 @@ check("the Hall has no cap: inductees are decided by the vote alone (see the bal
       f"{len(hall)} inductees in {YEARS} seasons, largest class {max([sum(1 for h in hall if h['year'] == y) for y in {h['year'] for h in hall}] or [0])}")
 check("everyone in the Hall had real esteem", all(h["esteem"] >= RC.HOF_FLOOR * RC.LEGEND_BAR[h["kind"]] for h in hall))
 
-# ---- reputation touches only owners' choices, never a game ----------------------------------------------------------------
+# ---- reputation touches only CEOs' choices, never a game ----------------------------------------------------------------
 S_rope, S_halo = S.ROPE_WEIGHT, S.HALO_POINTS
 S.ROPE_WEIGHT, S.GM_ROPE_WEIGHT, S.HALO_POINTS = 0.0, 0.0, 0.0
 Lx, rx, _ = play(5, 25)
@@ -136,15 +136,15 @@ RC.season_honors, RC.hall_vote = orig
 S.ROPE_WEIGHT, S.GM_ROPE_WEIGHT, S.HALO_POINTS = S_rope, 0.5, S_halo
 check("with rope and halo set to zero, recognition changes nothing: 25 seasons identical with honors, esteem and the Hall on or off", fx == fy)
 Lz, rz, _ = play(5, 25)
-check("with them on, reputation does change owners' choices (so the two roads differ)", FP.fingerprint_of(Lz, rz) != fx)
+check("with them on, reputation does change CEOs' choices (so the two roads differ)", FP.fingerprint_of(Lz, rz) != fx)
 fam = max((c for c in L.coaches), key=lambda c: c.esteem)
 cand = C.make_coach_card(3, 3)
-cand.ratings = {k: 50.0 for k in cand.ratings}      # mid-range, so the owner's noise never clips at 1 or 100 (which would hide the halo)
+cand.ratings = {k: 50.0 for k in cand.ratings}      # mid-range, so the CEO's noise never clips at 1 or 100 (which would hide the halo)
 o = L.teams[0].owner
 p0 = S._perceived(L, o, cand, 5, S.COACH_VIEW)
 cand.esteem = RC.LEGEND_BAR["coach"]
 p1 = S._perceived(L, o, cand, 5, S.COACH_VIEW)
-check("fame is a halo in how an owner sees a candidate, never in the candidate's ratings", all(p1[a] - p0[a] == round(S.HALO_POINTS) or abs((p1[a] - p0[a]) - S.HALO_POINTS) <= 1 for a in p0) and all(v == v for v in cand.ratings.values()))
+check("fame is a halo in how a CEO sees a candidate, never in the candidate's ratings", all(p1[a] - p0[a] == round(S.HALO_POINTS) or abs((p1[a] - p0[a]) - S.HALO_POINTS) <= 1 for a in p0) and all(v == v for v in cand.ratings.values()))
 import decisions as D  # noqa: E402
 cands, vets = S._candidates(L, "coach", C.make_coach_card, L.teams[0], 61, o, L._coach_ids + 1, set())
 dp = D.DecisionPoint("hire_coach", 61, 1, "owner", o, {}, [dict(id=f"candidate_{i}", label="x", tags={}, view=S._person_view(L, o, c, 61, S.COACH_VIEW, True)) for i, c in enumerate(cands)], "candidate_0")

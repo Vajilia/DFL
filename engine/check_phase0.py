@@ -71,7 +71,7 @@ check("non-playoff active picks = 26", hi - lo + 1 == R.ACTIVE_TEAMS - R.PLAYOFF
 lo, hi = R.DRAFT_PICKS["playoff_teams"]
 check("playoff picks = 14", hi - lo + 1 == R.PLAYOFF_TEAMS)
 
-# Owner accountability
+# CEO accountability
 # Facts the Commissioner confirmed, written down independently of the formulas in rules.py
 check("8 divisions in total", R.TOTAL_DIVISIONS == 8 and R.DIVISIONS_PER_CONFERENCE * len(R.CONFERENCES) == 8)
 check("recall cycle is 8 years (1 division league-wide per year)",

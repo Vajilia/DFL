@@ -8,7 +8,7 @@ strong 4th is only compared with a similarly strong 5th), and follow both for th
 four seasons. Differences are 5th-place (exiled) minus 4th-place.
 
 IMPORTANT: draft value and cap relief are PLACEHOLDER numbers (placeholder_model.py), so
-the study sweeps them instead of trusting one guess. Owner recall, revenue and fan capital
+the study sweeps them instead of trusting one guess. CEO recall, revenue and fan capital
 are not modelled yet, so the true cost of exile is bigger than this study can show.
 
     python engine/exile_study.py            (full study, a few minutes)
@@ -148,7 +148,7 @@ def main():
         f"Every number is a difference: **team that finished 5th (and was exiled) minus team that finished 4th**, "
         f"comparing teams of similar strength. Positive means exile left the team better off.*\n")
     ap_("**Read this first.** Draft value and cap relief are placeholder guesses, so this report shows how the answer changes "
-        "as those guesses change. It cannot say whether your final design is right. Owner recall, revenue and fan capital are "
+        "as those guesses change. It cannot say whether your final design is right. CEO recall, revenue and fan capital are "
         "not simulated yet, so the real cost of exile is larger than anything shown here.\n")
     ap_("## With the current placeholder settings\n")
     ap_(f"Lottery for teams that just finished 5th. A pick-1 draft pick is worth {PM.DRAFT_PICK1_VALUE:+.1f} points of team "
@@ -221,7 +221,7 @@ def main():
         ap_(f"- **Break-even ({label}).** Exile matches finishing 4th on playoff appearances when " + "; ".join(parts) + ".")
     ap_("- **The dial that matters** is how big the draft and cap-relief benefits are compared with the cost of a lost season. "
         "Nothing here says which setting is right; it shows where the line is.")
-    ap_("- **Not modelled yet:** owner recall, lost revenue and fan capital, and what characters choose to do. "
+    ap_("- **Not modelled yet:** CEO recall, lost revenue and fan capital, and what characters choose to do. "
         "Those are the real costs of exile and they only appear once the character cards exist.\n")
     os.makedirs(args.out, exist_ok=True)
     path = os.path.join(args.out, "exile_study.md" if not args.quick else "exile_study_quick.md")

@@ -2,11 +2,11 @@
 
 A real agent is any function that takes the plain-data view of one decision (decisions.DecisionPoint.public()) and returns
 {"choice": option id, "reason": text, "note": text}. This one is a small rulebook that reads ONLY that view (the deciding card's
-traits, ratings, notes and the options on offer, with the perceived ratings an owner would see), never the engine's true state, so it
+traits, ratings, notes and the options on offer, with the perceived ratings a CEO would see), never the engine's true state, so it
 is a fair rehearsal for a model: it can be wrong, and different cards choose differently.
 
     from agents import StandIn, seats
-    lg.driver = decisions.AgentDriver(StandIn(), workers=12)            # an agent in every owner's seat
+    lg.driver = decisions.AgentDriver(StandIn(), workers=12)            # an agent in every CEO's seat
     lg.driver = seats(range(1, 13), StandIn())                          # agents in 12 seats; the autopilot keeps the rest
 
 Everything it can do is a legal option; the guard would reject anything else.
@@ -18,14 +18,14 @@ import time
 
 import decisions as D
 
-# how patient each kind of owner is with a struggling coach or GM (more = more patient), and how she weighs a candidate
+# how patient each kind of CEO is with a struggling coach or GM (more = more patient), and how she weighs a candidate
 PATIENCE = {"Patient Steward": 0.30, "Legacy Builder": 0.15, "Local Hero": 0.10, "Penny-Pincher": 0.25, "Opportunist": -0.05,
             "Showwoman": -0.10, "Glory Hunter": -0.20, "Meddler": -0.15}
-LOOKS_FOR = {                                     # owner trait -> what she weights in a candidate (offense, defense, development, gamecraft, discipline, motivation)
+LOOKS_FOR = {                                     # CEO trait -> what she weights in a candidate (offense, defense, development, gamecraft, discipline, motivation)
     "Glory Hunter": (1.0, 1.0, 0.2, 0.5, 0.2, 0.3), "Patient Steward": (0.3, 0.3, 1.0, 0.3, 0.6, 0.6), "Legacy Builder": (0.6, 0.6, 1.0, 0.4, 0.4, 0.4),
     "Showwoman": (1.0, 0.4, 0.2, 0.3, 0.1, 1.0), "Meddler": (0.5, 0.5, 0.3, 1.0, 0.9, 0.3), "Penny-Pincher": (0.5, 0.5, 0.5, 0.5, 0.5, 0.5),
     "Local Hero": (0.4, 0.4, 0.6, 0.4, 0.6, 1.0), "Opportunist": (0.8, 0.8, 0.2, 0.6, 0.2, 0.2)}
-OFFER_OPEN = {"Patient Steward": 1, "Legacy Builder": 1, "Local Hero": 1, "Penny-Pincher": 0, "Opportunist": 0, "Showwoman": 0, "Glory Hunter": 0, "Meddler": 0}   # what an owner opens with
+OFFER_OPEN = {"Patient Steward": 1, "Legacy Builder": 1, "Local Hero": 1, "Penny-Pincher": 0, "Opportunist": 0, "Showwoman": 0, "Glory Hunter": 0, "Meddler": 0}   # what a CEO opens with
 OFFER_LIMIT = {"Patient Steward": 3, "Legacy Builder": 2, "Local Hero": 2, "Penny-Pincher": 1, "Opportunist": 1, "Showwoman": 1, "Glory Hunter": 0, "Meddler": 0}   # the most she will give
 GM_VIEW = ("scouting", "negotiation", "evaluation", "trades", "cap_sense")
 
@@ -62,7 +62,7 @@ class StandIn:
             if c is None or not c.get("can_be_fired", True):
                 continue
             heat = c["pressure_on_her"]
-            cut = bad + 0.25 * heat + (0.08 if angry_fans else 0.0) + (0.10 if ctx["you_are_a_new_owner"] else 0.0) - (0.15 if c["reputation"] in ("legend", "Hall of Famer") else 0.0) + r.gauss(0.0, 0.03)
+            cut = bad + 0.25 * heat + (0.08 if angry_fans else 0.0) + (0.10 if ctx["you_are_a_new_ceo"] else 0.0) - (0.15 if c["reputation"] in ("legend", "Hall of Famer") else 0.0) + r.gauss(0.0, 0.03)
             if cut > 0.12:
                 wants.append(who)
         pick = "keep_all" if not wants else ("fire_both" if len(wants) == 2 and "fire_both" in opts else f"fire_{wants[0]}")
@@ -96,9 +96,9 @@ class StandIn:
         note = f"Hired {best['view']['name']} ({best['view']['reputation']})." if self.notes else ""
         return dict(choice=best["id"], reason=f"{me['trait']} weighed the candidates", note=note)
 
-    # ---- the job interview (interviews.py): the owner's side
+    # ---- the job interview (interviews.py): the CEO's side
     def _owner_limit(self, me, candidate, alternatives) -> int:
-        """The most guaranteed seasons this owner will give: patient owners give more, and everyone gives more to a famous name or when no one else is left."""
+        """The most guaranteed seasons this CEO will give: patient CEOs give more, and everyone gives more to a famous name or when no one else is left."""
         base = OFFER_LIMIT.get(me["trait"], 1)
         famous = candidate.get("reputation") in ("legend", "Hall of Famer", "star")
         return max(0, min(3, base + (1 if famous else 0) + (1 if alternatives == 0 else 0)))
@@ -156,7 +156,7 @@ class StandIn:
 
     # ---- the job interview: the candidate's side
     def _wants(self, me, job) -> int:
-        """How many guaranteed seasons she wants before she takes this job: more for an impatient or trigger-happy owner and a struggling team, and for
+        """How many guaranteed seasons she wants before she takes this job: more for an impatient or trigger-happy CEO and a struggling team, and for
         someone with a name or who is anxious about contracts."""
         o = job["owner"]
         last = job["team_record_last_season"]
@@ -172,7 +172,7 @@ class StandIn:
         if offer >= want:
             pick, why = "accept", "enough security"
         elif want - offer >= 2 and job["other_candidates_the_owner_could_turn_to"] > 0 and r.random() < 0.4:
-            pick, why = "walk", "not enough security for this owner"
+            pick, why = "walk", "not enough security for this CEO"
         else:
             pick, why = counters.get(want, "accept"), f"asks for {want}"
         note = {"accept": f"Took the {job['team']} job on {offer} guaranteed season(s).", "walk": f"Turned down {job['team']}: too little security.",
@@ -203,6 +203,6 @@ class Flaky:
 
 
 def seats(team_ids, ask, workers: int = D.DEFAULT_WORKERS, timeout: float = 30.0):
-    """Agents in some owners' seats and the autopilot in the rest."""
+    """Agents in some CEOs' seats and the autopilot in the rest."""
     agent = D.AgentDriver(ask, timeout=timeout, workers=workers)
     return D.PerTeamDriver({tid: agent for tid in team_ids})

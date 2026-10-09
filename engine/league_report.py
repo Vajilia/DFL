@@ -129,11 +129,11 @@ def build_report(seed: int, seasons: int) -> str:
 
     # recall
     votes = [len(r.recall_votes) for r in results]
-    w("## Owner recall workload (for the AI budget)\n")
+    w("## CEO recall workload (for the AI budget)\n")
     same = min(votes) == max(votes)
-    w(f"Each year one division's owners come up for a vote (6 teams), and each exiled team's owner also faces one. "
-      f"That is {'exactly ' + str(votes[0]) if same else format(statistics.mean(votes), '.1f') + ' on average (range ' + str(min(votes)) + ' to ' + str(max(votes)) + ')'} owner votes a year. "
-      f"At 5 replacement candidates per vote that is at most about {5 * round(statistics.mean(votes))} generated owner cards a year, "
+    w(f"Each year one division's CEOs come up for a vote (6 teams), and each exiled team's CEO also faces one. "
+      f"That is {'exactly ' + str(votes[0]) if same else format(statistics.mean(votes), '.1f') + ' on average (range ' + str(min(votes)) + ' to ' + str(max(votes)) + ')'} CEO votes a year. "
+      f"At 5 replacement candidates per vote that is at most about {5 * round(statistics.mean(votes))} generated CEO cards a year, "
       f"if every recall succeeds.\n")
 
     # does tier predict success? (bigger sample), with and without the exile benefits

@@ -163,7 +163,7 @@ resX1 = play(X, ra, 1, 6, D.AgentDriver(AGENT, workers=12))
 dbx = os.path.join(tmp, "agents.db")
 store.save(dbx, X, ra, 6)
 Y, ry, yy = store.load(dbx)
-check("an owner's notes and decision log are on her card in the save and come back", all(o.notes == p.notes and o.decision_log == p.decision_log for o, p in zip(X.owners, Y.owners)) and sum(len(o.notes) for o in Y.owners) > 0)
+check("a CEO's notes and decision log are on her card in the save and come back", all(o.notes == p.notes and o.decision_log == p.decision_log for o, p in zip(X.owners, Y.owners)) and sum(len(o.notes) for o in Y.owners) > 0)
 resX2 = play(X, ra, 7, 12, D.AgentDriver(AGENT, workers=12))
 resY = play(Y, ry, 7, 12, D.AgentDriver(AG.StandIn(), workers=12))
 check("a league with agents, saved at season 6 and loaded with agents seated again, plays on exactly as if it had never stopped (12 seasons)",

@@ -122,7 +122,7 @@ def play(seed, years, driver=None):
 La, ra = play(33, 12, NotingAutopilot())
 Lb, rb = play(33, 12, None)
 check("writing notes on every decision changes no outcome (12 seasons identical)", FP.fingerprint_of(La, ra) == FP.fingerprint_of(Lb, rb))
-check("but the owners' cards carry their notes", all(t.owner.notes for t in La.teams) and all(not t.owner.notes for t in Lb.teams))
+check("but the CEOs' cards carry their notes", all(t.owner.notes for t in La.teams) and all(not t.owner.notes for t in Lb.teams))
 Lr, rr = play(21, 10, D.RandomLegalDriver(5))
 Lc, rc = play(21, 10, NotingAutopilot())
 rec = []
@@ -166,7 +166,7 @@ for e in rev:
     o = next(t.owner for t in La2.teams if t.id == e["team"])
     by_owner.setdefault(o.trait, []).append(e["chosen"] != "keep_all")
 rates = {k: sum(v) / len(v) for k, v in by_owner.items() if len(v) >= 30}
-check("owners with different personalities fire at different rates (the card decides, not the pool)", len(rates) >= 4 and max(rates.values()) - min(rates.values()) > 0.05,
+check("CEOs with different personalities fire at different rates (the card decides, not the pool)", len(rates) >= 4 and max(rates.values()) - min(rates.values()) > 0.05,
       ", ".join(f"{k} {100 * v:.0f}%" for k, v in sorted(rates.items(), key=lambda kv: kv[1])))
 hires = [e for e in La2.choice_log if e["kind"] == "hire_coach"]
 check("and they hire different people from the same kind of list (not always the first candidate)", len({e["chosen"] for e in hires}) >= 2 and sum(e["chosen"] != "candidate_0" for e in hires) > 0.15 * len(hires),
@@ -179,7 +179,7 @@ drivers = {}
 for e in Lz.choice_log:
     drivers.setdefault(e["driver"], set()).add(e["team"])
 agent_seats, auto_seats = drivers.get("agent", set()), drivers.get("autopilot", set())
-check("with agents in 12 seats, only those 12 owners are decided by agents; the other 36 run on the autopilot",
+check("with agents in 12 seats, only those 12 CEOs are decided by agents; the other 36 run on the autopilot",
       agent_seats == set(range(1, 13)) and auto_seats == set(range(13, 49)))
 check("the 36 autopilot seats make exactly the choices the autopilot would", all(e["chosen"] == e["default"] for e in Lz.choice_log if e["driver"] == "autopilot"))
 # a league with a real delay: the whole season's staff reviews go out together, not one after another

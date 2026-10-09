@@ -2,7 +2,7 @@
 
 *40 simulated leagues x 30 seasons for each of 60 settings. Every number is a difference: **team that finished 5th (and was exiled) minus team that finished 4th**, comparing teams of similar strength. Positive means exile left the team better off.*
 
-**Read this first.** Draft value and cap relief are placeholder guesses, so this report shows how the answer changes as those guesses change. It cannot say whether your final design is right. Owner recall, revenue and fan capital are not simulated yet, so the real cost of exile is larger than anything shown here.
+**Read this first.** Draft value and cap relief are placeholder guesses, so this report shows how the answer changes as those guesses change. It cannot say whether your final design is right. CEO recall, revenue and fan capital are not simulated yet, so the real cost of exile is larger than anything shown here.
 
 ## With the current placeholder settings
 
@@ -121,5 +121,5 @@ Rows: how much a pick-1 draft pick is worth. Columns: how much cap relief is wor
 - **Break-even (lottery for teams that just finished 5th).** Exile matches finishing 4th on playoff appearances when cap relief +0.0: pick-1 worth about 4.3; cap relief +0.5: pick-1 worth about 3.3; cap relief +1.0: pick-1 worth about 0.8; cap relief +2.0: none needed; cap relief +3.0: none needed.
 - **Break-even (lottery for teams that just served exile).** Exile matches finishing 4th on playoff appearances when cap relief +0.0: pick-1 worth about 2.3; cap relief +0.5: pick-1 worth about 1.8; cap relief +1.0: pick-1 worth about 0.7; cap relief +2.0: none needed; cap relief +3.0: none needed.
 - **The dial that matters** is how big the draft and cap-relief benefits are compared with the cost of a lost season. Nothing here says which setting is right; it shows where the line is.
-- **Not modelled yet:** owner recall, lost revenue and fan capital, and what characters choose to do. Those are the real costs of exile and they only appear once the character cards exist.
+- **Not modelled yet:** CEO recall, lost revenue and fan capital, and what characters choose to do. Those are the real costs of exile and they only appear once the character cards exist.
 

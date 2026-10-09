@@ -1,7 +1,7 @@
 """Recognition (Phase 4c): honors, esteem, what the media calls people, and the league Hall of Fame.
 
 The Commissioner's rule (2026-10-04): no designated legends, and no limit on greatness. Legend is an emergent property the media notices,
-and the Hall of Fame (the media plus the owners) confers.
+and the Hall of Fame (the media plus the CEOs) confers.
 
 How it works, and what it is allowed to touch:
 
@@ -14,9 +14,9 @@ How it works, and what it is allowed to touch:
     decides. When they split she is CONTESTED. Once she is a legend she keeps the title with a little extra room (sticky), so
     a legend does not flicker.
   * THE HALL OF FAME votes on retired people who waited a few years: every active outlet (weighted by credibility) and every
-    owner votes, and she goes in with three quarters of the vote. There is no cap and no quota; a class can be empty.
-  * Reputation touches ONLY owners' choices, never a game: more patience with a famous coach (rope), and a halo in how an
-    owner sees a famous candidate (her blind spot, never the truth). The on-field effects of coaches, GMs and players stay
+    CEO votes, and she goes in with three quarters of the vote. There is no cap and no quota; a class can be empty.
+  * Reputation touches ONLY CEOs' choices, never a game: more patience with a famous coach (rope), and a halo in how an
+    CEO sees a famous candidate (her blind spot, never the truth). The on-field effects of coaches, GMs and players stay
     capped exactly as before, so greatness is mostly reputation and story.
 
 Every random draw comes from a generator private to the person, the outlet and the year.
@@ -56,7 +56,7 @@ HOF_FLOOR = 0.55                 # share of the legend bar below which nobody is
 HOF_BAR = 0.80                   # a voter votes yes if her reading of the person's esteem is above this share of the legend bar
 HOF_SHARE = 0.75                 # share of the vote needed
 HOF_NOISE = 0.15
-# ---- dials: what reputation buys from owners ---------------------------------------------------------------
+# ---- dials: what reputation buys from CEOs ---------------------------------------------------------------
 RATIO_CAP = 1.5
 
 KINDS = ("coach", "gm", "owner", "player")
@@ -77,7 +77,7 @@ def cid_of(card) -> int:
 
 
 def esteem_ratio(card) -> float:
-    """Esteem as a share of the legend bar, capped. What owners react to."""
+    """Esteem as a share of the legend bar, capped. What CEOs react to."""
     return max(0.0, min(RATIO_CAP, card.esteem / LEGEND_BAR[kind_of(card)]))
 
 

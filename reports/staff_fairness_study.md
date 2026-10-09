@@ -1,24 +1,24 @@
-# Owners, GMs, recalls and fair competitiveness
+# CEOs, GMs, recalls and fair competitiveness
 
-> **Historical (2026-10-05):** this study was run before coaches, GMs and owners became living cards and before designated legends were removed. It is kept for what it shows about sizing the dials. The current proof is `decision_fairness_study.md` (autopilot, random and worst-case choices) and `living_fairness_drives_engine.md` (full drive engine).
+> **Historical (2026-10-05):** this study was run before coaches, GMs and CEOs became living cards and before designated legends were removed. It is kept for what it shows about sizing the dials. The current proof is `decision_fairness_study.md` (autopilot, random and worst-case choices) and `living_fairness_drives_engine.md` (full drive engine).
 
 
-Owners never touch a game. What they change is who coaches and who manages: an owner whose team under-delivers builds up "heat" and eventually fires her coach and GM, and a new owner sometimes sweeps the staff out. GMs have two small levers: they lift their team's rookie a little each year (a 100-rated scout is worth +1.5 rating points; a 1 costs the same) and they keep slightly more of the roster from reaching free agency (a 100-rated negotiator cuts contract expiries by 30%; a 1 raises them by 30%). The question for every row: does any trend leave its band?
+CEOs never touch a game. What they change is who coaches and who manages: a CEO whose team under-delivers builds up "heat" and eventually fires her coach and GM, and a new CEO sometimes sweeps the staff out. GMs have two small levers: they lift their team's rookie a little each year (a 100-rated scout is worth +1.5 rating points; a 1 costs the same) and they keep slightly more of the roster from reaching free agency (a 100-rated negotiator cuts contract expiries by 30%; a 1 raises them by 30%). The question for every row: does any trend leave its band?
 
 ## What this shows
 
 **As built, every trend stays inside its band** on the fast engine (8 leagues), the full drive engine (6 leagues) and a separate set of 16 fresh fast leagues (most titles one team won in any 20 seasons: 3.5 on average against a limit of 4.7, worst league 5 against 7; the strongest team on paper won the title 21% of the time against 25%; exile effect 0.20 against 0.5). Single rows are noisy, which is why the replication matters.
 
-**What owners and GMs change.** Almost nothing in the measured trends, with one exception that mattered:
+**What CEOs and GMs change.** Almost nothing in the measured trends, with one exception that mattered:
 
-- **Exile effect (a close call, and a change I made).** A team that finishes 5th is more likely to have a poor coach; the owner fires her and the average replacement is better, so the team bounces back faster than the same team would have. That is realistic, but it adds to the help exile already gives, and the band allows at most half a rating point. My first version also let exile itself heat up the coach's seat, which put the measure at 0.52 in one 8-league run and 0.51 to 0.60 in the project's standing 6-league check. I removed that extra heat: owners now fire only on results. The effect fell to about 0.2 on fresh leagues. The standing check now uses 16 leagues, because six leagues were too few to measure a quantity this noisy (an explicit statement that I raised the sample after a failure, not a hidden one).
-- **Legend count.** Owners fire coaches, so there are about twice as many hires, and each hire is another chance to draw a legend. At the earlier 5% rate that put about 4 or 5 legends on the field at once, so the rate is now 3% (about 2 or 3). A legend needs twice the heat to be fired.
+- **Exile effect (a close call, and a change I made).** A team that finishes 5th is more likely to have a poor coach; the CEO fires her and the average replacement is better, so the team bounces back faster than the same team would have. That is realistic, but it adds to the help exile already gives, and the band allows at most half a rating point. My first version also let exile itself heat up the coach's seat, which put the measure at 0.52 in one 8-league run and 0.51 to 0.60 in the project's standing 6-league check. I removed that extra heat: CEOs now fire only on results. The effect fell to about 0.2 on fresh leagues. The standing check now uses 16 leagues, because six leagues were too few to measure a quantity this noisy (an explicit statement that I raised the sample after a failure, not a hidden one).
+- **Legend count.** CEOs fire coaches, so there are about twice as many hires, and each hire is another chance to draw a legend. At the earlier 5% rate that put about 4 or 5 legends on the field at once, so the rate is now 3% (about 2 or 3). A legend needs twice the heat to be fired.
 
 **Stress tests.** GM levers 3 times stronger stay inside. At 6 times (a 100-rated scout adding 9 rating points to a rookie) the strongest-team-wins-the-title measure touches its limit (25%), so the built size has a wide margin.
 
 # Every setting tried (fast engine 8 leagues, drive engine 6 leagues, 48 seasons each)
 
-## A. Coaches only, as before (no owners, no GMs; coaches leave only by retiring)
+## A. Coaches only, as before (no CEOs, no GMs; coaches leave only by retiring)
 
 fast engine, 8 leagues x 48 seasons.
 
@@ -42,7 +42,7 @@ All trends inside the bands.
 
 Legend-led teams: 54 team-seasons per league (about 1.4 legends on the field at a time). They won 56.0% of their games (league average 50%), made the playoffs 50% of the time (14 of 40 teams = 35% on average) and won the title in 6.2% of seasons (1 in 40 = 2.5% on average).
 
-## B. Owners fire coaches, GMs on, as built
+## B. CEOs fire coaches, GMs on, as built
 
 fast engine, 8 leagues x 48 seasons.
 

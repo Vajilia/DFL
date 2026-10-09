@@ -64,13 +64,13 @@ check("the ticket pool pays out exactly what it takes in, every year",
       all(abs(sum(l["ticket_pool_in"] for l in f["lines"].values()) - sum(l["ticket_pool_out"] for l in f["lines"].values())) < 0.3 for f in rows))
 check("every club receives the same ticket-pool share in a year", all(len({l["ticket_pool_in"] for l in f["lines"].values()}) == 1 for f in rows))
 
-# forced sale: two subsidised quarters call a vote; 25 of the 47 other owners sell the club out from under her
+# forced sale: two subsidised quarters call a vote; 25 of the 47 other CEOs sell the club out from under her
 import rules as R  # noqa: E402
 voted = [l for l in lines if "sale_votes" in l]
 check("a vote is called only for two or more subsidised quarters", all(l["sub_quarters"] >= R.FORCED_SALE_SUBSIDY_QUARTERS for l in voted))
 check("every club with two or more subsidised quarters had a vote", all("sale_votes" in l for l in lines if l["sub_quarters"] >= R.FORCED_SALE_SUBSIDY_QUARTERS))
 check("a sale passes at 25 votes and not before", all((l["sale_votes"] >= R.FORCED_SALE_VOTES_NEEDED) == (l["sale_result"] == "sold") for l in voted))
-check("no vote has more than 47 voters (the owner concerned is recused)", all(l["sale_votes"] <= 47 for l in voted))
+check("no vote has more than 47 voters (the CEO concerned is recused)", all(l["sale_votes"] <= 47 for l in voted))
 
 # CEOs serve 10 to 20 years
 gone = [o for o in lg.owners if o.status == "retired" and o.tenure > 0 and o.age < 85]

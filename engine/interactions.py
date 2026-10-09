@@ -29,16 +29,16 @@ import fan_media_cards as FM
 UNDERPERFORMED_GAP = -0.06     # a team won at least this much less (win%) than its roster predicts: ~1 game over a 17-game season
 THIN_ROSTER_Z = -0.4           # a roster this many standard deviations below the league's average talent counts as thin
 IMPROVING_STEP = 0.05          # a team up at least this much (win%) on last year is "improving"
-LOYAL_CAPITAL = 0.55           # fans with this much Fan Capital have goodwill to defend an owner with
+LOYAL_CAPITAL = 0.55           # fans with this much Fan Capital have goodwill to defend a CEO with
 CALLED_IT = 0.08               # an outlet "called it" if its forecast was within this much (win%) of the result
-PRESS_HURT = -0.01             # the press cost an owner at least this much approval ("it was the press")
+PRESS_HURT = -0.01             # the press cost a CEO at least this much approval ("it was the press")
 OPTIMISTIC_OWNERS = {"Showwoman": 0.08, "Glory Hunter": 0.08, "Legacy Builder": 0.06, "Meddler": 0.04, "Local Hero": 0.04,
-                     "Penny-Pincher": -0.02, "Opportunist": -0.02, "Patient Steward": -0.03}   # how much an owner thinks fans like her more than they do
+                     "Penny-Pincher": -0.02, "Opportunist": -0.02, "Patient Steward": -0.03}   # how much a CEO thinks fans like her more than they do
 # relationship amounts (points on the -100..100 scale), before scaling by the card's own pressure thresholds
 REL_FIRED_TO_OWNER = -25
 REL_OWNER_TO_FIRED = -10
 REL_STAFF_WITNESS_TO_OWNER = -5
-REL_FANS_ON_FIRING = 4           # fans who wanted a change warm to the owner a little (cold if the firing was a sweep)
+REL_FANS_ON_FIRING = 4           # fans who wanted a change warm to the CEO a little (cold if the firing was a sweep)
 REL_RECALLED_OWNER_TO_FANS = -40
 REL_FANS_TO_RECALLED_OWNER = -30
 REL_SURVIVOR = 10
@@ -46,7 +46,7 @@ REL_ELECTED = 20
 REL_EXILE_BLAME = -10
 REL_FANS_EXILE = -15
 
-KEY = {"owner": lambda c: f"owner:{c.oid}", "coach": lambda c: f"coach:{c.cid}", "gm": lambda c: f"gm:{c.gid}",
+KEY = {"owner": lambda c: f"CEO:{c.oid}", "coach": lambda c: f"coach:{c.cid}", "gm": lambda c: f"gm:{c.gid}",
        "fans": lambda c: f"fans:{c.team_id}", "press": lambda c: f"press:{c.mid}"}
 
 
@@ -102,7 +102,7 @@ def evidence(lg, ctx: dict, tid: int) -> dict:
         ev["fan_capital"] = round(fb.capital, 3)
         ev["press_effect_on_approval"] = round(fb.last_sway, 3)
         ev["approval_before"] = None if d["approval_before"] is None else round(d["approval_before"], 3)
-    ev["new_owner"] = False        # filled by the caller when a new owner arrived this year
+    ev["new_owner"] = False        # filled by the caller when a new CEO arrived this year
     outlet = _local_outlet(lg, tid)
     if outlet is not None and tid in outlet.forecasts:
         ev["local_forecast"] = round(outlet.forecasts[tid], 3)
@@ -174,19 +174,19 @@ def _press_claim(lg, tid, ev):
 
 # ---- Firing -------------------------------------------------------------------------------------
 def firing_scene(lg, ctx, year, detail: dict):
-    """detail: team, who ('coach' or 'gm'), card (the person fired), heat, owner (card), reason."""
+    """detail: team, who ('coach' or 'gm'), card (the person fired), heat, CEO (card), reason."""
     tid, who, fired, owner = detail["team"], detail["who"], detail["card"], detail["owner"]
     d = ctx["teams"][tid]
     ev = evidence(lg, ctx, tid)
-    ev["new_owner"] = detail["reason"] == "new owner cleaned house"
+    ev["new_owner"] = detail["reason"] == "new CEO cleaned house"
     ev["heat"] = round(detail["heat"], 3)
     r = C._rng(lg.card_seed, "scene", "firing", tid, year, who)
     claims = []
-    # the owner
+    # the CEO
     if ev["new_owner"]:
         frame = "fresh_start"
-        text = f"{owner.name} ({owner.trait}): \"New owner, new staff. I wanted {owner.wants} and I wasn't going to ask {fired.name} for it.\""
-    elif detail["reason"] == "owner's judgment":
+        text = f"{owner.name} ({owner.trait}): \"New CEO, new staff. I wanted {owner.wants} and I wasn't going to ask {fired.name} for it.\""
+    elif detail["reason"] == "CEO's judgment":
         frame = "results" if ev["record"] < 0.5 else "judgment"
         text = (f"{owner.name} ({owner.trait}): \"It was my call. I wanted {owner.wants}, and I did not think {fired.name} was the person to get it.\"")
     else:
@@ -229,7 +229,7 @@ def firing_scene(lg, ctx, year, detail: dict):
     backed = supported(claims[0]["frame"], ev)
     if ev["new_owner"]:
         ruling = "sweep"
-        verdict = (f"A sweep: the new owner cleared the staff on arrival, whatever the record ({ev['record']:.0%} against {ev['expected']:.0%} on paper).")
+        verdict = (f"A sweep: the new CEO cleared the staff on arrival, whatever the record ({ev['record']:.0%} against {ev['expected']:.0%} on paper).")
     elif who == "coach" and supported("underperformed", ev) and backed:
         ruling = "fair"
         verdict = "The firing is backed by the record, and the roster does not excuse it: the team won well under what it was built to win."
@@ -242,9 +242,9 @@ def firing_scene(lg, ctx, year, detail: dict):
                    + ("the roster explains it; the team won about what it was built to win." if who == "coach" else "the roster she built was not thin, so the shortfall was on the field."))
     else:
         ruling = "unfounded"
-        verdict = "The firing is not backed by the record: the owner's reason does not hold up."
+        verdict = "The firing is not backed by the record: the CEO's reason does not hold up."
     ev["ruling"] = ruling
-    sc = _scene(lg, year, "firing", tid, f"owner fired the {who} ({detail['reason']})", ev, claims,
+    sc = _scene(lg, year, "firing", tid, f"CEO fired the {who} ({detail['reason']})", ev, claims,
                 f"{fired.name} fired; replaced by a new {who}", verdict)
     # relationships: the fired person is hurt in proportion to how much loyalty matters to her
     me, oth = key(who, fired), key("owner", owner)
@@ -263,7 +263,7 @@ def firing_scene(lg, ctx, year, detail: dict):
 
 # ---- Recall vote ----------------------------------------------------------------------------------
 def recall_scene(lg, ctx, year, detail: dict):
-    """detail: team, trigger, approval, share, result, owner (old card), new_owner (card or None), candidates (cards)."""
+    """detail: team, trigger, approval, share, result, CEO (old card), new_owner (card or None), candidates (cards)."""
     tid, owner = detail["team"], detail["owner"]
     d = ctx["teams"][tid]
     ev = evidence(lg, ctx, tid)
@@ -274,7 +274,7 @@ def recall_scene(lg, ctx, year, detail: dict):
     recalled = detail["result"] == "recalled"
     fb = d["fans"]
     claims = []
-    # the owner: believes fans like her more than they do, by an amount that depends on who she is
+    # the CEO: believes fans like her more than they do, by an amount that depends on who she is
     thinks = max(0.0, min(1.0, _shade(r, detail["approval"], OPTIMISTIC_OWNERS.get(owner.trait, 0.0), 0.02)))
     if recalled and owner.pressure.get("media", 50) >= 55:
         frame, text = "press", f"{owner.name} ({owner.trait}): \"I thought we were at {thinks:.0%}. This is what the papers did to me, not what I did to this team.\""
@@ -286,7 +286,7 @@ def recall_scene(lg, ctx, year, detail: dict):
     taste = fb.taste if fb is not None else "popularity"
     if fb is not None:
         frame = _fan_frame(fb)
-        extra = (f" We wanted an owner strong on {taste} and we chose {detail['new_owner'].name}." if recalled and detail.get("new_owner") is not None else "")
+        extra = (f" We wanted a CEO strong on {taste} and we chose {detail['new_owner'].name}." if recalled and detail.get("new_owner") is not None else "")
         claims.append(dict(role="fans", name=f"{fb.team_name} fans", frame=frame,
                            text=_fan_text(fb, ev, owner, frame, "recall") + extra, card=fb))
         pc = _press_claim(lg, tid, ev)
@@ -300,7 +300,7 @@ def recall_scene(lg, ctx, year, detail: dict):
                            text=f"{new.name} ({new.trait}): \"Five of us stood. The fans wanted strength on {taste} and picked me. I want {new.wants}.\"", card=new))
         ev["elected_is_best_on_taste"] = new is top
     verdict = (f"{100 * detail['share']:.1f}% voted to recall (a majority of the 1,000,000 fans is needed): "
-               + ("recalled." if recalled else "the owner survives."))
+               + ("recalled." if recalled else "the CEO survives."))
     sc = _scene(lg, year, "recall_vote", tid, f"vote triggered by {detail['trigger']}", ev, claims,
                 f"{owner.name} {'recalled; ' + new.name + ' elected from 5 candidates' if recalled else 'survives'}", verdict)
     # a mandate frame is supported by the data: the winner topped the candidates on the fans' taste
@@ -317,7 +317,7 @@ def recall_scene(lg, ctx, year, detail: dict):
             warmth = max(0.2, 1.0 - 2.0 * detail["share"])          # surviving by a hair warms no one; a landslide does
             _bump(owner, key("fans", fb), REL_SURVIVOR * warmth)
             _bump(fb, key("owner", owner), REL_SURVIVOR * warmth / 2)
-        _decide(fb, sc, "voted to recall the owner" if recalled else "kept the owner")
+        _decide(fb, sc, "voted to recall the CEO" if recalled else "kept the CEO")
     _decide(owner, sc, "was recalled" if recalled else "survived a recall vote")
     if new is not None:
         _decide(new, sc, f"was elected by the fans of team {tid}")
@@ -398,7 +398,7 @@ def render_scene(sc: dict, lg=None) -> str:
         mark = "supported by the record" if c["role"] in sc["supports"] else "not supported by the record"
         if c["role"] in sc["supports"] and "claimed_z" in c and c["claimed_z"] - sc["evidence"]["strength_z"] < -0.5:
             mark = "supported, but overstated"
-        label = {"gm": "GM", "fans": "The fans", "new_owner": "New owner"}.get(c["role"], c["role"].title())
+        label = {"gm": "GM", "fans": "The fans", "new_owner": "New CEO"}.get(c["role"], c["role"].title())
         L.append(f"├── {label} {'claim' if c['role'] == 'fans' else 'claims'}: {c['text']}  [{mark}]")
     e = sc["evidence"]
     facts = f"record {e['record']:.0%}, roster predicts {e['expected']:.0%}, roster {e['strength_z']:+.1f} deviations from average"

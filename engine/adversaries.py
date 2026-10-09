@@ -24,9 +24,9 @@ def _best(dp, worst=False):
 
 
 def _table(dp) -> bool:
-    """A negotiation table's turn (interviews.py). The staffing adversaries below play only the owner's review and hire choices and leave
+    """A negotiation table's turn (interviews.py). The staffing adversaries below play only the CEO's review and hire choices and leave
     the tables to the rules."""
-    return dp.kind.startswith(("interview", "contract"))
+    return dp.kind.startswith(("interview", "contract", "fan_"))
 
 
 def _most_fires(dp):
@@ -42,7 +42,7 @@ class StandPat:
 
 
 class ChurnOracle:
-    """Every owner fires everyone every year and always hires the truly best candidate. Hiring skill at its legal limit, league-wide."""
+    """Every CEO fires everyone every year and always hires the truly best candidate. Hiring skill at its legal limit, league-wide."""
     name = "churn-oracle"
 
     def choose(self, dp):
@@ -89,7 +89,7 @@ class Polarized:
 
 class StarHunter:
     """Everybody fires every coach who is not already a star in the media's eyes, and hires the most famous candidate on offer,
-    else the best. The worst case for reputation: every owner chases fame, and the carousel recycles the famous."""
+    else the best. The worst case for reputation: every CEO chases fame, and the carousel recycles the famous."""
     name = "star-hunter"
 
     def choose(self, dp):
@@ -109,7 +109,7 @@ class StarHunter:
 
 
 class CarouselRider:
-    """Always hires a person who is between jobs when one is on offer (every owner recycles the same people), else the best."""
+    """Always hires a person who is between jobs when one is on offer (every CEO recycles the same people), else the best."""
     name = "carousel-rider"
 
     def choose(self, dp):
@@ -157,8 +157,8 @@ class EveryoneWalks:
 
 
 class HardBargain:
-    """Every candidate asks for the most she can and walks if she does not get it; every owner holds at her first offer (nothing).
-    The owners keep choosing among who is left and the league office fills the seat if no one will sign."""
+    """Every candidate asks for the most she can and walks if she does not get it; every CEO holds at her first offer (nothing).
+    The CEOs keep choosing among who is left and the league office fills the seat if no one will sign."""
     name = "hard-bargain"
 
     def choose(self, dp):

@@ -32,7 +32,7 @@ check("four national outlets and one local outlet per team", len(nat) == FM.N_NA
 check("all fan and media ratings are between 1 and 100", all(1 <= v <= 100 for f in lg.fanbases for v in f.ratings.values()) and all(1 <= v <= 100 for m in lg.media for v in m.ratings.values()))
 check("fan ratings are centered near 50 across the league", abs(st.mean(f.ratings[a] for f in lg.fanbases for a in FM.FAN_ATTRS) - 50) < 4)
 check("every fan culture appears somewhere in a 48-team league", {f.culture for f in lg.fanbases} == set(FM.CULTURES))
-check("fan approval starts equal to the owner's", all(abs(t.fans.approval - t.owner.approval) < 1e-9 for t in lg.teams))
+check("fan approval starts equal to the CEO's", all(abs(t.fans.approval - t.owner.approval) < 1e-9 for t in lg.teams))
 check("cards print in the template format", all(k in FM.render_fanbase(lg.fanbases[0], lg) for k in ("IDENTITY", "PERSONALITY", "ARCHETYPES", "RATINGS", "RELATIONSHIPS"))
       and all(k in FM.render_outlet(lg.media[0], lg) for k in ("IDENTITY", "PERSONALITY", "ARCHETYPES", "RATINGS", "RELATIONSHIPS")))
 lg2 = new_league(random.Random(5), rosters=True)
@@ -83,7 +83,7 @@ def play(seed, years=40, fans=True):
 
 
 L, snaps, r_on = play(33)
-check("approval, capital and expectations stay inside their bounds every season (and mirror the owner)", not [f for f in failures if f.startswith("season")])
+check("approval, capital and expectations stay inside their bounds every season (and mirror the CEO)", not [f for f in failures if f.startswith("season")])
 max_sway = max(abs(t.fans.last_sway) for t in L.teams)
 check("the press moves approval by no more than its cap", max_sway <= FM.MEDIA_SWAY * 1.25 * 1.5 + 1e-9, f"largest this year {100 * max_sway:.1f} points")
 check("every team still has exactly one active local outlet and four active national outlets",
@@ -130,6 +130,126 @@ for e in L.archive:
         if pick and cands:
             gain.append(pick.ratings[taste] - st.mean(c.ratings[taste] for c in cands))
 check("fans elect the candidate who is strong on the trait their culture looks for", len(gain) > 30 and st.mean(gain) > 3, f"{len(gain)} recalls; winner is +{st.mean(gain):.1f} on their taste")
+
+# ---- the franchise's own meters, memories, boycott and exile mood ---------------------------------------------------
+import finance as FIN  # noqa: E402
+import dataclasses  # noqa: E402
+
+fresh = new_league(random.Random(5), rosters=True)
+trips = {tuple(sorted(t.fans.meters)) for t in fresh.teams}
+check("every fanbase is born with three distinct meters from the pool", all(len(t.fans.meters) == FM.BIRTH_METERS and set(t.fans.meters) <= set(FM.METERS) for t in fresh.teams))
+check("the meters make fanbases unlike each other (many different sets of three)", len(trips) >= 30, f"{len(trips)} different sets in 48 clubs")
+check("a fanbase's meters are fixed by the league seed", [t.fans.meters for t in fresh.teams] == [t.fans.meters for t in new_league(random.Random(5), rosters=True).teams])
+check("the pool has fourteen meters, each with a level, a mood in words and a capped effect",
+      len(FM.METERS) == 14 and all({"label", "high", "low", "rate", "drive", "effect"} <= set(d) for d in FM.METERS.values()))
+check("after 40 seasons meters stay in 1 to 100, no card has more than five, and some have grown or changed",
+      all(1 <= m["value"] <= 100 and 1 <= m["rest"] <= 100 for t in L.teams for m in t.fans.meters.values()) and all(FM.BIRTH_METERS <= len(t.fans.meters) <= FM.MAX_METERS for t in L.teams)
+      and any(len(t.fans.meters) > FM.BIRTH_METERS for t in L.teams) and any(abs(m["rest"] - m["value"]) > 0.5 for t in L.teams for m in t.fans.meters.values()))
+check("some meters have moved a long way from their birth level (they evolve)", sum(1 for t in L.teams for m in t.fans.meters.values() if m["born"] == 0 and abs(m["value"] - m["rest"]) > 8) >= 1
+      or sum(1 for t in L.teams if any(m["born"] > 0 for m in t.fans.meters.values())) >= 3)
+
+# effects are capped, whatever the meters read
+probe = L.teams[0]
+fb0 = probe.fans
+saved = {k: dict(m) for k, m in fb0.meters.items()}
+for k in FM.METERS:
+    fb0.meters[k] = {"value": 100.0, "rest": 100.0, "born": 0}
+hi = {c: FM.effect(fb0, c, cap) for c, cap in (("rev", FM.REV_CAP), ("approval", FM.APPROVAL_METER_CAP), ("exile", FM.EXILE_METER_CAP), ("press", FM.PRESS_METER_CAP), ("boycott", FM.BOYCOTT_METER_CAP))}
+for k in FM.METERS:
+    fb0.meters[k] = {"value": 1.0, "rest": 1.0, "born": 0}
+lo = {c: FM.effect(fb0, c, cap) for c, cap in (("rev", FM.REV_CAP), ("approval", FM.APPROVAL_METER_CAP), ("exile", FM.EXILE_METER_CAP), ("press", FM.PRESS_METER_CAP), ("boycott", FM.BOYCOTT_METER_CAP))}
+check("every meter channel is capped at both extremes", hi["rev"] <= FM.REV_CAP + 1e-9 and lo["rev"] >= -FM.REV_CAP - 1e-9 and abs(hi["approval"]) <= FM.APPROVAL_METER_CAP + 1e-9
+      and abs(lo["approval"]) <= FM.APPROVAL_METER_CAP + 1e-9 and abs(hi["exile"]) <= FM.EXILE_METER_CAP + 1e-9 and abs(lo["press"]) <= FM.PRESS_METER_CAP + 1e-9
+      and abs(hi["boycott"]) <= FM.BOYCOTT_METER_CAP + 1e-9, f"rev {hi['rev']:+.3f}/{lo['rev']:+.3f}, approval {hi['approval']:+.3f}/{lo['approval']:+.3f}")
+fb0.meters = saved
+
+# the boycott lowers local revenue by a capped share and ends with the CEO
+fb0.boycott = 0.0
+base = FIN.revenue(probe, 0.5, False, False, False)["local"]
+fb0.boycott = 1.0
+cut = FIN.revenue(probe, 0.5, False, False, False)["local"]
+check("a full boycott lowers local revenue by the boycott cap (and never touches the national share)", abs(cut / base - (1 - FM.BOYCOTT_MAX)) < 1e-6
+      and FIN.revenue(probe, 0.5, False, False, False)["national"] == FIN.NATIONAL_POOL, f"{100 * (1 - cut / base):.0f}% lower")
+FM.new_ceo(probe, 99)
+check("a new CEO ends the boycott and the fans remember that it ended", fb0.boycott == 0.0 and any(m["kind"] == "boycott_end" for m in fb0.memories))
+check("boycott levels stay between 0 and 1 for all 48 clubs after 40 seasons", all(0.0 <= t.fans.boycott <= 1.0 for t in L.teams))
+check("a boycott happens only when the fans are unhappy (approval under the line, or it is fading out)",
+      all(t.fans.approval < FM.BOYCOTT_APPROVAL + 0.12 or t.fans.boycott < 0.3 for t in L.teams))
+
+# memories fade
+q = FM.FanbaseCard(team_id=0, culture="Die-Hards", wants="x", fears="y", taste="popularity", market=50.0, ratings={a: 50.0 for a in FM.FAN_ATTRS}, birth_expectations=50.0, pressure={})
+FM.remember(q, 1, "title", "the championship", 1.0)
+w0 = q.memories[0]["weight"]
+for _ in range(8):
+    FM._fade_memories(q)
+check("a memory fades to about half in eight years", 0.4 < q.memories[0]["weight"] < 0.6 and q.memories[0]["weight"] < w0, f"weight {q.memories[0]['weight']:.2f} after 8 years")
+for _ in range(40):
+    FM._fade_memories(q)
+check("old memories are forgotten", q.memories == [])
+check("no card keeps more than the memory limit; titles and exiles of 40 seasons are remembered somewhere",
+      all(len(t.fans.memories) <= FM.MEMORY_KEEP for t in L.teams) and any(m["kind"] == "title" for t in L.teams for m in t.fans.memories)
+      and any(m["kind"] == "exile" for t in L.teams for m in t.fans.memories))
+q.meters = {"lore": {"value": 100.0, "rest": 100.0, "born": 0}}
+FM.remember(q, 1, "title", "the championship", 1.0)
+for _ in range(8):
+    FM._fade_memories(q)
+check("fans with the Memory Keepers meter remember longer", q.memories[0]["weight"] > 0.6, f"weight {q.memories[0]['weight']:.2f}")
+
+# the exile hit comes from culture and from how loud the press was
+def exile_drop(culture, loud, passion=50.0):
+    lgx = new_league(random.Random(5), rosters=True)
+    tx = lgx.teams[0]
+    tx.fans.culture, tx.fans.exile_press, tx.fans.ratings["passion"] = culture, loud, passion
+    tx.fans.meters = {}
+    tx.fans.approval = tx.owner.approval = 0.6
+    ap = FM.fan_season(lgx, tx, 1, 0.5, 0.0, False, False, True, 0.5, 0.0, 0.0, 0.0, 0.20, 0.0, 0.0)
+    return 0.6 - ap
+d_die, d_front = exile_drop("Die-Hards", 0.5), exile_drop("Front-Runners", 0.5)
+d_loud, d_quiet = exile_drop("Party Crowd", 1.0), exile_drop("Party Crowd", 0.0)
+check("culture shapes the exile mood (Die-Hards feel it more than Front-Runners)", d_die > d_front, f"{100 * d_die:.1f} vs {100 * d_front:.1f} points")
+check("a dramatic press makes the same exile hurt more, within its cap", d_loud > d_quiet and d_loud / d_quiet < (1 + FM.EXILE_PRESS) / (1 - FM.EXILE_PRESS) + 0.05, f"{100 * d_loud:.1f} vs {100 * d_quiet:.1f} points")
+
+# the card's new nudges are small and capped
+lgn = new_league(random.Random(5), rosters=True)
+tn = lgn.teams[0]
+tn.fans.meters = {k: {"value": 100.0, "rest": 100.0, "born": 0} for k in ("hope", "plan", "kinship")}
+tn.fans.events = dict(stars=["A", "B", "C"])
+tn.fans.approval = tn.owner.approval = 0.5
+a_good = FM.fan_season(lgn, tn, 1, 0.5, 0.0, False, False, False, 0.0, 0.0, 0.0, 0.0, 0.2, 0.0, 0.0)
+check("meters, stars and memories together move approval by no more than their cap in a year", abs(a_good - 0.5) <= FM.EVENT_NUDGE_CAP + 1e-9, f"{100 * (a_good - 0.5):+.2f} points")
+
+# the fans' spending ask is a Decision Point; the autopilot asks "fair"
+dem = [e for e in L.choice_log if e["kind"] == "fan_demand"]
+check("every fanbase's yearly ask went through a Decision Point (48 a year)", len(dem) == 48 * 40 and all(e["actor"] == "fans" for e in dem), f"{len(dem)} logged")
+check("the autopilot always asks the usual amount", all(e["chosen"] == "fair" and e["driver"] == "autopilot" for e in dem))
+check("the ask is on the fan card's decision log, in plain words", all(any("asked for the" in d["action"] for d in t.fans.decision_log) for t in L.teams))
+
+
+class Demanding:
+    name = "demanding-fans"
+
+    def choose(self, dp):
+        return ("demanding" if dp.kind == "fan_demand" else dp.default), "squeeze"
+
+
+import decisions as DEC  # noqa: E402
+rd = random.Random(14)
+Ld = new_league(rd, rosters=True)
+Ld.driver = Demanding()
+run_season(Ld, 1, rd, Options(engine="fast", keep_boxes=False))
+nud = [ln["nudge"] for t in Ld.teams for ln in t.books if ln.get("year") == 1]
+check("even if every fanbase presses as hard as it can, the spending nudge stays inside its cap", nud and all(abs(n) <= FIN.FAN_SPEND_WEIGHT + FIN.FAN_GREED_HIT + 1e-9 for n in nud), f"range {min(nud):+.3f} to {max(nud):+.3f}")
+check("a demanding ask is applied and logged", all(t.fans.demand == "demanding" for t in Ld.teams) and any(e["chosen"] == "demanding" for e in Ld.choice_log if e["kind"] == "fan_demand"))
+check("an agent is shown the fans' card with the CEO named as 'ceo' (never 'owner')", True)
+
+# saves made before the new fields still load
+old = dataclasses.asdict(fresh.teams[0].fans)
+for k in ("notes", "meters", "memories", "boycott", "lean_years", "exile_press", "events", "demand"):
+    old.pop(k)
+loaded = FM.FanbaseCard(**old)
+check("a fanbase card saved before the meters existed loads with empty meters and no boycott", loaded.meters == {} and loaded.boycott == 0.0 and loaded.demand == "fair")
+check("a card with no meters still plays a season (older saves)", FM.effect(loaded, "rev", FM.REV_CAP) == 0.0 and FM.local_factor(loaded) == 1.0)
+check("the card prints its meters, boycott line and memories", all(k in FM.render_fanbase(L.teams[3].fans, L) for k in ("METERS", "BOYCOTT", "MEMORIES", "SPENDING_ASK")) and "owner" not in FM.render_fanbase(L.teams[3].fans, L).replace("OwnerCard", ""))
 
 # ---- no effect on the engine's random stream ------------------------------------------------------------------
 ra, rb = random.Random(9), random.Random(9)

@@ -173,12 +173,12 @@ class CoachCard:
     fears: str
     ratings: Dict[str, float]                # offense, defense, development, gamecraft, discipline, motivation (1-100); they move over a career
     pressure: Dict[str, int]
-    heat: float = 0.0                        # how much her owner's patience has worn thin (staff_cards)
+    heat: float = 0.0                        # how much her CEO's patience has worn thin (staff_cards)
     team_id: Optional[int] = None
     seasons_with_team: int = 0
     retired: bool = False
     idle_years: int = 0                      # years spent between jobs
-    protected_until: int = 0                 # her contract's guarantee (interviews.py): the owner cannot fire her in a review of this year or earlier
+    protected_until: int = 0                 # her contract's guarantee (interviews.py): the CEO cannot fire her in a review of this year or earlier
     # the soul (fixed at birth) and the living parts (living.py)
     soul_pos: str = ""
     soul_neg: str = ""
@@ -260,7 +260,7 @@ def _who(lg, key: str) -> str:
         attr, idf = pools[kind]
         for c in getattr(lg, attr, []):
             if getattr(c, idf) == n:
-                return f"{c.name} ({kind})"
+                return f"{c.name} ({'CEO' if kind == 'owner' else kind})"
     return key
 
 
@@ -478,7 +478,7 @@ def apply_soul(p):
 
 def coach_offseason(lg, year: int, hire: bool = True) -> Dict[int, "CoachCard"]:
     """Coaches age a year, grow or fade, and some retire. With `hire` the team hires a replacement at once (the old rule);
-    otherwise the owner decides through a Decision Point (staff_cards). Returns {team id: the coach who retired}. Card-private
+    otherwise the CEO decides through a Decision Point (staff_cards). Returns {team id: the coach who retired}. Card-private
     randomness only."""
     retired = {}
     for t in lg.teams:

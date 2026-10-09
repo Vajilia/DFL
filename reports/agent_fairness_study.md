@@ -1,8 +1,8 @@
-# Agents in the owners' seats and at the interview table: fairness with a stand-in agent
+# Agents in the CEOs' seats and at the interview table: fairness with a stand-in agent
 
-A stand-in agent (agents.py) reads only the view a real agent would be shown (the deciding card, her notes, the options with the ratings she perceives) and chooses from the engine's options; owners with different personalities choose differently, and candidates ask for more guaranteed seasons or walk depending on how the owner and the team look to them. It is a rulebook, not a model, so this tests the machinery and the bands, not the quality of a real agent's judgment.
+A stand-in agent (agents.py) reads only the view a real agent would be shown (the deciding card, her notes, the options with the ratings she perceives) and chooses from the engine's options; CEOs with different personalities choose differently, and candidates ask for more guaranteed seasons or walk depending on how the CEO and the team look to them. It is a rulebook, not a model, so this tests the machinery and the bands, not the quality of a real agent's judgment.
 
-Rows A, I, J and K are the autopilot, agents in all 48 owners' seats (yearly reviews, hires and interviews), agents in 12 seats, and an agent whose answers are often lost or invalid. Rows L, M and N are worst cases at the interview table: contracts used to widen the gap as far as the rules allow (the strongest teams lock in the best coach for three seasons, the weakest hire the worst), every candidate refusing every job, and hard bargaining on both sides. In M and N the league office fills every seat by the old rule, so those leagues must be, and are, the autopilot league (identical numbers to row A): they test that the fallback holds, not the bands.
+Rows A, I, J and K are the autopilot, agents in all 48 CEOs' seats (yearly reviews, hires and interviews), agents in 12 seats, and an agent whose answers are often lost or invalid. Rows L, M and N are worst cases at the interview table: contracts used to widen the gap as far as the rules allow (the strongest teams lock in the best coach for three seasons, the weakest hire the worst), every candidate refusing every job, and hard bargaining on both sides. In M and N the league office fills every seat by the old rule, so those leagues must be, and are, the autopilot league (identical numbers to row A): they test that the fallback holds, not the bands.
 
 **Every row is inside every band.** One thing to know about the edge of the dynasty band: in row K (8 leagues) one league had a team win 7 titles in 20 seasons, which is the most the band allows. It was not a guarantee effect (the team's staff had no guarantees in that stretch and the same league on the autopilot gives 4), so I checked it against 24 fresh leagues for the autopilot and for row K: the worst league in each 24 was 6 (autopilot) and 5 (row K), with the same spread of 2 to 5 titles in most leagues. It was a tail event of the same size the autopilot also produces, not a tilt.
 
@@ -32,7 +32,7 @@ All trends inside the bands.
 
 Teams led by a coach the media calls a legend: 8 team-seasons per league (about 0.2 on the field at a time). They won 52.0% of their games (league average 50%), made the playoffs 44% of the time (14 of 40 teams = 35% on average) and won the title in 2.2% of seasons (1 in 40 = 2.5% on average).
 
-## I. A stand-in agent in all 48 owners' seats (cards decide, a dozen at a time)
+## I. A stand-in agent in all 48 CEOs' seats (cards decide, a dozen at a time)
 
 fast engine, 6 leagues x 48 seasons.
 
@@ -152,7 +152,7 @@ All trends inside the bands.
 
 Teams led by a coach the media calls a legend: 8 team-seasons per league (about 0.2 on the field at a time). They won 52.0% of their games (league average 50%), made the playoffs 44% of the time (14 of 40 teams = 35% on average) and won the title in 2.2% of seasons (1 in 40 = 2.5% on average).
 
-## N. Hard bargaining: every candidate asks for the most and walks without it, every owner holds the line
+## N. Hard bargaining: every candidate asks for the most and walks without it, every CEO holds the line
 
 fast engine, 6 leagues x 48 seasons.
 

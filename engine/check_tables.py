@@ -47,7 +47,7 @@ def covered(lg):
 
 
 # ---- the autopilot's tables are the old rule -------------------------------------------------------------------------------------
-GOLD = {33: "479ecf34c75237b7", 21: "bc854600ff674afa"}
+GOLD = {33: "adad847bbaaa266d", 21: "e75171006030c603"}
 for seed, want in GOLD.items():
     lg, res, _ = play(seed, 40)
     got = FP.fingerprint_of(lg, res)
@@ -59,7 +59,7 @@ check("every coach and GM the autopilot hired has a guarantee that has already l
 
 # ---- a guarantee protects her ---------------------------------------------------------------------------------------------------------
 class Guarantee3:
-    """Every owner offers three guaranteed seasons and every candidate accepts; and every owner fires everyone she is allowed to, every year."""
+    """Every CEO offers three guaranteed seasons and every candidate accepts; and every CEO fires everyone she is allowed to, every year."""
     name = "guarantee-3"
 
     def choose(self, dp):
@@ -78,11 +78,11 @@ for c in list(lg3.coaches) + list(lg3.gms):
         for e in c.career:
             if e["event"] == "fired" and h["year"] < e["year"] <= h["year"] + h["guaranteed"]:
                 viol.append((c.name, h["year"], e["year"]))
-check("a guaranteed coach or GM is never fired in the reviews her guarantee covers, even by an owner who fires everyone she can", not viol and len(fired) > 20 and sum(1 for c in lg3.coaches if c.protected_until > 0) > 40,
+check("a guaranteed coach or GM is never fired in the reviews her guarantee covers, even by a CEO who fires everyone she can", not viol and len(fired) > 20 and sum(1 for c in lg3.coaches if c.protected_until > 0) > 40,
       f"{len(fired)} firings in 14 seasons, none inside a guarantee")
 check("nobody is ever guaranteed more than three reviews", all(c.protected_until - max(e["year"] for e in c.career if e["event"] == "hired") <= IV.MAX_GUARANTEE for c in list(lg3.coaches) + list(lg3.gms) if any(e["event"] == "hired" for e in c.career)))
 rev = [e for e in lg3.choice_log if e["kind"] == "staff_review"]
-check("while a guarantee lasts the owner is not even offered the choice to fire her", any("fire_coach" not in e["options"] for e in rev) and any("fire_gm" not in e["options"] for e in rev))
+check("while a guarantee lasts the CEO is not even offered the choice to fire her", any("fire_coach" not in e["options"] for e in rev) and any("fire_gm" not in e["options"] for e in rev))
 check("the guarantee is on her card (and so in the save)", any(c.protected_until > 0 for c in lg3.coaches) and "protected_until" in store._plain(lg3.coaches[0]))
 
 # ---- walking away -------------------------------------------------------------------------------------------------------------------------
@@ -94,8 +94,8 @@ check("each of those jobs went to three interviews, one candidate after another"
 check("and a candidate who walked has it on her card", any(x["event"] == "turned_down" for c in lgw.coaches + lgw.passed_over for x in c.career))
 lgh, resh, _ = play(33, 25, ADV.HardBargain())
 ivh = interviews_of(lgh)
-check("when candidates ask for the most and owners hold the line, some jobs are filled by the league office and no seat is ever left empty", covered(lgh) and any(e["assigned"] for e in ivh) and all(len(e["attempts"]) <= 3 for e in ivh), f"{sum(e['assigned'] for e in ivh)} of {len(ivh)} written-up interviews")
-check("a seat a candidate refused goes to one of the others (the owner chooses again among those left)", any(len(e["attempts"]) > 1 and not e["assigned"] for e in ivh) or any(len(e["attempts"]) > 1 for e in iv))
+check("when candidates ask for the most and CEOs hold the line, some jobs are filled by the league office and no seat is ever left empty", covered(lgh) and any(e["assigned"] for e in ivh) and all(len(e["attempts"]) <= 3 for e in ivh), f"{sum(e['assigned'] for e in ivh)} of {len(ivh)} written-up interviews")
+check("a seat a candidate refused goes to one of the others (the CEO chooses again among those left)", any(len(e["attempts"]) > 1 and not e["assigned"] for e in ivh) or any(len(e["attempts"]) > 1 for e in iv))
 
 # ---- what each side sees ------------------------------------------------------------------------------------------------------------------
 seen = {"owner": [], "candidate": []}
@@ -115,16 +115,16 @@ class Spy:
 
 play(8, 3, Spy())
 p, o = seen["owner"][0]
-check("the owner is shown the candidate as she perceives her, and nothing of how the candidate reads the owner", "patience_as_you_read_her" not in str(p["context"]) and "perceived" in str(p["context"]))
+check("the CEO is shown the candidate as she perceives her, and nothing of how the candidate reads the CEO", "patience_as_you_read_her" not in str(p["context"]) and "perceived" in str(p["context"]))
 bad = 0
 for p, o, cand in seen["candidate"]:
     c = p["context"]
     if "ratings" in c or "notes" in str(c["owner"]):
         bad += 1
-check("the candidate is shown public facts and her own read of the owner, never the owner's card, ratings or notes", bad == 0 and all("patience_as_you_read_her" in p["context"]["owner"] for p, _, _ in seen["candidate"]))
+check("the candidate is shown public facts and her own read of the CEO, never the CEO's card, ratings or notes", bad == 0 and all("patience_as_you_read_her" in p["context"]["owner"] for p, _, _ in seen["candidate"]))
 off = [abs(p["context"]["owner"]["patience_as_you_read_her"] - o.ratings["patience"]) for p, o, _ in seen["candidate"]]
-check("her read of the owner is a read, not the truth (it is off by a few points, differently for each candidate)", sum(1 for x in off if x > 0.5) > 0.7 * len(off), f"mean error {sum(off) / len(off):.1f} points")
-check("the candidate is deciding with her own card (a different person from the owner)", all(p["decider"]["role"] in ("coach", "gm") and p["decider"]["name"] == cand.name for p, _, cand in seen["candidate"]))
+check("her read of the CEO is a read, not the truth (it is off by a few points, differently for each candidate)", sum(1 for x in off if x > 0.5) > 0.7 * len(off), f"mean error {sum(off) / len(off):.1f} points")
+check("the candidate is deciding with her own card (a different person from the CEO)", all(p["decider"]["role"] in ("coach", "gm") and p["decider"]["name"] == cand.name for p, _, cand in seen["candidate"]))
 
 # ---- agents at the tables ---------------------------------------------------------------------------------------------------------------------
 agent = AG.StandIn()
@@ -167,7 +167,7 @@ for trait, last, famous, g in rec.rows:
     if not last and not famous:
         by[trait].append(g)
 rates = {k: sum(v) / len(v) for k, v in by.items() if len(v) >= 25}
-check("owners with different personalities open with different offers when the candidate is an ordinary one and has alternatives (the card decides)",
+check("CEOs with different personalities open with different offers when the candidate is an ordinary one and has alternatives (the card decides)",
       len(rates) >= 4 and max(rates.values()) - min(rates.values()) > 0.4, ", ".join(f"{k} {v:.2f}" for k, v in sorted(rates.items(), key=lambda kv: kv[1])))
 mv = collections.Counter(e["chosen"].split("_")[0] for e in La.choice_log if e["kind"] == "interview_reply")
 check("candidates accept, ask for more, and sometimes walk (not all one thing)", all(mv[k] > 20 for k in ("accept", "counter", "walk")), str(dict(mv)))
@@ -177,7 +177,7 @@ ids = [e["id"] for e in La.choice_log]
 check("every table turn has its own id", len(ids) == len(set(ids)))
 check("every seat is filled after every season, whoever sat at the tables", covered(La))
 rel = [(c, [k for k in c.relationships if k.startswith("owner:")]) for c in La.coaches if c.team_id is not None]
-check("a signed deal leaves goodwill between the owner and the person she hired", sum(1 for c, ks in rel if ks and any(c.relationships[k] > 0 for k in ks)) > 20)
+check("a signed deal leaves goodwill between the CEO and the person she hired", sum(1 for c, ks in rel if ks and any(c.relationships[k] > 0 for k in ks)) > 20)
 
 # ---- replay, saving and speed ----------------------------------------------------------------------------------------------------------------------
 Lr, rr, _ = play(21, 10, D.RandomLegalDriver(5))
@@ -199,7 +199,7 @@ t0 = time.time()
 play(5, 1, None)
 base = time.time() - t0
 nd = len(Lt.choice_log)
-check(f"one season of {nd} decisions with a 50 ms agent costs {dt - base:.1f}s over the engine's {base:.1f}s (one at a time: {0.05 * nd:.1f}s): the tables of all 48 owners run side by side", dt - base < 0.05 * nd / 3)
+check(f"one season of {nd} decisions with a 50 ms agent costs {dt - base:.1f}s over the engine's {base:.1f}s (one at a time: {0.05 * nd:.1f}s): the tables of all 48 CEOs run side by side", dt - base < 0.05 * nd / 3)
 try:
     class Forever(TB.Table):
         def next_point(self):

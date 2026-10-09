@@ -1,6 +1,6 @@
 """Club finance (Step 7): revenue, surplus, the CEO's draw, subsidies and what the fans think of the spending.
 
-The Commissioner's skeleton: an owner is a CEO with a 10 to 20 year tenure; her personal draw is capped at $100 million a year and anything
+The Commissioner's skeleton: a CEO is a CEO with a 10 to 20 year tenure; her personal draw is capped at $100 million a year and anything
 above the cap goes to the Equalization Fund; subsidies to weaker clubs come out of CEOs' draws; each fanbase card stands for 1,000,000 fans
 and has a say in how the club spends. Everything else here is MODEL (a named dial below), in the same dollars as the cap ($100M, no inflation).
 
@@ -8,9 +8,9 @@ Two rules keep money off the field:
   * the cap does not change. Nothing here moves a player's pay, a club's limit, its bank or its floor (economy.py owns those), and a club's reserve
     can only cover its own losses;
   * nothing here draws from the game's random stream (no random numbers at all), and the only thing finance moves in the league's people is a
-    small, capped nudge to an owner's approval, applied after the season's votes.
+    small, capped nudge to a CEO's approval, applied after the season's votes.
 
-One year, in order (`close_books`, called after the season's cap accounts close and before the owners' review):
+One year, in order (`close_books`, called after the season's cap accounts close and before the CEOs' review):
   1. revenue: an equal share of the league's national money, plus local money that grows with the market, the fans' passion and the team's
      success (a title and a playoff run pay extra); an exiled club earns a fraction of the local money (its Ambassador Season is short) and
      half the national share;
@@ -18,7 +18,7 @@ One year, in order (`close_books`, called after the season's cap accounts close 
   3. the Fund: a club pays its share of a levy and receives its share of a payout (the Fund's cash is real, economy.close_season);
   4. surplus = revenue - expenses + Fund payout - levy. The CEO reinvests a share of any profit in the club (spent), sets a little aside in the
      reserve, and takes the rest as her draw, up to the cap; the excess above the cap goes to the Fund. A loss comes out of the reserve first, then from subsidies, then from her pocket;
-  5. subsidy: CEOs with a taste for it (the owner card's subsidy pressure) pay part of their draw into a pool that covers the losses of clubs
+  5. subsidy: CEOs with a taste for it (the CEO card's subsidy pressure) pay part of their draw into a pool that covers the losses of clubs
      the reserve cannot, pro rata to what each CEO is willing to give;
   6. the fans: they compare what the club invested (the reserve share plus any subsidy given) with what a million fans expect, and a maximum draw
      from a club that is losing annoys them. The result is one capped number added to approval next year.
@@ -28,6 +28,7 @@ from __future__ import annotations
 from typing import Dict, List, Optional
 
 import economy as EC
+import fan_media_cards as FM
 import staff_pay as SP
 import cards as C
 import rules as R
@@ -52,6 +53,7 @@ RESERVE_SHARE = 0.10              # share of a profit the CEO sets aside in the 
 RESERVE_MAX = 40.0                # a club's reserve stops growing here (the rest of the profit is drawn)
 SUBSIDY_SHARE = 0.20              # a 100-subsidy-pressure CEO is willing to give up to this share of her draw (a 1: about none)
 FAN_WANT = (4.0, 0.06, 0.04)     # what a million fans expect the club to invest each year: 10 + 0.15 x passion + 0.10 x expectations ($ millions)
+FAN_DEMAND = {"modest": 0.85, "fair": 1.0, "demanding": 1.25}     # what the fans ask, as a share of FAN_WANT: a Decision Point each year (the autopilot asks "fair")
 FAN_NORM = 0.80                   # fans are content when the club invests this share of what they want
 FAN_SPEND_WEIGHT = 0.02           # the most the investment can move approval in a year (before the draw-while-losing hit)
 FAN_GREED_HIT = 0.01              # approval lost when a CEO takes (nearly) the maximum draw from a club that wins under 40%
@@ -75,6 +77,7 @@ def revenue(team, pct: float, playoffs: bool, champion: bool, exiled: bool) -> D
     scale = LOCAL_MARKET[0] + LOCAL_MARKET[1] * market / 100.0
     scale *= 1.0 + LOCAL_PASSION * (passion - 50.0) / 50.0
     scale *= 1.0 + LOCAL_SUCCESS * (pct - 0.5) * 2.0
+    scale *= FM.local_factor(fb)                      # the fans' own meters (a few percent at most) and any boycott (up to 30%); 1.0 with fans off
     local = LOCAL_BASE * scale + (PLAYOFF_BONUS if playoffs else 0.0) + (TITLE_BONUS if champion else 0.0)
     national = NATIONAL_POOL
     if exiled:
@@ -103,7 +106,7 @@ def subsidy_willing(owner, draw: float) -> float:
 def close_books(lg, year: int, pct: Dict[int, float], playoff_teams, champion: int, returners, cap_rec: dict) -> dict:
     """Close every club's books for the season. `cap_rec` is economy.close_season's record (its levy and payout are real cash). Returns the league
     record (totals, the Fund's inflow from draws, subsidies, and each club's line) and sets `lg.pool`, each team's reserve and books, and
-    `lg.finance_nudge` (team id -> (owner id, approval nudge)) for the caller to apply after the votes."""
+    `lg.finance_nudge` (team id -> (CEO id, approval nudge)) for the caller to apply after the votes."""
     ret = set(returners)
     teams = lg.teams
     playing = [t for t in teams if t.id not in ret]
@@ -124,7 +127,8 @@ def close_books(lg, year: int, pct: Dict[int, float], playoff_teams, champion: i
         surplus = rev["national"] + rev["local"] - pay - OPERATING_COST - staff["total"] + fund - t.fines
         lines[t.id] = dict(team=t.id, year=year, exiled=exiled, national=round(rev["national"], 2), local=round(rev["local"], 2),
                            ticket_pool_in=round(pool_share, 2), ticket_pool_out=round(out_t, 2), payroll=round(pay, 2),
-                           operating=OPERATING_COST, staff=staff["total"], staff_clamped=staff["clamped"], fines=round(t.fines, 3), fund=round(fund, 2), surplus=round(surplus, 2))
+                           operating=OPERATING_COST, staff=staff["total"], staff_clamped=staff["clamped"], fines=round(t.fines, 3), fund=round(fund, 2), surplus=round(surplus, 2),
+                           boycott=round(t.fans.boycott, 2) if t.fans is not None else 0.0)
     # profits: the reserve share, then the draw, capped; losses: the reserve first
     need: Dict[int, float] = {}
     willing: Dict[int, float] = {}
@@ -179,15 +183,16 @@ def close_books(lg, year: int, pct: Dict[int, float], playoff_teams, champion: i
     lg.pool += to_fund
     # the fans: investment against what a million fans want, and the greed hit
     nudge: Dict[int, tuple] = {}
+    demands = _fan_demands(lg, year, teams, lines)
     for t in teams:
         ln = lines[t.id]
-        want = fan_want(t)
+        want = fan_want(t) * FAN_DEMAND[demands.get(t.id, "fair")]
         invested = ln["reinvested"] + given.get(t.id, 0.0)
         ratio = invested / want if want > 0 else FAN_NORM
         n = FAN_SPEND_WEIGHT * max(-1.0, min(1.0, ratio / FAN_NORM - 1.0))
         if ln["draw"] >= GREED_DRAW_SHARE * DRAW_CAP and pct.get(t.id, 0.5) < GREED_WIN_PCT:
             n -= FAN_GREED_HIT
-        ln.update(want=round(want, 2), invested=round(invested, 2), nudge=round(n, 4))
+        ln.update(want=round(want, 2), invested=round(invested, 2), nudge=round(n, 4), demand=demands.get(t.id, 'fair'))
         if t.owner is not None:
             nudge[t.id] = (t.owner.oid, n)
             t.owner.draws = round(getattr(t.owner, "draws", 0.0) + max(0.0, ln["draw"]), 2)
@@ -205,11 +210,37 @@ def close_books(lg, year: int, pct: Dict[int, float], playoff_teams, champion: i
     return rec
 
 
+def _fan_demands(lg, year: int, teams, lines) -> Dict[int, str]:
+    """Each fanbase decides how hard to press its CEO on spending this year (a Decision Point, kind "fan_demand"): modest, fair or demanding.
+    The autopilot always asks "fair", which is the old formula. The ask only changes what the investment is measured against, so the approval
+    nudge it produces is the same capped number as before (FAN_SPEND_WEIGHT)."""
+    import decisions as D
+    dps = []
+    for t in teams:
+        fb = t.fans
+        if fb is None or t.owner is None:
+            continue
+        base = fan_want(t)
+        last = t.books[-1] if t.books else {}
+        ctx = dict(usual_ask=round(base, 2), the_ceo=t.owner.name, ceo_approval=round(t.owner.approval, 3), the_ceos_investment_this_year=lines[t.id]["reinvested"],
+                   last_years_ask=last.get("want"), boycott=round(fb.boycott, 2), your_meters={FM.METERS[k]["label"]: round(m["value"]) for k, m in fb.meters.items()},
+                   what_you_remember=[m["text"] for m in sorted(fb.memories, key=lambda m: -m["weight"])[:4]])
+        opts = [dict(id=k, label=f"Ask for {int(100 * v)}% of the usual investment", tags={"ask": v}) for k, v in FAN_DEMAND.items()]
+        dps.append(D.DecisionPoint("fan_demand", year, t.id, "fans", fb, ctx, opts, "fair", dict(team=t)))
+    picks = D.decide_many(lg, dps)
+    out = {}
+    for dp, pick in zip(dps, picks):
+        out[dp.team_id] = pick
+        dp.actor.demand = pick
+        dp.actor.decision_log.append({"year": year, "interaction": "fan_demand", "action": f"asked for the {pick} level of investment"})
+    return out
+
+
 def forced_sales(lg, year: int, rec: dict) -> List[int]:
-    """Rulebook (Skeleton): a club subsidised in R.FORCED_SALE_SUBSIDY_QUARTERS or more quarters of a rolling four has its owner forced to sell if
-    R.FORCED_SALE_VOTES_NEEDED of the 48 owners vote for it (the owner concerned is recused, so 47 vote). A year's loss is spread over four equal
+    """Rulebook (Skeleton): a club subsidised in R.FORCED_SALE_SUBSIDY_QUARTERS or more quarters of a rolling four has its CEO forced to sell if
+    R.FORCED_SALE_VOTES_NEEDED of the 48 CEOs vote for it (the CEO concerned is recused, so 47 vote). A year's loss is spread over four equal
     quarters and the subsidy covers the later ones, so a club's subsidised quarters are the share of its loss that other CEOs paid (rounded up).
-    Gap: the window is the one season, not a true rolling four quarters. Returns the teams whose owner was forced out."""
+    Gap: the window is the one season, not a true rolling four quarters. Returns the teams whose CEO was forced out."""
     import staff_cards as SC
     sold = []
     lines = rec["lines"]
@@ -238,12 +269,13 @@ def forced_sales(lg, year: int, rec: dict) -> List[int]:
             SC._seat_owner(lg, t, year, new_owner=True, age=None)
             if t.fans is not None:
                 t.fans.approval = t.owner.approval
+                FM.new_ceo(t, year)
             sold.append(tid)
     return sold
 
 
 def apply_nudges(lg) -> int:
-    """After the owners' review: each club's approval nudge goes to the owner who earned it, if she is still the owner."""
+    """After the CEOs' review: each club's approval nudge goes to the CEO who earned it, if she is still the CEO."""
     n = 0
     nudge = getattr(lg, "finance_nudge", None) or {}
     for tid, (oid, d) in nudge.items():

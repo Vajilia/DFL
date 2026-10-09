@@ -1,6 +1,6 @@
 # Coach effects and fair competitiveness
 
-> **Historical (2026-10-05):** this study was run before coaches, GMs and owners became living cards and before designated legends were removed. It is kept for what it shows about sizing the dials. The current proof is `decision_fairness_study.md` (autopilot, random and worst-case choices) and `living_fairness_drives_engine.md` (full drive engine).
+> **Historical (2026-10-05):** this study was run before coaches, GMs and CEOs became living cards and before designated legends were removed. It is kept for what it shows about sizing the dials. The current proof is `decision_fairness_study.md` (autopilot, random and worst-case choices) and `living_fairness_drives_engine.md` (full drive engine).
 
 
 Each coach card has three levers: a lift to the team's offense and defense (a 50 rating is average and does nothing; a 100 is worth the stated points of margin), and a yearly boost to the development of each of her players (a 100 adds the stated rating points per year to every young player, half that to older ones; a 1 takes it away). Rare legends (5% of hires unless stated) have 90-plus ratings on all three. Coaches stay until they retire, so a great coach is a lasting edge. Same leagues and seeds in every row, 48 seasons each (first 8 thrown away). The question for every row: does any trend leave its band?

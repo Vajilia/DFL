@@ -1,4 +1,4 @@
-"""Checks for the Decision Point layer, the guard, the drivers and the first pilot (the owner's keep/fire/hire choice).
+"""Checks for the Decision Point layer, the guard, the drivers and the first pilot (the CEO's keep/fire/hire choice).
 
     python engine/check_decisions.py
 """
@@ -45,7 +45,7 @@ for seed, want in gold["seeds"].items():
 L, res, _ = play(33, 40)
 log = L.choice_log
 rev = [e for e in log if e["kind"] == "staff_review"]
-check("every owner makes a staff review every season", len(rev) == 48 * 40)
+check("every CEO makes a staff review every season", len(rev) == 48 * 40)
 fired_c = sum(len(r.staff["coach_fired"]) for r in res)
 fired_g = sum(len(r.staff["gm_fired"]) for r in res)
 ret_c = sum(e["event"] == "coach_retired" for e in L.archive)
@@ -148,7 +148,7 @@ check("an agent is shown its own card, what it perceives and the legal options, 
       all({"id", "kind", "decider", "context", "options", "instructions"} <= set(p) and p["options"] for p in seen))
 hire = next(p for p in seen if p["kind"] == "hire_coach")
 rev = next(p for p in seen if p["kind"] == "staff_review")
-check("a candidate's ratings are shown as the owner perceives them, not as they are",
+check("a candidate's ratings are shown as the CEO perceives them, not as they are",
       all("perceived" in o["view"] and "ratings" not in o["view"] for o in hire["options"]))
 check("the staff review shows the coach and GM as perceived, with no true ratings and no internal state",
       "perceived" in rev["context"]["coach"] and "ratings" not in rev["context"]["coach"] and "internal" not in json.dumps(rev).lower())
@@ -157,7 +157,7 @@ true = L2.teams[0].coach.ratings
 import staff_cards as S  # noqa: E402
 view = S._perceived(L2, L2.teams[0].owner, L2.teams[0].coach, 1, S.COACH_VIEW)
 diff = sum(abs(view[a] - true[a]) for a in S.COACH_VIEW) / len(S.COACH_VIEW)
-check("perception is noisy (an owner can be wrong about a candidate)", 0.5 < diff < 25, f"average miss {diff:.1f} rating points")
+check("perception is noisy (a CEO can be wrong about a candidate)", 0.5 < diff < 25, f"average miss {diff:.1f} rating points")
 shrewd, pit = L2.teams[0].owner, L2.teams[1].owner
 shrewd.ratings["business"], pit.ratings["business"] = 100.0, 1.0
 errs = {"shrewd": [], "pit": []}
@@ -185,7 +185,7 @@ check("random legal choices really do change the league", FP.fingerprint_of(Lr, 
 check("a replayed league logs the same choices", [e["chosen"] for e in Lr.choice_log] == [e["chosen"] for e in Lp.choice_log])
 check("every random choice is an option that was offered", all(e["chosen"] in e["options"] and e["status"] == "ok" for e in Lr.choice_log))
 
-# ---- per-team drivers: agents for some owners, autopilot for the rest ---------------------------------------------------
+# ---- per-team drivers: agents for some CEOs, autopilot for the rest ---------------------------------------------------
 Lm, rm, _ = play(33, 12, driver=D.PerTeamDriver({5: ADV.ChurnOracle()}))
 Lbase, rbase, _ = play(33, 12)
 mixed = {e["team"] for e in Lm.choice_log if e["driver"] != "autopilot"}
@@ -198,12 +198,12 @@ for name, drv in (("churn-oracle", ADV.ChurnOracle()), ("elite-oracle", ADV.Elit
                   ("star-hunter", ADV.StarHunter()), ("carousel-rider", ADV.CarouselRider()), ("stand-pat", ADV.StandPat()), ("random-legal", D.RandomLegalDriver(2))):
     Ld, rd, _ = play(12, 15, driver=drv)
     ok = all(t.coach and t.gm and t.owner for t in Ld.teams) and all(e["status"] == "ok" for e in Ld.choice_log) and Ld.by_id and True
-    check(f"{name}: 15 seasons complete, every team keeps a coach, GM and owner, every choice accepted", ok)
+    check(f"{name}: 15 seasons complete, every team keeps a coach, GM and CEO, every choice accepted", ok)
 
-# ---- the carousel: people between jobs really are re-hired when owners choose them ------------------------------------------
+# ---- the carousel: people between jobs really are re-hired when CEOs choose them ------------------------------------------
 Lc2, _, _ = play(5, 30, driver=ADV.CarouselRider())
 rehired = [c for c in Lc2.coaches if len({e["team"] for e in c.career if e["event"] == "hired"}) >= 2]
-check("owners who choose them re-hire people between jobs, who keep their one card and identity", len(rehired) > 5 and len({c.cid for c in Lc2.coaches}) == len(Lc2.coaches),
+check("CEOs who choose them re-hire people between jobs, who keep their one card and identity", len(rehired) > 5 and len({c.cid for c in Lc2.coaches}) == len(Lc2.coaches),
       f"{len(rehired)} coaches have worked for 2 or more teams")
 check("a re-hired coach keeps her ratings history and her soul (same card, same people)", all(c.soul_pos and c.career[0]["event"] in ("hired", "passed_over", "interviewed") for c in rehired))
 check("no one is ever on two teams at once", all(sum(1 for t in Lc2.teams if t.coach is c) <= 1 for c in Lc2.coaches) and len({id(t.coach) for t in Lc2.teams}) == 48 and len({id(t.gm) for t in Lc2.teams}) == 48)
@@ -211,10 +211,10 @@ check("no one is ever on two teams at once", all(sum(1 for t in Lc2.teams if t.c
 # ---- scenes still explain what happened, whoever decided -------------------------------------------------------------------
 Lr2, _, _ = play(8, 20, driver=D.RandomLegalDriver(11))
 fire = [e for e in Lr2.archive if e["event"] == "interaction" and e["kind"] == "firing"]
-check("firings made by an owner's own judgment get scenes with a ruling",
-      any(e["trigger"].endswith("(owner's judgment)") for e in fire) and all(e["evidence"]["ruling"] in ("sweep", "fair", "harsh", "unfounded") for e in fire),
+check("firings made by a CEO's own judgment get scenes with a ruling",
+      any(e["trigger"].endswith("(CEO's judgment)") for e in fire) and all(e["evidence"]["ruling"] in ("sweep", "fair", "harsh", "unfounded") for e in fire),
       f"{sum(e['trigger'].endswith(chr(41)) and 'judgment' in e['trigger'] for e in fire)} of {len(fire)} by judgment")
-check("a firing of a winning coach by an owner's whim is called unfounded",
+check("a firing of a winning coach by a CEO's whim is called unfounded",
       all(e["evidence"]["ruling"] == "unfounded" for e in fire if "judgment" in e["trigger"] and e["evidence"]["record"] >= 0.5))
 
 print()

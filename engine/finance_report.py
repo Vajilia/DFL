@@ -59,7 +59,7 @@ md += (f"Mean draw {st.mean(draws):.0f}M. {100 * sum(1 for l in lines if l['to_f
 md += "## Subsidies and forced sales\n\n"
 md += (f"Subsidies from CEOs' draws average {st.mean(r['subsidy'] for r in allrecs):.1f}M a season; CEOs put {st.mean(r['own_pocket'] for r in allrecs):.1f}M "
        f"a season of their own money into clubs the reserve and subsidies could not cover. {votes} forced-sale votes were called in {n_years} league-seasons; "
-       f"{sold} owners were forced to sell.\n\n")
+       f"{sold} CEOs were forced to sell.\n\n")
 md += "## Tenure\n\n"
 md += (f"{len(tenures)} CEOs completed their tenure: average {st.mean(tenures):.1f} seasons (shortest {min(tenures)}, longest {max(tenures)}). "
        f"Recalls and forced sales end tenures early and are not counted here.\n" if tenures else "No CEO completed a tenure in this run.\n")

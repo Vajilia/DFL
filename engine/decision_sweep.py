@@ -1,6 +1,6 @@
 """Do the fairness bands hold whatever the agents choose?
 
-Same leagues and seeds in every row; only who makes the owner's keep/fire/hire choices changes. The first row is the autopilot (the
+Same leagues and seeds in every row; only who makes the CEO's keep/fire/hire choices changes. The first row is the autopilot (the
 rules as they were before agents). The others are random-legal play and four adversaries that use the TRUE state to push staff
 quality to the legal limit (see adversaries.py). The question for every row: does any trend leave its band?
 Writes reports/decision_fairness_study.md.
@@ -24,22 +24,22 @@ VARIANTS = [
     ("A. Autopilot (the rules as they were before agents)", lambda: D.PolicyDriver()),
     ("B. Random legal choices", lambda: D.RandomLegalDriver(7)),
     ("C. Nobody is ever fired", lambda: ADV.StandPat()),
-    ("D. Worst case: every owner fires everyone every year and hires the truly best candidate", lambda: ADV.ChurnOracle()),
+    ("D. Worst case: every CEO fires everyone every year and hires the truly best candidate", lambda: ADV.ChurnOracle()),
     ("E. Worst case: only the 8 strongest teams churn and hire perfectly", lambda: ADV.EliteOracle(8)),
     ("F. Worst case: the 8 strongest hire the best, the 8 weakest the worst, every year", lambda: ADV.Polarized(8)),
     ("G. Worst case: everyone hunts for the most famous coach", lambda: ADV.StarHunter()),
-    ("H. Worst case: every owner recycles the same people between jobs", lambda: ADV.CarouselRider()),
+    ("H. Worst case: every CEO recycles the same people between jobs", lambda: ADV.CarouselRider()),
 ]
 
 # the stand-in agent (agents.py) reads only what a real agent is shown; a dozen at a time through the real pool
 AGENT_VARIANTS = [
     ("A. Autopilot (the rules as they were before agents)", lambda: D.PolicyDriver()),
-    ("I. A stand-in agent in all 48 owners' seats (cards decide, a dozen at a time)", lambda: D.AgentDriver(AG.StandIn(), workers=12)),
+    ("I. A stand-in agent in all 48 CEOs' seats (cards decide, a dozen at a time)", lambda: D.AgentDriver(AG.StandIn(), workers=12)),
     ("J. Agents in 12 seats (every fourth team), the autopilot in the other 36", lambda: AG.seats(range(1, 49, 4), AG.StandIn())),
     ("K. The same agent, but a quarter of its answers are lost or invalid (the autopilot steps in)", lambda: D.AgentDriver(AG.Flaky(AG.StandIn(), every=4), workers=12)),
     ("L. Worst case at the interview table: the 8 strongest hire the best and guarantee her three seasons, the 8 weakest hire the worst on no guarantee", lambda: ADV.LockIn(8)),
     ("M. Every candidate refuses every job (the league office fills every seat by the old rule)", lambda: ADV.EveryoneWalks()),
-    ("N. Hard bargaining: every candidate asks for the most and walks without it, every owner holds the line", lambda: ADV.HardBargain()),
+    ("N. Hard bargaining: every candidate asks for the most and walks without it, every CEO holds the line", lambda: ADV.HardBargain()),
 ]
 
 
@@ -54,17 +54,17 @@ def main():
     variants = AGENT_VARIANTS if a.agents else VARIANTS
     keep = {x.strip() for x in a.only.split(",") if x.strip()}
     if a.agents:
-        out = ["# Agents in the owners' seats: fairness with a stand-in agent\n",
+        out = ["# Agents in the CEOs' seats: fairness with a stand-in agent\n",
                "A stand-in agent (agents.py) reads only the view a real agent would be shown (the deciding card, her notes, the options with the ratings "
-               "she perceives) and chooses from the engine's options; owners with different personalities choose differently. It is a rulebook, not a "
+               "she perceives) and chooses from the engine's options; CEOs with different personalities choose differently. It is a rulebook, not a "
                "model, so this tests the machinery and the bands, not the quality of a real agent's judgment. Rows: all 48 seats, a dozen seats, and "
                "an agent whose answers are often lost or invalid.\n"]
     else:
       out = ["# Whatever the agents choose: fairness under the worst legal play\n",
            "The principle: the road has guardrails and traffic controls, the character card is the driver, and what the driver does with the car "
-           "always stays inside the fair-competitiveness bands. The first owner choice to go through a Decision Point is keep, fire or hire "
+           "always stays inside the fair-competitiveness bands. The first CEO choice to go through a Decision Point is keep, fire or hire "
            "for the coach and the GM (the hire is one of three candidates). The autopilot row reproduces the league as it was before agents. "
-           "The other rows replace the owners' choices with random play and with adversaries that see the TRUE ratings of every candidate "
+           "The other rows replace the CEOs' choices with random play and with adversaries that see the TRUE ratings of every candidate "
            "(no real agent can) and play the legal limit. Everything they do is a legal option; the guard would reject anything else.\n"]
     for label, mk in variants:
         if keep and label[0] not in keep:

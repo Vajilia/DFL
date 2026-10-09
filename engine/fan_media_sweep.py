@@ -1,6 +1,6 @@
 """Do fanbase and media cards keep the league inside the fair-competitiveness bands?
 
-Same leagues and seeds in every row. The first row has owners, GMs and coaches but the old placeholder approval model (no fan
+Same leagues and seeds in every row. The first row has CEOs, GMs and coaches but the old placeholder approval model (no fan
 or media cards). The rest turn the fan and media cards on; the last stress rows make the press 3x and 6x stronger and Fan Capital
 3x stronger. Writes reports/fan_media_fairness_study.md.
 
@@ -19,7 +19,7 @@ ROOT = os.path.dirname(os.path.abspath(__file__)).rsplit(os.sep, 1)[0]
 
 # (label, fans on?, media sway, capital weight, engine)
 VARIANTS = [
-    ("A. Old placeholder approval model (owners, GMs and coaches, no fan or media cards)", False, 0.03, 0.30, "fast"),
+    ("A. Old placeholder approval model (CEOs, GMs and coaches, no fan or media cards)", False, 0.03, 0.30, "fast"),
     ("B. Fanbase and media cards, as built", True, 0.03, 0.30, "fast"),
     ("C. Stress test: the press 3x stronger and Fan Capital 3x stronger", True, 0.09, 0.90, "fast"),
     ("D. Stress test: the press 6x stronger and Fan Capital 6x stronger", True, 0.18, 1.80, "fast"),
@@ -37,7 +37,7 @@ def main():
     a = ap.parse_args()
     keep = {x.strip() for x in a.only.split(",") if x.strip()}
     out = ["# Fanbase and media cards, and fair competitiveness\n",
-           "Fans and the press never touch a game. A fanbase's culture and ratings decide how an owner's approval responds to a season "
+           "Fans and the press never touch a game. A fanbase's culture and ratings decide how a CEO's approval responds to a season "
            "(how patient, how demanding, how moody, how much it believes the press). The press moves approval by at most 3 points a year "
            "(more in a big market, to a trusting fanbase). Fan Capital, the slow store of goodwill, only ever buffers a recall vote. "
            "Approval decides recalls, and a recall can lead to a coach or GM being fired, so the only road to the field is long. "
