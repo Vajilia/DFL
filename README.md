@@ -43,7 +43,8 @@ A seeded league engine with 53-player rosters, character cards, a drive-by-drive
 | `engine/agents.py` | A stand-in agent (reads only the public view), a flaky wrapper and seats for agents in some chairs, to rehearse the machinery without a model |
 | `engine/adversaries.py` | Worst-case drivers used to test the fairness bands |
 | `engine/interactions.py` | The Interaction system, first slice: firing, recall vote and exile determination scenes (claims, evidence, relationships, decision logs) |
-| `engine/fan_media_cards.py` | Fanbase cards (the franchise's permanent card: culture, ratings, approval of the CEO, Fan Capital, its own evolving meters, fading memories, a boycott level) and media outlet cards (voice, ratings, Credibility, forecasts) |
+| `engine/ceo_card.py`, `engine/check_ceo.py` | The CEO card's answers to her fans: a yearly spending pledge and a boycott response (both Decision Points), three meters that end with her tenure (Fan Rapport, Standing Among CEOs, Legacy), and the fans' memory passing to the next CEO |
+| `engine/fan_media_cards.py` | Fanbase cards (the franchise's permanent card: culture, ratings, approval of the CEO, Fan Capital, its own evolving meters, fading memories, a boycott level) and media outlet cards (the press is the voice and the eyes and ears of the fans: a national outlet reports a year as it was, a local outlet frames it toward its fans by a capped amount) |
 | `engine/staff_sweep.py` | Tests CEOs, firings and the GM levers (and 3x, 6x stress versions) against the fairness bands; writes `reports/staff_fairness_study.md` |
 | `engine/card_report.py` | Writes `reports/card_samples.md` |
 | `engine/coach_sweep.py` | Sweeps the coach dials (team lift, player development) against the fairness bands; writes `reports/coach_fairness_study.md` |
@@ -78,6 +79,7 @@ A seeded league engine with 53-player rosters, character cards, a drive-by-drive
     python engine/check_cards.py           # character cards and the coach effect
     python engine/check_staff.py           # CEOs, GMs, recall votes, firings
     python engine/check_fans.py            # fanbase and media cards
+    python engine/check_ceo.py             # the CEO card: pledge, boycott answer, meters, inherited fan memory
     python engine/check_decisions.py       # decision points, the guard, replay, the autopilot's exactness
     python engine/check_living.py          # living cards, recognition, the Hall of Fame, saving and resuming a league
     python engine/check_store.py           # the cards are the save: rebuild, resume exactly, export/import a card

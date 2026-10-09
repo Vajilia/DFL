@@ -287,7 +287,7 @@ BASIS = {
     "What drives fan approval, how fans pick among candidates, CEO aging, when CEOs fire coaches and GMs, and the two GM levers (scouting 1.5 points, retention 30%)": MODEL,
     "Fan cultures and ratings, how they bend approval, expectations drift (bounded), how fans choose among candidates by culture": MODEL,
     "Fan Capital as a store of goodwill that only buffers a recall (weight 0.30), and the media's 3-point yearly cap on approval": MODEL,
-    "Media outlets: four national plus one local per team, voices, forecasts, credibility, folding after two irrelevant seasons": MODEL,
+    "Media outlets: four national plus one local per team, voices, reach and sensationalism; a national outlet reports a year as it was, a local outlet frames it toward its fans (capped); a fixed credibility weights recognition votes": MODEL,
     "Interactions: parties give claims and the Archive records \"Party A claims / Party B claims / Evidence supports\"; evidence defaults to truth; firing, exile determination and recall vote are interactions": SKELETON,
     "Which interactions come first (the Required ones), that scenes change relationships and the Archive only, and that scene text is code-generated first": SKELETON,
     "How claims are framed and judged, the firing rulings (sweep, fair, harsh, unfounded), relationship amounts and thresholds": MODEL,

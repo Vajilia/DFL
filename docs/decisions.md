@@ -183,3 +183,20 @@ The Commissioner's direction: the fanbase card is the only permanent card (it ou
 
 **Result.** Goldens regenerated; 13 of 13 bands on both engines (see Step 9a's method); no band widened.
 
+## The ring of accountability, step A: the CEO answers her fans, and a simpler press (2026-10-09)
+
+The Commissioner described the ring: fans are where outside revenue enters the league; the CEO must spend about $90M on player contracts and run everything else; the CEO hires and fires the GM and head coach; the GM scouts and assembles the team; the head coach hires and fires two coordinators who call the plays (the head coach can veto); players answer to their coaches, coaches and GMs to the CEO, the CEO to the fans; and every category's first priority is the Diamond Coronation. The media is simplified to be the voice and the eyes and ears of the fans: accurate, but framed as its fans prefer, except nationally.
+
+Decision order applied: what the NFL does (nothing here, so MODEL), fair competitiveness (everything capped, money and approval only, no effect on a game), then the Commissioner. The work is split in two so each can be verified: step A (this section) touches only money and approval; step B (coordinators and veto, the GM assembling the roster, the Coronation as the first thing every card is shown) changes how games are played and will be calibrated on its own.
+
+**The CEO card** (`engine/ceo_card.py`). Before this, fans reached the CEO (approval, recall, boycott) and she could only answer through formulas. Now:
+- `ceo_pledge` (Decision Point): each year each CEO with a profit chooses lean, standard or generous, which scales the share of the profit she puts back into the club (60%, 100% or 140% of her usual 5% to 30%, never above 45%). The autopilot is standard, the old formula.
+- `ceo_boycott` (Decision Point): while her fans are boycotting she holds firm, concedes (the boycott keeps 60% of its level and she adds 10 points to next year's reinvest share) or steps aside (retires early, so the next CEO starts without the boycott). The autopilot concedes if her ambition is 55 or more and otherwise holds.
+- Three meters that belong to her and end with her tenure: Fan Rapport (moves approval by at most 1 point), Standing Among CEOs (moves the chance another CEO votes to force her sale by at most 15 points; she gains it by paying subsidy and loses it by receiving one or taking a greedy draw) and Legacy (cosmetic, nothing reads it).
+- The fans' memory passes on: a new CEO's honeymoon is shifted by at most 5 points, warmer for remembered titles and returns, colder for exiles, droughts and boycotts, and by the fans' Grudge meter.
+- A maximum draw from a club whose fans are boycotting now counts as the greedy draw that annoys the fans, as a maximum draw from a losing club already did.
+
+**The simpler press.** Forecasts, accuracy grading, credibility that rises and falls, and outlets that fold are gone. A national outlet tells each team's year as it was; a local outlet tells the same year framed toward its fans' mood (at most 0.25 of tone); the facts never change. Reach and sensationalism remain (how loud an outlet is and how much it makes of an exile); a fixed credibility weight stays for the legend and Hall of Fame votes. Old saves load: the unused fields are kept. The local scene claim "we called it" became "the town is restless and that is how we are telling it", which is always supported by the record because the press does not lie.
+
+**Not built yet (step B).** Coordinators as cards, the head coach's veto, the GM making the roster decisions the autopilot makes now, and a Coronation line in every Decision Point. The cap-floor figure of $90M the Commissioner named has not been checked against the engine's payroll floor.
+

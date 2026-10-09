@@ -28,6 +28,7 @@ from __future__ import annotations
 from typing import Dict, List, Optional
 
 import economy as EC
+import ceo_card as CEOC
 import fan_media_cards as FM
 import staff_pay as SP
 import cards as C
@@ -133,13 +134,17 @@ def close_books(lg, year: int, pct: Dict[int, float], playoff_teams, champion: i
     need: Dict[int, float] = {}
     willing: Dict[int, float] = {}
     to_fund = 0.0
+    CEOC.pledge_decisions(lg, year, teams, lines, reinvest_share)         # each CEO with a profit chooses lean, standard or generous (the autopilot: standard)
     for t in teams:
         ln = lines[t.id]
         o = t.owner
         s = ln["surplus"]
         reserve = t.reserve
         if s >= 0.0:
-            spent = s * reinvest_share(o)                                  # reinvested: stadium, community, staff; gone, but the fans see it
+            share = CEOC.reinvest_share(o, reinvest_share(o)) if o is not None else reinvest_share(o)
+            if o is not None:
+                o.pledge_bonus = 0.0                                       # a promise made to a boycott is kept once
+            spent = s * share                                              # reinvested: stadium, community, staff; gone, but the fans see it
             saved = min(s * RESERVE_SHARE, max(0.0, RESERVE_MAX - reserve))
             reserve += saved
             keep = spent
@@ -190,7 +195,7 @@ def close_books(lg, year: int, pct: Dict[int, float], playoff_teams, champion: i
         invested = ln["reinvested"] + given.get(t.id, 0.0)
         ratio = invested / want if want > 0 else FAN_NORM
         n = FAN_SPEND_WEIGHT * max(-1.0, min(1.0, ratio / FAN_NORM - 1.0))
-        if ln["draw"] >= GREED_DRAW_SHARE * DRAW_CAP and pct.get(t.id, 0.5) < GREED_WIN_PCT:
+        if ln["draw"] >= GREED_DRAW_SHARE * DRAW_CAP and (pct.get(t.id, 0.5) < GREED_WIN_PCT or (t.fans is not None and t.fans.boycott >= FM.BOYCOTT_START)):
             n -= FAN_GREED_HIT
         ln.update(want=round(want, 2), invested=round(invested, 2), nudge=round(n, 4), demand=demands.get(t.id, 'fair'))
         if t.owner is not None:
@@ -258,6 +263,7 @@ def forced_sales(lg, year: int, rec: dict) -> List[int]:
                 continue
             payer = lines[v.id].get("subsidy_paid", 0.0) > 0
             p = SALE_YES_BASE + (SALE_YES_PAYER if payer else 0.0) - SALE_YES_PRESSURE * (v.owner.pressure.get("subsidy", 50) / 100.0 - 0.5)
+            p += CEOC.sale_shift(o)                          # the other CEOs' regard for the one concerned (Standing Among CEOs)
             if C._rng(lg.card_seed, "forcedsale", o.oid, year, v.owner.oid).random() < max(0.0, min(1.0, p)):
                 yes += 1
         passed = yes >= R.FORCED_SALE_VOTES_NEEDED

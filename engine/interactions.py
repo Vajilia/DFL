@@ -30,7 +30,6 @@ UNDERPERFORMED_GAP = -0.06     # a team won at least this much less (win%) than 
 THIN_ROSTER_Z = -0.4           # a roster this many standard deviations below the league's average talent counts as thin
 IMPROVING_STEP = 0.05          # a team up at least this much (win%) on last year is "improving"
 LOYAL_CAPITAL = 0.55           # fans with this much Fan Capital have goodwill to defend a CEO with
-CALLED_IT = 0.08               # an outlet "called it" if its forecast was within this much (win%) of the result
 PRESS_HURT = -0.01             # the press cost a CEO at least this much approval ("it was the press")
 OPTIMISTIC_OWNERS = {"Showwoman": 0.08, "Glory Hunter": 0.08, "Legacy Builder": 0.06, "Meddler": 0.04, "Local Hero": 0.04,
                      "Penny-Pincher": -0.02, "Opportunist": -0.02, "Patient Steward": -0.03}   # how much a CEO thinks fans like her more than they do
@@ -103,10 +102,8 @@ def evidence(lg, ctx: dict, tid: int) -> dict:
         ev["press_effect_on_approval"] = round(fb.last_sway, 3)
         ev["approval_before"] = None if d["approval_before"] is None else round(d["approval_before"], 3)
     ev["new_owner"] = False        # filled by the caller when a new CEO arrived this year
-    outlet = _local_outlet(lg, tid)
-    if outlet is not None and tid in outlet.forecasts:
-        ev["local_forecast"] = round(outlet.forecasts[tid], 3)
-        ev["local_forecast_miss"] = round(abs(outlet.forecasts[tid] - d["pct"]), 3)
+    if fb is not None:
+        ev["fan_approval"] = round(fb.approval, 3)
     return ev
 
 
@@ -124,8 +121,8 @@ def supported(frame: str, ev: dict) -> bool:
         return ev.get("fan_capital", 0.0) >= LOYAL_CAPITAL
     if frame == "press":
         return ev.get("press_effect_on_approval", 0.0) <= PRESS_HURT
-    if frame == "called_it":
-        return ev.get("local_forecast_miss", 1.0) <= CALLED_IT
+    if frame == "voice":
+        return True                                  # the press always gets the facts right; only its framing leans
     if frame == "fresh_start":
         return bool(ev.get("new_owner"))
     return False
@@ -164,12 +161,13 @@ def _fan_text(fb, ev, owner, frame, trigger_kind) -> str:
 
 
 def _press_claim(lg, tid, ev):
+    """The local outlet is the voice of the fans: it states the record accurately and frames it the way its fans prefer."""
     m = _local_outlet(lg, tid)
-    if m is None or "local_forecast" not in ev:
+    if m is None or "fan_approval" not in ev:
         return None
-    text = (f"{m.name} ({m.voice}): \"We had them at {ev['local_forecast']:.0%}. They finished {ev['record']:.0%}. "
-            f"{'We called it.' if ev['local_forecast_miss'] <= CALLED_IT else 'Nobody saw this coming.'}\"")
-    return dict(role="press", name=m.name, frame="called_it", text=text, card=m)
+    mood = "restless" if ev["fan_approval"] < 0.45 else "behind the team" if ev["fan_approval"] > 0.6 else "watching closely"
+    text = (f"{m.name} ({m.voice}): \"They finished {ev['record']:.0%}. The town is {mood}, and that is how we are telling it.\"")
+    return dict(role="press", name=m.name, frame="voice", text=text, card=m)
 
 
 # ---- Firing -------------------------------------------------------------------------------------

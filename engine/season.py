@@ -75,9 +75,6 @@ def run_season(league: League, year: int, rng: random.Random, opt: Options = Non
     if league.has_rosters:
         from league import refresh_strengths
         refresh_strengths(league)          # fresh power ratings for the placeholder-style readers
-        if league.staff_on and league.fans_on:
-            import fan_media_cards
-            fan_media_cards.forecast(league, year)      # the press forecasts the season from each team's strength
     runner.service_year = year
     games = build_schedule(league, rng)
     if opt.validate_schedule:

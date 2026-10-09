@@ -10,12 +10,11 @@ Built on the same rules as every other card:
     and it is re-tested against the fair-competitiveness bands (reports/fan_media_fairness_study.md).
 
 From the rules text (the Commissioner's skeleton): the Media wants clicks and fears irrelevance; Fan Capital is the currency that gives a
-CEO recall immunity; Media Credibility is the currency that gives narrative control. The vote itself (1,000,000 fans,
+CEO recall immunity. The vote itself (1,000,000 fans,
 simple majority, 5 candidates, under 40% approval or exile) is in staff_cards.py.
 
-Everything else here is an AI placeholder: the six fan cultures, the five fan ratings, how the media forecasts and
-grades a team, how credibility is won and lost, and how much weight any of it carries. Each dial is named so it can be
-changed in one place.
+Everything else here is an AI placeholder: the six fan cultures, the five fan ratings, the fan meters, how the press frames a team's
+year, and how much weight any of it carries. Each dial is named so it can be changed in one place.
 
 The two cards
   FanbaseCard, one per team. Belongs to the franchise, not the CEO: it outlives every CEO, and it is the only card that is permanent. Holds
@@ -26,9 +25,11 @@ The two cards
         happens to the club and slowly change what their level means, so two fanbases with the same culture still differ;
       - MEMORIES (titles, exile and return, playoff droughts, stars who left, a boycott) that fade with time;
       - a BOYCOTT level: angry fans stay away from the stadium and the store, which lowers local revenue until a new CEO is seated.
-  MediaCard, one per outlet: four national outlets and one local beat outlet per team. Holds a voice (personality),
-    ratings, and Credibility, which goes up when its forecasts come true and down when they miss. An outlet that stays
-    irrelevant folds and is replaced.
+  MediaCard, one per outlet: four national outlets and one local beat outlet per team. Simplified (the Commissioner, 2026-10-09): the press is the
+    voice and the eyes and ears of the fans. It always reports the facts accurately. A national outlet tells a team's year as it was; a local
+    outlet tells the same year framed the way its own fans prefer (toward their mood, by a capped amount). Reach decides how loud an outlet is,
+    sensationalism how much it makes of an exile, and a fixed credibility weights it in the legend and Hall of Fame votes. There are no forecasts to
+    be right or wrong about and no outlets that fold.
 """
 from __future__ import annotations
 
@@ -76,16 +77,13 @@ BOYCOTT_MAX = 0.40               # a full boycott costs this share of the club's
 BOYCOTT_START = 0.15             # a boycott "begins" (and is remembered) when its level crosses this
 EXILE_CULTURE = {"Die-Hards": 1.20, "Front-Runners": 0.85, "Long-Suffering": 0.95, "Entitled": 1.15, "Gloomy Realists": 0.90, "Party Crowd": 1.0}
 EXILE_PRESS = 0.25               # how loud the press is about an exile (the outlets' sensationalism, weighted like the coverage) moves the hit by up to this share
-# media
+# media (simplified 2026-10-09: the press is the voice and the eyes and ears of the fans)
 N_NATIONAL = 4
-MEDIA_ATTRS = ("accuracy", "sensationalism", "reach", "access", "independence")
+MEDIA_ATTRS = ("reach", "sensationalism")
 MEDIA_SWAY = 0.03                # the most that the whole press can move one CEO's approval in a year (before market size and trust)
-FORECAST_SLOPE = 0.028           # win% per rating point of team strength (fitted to the engine); outlets forecast from this
-FORECAST_NOISE = 0.14            # a 1-accuracy outlet's forecast error sd (win%); a 100-accuracy outlet's is 0.04
+FORECAST_SLOPE = 0.028           # win% per rating point of team strength (fitted to the engine); interactions.py uses it for what a team's record should have been
 LOCAL_WEIGHT = 2.0               # a local beat outlet counts this many times a national one in a team's coverage
-HOMER_BIAS = 0.04                # a local outlet over-reads her own team's year by this much win%
-CRED_SMOOTH = 0.25               # Credibility moves this far toward this year's score each season
-CRED_FOLD_BELOW, CRED_FOLD_YEARS = 18.0, 2   # an outlet under this for this many seasons running folds
+LOCAL_SLANT = 0.25               # a local outlet frames a team's year toward its fans' mood by at most this (the facts never change)
 MARKET_MIN_SCALE = 0.75          # big markets get more coverage: media sway scales from this (market 1) to 1.25 (market 100)
 
 CULTURES = {
@@ -98,13 +96,13 @@ CULTURES = {
     "Party Crowd": ("a good time", "boredom", "involvement", (-6, -6, 10, 6, 8)),
 }
 OUTLET_VOICES = {
-    # voice: (wants, fears, (accuracy, sensationalism, reach, access, independence) offsets)
-    "Hype Machine": ("clicks and a roaring crowd", "irrelevance", (-6, 14, 6, 4, -6)),
-    "Watchdog": ("the story behind the story", "being scooped", (6, -4, 0, -4, 12)),
-    "Contrarian": ("the take nobody else has", "agreeing with everyone", (-2, 8, 0, 0, 8)),
-    "Homer": ("the team's love", "losing her access", (-4, 4, 0, 10, -10)),
-    "Statistician": ("being right", "being wrong in public", (12, -10, -4, -4, 4)),
-    "Gossip": ("the leak", "a dead story", (-8, 12, 2, 8, -4)),
+    # voice: (wants, fears, (reach, sensationalism) offsets)
+    "Hype Machine": ("clicks and a roaring crowd", "irrelevance", (6, 14)),
+    "Watchdog": ("the story behind the story", "being scooped", (0, -4)),
+    "Contrarian": ("the take nobody else has", "agreeing with everyone", (0, 8)),
+    "Homer": ("the team's love", "losing her access", (0, 4)),
+    "Statistician": ("being right", "being wrong in public", (-4, -10)),
+    "Gossip": ("the leak", "a dead story", (2, 12)),
 }
 NATIONAL_NAMES = ["Diamond Daily", "The DFL Wire", "Gridiron Tonight", "The Coronation Report", "League Line", "The Tiara Times",
                   "Sunday Standard", "The Draft Room", "Pressbox One", "The Scoreboard"]
@@ -118,11 +116,8 @@ FAN_ARCHETYPES = {
     "media_trust": ("Hang On Every Word", "Distrust the Press"),
 }
 MEDIA_ARCHETYPES = {
-    "accuracy": ("Usually Right", "Chronically Wrong"),
-    "sensationalism": ("Headline Chaser", "Dry as Dust"),
     "reach": ("Everywhere", "Nobody Reads It"),
-    "access": ("Inside Track", "Locked Out"),
-    "independence": ("Fearless", "CEO's Mouthpiece"),
+    "sensationalism": ("Headline Chaser", "Dry as Dust"),
 }
 
 
@@ -203,6 +198,9 @@ class FanbaseCard:
 
 @dataclass
 class MediaCard:
+    """One outlet. Simplified (2026-10-09): a national outlet reports a team's year as it was; a local outlet is the voice of its fans, and reports
+    the same facts framed the way those fans prefer (LOCAL_SLANT). `credibility` is now a fixed weight in the legend and Hall of Fame votes
+    (recognition.py); forecasts, record, low_years and the folded status are kept only so old saves load."""
     mid: int
     name: str                                    # the outlet
     kind: str                                    # national | local
@@ -212,12 +210,12 @@ class MediaCard:
     fears: str
     ratings: Dict[str, float]
     pressure: Dict[str, int]
-    credibility: float = 50.0                    # the currency: 1 to 100
-    status: str = "active"                       # active | folded
+    credibility: float = 50.0                    # fixed weight in recognition votes, 1 to 100
+    status: str = "active"                       # active | folded (old saves only)
     byline: str = ""                             # the face of the outlet; cosmetic until Interactions use it
-    low_years: int = 0
-    forecasts: Dict[int, float] = field(default_factory=dict)      # team id -> forecast win% for the season being played
-    record: List[dict] = field(default_factory=list)               # (year, mean forecast error) one line per season
+    low_years: int = 0                           # unused (old saves)
+    forecasts: Dict[int, float] = field(default_factory=dict)      # unused (old saves)
+    record: List[dict] = field(default_factory=list)               # unused (old saves)
     relationships: Dict[str, int] = field(default_factory=dict)
     career: List[dict] = field(default_factory=list)
     decision_log: List[dict] = field(default_factory=list)
@@ -263,7 +261,7 @@ def make_outlet(seed: int, mid: int, kind: str, team_id: Optional[int] = None, t
     c = MediaCard(mid=mid, name=name, kind=kind, team_id=team_id, voice=voice, wants=wants, fears=fears, ratings=ratings,
                   pressure={"spotlight": max(5, min(95, round(r.gauss(50, 15)))), "access": max(5, min(95, round(r.gauss(50, 15)))),
                             "irrelevance": max(5, min(95, round(r.gauss(50, 15))))},
-                  credibility=round(_clip(0.6 * ratings["accuracy"] + 0.4 * 50.0 + r.gauss(0.0, 6.0)), 1))
+                  credibility=round(_clip(r.gauss(55.0, 12.0)), 1))
     c.byline = f"{first} {last}"
     return c
 
@@ -306,52 +304,27 @@ def _new_outlet(lg, kind, team, year):
     return m
 
 
-def forecast(lg, year: int):
-    """Every outlet forecasts every team it covers, from the team's strength as it stands, with an error that shrinks with accuracy.
-    The forecast is judged at the end of the season."""
-    for m in lg.media:
-        if m.status != "active":
-            continue
-        m.forecasts = {}
-        sd = FORECAST_NOISE - (FORECAST_NOISE - 0.04) * m.ratings["accuracy"] / 100.0
-        covered = [lg.by_id[m.team_id]] if m.kind == "local" else lg.teams
-        for t in covered:
-            if t.status != "active":
-                continue
-            r = C._rng(lg.card_seed, "forecast", m.mid, t.id, year)
-            base = 0.5 + FORECAST_SLOPE * t.strength
-            m.forecasts[t.id] = max(0.05, min(0.95, base + r.gauss(0.0, sd)))
-
-
 def media_season(lg, year: int, pct: Dict[int, float], champion: int, new_exiles) -> Dict[int, float]:
-    """Grade the season. Returns each team's press tone (-1 to 1) and updates every outlet's Credibility."""
+    """The press tells each team's year. A national outlet tells it as it was; a local outlet is the voice of its fans and tells the same year
+    framed toward their mood (LOCAL_SLANT at most). Returns each team's press tone (-1 to 1), weighted by reach (a local beat counts double)."""
     tone_sum: Dict[int, float] = {}
     tone_w: Dict[int, float] = {}
     for m in lg.media:
         if m.status != "active":
             continue
-        errs = []
-        for tid, f in m.forecasts.items():
+        for tid in ([m.team_id] if m.kind == "local" else list(pct)):
             if tid not in pct:
                 continue
-            actual = pct[tid]
-            errs.append(abs(f - actual))
-            # how the outlet reads the team's year: truth plus her bias, stretched by her love of drama
-            read = actual + (HOMER_BIAS if m.kind == "local" else 0.0)
-            tone = (read - 0.5) * 3.0 * (0.7 + 0.6 * m.ratings["sensationalism"] / 100.0)
-            tone = max(-1.0, min(1.0, tone))
-            w = (LOCAL_WEIGHT if m.kind == "local" else 1.0) * (m.credibility / 100.0) * (0.5 + m.ratings["reach"] / 100.0)
+            tone = max(-1.0, min(1.0, (pct[tid] - 0.5) * 3.0))                   # the year as it was
+            if m.kind == "local":
+                fb = getattr(lg.by_id[tid], "fans", None)
+                mood = 0.0 if fb is None else (fb.approval - 0.5) * 2.0          # what these fans feel going in, -1 to 1
+                tone = max(-1.0, min(1.0, tone + LOCAL_SLANT * mood))            # framed the way they prefer
+            w = (LOCAL_WEIGHT if m.kind == "local" else 1.0) * (0.5 + m.ratings["reach"] / 100.0)
             tone_sum[tid] = tone_sum.get(tid, 0.0) + w * tone
             tone_w[tid] = tone_w.get(tid, 0.0) + w
-        if errs:
-            mae = sum(errs) / len(errs)
-            # score 100 for a perfect forecast, 0 for an error of 0.20 or worse (a coin flip is about 0.11)
-            score = max(0.0, 100.0 * (1.0 - mae / 0.20))
-            m.credibility = round(_clip(m.credibility + CRED_SMOOTH * (score - m.credibility)), 1)
-            m.record.append({"year": year, "error": round(mae, 3)})
-        m.low_years = m.low_years + 1 if m.credibility < CRED_FOLD_BELOW else 0
     tone = {tid: tone_sum[tid] / max(tone_w[tid], 1e-9) for tid in tone_sum}
-    # how loud the press was about each exile: the outlets covering the team, weighted like the coverage, by how much they love drama
+    # how loud the press was about each exile: the outlets covering the team, weighted by reach, by how much they love drama
     for tid in new_exiles:
         t = lg.by_id.get(tid)
         if t is None or getattr(t, "fans", None) is None:
@@ -360,19 +333,10 @@ def media_season(lg, year: int, pct: Dict[int, float], champion: int, new_exiles
         for m in lg.media:
             if m.status != "active" or (m.kind == "local" and m.team_id != tid):
                 continue
-            w = (LOCAL_WEIGHT if m.kind == "local" else 1.0) * (m.credibility / 100.0) * (0.5 + m.ratings["reach"] / 100.0)
+            w = (LOCAL_WEIGHT if m.kind == "local" else 1.0) * (0.5 + m.ratings["reach"] / 100.0)
             num += w * m.ratings["sensationalism"] / 100.0
             den += w
         t.fans.exile_press = round(num / den, 3) if den > 0 else 0.5
-    # an outlet that has been irrelevant too long folds, and a new one takes her place
-    for i, m in enumerate(list(lg.media)):
-        if m.status == "active" and m.low_years >= CRED_FOLD_YEARS:
-            m.status = "folded"
-            m.career.append({"year": year, "event": "folded"})
-            new = _new_outlet(lg, m.kind, lg.by_id[m.team_id] if m.team_id else None, year)
-            lg.media.append(new)
-            lg.archive.append(dict(year=year, event="outlet_folded", outlet=m.name, kind=m.kind, team=m.team_id,
-                                   credibility=round(m.credibility, 1), replacement=new.name))
     return tone
 
 
@@ -396,6 +360,11 @@ def local_factor(fb) -> float:
 def remember(fb, year: int, kind: str, text: str, weight: float = 1.0):
     fb.memories.append({"year": year, "kind": kind, "text": text, "weight": round(weight, 3)})
     _trim_memories(fb)
+
+
+def glow(fb, scars=("exile", "drought")) -> float:
+    """Remembered glory (titles, returns) minus remembered scars, as a sum of memory weights."""
+    return sum(m["weight"] for m in fb.memories if m["kind"] in ("title", "return")) - sum(m["weight"] for m in fb.memories if m["kind"] in scars)
 
 
 def _fade_memories(fb):
@@ -437,6 +406,8 @@ def new_ceo(t, year: int):
         remember(fb, year, "boycott_end", "the boycott ended with a new CEO", 0.4)
     fb.boycott = 0.0
     fb.events = dict(fb.events, newceo=True)
+    import ceo_card as CEOC
+    CEOC.inherit(t, year)
 
 
 def _awaken(lg, fb, year: int, happened):
@@ -477,7 +448,7 @@ def fan_season(lg, t, year: int, pct: float, tone: float, in_playoffs: bool, cha
     ln = ln if ln.get("year") == year else {}
     want, invested = ln.get("want", 0.0), ln.get("invested", 0.0)
     spend = max(-1.0, min(1.0, (invested / want) / 0.8 - 1.0)) if want > 0 else 0.0      # 0.8 is finance.FAN_NORM
-    greed = 1.0 if (ln.get("draw", 0.0) >= 0.8 * 100.0 and pct < 0.40) else 0.0       # finance.GREED_DRAW_SHARE x DRAW_CAP, GREED_WIN_PCT
+    greed = 1.0 if (ln.get("draw", 0.0) >= 0.8 * 100.0 and (pct < 0.40 or fb.boycott >= BOYCOTT_START)) else 0.0   # finance.GREED_DRAW_SHARE x DRAW_CAP, GREED_WIN_PCT
     # --- memories and the playoff drought
     _fade_memories(fb)
     fb.lean_years = 0 if in_playoffs else fb.lean_years + 1
@@ -515,9 +486,8 @@ def fan_season(lg, t, year: int, pct: float, tone: float, in_playoffs: bool, cha
     sd = noise + VOLATILITY_NOISE * (rt["volatility"] - 50.0) / 50.0
     fb.approval = max(0.0, min(1.0, fb.approval + smooth * (target + sway - fb.approval) + r.gauss(0.0, max(0.0, sd))))
     # small capped nudges: the meters, stars who left, and what the fans remember
-    glow = sum(m["weight"] for m in fb.memories if m["kind"] in ("title", "return")) - sum(m["weight"] for m in fb.memories if m["kind"] in ("exile", "drought"))
     nudge = effect(fb, "approval", APPROVAL_METER_CAP) - min(STAR_HIT_CAP, STAR_HIT * len(stars)) \
-        + max(-MEMORY_GLOW_CAP, min(MEMORY_GLOW_CAP, MEMORY_GLOW * glow))
+        + max(-MEMORY_GLOW_CAP, min(MEMORY_GLOW_CAP, MEMORY_GLOW * glow(fb)))
     fb.approval = max(0.0, min(1.0, fb.approval + max(-EVENT_NUDGE_CAP, min(EVENT_NUDGE_CAP, nudge))))
     # --- the boycott: fans below the line stay away; it fades slowly and ends with the CEO
     raw = 0.0
@@ -612,9 +582,9 @@ def render_outlet(m: MediaCard, lg=None) -> str:
     L.append("RATINGS:")
     for a in MEDIA_ATTRS:
         L.append(f"  - {a}: {m.ratings[a]:.0f}")
-    L.append(f"  - Credibility: {m.credibility:.0f}  (the currency: it weights this outlet's say in a team's coverage)")
-    if m.record:
-        L.append("  - forecast record (mean miss, win%): " + ", ".join(f"{e['year']}: {e['error']:.2f}" for e in m.record[-6:]))
+    L.append(f"  - weight in the legend and Hall of Fame votes: {m.credibility:.0f}")
+    L.append("  - the facts: always accurate; " + ("it frames each year the way its own fans prefer (by at most "
+             f"{int(100 * LOCAL_SLANT)} points of tone)" if m.kind == "local" else "it tells each team's year as it was"))
     L.append("  - pressure thresholds: " + ", ".join(f"{k} {v}" for k, v in m.pressure.items()))
     L.append("RELATIONSHIPS: " + C.rel_text(m, lg))
     L.append("DECISION_LOG: " + C.decisions_text(m))

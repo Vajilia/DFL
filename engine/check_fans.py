@@ -50,17 +50,29 @@ for cap in (0.0, 0.3, 0.5, 0.6, 1.0):
 check("Fan Capital never makes a recall more likely", all(v >= 0 for v in vals))
 check("Fan Capital's buffer stays inside its cap", max(vals) <= FM.CAPITAL_RECALL_WEIGHT * (1 - FM.CAPITAL_FLOOR) + 1e-9, f"max {max(vals):.3f}")
 
-# Compare forecast grading against the same result and starting credibility.
-# This isolates the earning rule from a particular league's recent luck.
-graded = copy.deepcopy(lg)
-accurate, sloppy = [copy.deepcopy(nat[0]) for _ in range(2)]
-accurate.mid, sloppy.mid = 900001, 900002
-accurate.credibility = sloppy.credibility = 50.0
-accurate.forecasts, sloppy.forecasts = {t0.id: 0.7}, {t0.id: 0.5}
-graded.media = [accurate, sloppy]
-FM.media_season(graded, 1, {t0.id: 0.7}, t0.id, [])
-check("a better forecast earns more credibility against the same result",
-      accurate.credibility > 50.0 > sloppy.credibility and accurate.record[-1]["error"] < sloppy.record[-1]["error"])
+# The press (simplified): national tells a year as it was, local frames it toward its fans' mood by a capped amount
+pr = new_league(random.Random(5), rosters=True)
+tp = pr.teams[0]
+pct_map = {t.id: 0.5 for t in pr.teams}
+pct_map[tp.id] = 0.8
+tp.fans.approval = 0.5
+base_tone = FM.media_season(pr, 1, pct_map, tp.id, [])[tp.id]
+tp.fans.approval = 0.9
+happy_tone = FM.media_season(pr, 1, pct_map, tp.id, [])[tp.id]
+tp.fans.approval = 0.1
+angry_tone = FM.media_season(pr, 1, pct_map, tp.id, [])[tp.id]
+check("a local outlet frames the same year more kindly for happy fans and more harshly for angry ones", happy_tone > base_tone > angry_tone, f"{happy_tone:+.3f} / {base_tone:+.3f} / {angry_tone:+.3f}")
+check("the slant is capped: it never moves a team's tone by more than the local slant", happy_tone - base_tone <= FM.LOCAL_SLANT + 1e-9 and base_tone - angry_tone <= FM.LOCAL_SLANT + 1e-9)
+only_national = new_league(random.Random(5), rosters=True)
+only_national.media = [m for m in only_national.media if m.kind == "national"]
+tt = only_national.teams[0]
+tt.fans.approval = 0.95
+t_hi = FM.media_season(only_national, 1, {t.id: 0.7 for t in only_national.teams}, -1, [])[tt.id]
+tt.fans.approval = 0.05
+t_lo = FM.media_season(only_national, 1, {t.id: 0.7 for t in only_national.teams}, -1, [])[tt.id]
+check("a national outlet reports the year as it was whatever the fans feel", abs(t_hi - t_lo) < 1e-12 and abs(t_hi - 0.6) < 1e-9, f"tone {t_hi:+.3f}")
+check("the press never changes a fact: tone rises with the record for any mood", FM.media_season(pr, 1, {**pct_map, tp.id: 0.9}, tp.id, [])[tp.id] > FM.media_season(pr, 1, {**pct_map, tp.id: 0.2}, tp.id, [])[tp.id])
+check("there are no forecasts and no outlets that fold", all(not m.forecasts and m.status == "active" for m in pr.media))
 
 
 # ---- 40 seasons -------------------------------------------------------------------------------------
@@ -90,22 +102,7 @@ check("every team still has exactly one active local outlet and four active nati
       all(sum(1 for m in L.media if m.status == "active" and m.kind == "local" and m.team_id == t.id) == 1 for t in L.teams)
       and sum(1 for m in L.media if m.status == "active" and m.kind == "national") == FM.N_NATIONAL)
 check("credibility stays between 1 and 100", all(1 <= m.credibility <= 100 for m in L.media))
-folded = [m for m in L.media if m.status == "folded"]
-check("outlets fold and are replaced (the Archive records it)", len(folded) > 0 and sum(e["event"] == "outlet_folded" for e in L.archive) == len(folded), f"{len(folded)} folded in 40 seasons")
-active = [m for m in L.media if m.status == "active" and len(m.record) >= 20]
-for extra_seed in (8, 9, 10, 11):                 # pool four more leagues: one league's 46 outlets is too few for a stable correlation (the true link is real but weak, about 0.1 to 0.2, because a season's results are noisy)
-    rr = random.Random(extra_seed)
-    Lx = new_league(rr, rosters=True)
-    for y in range(1, 41):
-        run_season(Lx, y, rr, Options(engine="fast", keep_boxes=False))
-    active += [m for m in Lx.media if m.status == "active" and len(m.record) >= 20]
-accs = [m.ratings["accuracy"] for m in active]
-# Credibility is a short moving average. Compare accuracy with the mean scored
-# forecast over a career, rather than one noisy final-year credibility value.
-creds = [st.mean(max(0.0, 100.0 * (1.0 - e["error"] / 0.20)) for e in m.record) for m in active]
-mx, my = st.mean(accs), st.mean(creds)
-corr = sum((a - mx) * (c - my) for a, c in zip(accs, creds)) / (sum((a - mx) ** 2 for a in accs) ** 0.5 * sum((c - my) ** 2 for c in creds) ** 0.5)
-check("accurate outlets earn higher forecast scores over their careers", corr > 0.05, f"correlation {corr:.2f} over {len(active)} outlets with 20+ seasons in 5 leagues")
+check("no outlet folds or is replaced (the press is simplified)", all(m.status == "active" for m in L.media) and not any(e["event"] == "outlet_folded" for e in L.archive))
 
 # expectations drift the way results run
 wins = {t.id: [] for t in L.teams}

@@ -82,6 +82,9 @@ class OwnerCard:
     status: str = "owner"                    # CEO | recalled | sold (forced sale, finance.py) | retired
     tenure: int = 0                          # a CEO's tenure in years, drawn at birth (finance.TENURE_MIN..MAX); 0 on old saves, which keep the age rule
     draws: float = 0.0                       # what she has taken out of her club, $ millions (finance.py)
+    meters: Dict[str, float] = field(default_factory=dict)   # Fan Rapport, Standing Among CEOs, Legacy: hers alone, they end with her tenure (ceo_card.py)
+    pledge: str = "standard"                 # how much of a profit she put back into the club this year (a Decision Point, ceo_card.py)
+    pledge_bonus: float = 0.0                # extra share promised to the fans after conceding to a boycott, used up next year
     teams_owned: List[int] = field(default_factory=list)   # the never-twice rule is checked against this
     # the soul (fixed at birth) and the living parts (living.py)
     soul_pos: str = ""
@@ -522,6 +525,9 @@ def season_end(lg, year: int, pct: Dict[int, float], new_exiles, champion: int, 
             target += (o.ratings["popularity"] - 50.0) / 50.0 * APPROVAL_POPULARITY
             o.approval += APPROVAL_SMOOTH * (target - o.approval) + r.gauss(0.0, APPROVAL_NOISE)
             o.approval = max(0.0, min(1.0, o.approval))
+        if fans_on:
+            import ceo_card as CEOC
+            CEOC.season(t, year, pct.get(t.id, 0.5), t.id in playoff_teams, t.id == champion, t.id in new_exiles)
         o.seasons_owned += 1
         o.age += 1
         LV.grow(o, "owner", lg.card_seed, year, approval=o.approval)
@@ -571,7 +577,11 @@ def season_end(lg, year: int, pct: Dict[int, float], new_exiles, champion: int, 
             out["survived"].append(tid)
             out["vote_details"].append(dict(team=tid, trigger=why, approval=pre_bounce, share=share, result="survived", owner=o,
                                             new_owner=None, candidates=[]))
-    # 3. CEOs who are not voted out may still age out; the replacement is a new CEO with no vote
+    # 3. CEOs who are not voted out may answer a boycott or age out; the replacement is a new CEO with no vote
+    aside = set()
+    if fans_on:
+        import ceo_card as CEOC
+        aside = {tid for tid, pick in CEOC.boycott_decisions(lg, year, [t for t in lg.teams if t.id not in out["new_owner_teams"]]).items() if pick == "step_aside"}
     for t in lg.teams:
         o = t.owner
         if t.id in out["new_owner_teams"]:
@@ -580,7 +590,7 @@ def season_end(lg, year: int, pct: Dict[int, float], new_exiles, champion: int, 
         p = 0.02 if o.age < OWNER_RETIRE_FROM else min(1.0, 0.02 + 0.05 * (o.age - OWNER_RETIRE_FROM + 1))
         # a CEO serves out her tenure (10 to 20 years, drawn at birth); CEOs on old saves (tenure 0) keep the age rule
         done = o.tenure > 0 and o.seasons_owned >= o.tenure
-        if o.age >= OWNER_MAX_AGE or done or (o.tenure == 0 and r.random() < p):
+        if o.age >= OWNER_MAX_AGE or done or (o.tenure == 0 and r.random() < p) or t.id in aside:
             o.status = "retired"
             o.career.append({"year": year, "event": "retired", "age": o.age})
             log(lg, year, "owner_retired", team=t.id, owner=o.name, age=o.age)
@@ -679,7 +689,7 @@ def render_owner(o: OwnerCard, lg=None) -> str:
     team = lg.by_id[o.team_id].name if (lg is not None and o.team_id is not None) else "unattached"
     pos, neg = owner_archetypes(o)
     tag = f"  -  {o.standing.upper()}" if o.standing in ("legend", "Hall of Famer") else ""
-    L = [f"### CEO {o.name}  ({team}, {o.status})" + tag, "```yaml"]
+    L = [f"### CEO {o.name}  ({team}, {'CEO' if o.status == 'owner' else o.status})" + tag, "```yaml"]
     L.append(f"IDENTITY: [{o.name}, age {o.age}, from {o.hometown}; {o.path}]")
     L.append(f"SOUL (fixed): [+ {pos}, - {neg}]")
     L.append(f"PERSONALITY: [{o.trait}] wants {o.wants}; fears {o.fears}")
@@ -689,6 +699,12 @@ def render_owner(o: OwnerCard, lg=None) -> str:
         L.append(_rating_line(o, a))
     L.append(f"  - fan approval right now: {100 * o.approval:.0f}%  (a recall vote is triggered under {100 * R.RECALL_APPROVAL_THRESHOLD:.0f}%)")
     L.append("  - pressure thresholds: " + ", ".join(f"{k} {v}" for k, v in o.pressure.items()))
+    import ceo_card as CEOC
+    L.append("METERS (hers alone; they end with her tenure):")
+    for k, v in CEOC.ensure(o).items():
+        d = CEOC.METERS[k]
+        L.append(f"  - {d['label']}: {v:.0f}  ({d['high'] if v >= 60 else d['low'] if v <= 40 else 'somewhere in between'})")
+    L.append(f"PLEDGE: [{o.pledge}] the share of a profit she puts back into the club" + (f"; she has promised {int(100 * o.pledge_bonus)} points more next year" if o.pledge_bonus else ""))
     L.append("TRAJECTORY: " + C.trajectory_text(o))
     if o.notes:
         L.append("NOTES TO SELF: " + " | ".join(n["text"] for n in o.notes[-3:]))
