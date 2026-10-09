@@ -104,7 +104,7 @@ check("fired coaches hold a grudge against the CEO who fired them", all(any(k.st
       f"{len(fired_coaches)} fired coaches")
 recalled = [o for o in La.owners if o.status == "recalled"]
 check("recalled CEOs hold a grudge against their fans (however much goodwill they had banked)", all(o.relationships.get(f"fans:{o.teams_owned[0]}", 0) < 0 for o in recalled), f"{len(recalled)} recalled CEOs")
-check("and the fans against them", all(La.by_id[o.teams_owned[0]].fans.relationships.get(f"CEO:{o.oid}", 0) < 0 for o in recalled))
+check("and the fans against them", all(La.by_id[o.teams_owned[0]].fans.relationships.get(f"owner:{o.oid}", 0) < 0 for o in recalled))
 check("an elected CEO starts warm with her fans", any(o.relationships.get(f"fans:{o.teams_owned[0]}", 0) > 0 for o in La.owners if o.status == "owner" and any(e["event"] == "elected" for e in o.career)))
 check("every card's relationship keys name real kinds of party", all(k.split(":")[0] in ("owner", "coach", "gm", "fans", "press") for c in cards for k in c.relationships))
 log_ids = {d["interaction"] for c in cards for d in c.decision_log}

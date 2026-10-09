@@ -73,8 +73,11 @@ r = GV.review_trade(lg, t0.id, t1.id, [], [], [], [], 11, None)
 check("an empty trade is rejected with a reason", r is not None and r.power == "reject" and "nothing" in r.reason)
 r2 = GV.review_trade(lg, t0.id, t0.id, [], [], [], [], 11, None)
 check("a trade with oneself is rejected", r2 is not None and r2.power == "reject")
-legal = [p for p in t0.roster if p.years_left >= 1][:1]
-legal_b = [p for p in t1.roster if p.years_left >= 1][:1]
+import transactions as T  # noqa: E402
+# a pair of players the rules allow (any pair will do; which one is legal depends on the cap that year)
+pair = next(((pa, pb) for pa in t0.roster if pa.years_left >= 1 for pb in t1.roster if pb.years_left >= 1
+             if not T.check_trade(lg, t0.id, t1.id, [pa.id], [pb.id], [], [], 11, None)), None)
+legal, legal_b = [pair[0]], [pair[1]]
 r3 = GV.review_trade(lg, t0.id, t1.id, [legal[0].id], [legal_b[0].id], [], [], 11, None, band_guard=lambda *a: "talent would concentrate")
 check("the fairness guard can stop a trade and the reason is recorded", r3 is not None and r3.reason == "talent would concentrate")
 

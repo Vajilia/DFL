@@ -46,7 +46,7 @@ REL_ELECTED = 20
 REL_EXILE_BLAME = -10
 REL_FANS_EXILE = -15
 
-KEY = {"owner": lambda c: f"CEO:{c.oid}", "coach": lambda c: f"coach:{c.cid}", "gm": lambda c: f"gm:{c.gid}",
+KEY = {"owner": lambda c: f"owner:{c.oid}", "coach": lambda c: f"coach:{c.cid}", "gm": lambda c: f"gm:{c.gid}",
        "fans": lambda c: f"fans:{c.team_id}", "press": lambda c: f"press:{c.mid}"}
 
 
