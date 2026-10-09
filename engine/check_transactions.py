@@ -910,6 +910,30 @@ class ContractTables(unittest.TestCase):
         self.assertGreater(counts[True], 20)
         self.assertEqual(counts[False], 0)
 
+    # 6 ---------------------------------------------------------------------------------------------------------------------------------------
+    def test_the_cutdown_has_waiver_claims_and_every_claim_leaves_a_legal_roster(self):
+        from league import new_league
+        rng = random.Random(41)
+        lg = new_league(rng, rosters=True)
+        total = 0
+        for y in range(1, 4):
+            res = run_season(lg, y, rng, Options(engine="fast", keep_boxes=False))
+            total += res.offseason.get("claims", 0)
+            self.assertLessEqual(res.offseason.get("claims", 0), 3 * R.TOTAL_TEAMS)
+            self.assertEqual(res.offseason["waived"], len([e for e in lg.movement.events if e.get("kind") == "waiver_claim" and e.get("week") is None and e.get("year") == y])
+                             + res.offseason["waived"] - res.offseason.get("claims", 0))
+            ids = [p.id for t in lg.teams for p in t.roster + t.practice_squad]
+            self.assertEqual(len(ids), len(set(ids)))                                     # no player is on two clubs
+            self.assertFalse({p.id for p in lg.free_agents} & set(ids))                  # and none is on a club and the market at once
+            for t in lg.teams:
+                self.assertEqual(len(t.roster), ROSTER_SIZE)
+                self.assertTrue(all(p.team_id == t.id for p in t.roster))
+                self.assertLessEqual(EC.payroll(t), EC.limit(t) + 1e-6)                   # the cap holds after claims
+        self.assertGreater(total, 10)
+        claims = [e for e in lg.movement.events if e.get("kind") == "waiver_claim" and e.get("week") is None]
+        self.assertEqual(len(claims), total)
+        self.assertTrue(all(e["from_club"] != e["to_club"] for e in claims))
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=1)

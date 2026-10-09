@@ -47,7 +47,7 @@ def covered(lg):
 
 
 # ---- the autopilot's tables are the old rule -------------------------------------------------------------------------------------
-GOLD = {33: "229667901a114a23", 21: "5d3dcbec533b2f85"}
+GOLD = {33: "479ecf34c75237b7", 21: "bc854600ff674afa"}
 for seed, want in GOLD.items():
     lg, res, _ = play(seed, 40)
     got = FP.fingerprint_of(lg, res)

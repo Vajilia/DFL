@@ -22,6 +22,12 @@ class RosterModel:
     keep_gm_shift: float = 20.0
     cap_headroom: float = 3.0             # $ millions a club keeps back from its limit when it re-signs and signs free agents (NFL clubs rarely spend to the last dollar)
     table_min_ovr: float = 70.0           # players rated this or better are signed at a contract table
+    ext_prob: float = 0.40                # chance a club extends an eligible player (final contract year ahead, rated ext_min_ovr or better) before her deal runs out
+    ext_min_ovr: float = 66.0
+    ext_max_age: int = 30
+    trade_sell_prob: float = 0.80         # offseason trade window: chance a club sells a player for picks (autotrade.py)
+    trade_swap_prob: float = 0.25         # and chance it trades up the board (two picks for one earlier one)
+    trade_week_prob: float = 0.15         # each in-season window (weeks 3 and 6): chance a club sells a player
     tag_prob: float = 0.35                # chance a club tags its best expiring unrestricted player rated tag_min_ovr or better (a tag is a premium one-year deal)
     tag_min_ovr: float = 70.0
     tag_franchise_ovr: float = 78.0       # a tagged player rated this or better gets the franchise tag; below it, the transition tag

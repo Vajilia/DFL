@@ -8,8 +8,7 @@ Everything here is the autopilot's "road": the lists, the limits and the weekly 
 inactive, who goes on injured reserve, who is promoted) follow plain formulas by rating and need. When agents choose, they choose among
 what these functions allow.
 
-Known simplifications (the rulebook rows say so): practice-squad
-players are not elevated to game day for single games; an exiled team's injured reserve works on the same calendar as everyone's.
+Known simplifications (the rulebook rows say so): an exiled team's injured reserve works on the same calendar as everyone's.
 """
 from __future__ import annotations
 
@@ -38,7 +37,7 @@ def counts(players) -> Dict[str, int]:
 def active_list(t) -> List[Player]:
     """Game day: at most 48 healthy players from the 53. Healthy players beyond 48 are inactive: the weakest ones, but never below the
     position minimums (ACTIVE_MINIMUMS), so a team never leaves out the only kicker or a third of its line."""
-    healthy = [p for p in t.roster if p.weeks_out == 0 and p.suspended == 0]
+    healthy = [p for p in t.roster if p.weeks_out == 0 and p.suspended == 0] + list(t.elevated)
     surplus = len(healthy) - R.ACTIVE_LIMIT
     if surplus <= 0:
         return healthy
@@ -49,6 +48,42 @@ def active_list(t) -> List[Player]:
     droppable.sort(key=lambda p: (p.ovr, p.id))
     out = {p.id for p in droppable[:surplus]}
     return [p for p in healthy if p.id not in out]
+
+
+ACTIVE_LIMIT_FILL = R.ACTIVE_LIMIT
+
+
+def elevate(t) -> List[Player]:
+    """Practice-squad elevations (NFL: up to 2 players a game, each at most 3 times a season; she returns to the squad after the game).
+    The autopilot elevates when a position has fewer healthy players than its game-day minimum (ACTIVE_MINIMUMS), then when fewer than 48
+    healthy players are on the 53: the best squad player at the thinnest position first. Sets t.elevated for the week's lineup and counts each use against the player."""
+    t.elevated = []
+    healthy = [p for p in t.roster if p.weeks_out == 0 and p.suspended == 0]
+    have = counts(healthy)
+    short = ACTIVE_LIMIT_FILL - len(healthy)                  # places short of a full game-day list of 48
+    gaps = {pos: ACTIVE_MINIMUMS[pos] - have[pos] for pos in POSITIONS if have[pos] < ACTIVE_MINIMUMS[pos]}
+    while len(t.elevated) < R.PRACTICE_ELEVATIONS_MAX_GAME:
+        if gaps:
+            pos = max(gaps, key=lambda x: (gaps[x], x))
+        elif short - len(t.elevated) > 0:
+            pos = max(POSITIONS, key=lambda x: (ROSTER_COUNTS[x] - have[x] - sum(1 for q in t.elevated if q.pos == x), x))
+        else:
+            break
+        pool = [p for p in t.practice_squad if p.pos == pos and p.weeks_out == 0 and p.suspended == 0 and p.elevations < R.PRACTICE_ELEVATIONS_MAX_PLAYER
+                and p not in t.elevated]
+        if pool:
+            p = max(pool, key=lambda p: (p.ovr, -p.id))
+            p.elevations += 1
+            t.elevated.append(p)
+        elif gaps:
+            pass
+        else:
+            break
+        if gaps:
+            gaps[pos] -= 1
+            if gaps[pos] <= 0:
+                del gaps[pos]
+    return t.elevated
 
 
 def game_roster(t) -> List[Player]:
@@ -137,9 +172,15 @@ def _weakest_surplus(t) -> Player:
 def fill_roster(lg, t, rng: random.Random, log: Optional[dict] = None):
     """Back to 53 after someone went on injured reserve: promote the best practice-squad player at the position that is short, else sign the
     best free agent at that position, else a street player, at the minimum. Then refill the practice squad."""
-    while len(t.roster) < ROSTER_SIZE:
+    while True:
         c = counts(t.roster)
-        short = sorted(POSITIONS, key=lambda pos: c[pos] - ROSTER_COUNTS[pos])
+        low = [pos for pos in POSITIONS if c[pos] < ACTIVE_MINIMUMS[pos]]          # a position below its game-day minimum (trades can leave one)
+        if len(t.roster) >= ROSTER_SIZE:
+            if not low:
+                break
+            _release(lg, t, _weakest_surplus(t))                                    # full at 53 but short at a position: the weakest surplus player goes
+            continue
+        short = sorted(low or POSITIONS, key=lambda pos: c[pos] - ROSTER_COUNTS[pos])
         pos = short[0]
         at = [p for p in t.practice_squad if p.pos == pos]
         if at:                                              # the best on the practice squad at that position
@@ -217,6 +258,7 @@ def manage_week(lg, rng: random.Random, weeks_left: int, wire=None) -> dict:
     # a player who is out for the season and can never return this year does not need a designation; one who has been on injured
     # reserve and is healed but was not designated stays there until the offseason
     for t in lg.teams:
-        if len(t.roster) < ROSTER_SIZE:
-            fill_roster(lg, t, rng, log)
+        c = counts(t.roster)
+        if len(t.roster) < ROSTER_SIZE or any(c[pos] < ACTIVE_MINIMUMS[pos] for pos in POSITIONS):
+            fill_roster(lg, t, rng, log)                    # also when a claim took the open place and left a position (the kicker, say) below its game-day minimum
     return log

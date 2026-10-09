@@ -83,6 +83,39 @@ with tempfile.TemporaryDirectory() as d:
     q2 = [x for x in lg2.teams[1].roster if x.id == q.id][0]
     check("an injury (kind and games left) survives a save", q2.weeks_out == 3 and q2.injury == "concussion")
 
+# ---- lasting damage (the Commissioner's design: it affects the career afterward, and no ailment outlives the career)
+import offseason as OFF  # noqa: E402
+from players import make_player  # noqa: E402
+rr = random.Random(5)
+n = 20000
+knee_long = sum(1 for _ in range(n) if I.roll_lasting("knee", 12, rr) > 0) / n
+knee_short = sum(1 for _ in range(n) if I.roll_lasting("knee", 1, rr) > 0) / n
+check("a long knee injury often leaves lasting damage, a one-game knock almost never", knee_long > 0.3 and knee_short < 0.05, f"{knee_long:.2f} vs {knee_short:.3f}")
+check("points lost are small (1 to 4)", all(1 <= x <= 4 for x in (I.roll_lasting("neck", 12, rr) for _ in range(500)) if x))
+pl = make_player(random.Random(2), 99001, "WR", 70.0, 26)
+before, atts = pl.ovr, dict(pl.ratings)
+I.apply_lasting(pl, "knee", 3)
+check("lasting damage takes the points off every rating and the overall", abs((before - pl.ovr) - 3) < 1e-6 and all(pl.ratings[a] == atts[a] - 3 for a in atts))
+check("and is on her record", pl.wear == ["knee"] and pl.wear_points == 3)
+low = make_player(random.Random(3), 99002, "WR", 2.0, 26)
+I.apply_lasting(low, "knee", 4)
+check("ratings never go below the floor", all(v >= R.RATING_MIN for v in low.ratings.values()))
+a, b = make_player(random.Random(4), 99003, "WR", 60.0, 31), make_player(random.Random(4), 99004, "WR", 60.0, 31)
+b.wear = ["knee", "back"]
+check("lasting damage shortens a career (higher retirement chance)", OFF._retire_prob(b) > OFF._retire_prob(a))
+I.clear_on_exit(b)
+check("when her career ends the record is wiped (no ailment outlives a career)", b.wear == [] and b.wear_points == 0)
+rng = random.Random(21)
+lg = new_league(rng, rosters=True)
+res = run_season(lg, 1, rng, Options(engine="fast", keep_boxes=False))
+inj, las = len(res.runner.injury_log), len(res.runner.lasting_log)
+check("about 3 to 12% of injuries leave lasting damage", 0.03 <= las / inj <= 0.12, f"{las} of {inj}")
+check("every lasting-damage entry names a real injury kind and 1 to 4 points", all(k in I.KIND_NAMES and 1 <= pts <= 4 for _, _, _, k, pts in res.runner.lasting_log))
+for _ in range(3):
+    res = run_season(lg, 2 + _, rng, Options(engine="fast", keep_boxes=False))
+check("players who left the league carry no record of damage", all(not p.wear for p in lg.retired_players))
+check("damage on the record equals the points lost", all(p.wear_points >= len(p.wear) for t in lg.teams for p in t.roster))
+
 print()
 print("FAILED: " + ", ".join(failures) if failures else "all injury checks passed")
 sys.exit(1 if failures else 0)

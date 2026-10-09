@@ -23,6 +23,10 @@ import movement as MV
 import tables as TB
 import staff_cards as SC
 import transactions as T
+import injuries as IJ
+
+CUT_CLAIMS_MAX = 3            # MODEL: most waiver claims one club makes at the cutdown
+CUT_CLAIM_MARGIN = 4.0        # MODEL: a cut player must beat the club's weakest player at her position by this many rating points to be claimed
 
 # Years of aging offset by position: quarterbacks, kickers and punters last longer.
 AGE_SHIFT = {"QB": 2, "K": 5, "P": 5, "RB": -1}
@@ -48,6 +52,8 @@ def _retire_prob(p: Player) -> float:
     base = {31: 0.05, 32: 0.10, 33: 0.20, 34: 0.35}.get(a, 0.60 if a >= 35 else 0.0)
     if a >= 28 and p.ovr < 45:
         base += 0.15
+    if p.wear:
+        base += IJ.wear_retire_bonus(p)                                   # lasting damage shortens a career
     return min(base, 0.95)
 
 
@@ -194,9 +200,9 @@ def run_roster_offseason(lg: League, rng: random.Random, rm: RosterModel, year: 
     ps_ids = {p.id for t in teams for p in t.practice_squad}
     for t in teams:
         t.roster = list(t.roster) + list(t.ir) + list(t.practice_squad)
-        t.ir, t.practice_squad, t.ir_returns = [], [], 0
+        t.ir, t.practice_squad, t.ir_returns, t.elevated = [], [], 0, []
         for p in t.roster:
-            p.weeks_out, p.ir_games, p.ir_designated, p.injury = 0, 0, False, ""
+            p.weeks_out, p.ir_games, p.ir_designated, p.injury, p.elevations = 0, 0, False, "", 0
     for p in lg.free_agents:
         p.weeks_out, p.injury = 0, ""
 
@@ -211,6 +217,7 @@ def run_roster_offseason(lg: League, rng: random.Random, rm: RosterModel, year: 
         for p in t.roster:
             if rng.random() < _retire_prob(p):
                 p.retired, p.team_id = True, None
+                IJ.clear_on_exit(p)
                 log["retired"] += 1
             else:
                 keep.append(p)
@@ -220,6 +227,7 @@ def run_roster_offseason(lg: League, rng: random.Random, rm: RosterModel, year: 
         p.fa_years += 1
         if rng.random() < _retire_prob(p) or p.fa_years > 2:
             p.retired = True
+            IJ.clear_on_exit(p)
             log["retired"] += 1
         else:
             pool.append(p)
@@ -241,6 +249,28 @@ def run_roster_offseason(lg: League, rng: random.Random, rm: RosterModel, year: 
             if p.years_left > 0:
                 EC.enforce_minimum(p)
         keep = [p for p in t.roster if p.years_left > 0]
+        lim = EC.limit(t) - rm.cap_headroom          # a club keeps a little room back; the hard limit still applies at the cut-downs
+        # mid-contract extensions (NFL: any time after a drafted player's third season): a player with her final year ahead who is good, still young
+        # enough and wanted is signed at today's market price for a new term; the club must fit her new number under its limit
+        exiled0 = t.status == "exiled"
+        if not exiled0:
+            for p in sorted((q for q in keep if q.years_left == 1 and q.id not in ps_ids and q.ovr >= rm.ext_min_ovr and q.age <= rm.ext_max_age
+                             and (q.accrued_seasons or 0) >= R.EXTENSION_MIN_SEASONS), key=lambda q: -q.ovr):
+                if rng.random() >= rm.ext_prob / max(0.5, SC.gm_retention_factor(t)):
+                    continue
+                cost = EC.market_salary(p.pos, p.ovr, p.credited_seasons)
+                if cost <= p.salary * 1.02:
+                    continue                                         # she is already paid at or above her price: nothing to agree
+                rookie_pays0 = [EC.rookie_salary(x) for x in mv.slots_owned(year, t.id)]
+                slots0 = max(0, EC.OFFSEASON_COUNT - len(keep) - len(rookie_pays0))
+                new_sal = [k.salary for k in keep if k is not p] + [cost]
+                if not (keep_rule(t, keep, p, cost)
+                        and EC.counted_51(new_sal + rookie_pays0, t.dead_now) + slots0 * EC.MIN_SALARY + EC.OFFSEASON_RESERVE <= lim):
+                    continue
+                old = (p.salary, p.years_left)
+                EC.sign(p, cost, EC.contract_years(p))
+                log["extensions"] = log.get("extensions", 0) + 1
+                log.setdefault("extension_list", []).append((t.id, p.id, old[0], old[1], p.salary, p.years_left, p.accrued_seasons or 0, p.age, round(p.ovr, 1)))
         expiring = sorted((p for p in t.roster if p.years_left <= 0), key=lambda p: -p.ovr)
         lim = EC.limit(t) - rm.cap_headroom          # a club keeps a little room back; the hard limit still applies at the cut-downs
         rookie_pays = [EC.rookie_salary(s) for s in mv.slots_owned(year, t.id)]
@@ -353,6 +383,9 @@ def run_roster_offseason(lg: League, rng: random.Random, rm: RosterModel, year: 
     # 3b. the restricted market: offer sheets, five days to match, compensation (movement.py), all settled before the draft
     mv.run_market(lg, rng, rm, year, log)
     mv.check_ready_for_draft(year)
+    if rm.trade_sell_prob > 0:
+        import autotrade
+        log["trades"] = autotrade.window(lg, rng, rm, year, None, rm.trade_sell_prob, rm.trade_swap_prob, year, rounds=2)      # the trade market before the draft
 
     # 4. the draft: seven rounds of 48 picks in the same order each round, quality by overall pick, a rookie-scale contract by pick.
     # The club that owns a pick makes the selection (it may be another club's original pick); the slot and the rookie price are the pick's.
@@ -541,6 +574,8 @@ def run_roster_offseason(lg: League, rng: random.Random, rm: RosterModel, year: 
     # 7. the cutdown to 53, then each team's practice squad of 16 from the players it cut. A team keeps the best players at each position up to
     # the roster table and, if that costs more than its limit, sheds its most overpaid player and chooses again.
     cut: List[Player] = []
+    held_ids: set = set()
+    held: List[tuple] = []                                  # (player, club that cut her): on waivers until 7a
     for t in order:
         camp = sorted(t.roster, key=lambda p: (-p.ovr, p.id))
         log["camp"] += len(camp)
@@ -580,18 +615,63 @@ def run_roster_offseason(lg: League, rng: random.Random, rm: RosterModel, year: 
             cut.append(w)
             log["cap_cuts"] += 1
             log["designated"] = log.get("designated", 0) + des
-        for p in rest:
-            EC.release(t, p)                                  # let go (the practice squad starts a new one-year contract)
-        for p in ps:
-            rosters.to_practice_squad(p)
         ps_ids = {p.id for p in ps}
         for p in rest:
-            if p.id not in ps_ids:
+            if p.id not in ps_ids and T.subject_to_waivers(p, 0) and p.team_id == t.id and p.salary > 0:
+                held.append((p, t.id))
+                held_ids.add(p.id)                            # under 4 accrued seasons: on waivers until the claims are settled (no dead money if she is claimed)
+            else:
+                EC.release(t, p)                              # let go (the practice squad starts a new one-year contract)
+        for p in ps:
+            rosters.to_practice_squad(p)
+        for p in rest:
+            if p.id not in ps_ids and p.id not in held_ids:
                 p.team_id, p.fa_years = None, 0
                 cut.append(p)
                 log["cut"] += 1
         t.roster, t.practice_squad = sel, ps
         log["practice_squad"] += len(ps)
+    # 7a. waivers on the cutdown (NFL): the cut players with under 4 accrued seasons are claimed, best first, by the first club in waiver priority (the order of
+    # this draft, worst first) that she would improve at her position by CUT_CLAIM_MARGIN and can afford; the club drops its weakest player at that position
+    # (and owes the dead money on her). The claimer takes the contract as it stands; if no one claims her the club that cut her pays what a release costs.
+    claimed_ids = set()
+    prio = T.priority_order(lg, year + 1, 0, {})
+    n_claims = {t.id: 0 for t in teams}
+    pend = {t.id: 0.0 for t in teams}                       # dead money a club will owe for its own waived players if none is claimed
+    for p, club in held:
+        pend[club] += EC.dead_charge(p)
+    for p, club in sorted(held, key=lambda x: (-x[0].ovr, x[0].id)):
+        for tid in prio:
+            t2 = lg.by_id[tid]
+            if tid == club or n_claims[tid] >= CUT_CLAIMS_MAX:
+                continue
+            at = [q for q in t2.roster if q.pos == p.pos]
+            if not at:
+                continue
+            weakest = min(at, key=lambda q: (q.ovr, -q.id))
+            if p.ovr < weakest.ovr + CUT_CLAIM_MARGIN:
+                continue
+            if EC.payroll(t2) + pend[tid] + p.salary - weakest.salary + EC.dead_charge(weakest) > EC.limit(t2) + 1e-9:
+                continue
+            t2.roster.remove(weakest)
+            EC.release(t2, weakest)
+            weakest.team_id, weakest.fa_years = None, 0
+            cut.append(weakest)
+            p.team_id = t2.id
+            t2.roster.append(p)
+            n_claims[tid] += 1
+            claimed_ids.add(p.id)
+            pend[club] -= EC.dead_charge(p)
+            log["claims"] = log.get("claims", 0) + 1
+            mv._event("waiver_claim", year=year, week=None, player=p.id, from_club=club, to_club=tid)
+            break
+    for p, club in held:
+        if p.id not in claimed_ids:
+            EC.release(lg.by_id[club], p)
+            p.team_id, p.fa_years = None, 0
+            cut.append(p)
+            log["cut"] += 1
+    log["waived"] = len(held)
 
     # the market for next year: everyone not signed, the best of them kept (the rest leave football; players who were already part of the
     # league leave as retired, so their cards are kept, and camp invitees who never made a roster are simply gone)
@@ -601,6 +681,7 @@ def run_roster_offseason(lg: League, rng: random.Random, rm: RosterModel, year: 
     for p in market[rm.market_size:]:
         if p.card is not None:                              # already part of the league: leaves as retired, her card kept
             p.retired = True
+            IJ.clear_on_exit(p)
         elif p.draft_year is not None:                      # a draft pick who did not make it: she is on record, so she keeps a card
             p.retired, p.team_id = True, None
             lg.retired_players.append(p)

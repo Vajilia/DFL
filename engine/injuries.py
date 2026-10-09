@@ -43,6 +43,46 @@ CONCUSSION = "concussion"
 MIN_GAMES_CONCUSSION = 1
 
 
+# Lasting damage (the Commissioner, 2026-10-08: "lasting damage from an injury still affects the player's career afterward"; no ailment outlives
+# her career). After an injury a player may be left a little worse for good: a few rating points off every rating, a note in her `wear` list, and a
+# slightly earlier retirement. The chance depends on the kind and on how long she was out; most injuries leave nothing. MODEL dials.
+LASTING = {   # kind: (chance when out 8+ games, chance when out 3 to 7, chance when out 1 or 2)
+    "knee": (0.45, 0.12, 0.02), "shoulder": (0.30, 0.08, 0.01), "foot": (0.25, 0.06, 0.01), "back": (0.30, 0.08, 0.01),
+    "neck": (0.40, 0.12, 0.03), "concussion": (0.25, 0.12, 0.03), "ankle": (0.15, 0.04, 0.005), "hamstring": (0.15, 0.04, 0.005),
+    "groin": (0.12, 0.03, 0.005), "hand": (0.08, 0.02, 0.0), "ribs": (0.05, 0.01, 0.0), "other": (0.05, 0.01, 0.0),
+}
+LASTING_POINTS = ((1, 2, 3, 4), (55, 28, 12, 5))     # rating points lost, and their weights
+WEAR_RETIRE = 0.03                                     # added retirement chance per lasting injury on her record, each offseason (capped at 0.15)
+
+
+def roll_lasting(kind: str, games: int, rng: random.Random) -> int:
+    """Rating points a player loses for good after this injury (0 for most)."""
+    hi, mid, lo = LASTING.get(kind, LASTING["other"])
+    p = hi if games >= 8 else mid if games >= 3 else lo
+    if rng.random() >= p:
+        return 0
+    return rng.choices(LASTING_POINTS[0], LASTING_POINTS[1])[0]
+
+
+def apply_lasting(p: Player, kind: str, pts: int):
+    """Take the points off every rating (never below the floor), note the kind on her record."""
+    from rules import RATING_MIN
+    for a in p.ratings:
+        p.ratings[a] = max(RATING_MIN, p.ratings[a] - pts)
+    p.recompute()
+    p.wear.append(kind)
+    p.wear_points += pts
+
+
+def wear_retire_bonus(p: Player) -> float:
+    return min(0.15, WEAR_RETIRE * len(p.wear))
+
+
+def clear_on_exit(p: Player):
+    """No ailment outlives a career (the Commissioner's rule): when a player leaves the league her record of lasting damage is wiped."""
+    p.wear, p.wear_points = [], 0
+
+
 def mean_games_out() -> float:
     total = 0.0
     for _, share, (ds, ws) in KINDS:

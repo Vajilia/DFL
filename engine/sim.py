@@ -25,11 +25,11 @@ def win_probability(expected_margin: float, margin_sd: float) -> float:
 
 
 # Share of games level after regulation that are still level after a regular-season overtime (NFL rule: both teams possess, then
-# sudden death, 10 minutes). Measured on the drive engine (24% of overtime games, about 1.5% of all games, with 6% of games reaching
-# overtime); the placeholder and fast engines use it so ties arrive at the same rate whichever engine decides the game. KNOWN GAP: the
-# NFL's rate is far lower (0.24% of games, 6% of overtime games under the 2012-24 rule), because NFL overtime drives score more often
-# than the drive engine's. Re-fitting overtime scoring is step 9 of the build plan (reports/rulebook_status.md).
-OT_TIE_SHARE = 0.24
+# sudden death, 10 minutes). Measured on the drive engine after the Step 9 overtime fit (overtime is played at the hurry-up pace and a
+# level team goes for it late): 6.3% of overtime games, about 0.4% of all games, with 6.6% of games reaching overtime. The NFL's rate is
+# about 0.24 to 0.4% of games and 4 to 8% of overtime games. The placeholder and fast engines use this share so ties arrive at the
+# same rate whichever engine decides the game; re-measure with a probe whenever the drive engine's scoring is re-fitted.
+OT_TIE_SHARE = 0.063
 
 
 def score_from_expected(game: Game, expected: float, rng: random.Random, margin_sd: float, allow_tie: bool = False) -> Game:
@@ -85,6 +85,8 @@ class GameRunner:
         self.games_played = 0
         self.service_year = None                  # set by run_season; direct game calls need no service accounting
         self.week = 0                             # regular-season weeks finished (the injured-reserve calendar)
+        self.elevation_log: list = []             # (week, team, player, position, her nth elevation) for each practice-squad call-up
+        self.lasting_log: list = []               # (week, team, player, kind, points) for each injury that left lasting damage
         self.ir_log: list = []                    # one rosters.manage_week summary per week
         self.record: Dict[int, list] = {}         # team id -> [wins, losses, ties] over the games that count (waiver priority)
 
@@ -95,6 +97,8 @@ class GameRunner:
             from lineup import build_lineup
             import rosters
             team = self.league.by_id[tid]
+            for p in rosters.elevate(team):                    # practice-squad call-ups for this week's game
+                self.elevation_log.append((self.week + 1, tid, p.id, p.pos, p.elevations))
             lu = self._cache[tid] = build_lineup(tid, rosters.game_roster(team), team.coach)
         return lu
 
@@ -159,6 +163,7 @@ class GameRunner:
 
     def _roll_injuries(self, game: Game):
         from injuries import roll_injuries
+        import injuries as IJ
         for tid in (game.home, game.away):
             lu = self.lineup(tid)
             starters = ([lu.qb, lu.te, lu.k, lu.p] + lu.rbs + lu.wrs + lu.ol + lu.dl + lu.lb + lu.cb + lu.s)
@@ -167,6 +172,10 @@ class GameRunner:
                 p.weeks_out, p.injury = n, kind
                 self._new_hurt.add(p.id)
                 self.injury_log.append((game.week, tid, p.id, n, kind))
+                pts = IJ.roll_lasting(kind, n, self.rng)
+                if pts:
+                    IJ.apply_lasting(p, kind, pts)
+                    self.lasting_log.append((game.week, tid, p.id, kind, pts))
 
     # ---- the weekly clock ---------------------------------------------------
     def end_week(self):
@@ -175,7 +184,7 @@ class GameRunner:
             from injuries import tick_week
             import rosters
             for t in self.league.teams:
-                tick_week(list(t.roster) + list(t.ir), self._new_hurt)
+                tick_week(list(t.roster) + list(t.ir) + list(t.practice_squad), self._new_hurt)
             self.week += 1
             wire = None
             if self.service_year is not None:
@@ -190,3 +199,5 @@ class GameRunner:
                 self.injury_reports.append(injury_report(self.league, self.week))      # the weekly injury report, after the week's moves
         self._new_hurt = set()
         self._cache.clear()
+        for t in self.league.teams:
+            t.elevated = []

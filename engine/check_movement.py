@@ -104,7 +104,7 @@ class Movement(unittest.TestCase):
         mv.transfer_pick(lg, (1, 5, a), b)
         from offseason import run_roster_offseason
         from roster_model import RosterModel
-        log = run_roster_offseason(lg, rng, RosterModel(), 1, pick_of, returners=[t.id for t in lg.exiled()])
+        log = run_roster_offseason(lg, rng, RosterModel(trade_sell_prob=0.0, trade_swap_prob=0.0), 1, pick_of, returners=[t.id for t in lg.exiled()])
         self.assertEqual(log["rookies"], R.DRAFT_ROUNDS * R.TOTAL_TEAMS)
         people = everyone(lg)
         first = people[mv.picks[(1, 1, a)].selected]
@@ -460,7 +460,7 @@ class Movement(unittest.TestCase):
                 lg.movement.transfer_pick(lg, (2, 1, 10), 11)
                 lg.movement.transfer_pick(lg, (3, 2, 10), 11)
                 picks_to_use = (2, 1, 10)
-            res = run_season(lg, y, rng, Options(engine="fast", keep_boxes=False, roster_model=RosterModel(rfa_offer_prob=1.0)))
+            res = run_season(lg, y, rng, Options(engine="fast", keep_boxes=False, roster_model=RosterModel(rfa_offer_prob=1.0, trade_sell_prob=0.0, trade_swap_prob=0.0, trade_week_prob=0.0)))   # the autopilot's own trades are tested in check_autotrade
             mv = lg.movement
             if y == 2:
                 used = mv.picks[picks_to_use]

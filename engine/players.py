@@ -36,6 +36,8 @@ class Player:
     weeks_out: int = 0                   # injured: games still to miss
     suspended: int = 0                   # games still to serve on a suspension (discipline.py)
     injury: str = ""                     # what hurt her (injuries.KIND_NAMES), while she is out
+    wear: List[str] = field(default_factory=list)    # kinds of injury that left lasting damage (injuries.apply_lasting); wiped when her career ends
+    wear_points: int = 0                 # rating points lost to them in all
     draft_year: Optional[int] = None
     draft_pick: Optional[int] = None
     years_in_league: int = 0
@@ -55,6 +57,7 @@ class Player:
     bonus: float = 0.0                   # the year's share of her signing bonus (part of `salary`, the cap number)
     bonus_years: int = 0                 # years of that bonus still to be spread out
     guaranteed: float = 0.0              # base pay still guaranteed, $ millions in all (economy.py)
+    elevations: int = 0                  # times elevated from the practice squad to a game-day roster this season (at most 3)
     ir_games: int = 0                    # games since she went on injured reserve
     ir_designated: bool = False          # designated to return from injured reserve this season (uses one of the team's 8)
 

@@ -6,6 +6,7 @@ import json
 import os
 import random
 import sys
+import threading
 import time
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -109,8 +110,11 @@ lg = FakeLeague(Fixed({"choice": "x", "reason": {"nested": "object"}}))
 check("guard: a reason that is not text is dropped", D.decide(lg, dp()) == "x" and lg.choice_log[-1]["reason"] == "")
 
 
+RELEASE_SLOW = threading.Event()      # a slow agent waits for this, so it can never answer in time however long the machine stalls (a garbage-collection pause once let a 0.5 s sleep finish inside a 1 ms timeout)
+
+
 def slow(payload):
-    time.sleep(0.5)
+    RELEASE_SLOW.wait(120)
     return "x"
 
 
@@ -170,6 +174,7 @@ La, ra, _ = play(33, 3, driver=D.AgentDriver(slow, timeout=0.001))
 Lb, rb, _ = play(33, 3)
 check("when no agent answers in time the league completes exactly as the autopilot would play it",
       FP.fingerprint_of(La, ra) == FP.fingerprint_of(Lb, rb) and all(e["status"] == "no_answer" for e in La.choice_log))
+RELEASE_SLOW.set()
 
 # ---- the choice log is the history: replay reproduces it ---------------------------------------------------------------
 Lr, rr, _ = play(8, 20, driver=D.RandomLegalDriver(11))

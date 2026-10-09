@@ -137,7 +137,7 @@ for seed in range(1, 6):
     tot_games += len(res.games)
     check(f"season {seed}: no playoff game ends level", all(not g.tied for g in res.playoff_games))
 check("every team plays 18 games with wins + losses + ties = 18", bad == 0)
-check("ties appear in seasons at roughly the engine's measured rate (under 4%)", 0 < tot_ties / tot_games < 0.04, f"{tot_ties} in {tot_games}")
+check("ties appear in seasons at about the NFL's rate (under 1.2%)", 0 < tot_ties / tot_games < 0.012, f"{tot_ties} in {tot_games}")
 
 print()
 if failures:

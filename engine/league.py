@@ -23,6 +23,7 @@ class Team:
     roster: List[Player] = None          # the 53 (injured players included, players on injured reserve not)
     practice_squad: List[Player] = field(default_factory=list)      # 16 (rosters.py)
     ir: List[Player] = field(default_factory=list)                  # injured reserve
+    elevated: List[Player] = field(default_factory=list)     # practice-squad players elevated for this week's game (rosters.elevate; cleared each week)
     ir_returns: int = 0                  # players designated to return from injured reserve so far this season (at most 8)
     coach: object = None      # cards.CoachCard, the head coach
     owner: object = None      # staff_cards.OwnerCard

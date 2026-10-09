@@ -196,7 +196,7 @@ class _Game:
 
     def _hurry(self, off: int) -> bool:
         if self.in_ot:
-            return False
+            return True                         # overtime is played at the two-minute pace (NFL: no-huddle, clock managed for a last kick)
         behind = self.score[off] < self.score[1 - off]
         if not behind:
             return False
@@ -267,6 +267,8 @@ class _Game:
                         go = True                       # a trailing team in overtime has no use for a punt
                     if late_trail and pos >= 30:
                         go = True
+                    if self.in_ot and self.score[off] == self.score[1 - off] and self.t < 180 and pos >= 45 and to_go <= 3:
+                        go = True                       # level in the last minutes of overtime: a team goes for it rather than settle for a tie
                 if not go:
                     if kick_ok:
                         tm["fga"] += 1

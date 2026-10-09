@@ -16,6 +16,8 @@ from sim import GameRunner
 from roster_model import RosterModel
 from standings import Stats, compute_stats, rank_by_style
 
+TRADE_WEEKS = (3, 6)                    # MODEL: the weeks (finished) after which the autopilot's in-season trade windows run, before the deadline (week 9)
+
 
 @dataclass
 class Options:
@@ -87,6 +89,7 @@ def run_season(league: League, year: int, rng: random.Random, opt: Options = Non
     for g in games + amb_games:
         by_week.setdefault(g.week, []).append(g)
     log: list = []
+    trade_log: list = []                    # in-season trades (autotrade.py)
     bowl = None
     for week in range(1, R.REGULAR_SEASON_WEEKS + 1):
         if week == R.AMBASSADOR_BOWL_WEEK:
@@ -98,6 +101,11 @@ def run_season(league: League, year: int, rng: random.Random, opt: Options = Non
         for g in by_week.get(week, []):
             runner.play(g, neutral=(g.kind == "ambassador_bowl"))
         runner.end_week()
+        if league.has_rosters and week in TRADE_WEEKS and opt.roster_model.trade_week_prob > 0:
+            import autotrade
+            league.movement.ensure_picks(league, year)
+            trade_log.extend(autotrade.window(league, rng, opt.roster_model, year, week, opt.roster_model.trade_week_prob, 0.0, year))
+    runner.trade_log = trade_log
     stats = compute_stats(league, games, active_ids)
     amb_stats = compute_stats(league, amb_games, returners)
 

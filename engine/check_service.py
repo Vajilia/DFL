@@ -10,6 +10,7 @@ import store
 from league import new_league
 from players import make_player
 from schedule import Game
+from roster_model import RosterModel
 from season import Options, run_season
 
 
@@ -129,7 +130,8 @@ class ServiceChecks(unittest.TestCase):
             rr = random.Random(4)
             league = new_league(rr, rosters=True)
             starters = [(t.status, p, p.accrued_seasons) for t in league.teams for p in t.roster]
-            run_season(league, 1, rr, Options(engine=engine, keep_boxes=False, injuries=False))
+            run_season(league, 1, rr, Options(engine=engine, keep_boxes=False, injuries=False,
+                                              roster_model=RosterModel(trade_sell_prob=0.0, trade_swap_prob=0.0, trade_week_prob=0.0)))   # a trade changes a player's club and her service weeks
             for status, p, before in starters:
                 self.assertEqual(len(p.service_weeks), 7 if status == "exiled" else 18)
                 self.assertEqual(p.accrued_seasons, before + 1)
