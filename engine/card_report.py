@@ -189,6 +189,15 @@ def main():
                f"{100 * nr / max(1, nv):.0f}% of votes. CEOs retire on their own too: {sum(o.status == 'retired' for o in lg.owners)} so far.\n")
     out.append(f"**Firings:** {sum(e['event'] == 'coach_fired' for e in lg.archive)} coaches and {sum(e['event'] == 'gm_fired' for e in lg.archive)} GMs fired in {yrs} seasons.\n")
     out.append(f"**Coaches so far:** {len(lg.coaches)} hired and {sum(c.retired for c in lg.coaches)} retired in {a.seasons} seasons; {len(lg.free_coaches)} coaches and {len(lg.free_gms)} GMs are between jobs right now.\n")
+    import coordinators as CO
+    sv = collections.Counter(e["chosen"] for e in lg.choice_log if e["kind"] == "scheme_veto")
+    sp = collections.Counter(e["chosen"] for e in lg.choice_log if e["kind"] == "coord_scheme")
+    out.append(f"**Coordinators:** {len(lg.coords)} hired and {sum(c.status == 'retired' for c in lg.coords)} retired in {a.seasons} seasons; {len(lg.free_coords)} between jobs. "
+               f"Schemes proposed: {', '.join(f'{k} {v}' for k, v in sp.most_common())}; the head coach vetoed {sv['veto']} of {sv['veto'] + sv['approve']}. "
+               f"{sum(e['event'] == 'fired' for c in lg.coords for e in c.career)} coordinators fired by their head coaches.\n")
+    out.append("```\n" + CO.render_coord(lg.teams[0].oc, lg) + "\n\n" + CO.render_coord(lg.teams[0].dc, lg) + "\n```\n")
+    gp = collections.Counter((e["kind"], e["chosen"]) for e in lg.choice_log if e["kind"] in ("gm_draft_focus", "gm_cap_plan"))
+    out.append(f"**GM plan choices on the record:** {', '.join(f'{k[0]} {k[1]} {v}' for k, v in sorted(gp.items()))} (the autopilot keeps the old rule).\n")
     out.append(f"**Players with cards:** {len(active) + len(lg.free_agents)} active or unsigned, {len(lg.retired_players)} retired.\n")
     path = os.path.join(ROOT, "reports", "card_samples.md")
     open(path, "w").write("\n".join(out))

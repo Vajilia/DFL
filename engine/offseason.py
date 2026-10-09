@@ -88,7 +88,7 @@ def _team_counts(roster: List[Player]) -> Dict[str, int]:
     return c
 
 
-def _pick_rookie_position(roster: List[Player], overall: int, rng: random.Random) -> str:
+def _pick_rookie_position(roster: List[Player], overall: int, rng: random.Random, focus: str = "needs") -> str:
     counts = _team_counts(roster)
     w = []
     for pos in POSITIONS:
@@ -99,7 +99,7 @@ def _pick_rookie_position(roster: List[Player], overall: int, rng: random.Random
                 x *= 0.05
             w.append(x)
         else:
-            w.append(max(0.15, need + 0.4) * ROSTER_COUNTS[pos])
+            w.append(max(0.15, need + 0.4) * ROSTER_COUNTS[pos] if focus == "needs" else float(ROSTER_COUNTS[pos]))     # the GM's draft focus (gm_plan.py)
     return rng.choices(POSITIONS, w)[0]
 
 
@@ -196,6 +196,8 @@ def run_roster_offseason(lg: League, rng: random.Random, rm: RosterModel, year: 
     mv.begin_year(lg, year, pick_of)                         # the pick ledger: this draft and the next three, slots set from the draft order
     for t in teams:
         EC.new_year(t)                                       # a new league year: last season's dead money is gone, designations are fresh
+    import gm_plan
+    plan = gm_plan.plans(lg, year)                           # each GM's draft focus and cap margin for this offseason (the default is the old rule)
     # injuries heal over the offseason, injured reserve is over, and the practice squad joins the squad
     ps_ids = {p.id for t in teams for p in t.practice_squad}
     for t in teams:
@@ -249,7 +251,7 @@ def run_roster_offseason(lg: League, rng: random.Random, rm: RosterModel, year: 
             if p.years_left > 0:
                 EC.enforce_minimum(p)
         keep = [p for p in t.roster if p.years_left > 0]
-        lim = EC.limit(t) - rm.cap_headroom          # a club keeps a little room back; the hard limit still applies at the cut-downs
+        lim = EC.limit(t) - rm.cap_headroom - plan[t.id]["headroom"]          # a club keeps a little room back; the hard limit still applies at the cut-downs
         # mid-contract extensions (NFL: any time after a drafted player's third season): a player with her final year ahead who is good, still young
         # enough and wanted is signed at today's market price for a new term; the club must fit her new number under its limit
         exiled0 = t.status == "exiled"
@@ -272,7 +274,7 @@ def run_roster_offseason(lg: League, rng: random.Random, rm: RosterModel, year: 
                 log["extensions"] = log.get("extensions", 0) + 1
                 log.setdefault("extension_list", []).append((t.id, p.id, old[0], old[1], p.salary, p.years_left, p.accrued_seasons or 0, p.age, round(p.ovr, 1)))
         expiring = sorted((p for p in t.roster if p.years_left <= 0), key=lambda p: -p.ovr)
-        lim = EC.limit(t) - rm.cap_headroom          # a club keeps a little room back; the hard limit still applies at the cut-downs
+        lim = EC.limit(t) - rm.cap_headroom - plan[t.id]["headroom"]          # a club keeps a little room back; the hard limit still applies at the cut-downs
         rookie_pays = [EC.rookie_salary(s) for s in mv.slots_owned(year, t.id)]
         exiled = t.status == "exiled"
         # the club's one tag: its best expiring unrestricted player, if she is good enough, the dice say so and the tag fits under the cap
@@ -392,7 +394,7 @@ def run_roster_offseason(lg: League, rng: random.Random, rm: RosterModel, year: 
     def draft_pick_made(pk, overall, rnd):
         t = lg.by_id[pk.owner]
         mv.check_free(pk.key)                              # before anything is made for it: a used or held pick stops the draft cleanly
-        pos = _pick_rookie_position(t.roster, overall, rng)
+        pos = _pick_rookie_position(t.roster, overall, rng, plan[t.id]["draft"])
         p = make_player(rng, lg.new_id(), pos, clamp(rookie_ovr(overall, rm, rng) + SC.gm_scouting_bonus(t), 30, 95),
                         rng.choice((22, 22, 22, 23)), t.id, draft_year=year, draft_pick=overall)
         p.years_in_league = 0
@@ -445,7 +447,7 @@ def run_roster_offseason(lg: League, rng: random.Random, rm: RosterModel, year: 
 
     def room_for(t) -> float:
         """What this team can pay the next signing: this season's limit less its payroll, keeping the minimum salary back for every other open slot."""
-        return EC.limit(t) - rm.cap_headroom - _offseason_over(t, extra_slots=1)
+        return EC.limit(t) - rm.cap_headroom - plan[t.id]["headroom"] - _offseason_over(t, extra_slots=1)
 
     def take(t, p, price=None):
         by_pos[p.pos].remove(p)

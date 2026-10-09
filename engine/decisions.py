@@ -50,6 +50,7 @@ class DecisionPoint:
         self.context, self.options, self.default = context, options, default
         self.internal = internal or {}
         self.id = ""                       # set by the guard
+        self.priority: dict = {}           # the Diamond Coronation line every role sees first (set by the guard: coronation())
 
     @property
     def option_ids(self) -> List[str]:
@@ -59,10 +60,21 @@ class DecisionPoint:
         """What an agent is shown: the decider's own card (a bounded view of it), what she perceives, and the legal options.
         Nothing true-but-hidden."""
         a = self.actor
-        return dict(id=self.id, kind=self.kind, year=self.year, team=self.team_id,
+        return dict(top_priority=self.priority, id=self.id, kind=self.kind, year=self.year, team=self.team_id,
                     decider=card_view(self.actor_kind, a), context=self.context, options=[dict(o) for o in self.options],
                     instructions="Reply with the id of exactly one option, and optionally a short reason and a short note to yourself "
                                  "(plain words; the note is shown back to you at your next decision).")
+
+
+def coronation(lg, team_id: int) -> dict:
+    """Every role's first priority (the Commissioner, 2026-10-09): the Diamond Coronation. Shown at the top of every decision, with where her team stands."""
+    t = getattr(lg, "by_id", {}).get(team_id)
+    if t is None:
+        return dict(goal="Win the Diamond Coronation.")
+    won = list(getattr(lg, "titles", {}).get(team_id, ()))
+    return dict(goal="Win the Diamond Coronation. It is the first priority of every role in the league; everything else on this card is a means to it.",
+                your_team=t.name, strength_rank=1 + sum(1 for x in lg.teams if x.strength > t.strength), of_teams=len(lg.teams),
+                coronations_won=len(won), last_won=won[-1] if won else None)
 
 
 def card_view(role: str, a) -> dict:
@@ -195,6 +207,7 @@ def decide_many(lg, dps: List[DecisionPoint]) -> List[str]:
     for dp in dps:
         dp.id = _next_id(lg, dp, taken)
         taken.add(dp.id)
+        dp.priority = coronation(lg, dp.team_id)
     base = getattr(lg, "driver", None) or PolicyDriver()
     drivers = [base.driver_for(dp) if hasattr(base, "driver_for") else base for dp in dps]
     answers: list = [None] * len(dps)

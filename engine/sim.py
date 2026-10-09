@@ -99,7 +99,7 @@ class GameRunner:
             team = self.league.by_id[tid]
             for p in rosters.elevate(team):                    # practice-squad call-ups for this week's game
                 self.elevation_log.append((self.week + 1, tid, p.id, p.pos, p.elevations))
-            lu = self._cache[tid] = build_lineup(tid, rosters.game_roster(team), team.coach)
+            lu = self._cache[tid] = build_lineup(tid, rosters.game_roster(team), team.coach, team)
         return lu
 
     def power(self, tid: int) -> float:

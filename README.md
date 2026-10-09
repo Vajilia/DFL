@@ -44,6 +44,7 @@ A seeded league engine with 53-player rosters, character cards, a drive-by-drive
 | `engine/adversaries.py` | Worst-case drivers used to test the fairness bands |
 | `engine/interactions.py` | The Interaction system, first slice: firing, recall vote and exile determination scenes (claims, evidence, relationships, decision logs) |
 | `engine/ceo_card.py`, `engine/check_ceo.py` | The CEO card's answers to her fans: a yearly spending pledge and a boycott response (both Decision Points), three meters that end with her tenure (Fan Rapport, Standing Among CEOs, Legacy), and the fans' memory passing to the next CEO |
+| `engine/coordinators.py`, `engine/gm_plan.py`, `engine/check_coordinators.py` | The coaching staff and the GM's plan (the ring of accountability, step B): offensive and defensive coordinator cards the head coach hires, reviews and fires; each preseason a coordinator proposes a scheme and the head coach may veto it; a unit's coaching lift is mostly the coordinator's; the GM chooses a draft focus and a cap margin each offseason (the autopilot keeps the old rule); every Decision Point opens with the Diamond Coronation. |
 | `engine/fan_media_cards.py` | Fanbase cards (the franchise's permanent card: culture, ratings, approval of the CEO, Fan Capital, its own evolving meters, fading memories, a boycott level) and media outlet cards (the press is the voice and the eyes and ears of the fans: a national outlet reports a year as it was, a local outlet frames it toward its fans by a capped amount) |
 | `engine/staff_sweep.py` | Tests CEOs, firings and the GM levers (and 3x, 6x stress versions) against the fairness bands; writes `reports/staff_fairness_study.md` |
 | `engine/card_report.py` | Writes `reports/card_samples.md` |
@@ -80,6 +81,7 @@ A seeded league engine with 53-player rosters, character cards, a drive-by-drive
     python engine/check_staff.py           # CEOs, GMs, recall votes, firings
     python engine/check_fans.py            # fanbase and media cards
     python engine/check_ceo.py             # the CEO card: pledge, boycott answer, meters, inherited fan memory
+    python engine/check_coordinators.py    # coordinators, the head coach's veto, the GM's plan, the Coronation line
     python engine/check_decisions.py       # decision points, the guard, replay, the autopilot's exactness
     python engine/check_living.py          # living cards, recognition, the Hall of Fame, saving and resuming a league
     python engine/check_store.py           # the cards are the save: rebuild, resume exactly, export/import a card

@@ -239,6 +239,8 @@ def init_staff(lg, year: int = 0):
             _seat_owner(lg, t, year, new_owner=False)
         if t.gm is None:
             _hire_gm(lg, t, year)
+    import coordinators
+    coordinators.init(lg, year)
     if getattr(lg, "fans_on", False):
         import fan_media_cards as FM
         FM.init_fans_media(lg, year)
@@ -497,7 +499,7 @@ def season_end(lg, year: int, pct: Dict[int, float], new_exiles, champion: int, 
     """One season's accountability: approval, recall votes, CEO turnover, then hiring and firing.
     `pct` is every team's win percentage this season (the exiled teams' come from the Ambassador Season).
     Returns what happened, for reports."""
-    out = dict(votes=[], recalled=[], survived=[], owner_retired=[], coach_fired=[], gm_fired=[], coach_retired=[],
+    out = dict(votes=[], recalled=[], survived=[], owner_retired=[], coach_fired=[], gm_fired=[], coach_retired=[], coordinators={},
                approval={}, new_owner_teams=[], vote_details=[], firing_details=[], scenes=[])
     scenes_on = getattr(lg, "interactions_on", False)
     if scenes_on:
@@ -667,6 +669,8 @@ def season_end(lg, year: int, pct: Dict[int, float], new_exiles, champion: int, 
             out["gm_fired"].append(t.id)
             out["firing_details"].append(dict(team=t.id, who="gm", card=g, heat=g.heat, owner=o, reason=reason))
     _hire_round(lg, year, jobs)                       # then the CEOs who fired someone choose replacements, together
+    import coordinators
+    out["coordinators"] = coordinators.season(lg, year, pct, set(out["coach_fired"]) | set(out["coach_retired"]))      # the head coaches review and hire their coordinators
     lg.prev_pct = dict(pct)
     if scenes_on:
         out["scenes"] = IX.season_scenes(lg, year, ctx, out, new_exiles)

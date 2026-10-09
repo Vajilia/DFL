@@ -53,7 +53,35 @@ class StandIn:
             return self._ceo_pledge(payload, me)
         if payload["kind"] == "ceo_boycott":
             return self._ceo_boycott(payload, me)
+        if payload["kind"] in ("coord_scheme", "scheme_veto", "coord_review", "hire_coordinator", "gm_draft_focus", "gm_cap_plan"):
+            return self._ring(payload, me)
         return self._hire(payload, me, r)
+
+    # ---- the coaching staff and the GM's offseason plan (Step B)
+    def _ring(self, p, me):
+        k, ctx, opts = p["kind"], p["context"], p["options"]
+        if k == "coord_scheme":
+            pick = max(opts, key=lambda o: o["tags"]["perceived_fit"])["id"]
+            why = "the scheme that suits the roster as I see it"
+        elif k == "scheme_veto":
+            pick = "veto" if ctx["your_view_of_fit"] < -0.1 else "approve"
+            why = f"I see the fit at {ctx['your_view_of_fit']:+.2f}"
+        elif k == "coord_review":
+            hot = [c for c in ctx["coordinators"].values() if c["heat"] > 0.3]
+            pick = ("fire_both" if len(hot) == 2 else "keep_both") if hot else "keep_both"
+            if len(hot) == 1:
+                key = [s for s, c in ctx["coordinators"].items() if c["heat"] > 0.3][0]
+                pick = f"fire_{key}"
+            why = "fire only the one whose heat is high" if hot else "keep my staff"
+        elif k == "hire_coordinator":
+            pick = max(opts, key=lambda o: o["view"]["playcalling"] + o["view"]["vision"])["id"]
+            why = "the best play-caller and eye on offer"
+        elif k == "gm_draft_focus":
+            pick, why = "needs", "fill the holes"
+        else:
+            pick = "all_in" if ctx["your_team_strength_rank"] <= 12 else "balanced"
+            why = f"strength rank {ctx['your_team_strength_rank']}"
+        return dict(choice=pick, reason=why, note=f"{k.replace('_', ' ')} {p['year']}: {pick}" if self.notes else "")
 
     # ---- the fans' yearly ask: press hard on an unpopular CEO, ease off a popular one
     def _fan_demand(self, p, r):

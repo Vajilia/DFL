@@ -74,6 +74,9 @@ def run_season(league: League, year: int, rng: random.Random, opt: Options = Non
                         opt.record_plays)
     if league.has_rosters:
         from league import refresh_strengths
+        if league.staff_on and league.coaches_on:
+            import coordinators
+            coordinators.preseason(league, year)      # every coordinator proposes a scheme and the head coach may veto it
         refresh_strengths(league)          # fresh power ratings for the placeholder-style readers
     runner.service_year = year
     games = build_schedule(league, rng)
@@ -115,6 +118,7 @@ def run_season(league: League, year: int, rng: random.Random, opt: Options = Non
 
     # ---- playoffs (MODEL: no new injuries in the playoffs; existing injuries stay as they are)
     seeds, playoff_games, exits, champion = play_playoffs(league, division_ranks, stats, rng, runner, log)
+    league.titles.setdefault(champion, []).append(year)          # the Diamond Coronation is every role's first priority
 
     # ---- draft
     all_stats = compute_stats(league, games + amb_games, active_ids + returners)   # one table so tiebreaks see every game

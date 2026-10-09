@@ -83,7 +83,7 @@ def _rec_rating(p: Player) -> float:
     return r["hands"]                                   # RB
 
 
-def build_lineup(team_id: int, roster: List[Player], coach=None) -> Lineup:
+def build_lineup(team_id: int, roster: List[Player], coach=None, team=None) -> Lineup:
     ch = depth_chart(roster)
     qb, k, p = ch["QB"][0], ch["K"][0], ch["P"][0]
     rbs, wrs, te = ch["RB"][:2], ch["WR"][:3], ch["TE"][0]
@@ -112,9 +112,14 @@ def build_lineup(team_id: int, roster: List[Player], coach=None) -> Lineup:
     L.k_acc, L.k_pow = k.ratings["accuracy"], k.ratings["power"]
     L.p_pow, L.p_acc = p.ratings["power"], p.ratings["accuracy"]
 
-    if coach is not None:
-        # head coach: a small capped lift to the offensive or defensive units (cards.COACH_POINTS_AT_100)
-        o, d = coach.offense_points, coach.defense_points
+    if coach is not None or (team is not None and (getattr(team, "oc", None) is not None or getattr(team, "dc", None) is not None)):
+        # the coaches: a small capped lift to the offensive or defensive units. The head coach's own (cards.COACH_POINTS_AT_100) is blended with
+        # the coordinator who calls the plays, plus the fit of this season's scheme (coordinators.lifts)
+        if team is not None:
+            import coordinators
+            o, d = coordinators.lifts(coach, team)
+        else:
+            o, d = coach.offense_points, coach.defense_points
         for f in ("qb_acc", "qb_arm", "qb_aware", "rec", "pass_block", "run_block", "rb_run"):
             setattr(L, f, getattr(L, f) + o)
         for f in ("pass_rush", "coverage", "ball_skills", "run_stop"):
