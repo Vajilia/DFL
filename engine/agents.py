@@ -55,6 +55,8 @@ class StandIn:
             return self._ceo_boycott(payload, me)
         if payload["kind"] in ("coord_scheme", "scheme_veto", "coord_review", "hire_coordinator", "gm_draft_focus", "gm_cap_plan"):
             return self._ring(payload, me)
+        if payload["kind"] in ("gm_draft_pick", "gm_resign", "gm_free_agent", "gm_trade_sell", "gm_trade_buy"):
+            return self._roster(payload, me)
         return self._hire(payload, me, r)
 
     # ---- the coaching staff and the GM's offseason plan (Step B)
@@ -81,6 +83,25 @@ class StandIn:
         else:
             pick = "all_in" if ctx["your_team_strength_rank"] <= 12 else "balanced"
             why = f"strength rank {ctx['your_team_strength_rank']}"
+        return dict(choice=pick, reason=why, note=f"{k.replace('_', ' ')} {p['year']}: {pick}" if self.notes else "")
+
+    # ---- the GM builds the roster (Step C): she chooses by role utility as she sees it
+    def _roster(self, p, me):
+        k, ctx, opts = p["kind"], p["context"], p["options"]
+        if k == "gm_draft_pick":
+            best = max(opts, key=lambda o: o["tags"]["role_utility"])
+            pick, why = best["id"], f"a {best['id']} adds the most in her role (utility {best['tags']['role_utility']})"
+        elif k == "gm_resign":
+            u = ctx["role_utility_to_you"]
+            pick = "re_sign" if u > 0 else "let_walk"
+            why = f"she would {'start' if u > 0 else 'not start'} for me: utility {u}"
+        elif k == "gm_free_agent":
+            best = max(opts, key=lambda o: o["tags"]["role_utility"])
+            pick, why = best["id"], f"the best fit by role utility ({best['tags']['role_utility']})"
+        else:
+            give, get = ctx["chart_points_you_give"], ctx["chart_points_you_get"]
+            pick = "accept" if get >= 0.9 * give else "decline"
+            why = f"I give {give:.0f} chart points and get {get:.0f}"
         return dict(choice=pick, reason=why, note=f"{k.replace('_', ' ')} {p['year']}: {pick}" if self.notes else "")
 
     # ---- the fans' yearly ask: press hard on an unpopular CEO, ease off a popular one

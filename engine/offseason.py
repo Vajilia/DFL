@@ -24,6 +24,8 @@ import tables as TB
 import staff_cards as SC
 import transactions as T
 import injuries as IJ
+import roles
+import gm_roster as GMR
 
 CUT_CLAIMS_MAX = 3            # MODEL: most waiver claims one club makes at the cutdown
 CUT_CLAIM_MARGIN = 4.0        # MODEL: a cut player must beat the club's weakest player at her position by this many rating points to be claimed
@@ -105,9 +107,7 @@ def _pick_rookie_position(roster: List[Player], overall: int, rng: random.Random
 
 def _slot_floor(roster: List[Player], pos: str) -> float:
     """Overall of the weakest starter at a position (what a newcomer has to beat to start)."""
-    at = sorted((p.ovr for p in roster if p.pos == pos), reverse=True)
-    n = STARTERS[pos]
-    return at[n - 1] if len(at) >= n else 45.0
+    return roles.slot_floor(roster, pos)
 
 
 def _quick_strength(roster: List[Player]) -> float:
@@ -123,11 +123,7 @@ def _quick_strength(roster: List[Player]) -> float:
 
 
 def _gain(roster: List[Player], cand: Player) -> float:
-    n = STARTERS[cand.pos]
-    floor = _slot_floor(roster, cand.pos)
-    if cand.ovr > floor:                                  # would start
-        return (cand.ovr - floor) * (1.0 + 0.4 * n) + 5.0
-    return cand.ovr - 60.0                                # depth only: small and negative
+    return roles.utility(roster, cand.pos, cand.ovr)         # the role utility (roles.py): what she adds in the role she would play
 
 
 def _undrafted(lg: League, rm: RosterModel, rng: random.Random) -> List[Player]:
@@ -241,6 +237,7 @@ def run_roster_offseason(lg: League, rng: random.Random, rm: RosterModel, year: 
     import service
     per = R.TOTAL_TEAMS
     keep_rule = _keep_rule_factory(rm, rng)
+    let_go: Dict[int, int] = {}              # club id -> important players its GM has let walk this offseason against the rule (gm_roster.LET_GO_MAX)
     pending: List[tuple] = []                # important re-signings waiting for their contract table: (club, player, market price, standard years, class, rookie pays, limit)
     comp_lost: Dict[int, tuple] = {}         # player id -> (club she left, weeks she played): unrestricted players who reached the market
     signed_by: Dict[int, tuple] = {}         # player id -> (club that signed her, her new yearly pay) for each of them another club signed
@@ -266,8 +263,11 @@ def run_roster_offseason(lg: League, rng: random.Random, rm: RosterModel, year: 
                 rookie_pays0 = [EC.rookie_salary(x) for x in mv.slots_owned(year, t.id)]
                 slots0 = max(0, EC.OFFSEASON_COUNT - len(keep) - len(rookie_pays0))
                 new_sal = [k.salary for k in keep if k is not p] + [cost]
-                if not (keep_rule(t, keep, p, cost)
-                        and EC.counted_51(new_sal + rookie_pays0, t.dead_now) + slots0 * EC.MIN_SALARY + EC.OFFSEASON_RESERVE <= lim):
+                wants_ext = keep_rule(t, keep, p, cost)
+                fits_ext = EC.counted_51(new_sal + rookie_pays0, t.dead_now) + slots0 * EC.MIN_SALARY + EC.OFFSEASON_RESERVE <= lim
+                if fits_ext:
+                    wants_ext = GMR.resign(lg, rm, t, year, p, cost, wants_ext, keep, extension=True)      # the GM's call (the rule is her default); asked only when the cap allows
+                if not (wants_ext and fits_ext):
                     continue
                 old = (p.salary, p.years_left)
                 EC.sign(p, cost, EC.contract_years(p))
@@ -328,8 +328,11 @@ def run_roster_offseason(lg: League, rng: random.Random, rm: RosterModel, year: 
             if wants is None:
                 wants = keep_rule(t, keep, p, cost)
             count = EC.counted_51([k.salary for k in keep] + [cost] + rookie_pays, t.dead_now)
+            fits_cap = count + slots_after * EC.MIN_SALARY + EC.OFFSEASON_RESERVE <= lim
+            if fits_cap and p.ovr >= rm.table_min_ovr and p.id not in ps_ids:
+                wants = GMR.resign(lg, rm, t, year, p, cost, bool(wants), keep, extension=False, let_go=let_go)       # the GM's call (the rule is her default); asked only when the cap allows
             deal = None
-            if wants and count + slots_after * EC.MIN_SALARY + EC.OFFSEASON_RESERVE <= lim:
+            if wants and fits_cap:
                 deal = (cost, EC.contract_years(p))
                 if rm.contract_tables and p.ovr >= rm.table_min_ovr and p.id not in ps_ids:         # an important deal is made at a table (below), with the DFLPA representative present
                     pending.append((t, p, cost, deal[1], cls, rookie_pays, lim))
@@ -395,6 +398,7 @@ def run_roster_offseason(lg: League, rng: random.Random, rm: RosterModel, year: 
         t = lg.by_id[pk.owner]
         mv.check_free(pk.key)                              # before anything is made for it: a used or held pick stops the draft cleanly
         pos = _pick_rookie_position(t.roster, overall, rng, plan[t.id]["draft"])
+        pos = GMR.draft_pick(lg, t, year, overall, rnd, pos, rm, plan[t.id]["draft"])           # the GM may take another position in the first two rounds
         p = make_player(rng, lg.new_id(), pos, clamp(rookie_ovr(overall, rm, rng) + SC.gm_scouting_bonus(t), 30, 95),
                         rng.choice((22, 22, 22, 23)), t.id, draft_year=year, draft_pick=overall)
         p.years_in_league = 0
@@ -507,13 +511,17 @@ def run_roster_offseason(lg: League, rng: random.Random, rm: RosterModel, year: 
             if not open_pos:
                 continue
             best, best_gain = None, -1e9
+            options = []
             for pos in open_pos:
                 c = affordable(t, pos)
                 if c is None:
                     continue
                 g = _gain(t.roster, c)
+                options.append((g, c))
                 if g > best_gain:
                     best, best_gain = c, g
+            if best is not None and best_gain >= GMR.FA_ASK_MIN_GAIN:
+                best = GMR.free_agent(lg, t, year, options, best, lambda c: EC.market_salary(c.pos, c.ovr, c.credited_seasons))      # a marquee signing is the GM's call
             price = None
             if best is None:                                # no one on the market at an open position that the team can afford: a street free agent at the minimum
                 pos = open_pos[0]

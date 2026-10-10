@@ -125,6 +125,9 @@ def window(lg, rng: random.Random, rm, year: int, week: Optional[int], sell_prob
             if deal is None:
                 continue
             a, b, pa, pb, ka, kb, pts, victim = deal
+            import gm_roster
+            if not gm_roster.trade_ok(lg, rm, a, b, pa, pb, ka, kb, pts, year, week):      # both GMs have to agree (the rule's answer is yes)
+                continue
             if victim is not None:                                     # in season the buying club is at 53: it releases its weakest surplus player first
                 rosters._release(lg, lg.by_id[b], victim)
             if GV.review_trade(lg, a, b, pa, pb, ka, kb, year, week) is not None:

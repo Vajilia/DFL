@@ -77,6 +77,11 @@ def coronation(lg, team_id: int) -> dict:
                 coronations_won=len(won), last_won=won[-1] if won else None)
 
 
+def _judged(actor_kind: str) -> str:
+    import roles
+    return roles.judged_on(actor_kind)
+
+
 def card_view(role: str, a) -> dict:
     """The decider's card as an agent sees it: who she is, what she is like, what she has done lately, and her own notes. Long lists
     on the card (career, honors, decisions) are summarized and the latest entries shown; the card itself keeps everything."""
@@ -207,7 +212,7 @@ def decide_many(lg, dps: List[DecisionPoint]) -> List[str]:
     for dp in dps:
         dp.id = _next_id(lg, dp, taken)
         taken.add(dp.id)
-        dp.priority = coronation(lg, dp.team_id)
+        dp.priority = dict(coronation(lg, dp.team_id), you_are_judged_on=_judged(dp.actor_kind))
     base = getattr(lg, "driver", None) or PolicyDriver()
     drivers = [base.driver_for(dp) if hasattr(base, "driver_for") else base for dp in dps]
     answers: list = [None] * len(dps)

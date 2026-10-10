@@ -34,23 +34,25 @@ fast engine, 6 leagues x 48 seasons.
 
 | Trend | This league | Fair-competitiveness band | Inside? | Range across leagues |
 | --- | --- | --- | --- | --- |
-| spread of regular-season win percentage across teams (pure luck alone is about 0.12) | 0.144 | 0.130 to 0.190 | yes | 0.141 to 0.148 |
-| how much a team's win % repeats from one season to the next (0 = pure luck, 1 = fixed) | 0.138 | 0.100 to 0.500 | yes | 0.128 to 0.147 |
-| share of games decided by 8 points or fewer | 0.487 | 0.350 to 0.550 | yes | 0.482 to 0.490 |
-| share of seasons in which the champion is the previous champion | 0.043 | 0.000 to 0.120 | yes | 0.000 to 0.077 |
-| most titles one team wins in any 20-season stretch, averaged over leagues. A league where every playoff team had exactly equal title odds averages 4.7 (40 equal teams would give 3.1), so this caps concentration at pure luck among the 14 | 3.67 | 0.00 to 4.70 | yes | 3.00 to 6.00 |
-| most titles one team wins in any 20 seasons in the single worst league (7 or more happens under pure luck about 3% of the time, so it signals a dynasty) | 6 | 0 to 7 | yes | 3 to 6 |
-| how often the strongest team on paper wins the title | 0.179 | 0.080 to 0.250 | yes | 0.100 to 0.325 |
-| average division finish of a team back from exile (3.0 = league average) | 3.12 | 2.80 to 3.40 | yes | 2.99 to 3.21 |
-| share of returning teams that win their division | 0.194 | 0.100 to 0.300 | yes | 0.172 to 0.216 |
-| share of returning teams that finish 5th again | 0.242 | 0.100 to 0.300 | yes | 0.219 to 0.269 |
-| extra team rating (points, about half a win per point) a team has two years after finishing 5th compared with one that finished 4th | 0.29 | -0.50 to 0.50 | yes | 0.07 to 0.69 |
+| spread of regular-season win percentage across teams (pure luck alone is about 0.12) | 0.144 | 0.130 to 0.190 | yes | 0.142 to 0.144 |
+| how much a team's win % repeats from one season to the next (0 = pure luck, 1 = fixed) | 0.122 | 0.100 to 0.500 | yes | 0.089 to 0.149 |
+| share of games decided by 8 points or fewer | 0.480 | 0.350 to 0.550 | yes | 0.471 to 0.488 |
+| share of seasons in which the champion is the previous champion | 0.047 | 0.000 to 0.120 | yes | 0.000 to 0.103 |
+| most titles one team wins in any 20-season stretch, averaged over leagues. A league where every playoff team had exactly equal title odds averages 4.7 (40 equal teams would give 3.1), so this caps concentration at pure luck among the 14 | 3.67 | 0.00 to 4.70 | yes | 3.00 to 5.00 |
+| most titles one team wins in any 20 seasons in the single worst league (7 or more happens under pure luck about 3% of the time, so it signals a dynasty) | 5 | 0 to 7 | yes | 3 to 5 |
+| how often the strongest team on paper wins the title | 0.121 | 0.080 to 0.250 | yes | 0.075 to 0.175 |
+| average division finish of a team back from exile (3.0 = league average) | 3.08 | 2.80 to 3.40 | yes | 2.98 to 3.17 |
+| share of returning teams that win their division | 0.190 | 0.100 to 0.300 | yes | 0.166 to 0.228 |
+| share of returning teams that finish 5th again | 0.218 | 0.100 to 0.300 | yes | 0.200 to 0.237 |
+| extra team rating (points, about half a win per point) a team has two years after finishing 5th compared with one that finished 4th | 0.76 | -0.50 to 0.50 | **NO** | 0.53 to 1.09 |
 | share of exiled teams that get a top-8 pick in the lottery and then a top-16 pick in their second draft | 0.000 | 0.000 to 0.100 | yes | 0.000 to 0.000 |
-| share of team-seasons that follow three straight bottom-two finishes (pure luck gives about 0.06; exile years are skipped) | 0.075 | 0.000 to 0.100 | yes | 0.071 to 0.084 |
+| share of team-seasons that follow three straight bottom-two finishes (pure luck gives about 0.06; exile years are skipped) | 0.074 | 0.000 to 0.100 | yes | 0.070 to 0.079 |
 
-All trends inside the bands.
+**Outside the bands:** exile_effect.
 
-Teams led by a coach the media calls a legend: 2 team-seasons per league (about 0.0 on the field at a time). They won 63.6% of their games (league average 50%), made the playoffs 56% of the time (14 of 40 teams = 35% on average) and won the title in 0.0% of seasons (1 in 40 = 2.5% on average).
+Note (2026-10-10, GM roster step): this row was re-run after the GM's roster decisions were added. Only the exile-return effect is outside (0.76 against a cap of 0.50). With the new GM decisions left on the autopilot and everything else random it is already 0.58, so the excess predates this step (it is not in the 2026-10-08 run of this row, which gave 0.29); the GM's roster decisions alone, chosen at random, stay inside every band (repeat 0.129, exile effect 0.37). Each earlier group of decisions chosen at random alone also stays inside (coordinators and schemes -0.38, the GM plan 0.16, fans and CEOs -0.21), so the excess comes from random play across many groups at once. Open: find which group combination drives it.
+
+Teams led by a coach the media calls a legend: 0 team-seasons per league (about 0.0 on the field at a time). They won 66.7% of their games (league average 50%), made the playoffs 100% of the time (14 of 40 teams = 35% on average) and won the title in 0.0% of seasons (1 in 40 = 2.5% on average).
 
 ## C. Nobody is ever fired
 
@@ -196,3 +198,26 @@ All trends inside the bands.
 
 Teams led by a coach the media calls a legend: 14 team-seasons per league (about 0.3 on the field at a time). They won 52.6% of their games (league average 50%), made the playoffs 43% of the time (14 of 40 teams = 35% on average) and won the title in 4.9% of seasons (1 in 40 = 2.5% on average).
 
+## O. Worst case at the GM's desk: the 8 strongest GMs choose every draft position, re-signing, signing and trade with perfect sight, the 8 weakest choose the worst
+
+fast engine, 6 leagues x 48 seasons.
+
+| Trend | This league | Fair-competitiveness band | Inside? | Range across leagues |
+| --- | --- | --- | --- | --- |
+| spread of regular-season win percentage across teams (pure luck alone is about 0.12) | 0.149 | 0.130 to 0.190 | yes | 0.143 to 0.153 |
+| how much a team's win % repeats from one season to the next (0 = pure luck, 1 = fixed) | 0.183 | 0.100 to 0.500 | yes | 0.152 to 0.221 |
+| share of games decided by 8 points or fewer | 0.478 | 0.350 to 0.550 | yes | 0.474 to 0.483 |
+| share of seasons in which the champion is the previous champion | 0.038 | 0.000 to 0.120 | yes | 0.000 to 0.077 |
+| most titles one team wins in any 20-season stretch, averaged over leagues. A league where every playoff team had exactly equal title odds averages 4.7 (40 equal teams would give 3.1), so this caps concentration at pure luck among the 14 | 2.83 | 0.00 to 4.70 | yes | 2.00 to 3.00 |
+| most titles one team wins in any 20 seasons in the single worst league (7 or more happens under pure luck about 3% of the time, so it signals a dynasty) | 3 | 0 to 7 | yes | 2 to 3 |
+| how often the strongest team on paper wins the title | 0.171 | 0.080 to 0.250 | yes | 0.125 to 0.250 |
+| average division finish of a team back from exile (3.0 = league average) | 3.24 | 2.80 to 3.40 | yes | 3.12 to 3.39 |
+| share of returning teams that win their division | 0.161 | 0.100 to 0.300 | yes | 0.128 to 0.194 |
+| share of returning teams that finish 5th again | 0.253 | 0.100 to 0.300 | yes | 0.219 to 0.291 |
+| extra team rating (points, about half a win per point) a team has two years after finishing 5th compared with one that finished 4th | -0.09 | -0.50 to 0.50 | yes | -0.43 to 0.30 |
+| share of exiled teams that get a top-8 pick in the lottery and then a top-16 pick in their second draft | 0.000 | 0.000 to 0.100 | yes | 0.000 to 0.000 |
+| share of team-seasons that follow three straight bottom-two finishes (pure luck gives about 0.06; exile years are skipped) | 0.093 | 0.000 to 0.100 | yes | 0.083 to 0.101 |
+
+All trends inside the bands.
+
+Teams led by a coach the media calls a legend: 5 team-seasons per league (about 0.1 on the field at a time). They won 48.4% of their games (league average 50%), made the playoffs 37% of the time (14 of 40 teams = 35% on average) and won the title in 0.0% of seasons (1 in 40 = 2.5% on average).

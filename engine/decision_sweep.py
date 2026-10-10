@@ -29,6 +29,7 @@ VARIANTS = [
     ("F. Worst case: the 8 strongest hire the best, the 8 weakest the worst, every year", lambda: ADV.Polarized(8)),
     ("G. Worst case: everyone hunts for the most famous coach", lambda: ADV.StarHunter()),
     ("H. Worst case: every CEO recycles the same people between jobs", lambda: ADV.CarouselRider()),
+    ("O. Worst case at the GM's desk: the 8 strongest GMs choose every draft position, re-signing, signing and trade with perfect sight, the 8 weakest choose the worst", lambda: ADV.RosterOracle(8)),
 ]
 
 # the stand-in agent (agents.py) reads only what a real agent is shown; a dozen at a time through the real pool

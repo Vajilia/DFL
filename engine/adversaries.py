@@ -170,3 +170,38 @@ class HardBargain:
         if dp.kind == "interview_final":
             return "walk", "no deal"
         return dp.default, "default"
+
+
+class RosterOracle:
+    """The worst case at the GM's desk. The `n` strongest clubs' GMs choose with perfect sight at every draft pick, re-signing, free-agent signing and
+    trade (the draft position with the most role utility, the player who truly adds the most, the trade that truly gains the most); the `n` weakest
+    clubs' GMs choose the worst legal option every time. Everyone else follows the rules. Roster skill pushed to its legal limit in both directions."""
+    name = "roster-oracle"
+
+    def __init__(self, n: int = 8):
+        self.n = n
+
+    def choose(self, dp):
+        if not dp.kind.startswith(("gm_draft_pick", "gm_resign", "gm_free_agent", "gm_trade")):
+            return dp.default, "the rules"
+        rank = dp.internal["strength_rank"]
+        top, bottom = rank <= self.n, rank > 48 - self.n
+        if not (top or bottom):
+            return dp.default, "the rules"
+        pick = max if top else min
+        if dp.kind == "gm_draft_pick":
+            return pick(dp.options, key=lambda o: o["tags"]["role_utility"])["id"], "most role utility" if top else "least"
+        if dp.kind == "gm_resign":
+            import roles
+            p = dp.internal["player"]
+            u = roles.utility(dp.internal["rest"], p.pos, p.ovr)
+            good = "re_sign" if u > 0 else "let_walk"
+            return (good if top else ("let_walk" if good == "re_sign" else "re_sign")), "true value"
+        if dp.kind == "gm_free_agent":
+            import roles
+            t = dp.internal["team"]
+            cands = dp.internal["candidates"]
+            return pick(cands, key=lambda k: roles.utility(t.roster, cands[k].pos, cands[k].ovr)), "true best" if top else "true worst"
+        gain = dp.internal["true_get"] - dp.internal["true_give"]
+        return ("accept" if (gain >= 0) == top else "decline"), "true value"
+
