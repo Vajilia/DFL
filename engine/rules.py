@@ -279,7 +279,7 @@ BASIS = {
     "Coach cards may change results only by a small, capped amount, re-tested against the fairness bands": SKELETON,
     "Coaches develop their players, and legends (a Walsh or a Lombardi) appear more often than in the NFL, all inside the bands": SKELETON,
     "Nobody is a legend by birth and nothing caps greatness: legends emerge from honors, the media notices them, a league Hall of Fame confers them; coaches, GMs and CEOs are living cards with fixed souls (the Commissioner, 2026-10-04)": SKELETON,
-    "The legend standard (esteem bar), what earns esteem, how outlets read it, the Hall of Fame waiting time and vote share, career curves, retirement ages, the people-between-jobs pool, and what rope and halo do for a famous person": ADAPTED,
+    "The legend standard (esteem bar), what earns esteem, how outlets read it, the Hall of Fame waiting time and vote share, career curves, retirement ages, the people-between-jobs pool, and the (switched-off) rope and halo dials for a famous person": ADAPTED,
     "Archetypes are the player's soul; personality is an expression of the soul and her perception of her ratings, bounded by the archetype": SKELETON,
     "The sizes: coach team lift 1.0 point, development 0.4 rating points a year; the soul pull, perception speed, trait families, coach aging and retirement, and every word list on the cards": ADAPTED,
     "CEOs and GMs come next after players and coaches (the Commissioner: go with the AI's recommendations)": SKELETON,

@@ -15,8 +15,8 @@ How it works, and what it is allowed to touch:
     a legend does not flicker.
   * THE HALL OF FAME votes on retired people who waited a few years: every active outlet (weighted by credibility) and every
     CEO votes, and she goes in with three quarters of the vote. There is no cap and no quota; a class can be empty.
-  * Reputation touches ONLY CEOs' choices, never a game: more patience with a famous coach (rope), and a halo in how an
-    CEO sees a famous candidate (her blind spot, never the truth). The on-field effects of coaches, GMs and players stay
+  * Reputation touches nothing (the Commissioner, 2026-10-10: organic outcomes). The dials for rope (more patience with a famous coach) and halo
+    (a CEO sees a famous candidate's ratings a little higher) exist in staff_cards.py but are zero. The on-field effects of coaches, GMs and players stay
     capped exactly as before, so greatness is mostly reputation and story.
 
 Every random draw comes from a generator private to the person, the outlet and the year.
@@ -79,10 +79,6 @@ def cid_of(card) -> int:
 def esteem_ratio(card) -> float:
     """Esteem as a share of the legend bar, capped. What CEOs react to."""
     return max(0.0, min(RATIO_CAP, card.esteem / LEGEND_BAR[kind_of(card)]))
-
-
-def is_famous(card) -> bool:
-    return card.standing in ("legend", "Hall of Famer")
 
 
 # ---- honors and esteem ----------------------------------------------------------------------------------

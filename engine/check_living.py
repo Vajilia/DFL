@@ -126,9 +126,8 @@ check("the Hall has no cap: inductees are decided by the vote alone (see the bal
       f"{len(hall)} inductees in {YEARS} seasons, largest class {max([sum(1 for h in hall if h['year'] == y) for y in {h['year'] for h in hall}] or [0])}")
 check("everyone in the Hall had real esteem", all(h["esteem"] >= RC.HOF_FLOOR * RC.LEGEND_BAR[h["kind"]] for h in hall))
 
-# ---- reputation touches only CEOs' choices, never a game ----------------------------------------------------------------
-S_rope, S_halo = S.ROPE_WEIGHT, S.HALO_POINTS
-S.ROPE_WEIGHT, S.GM_ROPE_WEIGHT, S.HALO_POINTS = 0.0, 0.0, 0.0
+# ---- reputation touches nothing: fame buys no rope and no halo (the Commissioner, 2026-10-10: organic outcomes) --------------------------
+check("fame buys no rope and no halo: the dials are zero", S.ROPE_WEIGHT == 0.0 and S.GM_ROPE_WEIGHT == 0.0 and S.HALO_POINTS == 0.0)
 Lx, rx, _ = play(5, 25)
 fx = FP.fingerprint_of(Lx, rx)
 orig = (RC.season_honors, RC.hall_vote)
@@ -137,10 +136,11 @@ import season as SE  # noqa: E402
 Ly, ry, _ = play(5, 25)
 fy = FP.fingerprint_of(Ly, ry)
 RC.season_honors, RC.hall_vote = orig
-S.ROPE_WEIGHT, S.GM_ROPE_WEIGHT, S.HALO_POINTS = S_rope, 0.5, S_halo
-check("with rope and halo set to zero, recognition changes nothing: 25 seasons identical with honors, esteem and the Hall on or off", fx == fy)
+check("recognition changes nothing: 25 seasons identical with honors, esteem and the Hall on or off", fx == fy)
+# the switch still exists for anyone who wants fame to matter: with the dials on, reputation does change CEOs' choices
+S_dials = (S.ROPE_WEIGHT, S.GM_ROPE_WEIGHT, S.HALO_POINTS)
+S.ROPE_WEIGHT, S.GM_ROPE_WEIGHT, S.HALO_POINTS = 1.0, 0.5, 3.0
 Lz, rz, _ = play(5, 25)
-check("with them on, reputation does change CEOs' choices (so the two roads differ)", FP.fingerprint_of(Lz, rz) != fx)
 fam = max((c for c in L.coaches), key=lambda c: c.esteem)
 cand = C.make_coach_card(3, 3)
 cand.ratings = {k: 50.0 for k in cand.ratings}      # mid-range, so the CEO's noise never clips at 1 or 100 (which would hide the halo)
@@ -148,7 +148,10 @@ o = L.teams[0].owner
 p0 = S._perceived(L, o, cand, 5, S.COACH_VIEW)
 cand.esteem = RC.LEGEND_BAR["coach"]
 p1 = S._perceived(L, o, cand, 5, S.COACH_VIEW)
-check("fame is a halo in how a CEO sees a candidate, never in the candidate's ratings", all(p1[a] - p0[a] == round(S.HALO_POINTS) or abs((p1[a] - p0[a]) - S.HALO_POINTS) <= 1 for a in p0) and all(v == v for v in cand.ratings.values()))
+halo_ok = all(abs((p1[a] - p0[a]) - S.HALO_POINTS) <= 1 for a in p0) and all(v == v for v in cand.ratings.values())
+S.ROPE_WEIGHT, S.GM_ROPE_WEIGHT, S.HALO_POINTS = S_dials
+check("(dials switched on for the test) reputation can change CEOs' choices, so the two roads differ", FP.fingerprint_of(Lz, rz) != fx)
+check("(dials switched on) fame would be a halo in how a CEO sees a candidate, never in the candidate's ratings", halo_ok)
 import decisions as D  # noqa: E402
 cands, vets = S._candidates(L, "coach", C.make_coach_card, L.teams[0], 61, o, L._coach_ids + 1, set())
 dp = D.DecisionPoint("hire_coach", 61, 1, "owner", o, {}, [dict(id=f"candidate_{i}", label="x", tags={}, view=S._person_view(L, o, c, 61, S.COACH_VIEW, True)) for i, c in enumerate(cands)], "candidate_0")

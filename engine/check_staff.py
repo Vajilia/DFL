@@ -89,11 +89,8 @@ gf = sum(len(h.staff["gm_fired"]) for h in hist) / 40
 check("GMs get fired, less often than coaches", 0.5 < gf < cf, f"{gf:.1f} firings a year")
 import recognition as RC  # noqa: E402
 o0 = L.teams[0].owner
-check("CEOs give a famous coach more rope (the firing threshold rises with esteem, to double at the legend bar)",
-      abs(S._fire_threshold(o0, 1.0 + S.ROPE_WEIGHT * 1.0) - 2.0 * S._fire_threshold(o0, 1.0)) < 1e-9 and S.ROPE_WEIGHT > 0)
-check("firing is not a coin flip on fame: coaches fired had less esteem than the ones kept, on average",
-      st.mean(c.esteem for c in L.coaches if any(e["event"] == "fired" for e in c.career)) <
-      st.mean(c.esteem for c in L.coaches if not any(e["event"] == "fired" for e in c.career) and not c.retired))
+check("fame buys no rope: the firing threshold does not depend on esteem (the dial is zero; at 1.0 it would double at the legend bar)",
+      S.ROPE_WEIGHT == 0.0 and S.GM_ROPE_WEIGHT == 0.0 and abs(S._fire_threshold(o0, 1.0 + S.ROPE_WEIGHT * 1.0) - S._fire_threshold(o0, 1.0)) < 1e-9)
 fired = [c for c in L.coaches if any(e["event"] == "fired" for e in c.career)]
 check("fired coaches did worse than keepers (their heat was real)", st.mean(c.heat for c in fired) > st.mean(t.coach.heat for t in L.teams), "")
 check("the Archive records the firings and hirings", {"coach_fired", "gm_fired", "gm_hired", "recall_vote"} <= {e["event"] for e in L.archive})

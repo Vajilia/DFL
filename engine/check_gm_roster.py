@@ -87,7 +87,7 @@ check("the GM is asked about draft positions (round 1), re-signings, free agents
       all(len(v) > 0 for v in by.values()), {k: len(v) for k, v in by.items()})
 check("the draft asks about the first round each year: 48 picks, the GMs' own, wherever they were traded", len(by["gm_draft_pick"]) == 6 * R.TOTAL_TEAMS, len(by["gm_draft_pick"]))
 check("on the autopilot every answer is the rule's own answer", all(e["chosen"] == e["default"] and e["status"] == "ok" for k in KINDS for e in by[k]))
-check("a draft pick offers the rule's position and one other (the one with the most role utility)", all(e["default"] in e["options"] and len(e["options"]) == 2 for e in by["gm_draft_pick"]))
+check("a draft pick offers the rule's prospect and one other (the one with the most role utility on the top of the board)", all(e["default"] in e["options"] and len(e["options"]) == 2 for e in by["gm_draft_pick"]))
 check("the GM who starts a trade is asked (the seller of a veteran, or the club moving up in a pick swap), once per trade, and trades happen",
       len(by["gm_trade_sell"]) > 0 and len(by["gm_trade_buy"]) > 0 and len(by["gm_trade_sell"]) + len(by["gm_trade_buy"]) >= trades(L1) > 0, f"{trades(L1)} trades")
 
@@ -95,9 +95,10 @@ check("the GM who starts a trade is asked (the seller of a veteran, or the club 
 rule = Rule({})
 play(33, 3, rule)
 pick, res_dp, fa, sell = (rule.seen.get(k) for k in ("gm_draft_pick", "gm_resign", "gm_free_agent", "gm_trade_sell"))
-check("a draft decision shows the Coronation and what the seat is judged on first, the expected rookie, and each position's role utility",
+check("a draft decision shows the Coronation and what the seat is judged on first, and each prospect's college, board rank, grade as she sees it and role utility",
       pick is not None and "Coronation" in pick["top_priority"]["goal"] and pick["top_priority"]["you_are_judged_on"].startswith("Judged by the CEO")
-      and all("role_utility" in o["tags"] and o["tags"]["would_be"] in roles.ROLES for o in pick["options"]) and "rookie_rating_expected_at_this_slot" in pick["context"])
+      and all({"role_utility", "college", "board_rank", "grade_as_you_see_her", "senior_year"} <= set(o["tags"]) and o["tags"]["would_be"] in roles.ROLES for o in pick["options"])
+      and not any("ovr" in k or "true" in k for o in pick["options"] for k in o["tags"]))
 check("a re-signing shows her role utility to the club, her price and the role she would have, but not her true rating",
       res_dp is not None and {"role_utility_to_you", "her_price_per_year_m", "her_role_if_kept"} <= set(res_dp["context"]) and "rating_as_you_see_her" in res_dp["context"]["player"]
       and "ovr" not in str(res_dp["context"]).replace("rating", ""))
@@ -193,7 +194,7 @@ check("lost or garbled answers fall back to the rule and the league plays on", a
 Ln = new_league(random.Random(5), rosters=True)
 for tm in Ln.teams[:3]:
     tm.gm = None
-check("a club without a GM keeps the rule: nothing is asked and the draw stands", GMR.draft_pick(Ln, Ln.teams[0], 1, 5, 0, "QB", None, "needs") == "QB"
+check("a club without a GM keeps the rule: nothing is asked and the draw stands", GMR.draft_pick(Ln, Ln.teams[0], 1, 5, 0, "the rule's prospect", [], None, "needs") == "the rule's prospect"
       and GMR.resign(Ln, None, Ln.teams[0], 1, Ln.teams[0].roster[0], 1.0, True, Ln.teams[0].roster, False) is True
       and GMR.free_agent(Ln, Ln.teams[0], 1, [(1.0, Ln.teams[0].roster[0]), (0.5, Ln.teams[0].roster[1])], Ln.teams[0].roster[0], lambda c: 1.0) is Ln.teams[0].roster[0])
 Lr, _, _ = play(5, 6, D.RandomLegalDriver(seed=3))

@@ -90,7 +90,7 @@ class StandIn:
         k, ctx, opts = p["kind"], p["context"], p["options"]
         if k == "gm_draft_pick":
             best = max(opts, key=lambda o: o["tags"]["role_utility"])
-            pick, why = best["id"], f"a {best['id']} adds the most in her role (utility {best['tags']['role_utility']})"
+            pick, why = best["id"], f"a {best['tags']['position']} from {best['tags']['college']} adds the most in her role (utility {best['tags']['role_utility']})"
         elif k == "gm_resign":
             u = ctx["role_utility_to_you"]
             pick = "re_sign" if u > 0 else "let_walk"

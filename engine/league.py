@@ -74,6 +74,7 @@ class League:
         self.interactions_on = True        # Required interactions are written up as scenes (never changes an outcome)
         self.prev_pct: dict = {}           # last season's win% by team, for the scenes' evidence
         self.driver = None                 # who makes the choices (decisions.py); None means the autopilot
+        self.enricher = None               # who writes a player's bio (enrichment.py): a function payload -> text, or None for the code writer; never saved
         self.choice_log: list = []         # every choice anyone made, the canonical record of the league's history
         self.passed_over: list = []        # candidate cards that were not hired (the Archive keeps them)
         self._cand_ids = 0

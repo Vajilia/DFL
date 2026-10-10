@@ -146,6 +146,10 @@ class PlayerCard:
     relationships: Dict[str, int] = field(default_factory=dict)   # agent id -> score -100..100 (starts empty)
     career: List[dict] = field(default_factory=list)              # facts the engine knows
     decision_log: List[dict] = field(default_factory=list)        # choices she made (Interaction system, later)
+    dob: str = ""                            # date of birth (YYYY-MM-DD), from her origin (prospects.py)
+    bio: str = ""                            # the short paragraph about her, written by the enrichment agent or the code fallback (enrichment.py)
+    profile: str = ""                        # her player page, rendered from the card (enrichment.py)
+    enriched: str = ""                       # how the bio was written: "" not yet, "code", or "agent"
 
     @property
     def name(self) -> str:
@@ -351,6 +355,9 @@ def make_player_card(seed: int, p, year: int = 0) -> PlayerCard:
     r = _rng(seed, "player", p.id)
     first, last = make_name(seed, p.id)
     hometown, path = r.choice(CP.HOMETOWNS), r.choice(CP.PATHS)
+    import prospects as PR
+    origin = PR.ensure_origin(seed, p, year)                      # her college, date of birth and hometown (private streams: the random stream is untouched)
+    hometown = origin["hometown"]
     good, _ga, bad, _ba = birth_archetypes(p.pos, p.ratings)
     family = ARCHETYPE_FAMILY[good]
     ego = max(-EGO_CLIP, min(EGO_CLIP, r.gauss(0.0, EGO_SD)))
@@ -360,7 +367,7 @@ def make_player_card(seed: int, p, year: int = 0) -> PlayerCard:
     card = PlayerCard(pid=p.id, first=first, last=last, hometown=hometown, path=path,
                       archetype_pos=good, archetype_neg=bad, family=family,
                       shape={a: p.ratings[a] - p.ovr for a in p.ratings}, ego=ego, temper=temper,
-                      perceived=perceived, trait="", wants="", fears="", pressure={}, born_year=year, last_year=year)
+                      perceived=perceived, trait="", wants="", fears="", pressure={}, born_year=year, last_year=year, dob=origin["dob"])
     card.trait = express(card, p.ratings)
     card.wants, card.fears = CP.TRAITS[card.trait]
     card.pressure = _pressure(pressure_r, card.trait)
@@ -523,6 +530,11 @@ def render_player(p, lg=None) -> str:
     mood = "overconfident" if conf > 0.25 else "full of doubt" if conf < -0.25 else "clear-eyed"
     L = [f"### {c.name}  ({p.pos}, {status})", "```yaml"]
     L.append(f"IDENTITY: [{c.name}, age {p.age}, from {c.hometown}; {c.path}]")
+    if p.origin:
+        import prospects as PR
+        L.append(f"ORIGIN: [born {c.dob}; {p.origin['college']} (tier {p.origin['tier']}); senior year " + PR.stat_line(p.pos, p.origin['stats'][-1]) + "]")
+    if c.bio:
+        L.append(f"BIO ({c.enriched}): {c.bio}")
     L.append(f"SOUL (fixed): [+ {c.archetype_pos}, - {c.archetype_neg}]  temperament family: {c.family}")
     L.append(f"PERSONALITY: [{c.trait}] wants {c.wants}; fears {c.fears}")
     L.append(f"  - allowed by her soul: {', '.join(FAMILY_TRAITS[c.family])}; right now she is {mood} ({conf:+.2f})")

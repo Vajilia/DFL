@@ -47,9 +47,9 @@ OWNER_RETIRE_FROM, OWNER_MAX_AGE = 65, 85
 HEAT_DECAY = 0.6
 HEAT_EXILE = 0.0 
 FIRE_BASE, FIRE_PATIENCE = 0.15, 0.20    # coach is fired when heat > base + patience-based slack (patience 50 -> 0.25)
-ROPE_WEIGHT = 1.0                        # esteem buys rope: a coach at the legend bar takes twice the heat to fire (see recognition.esteem_ratio)
-GM_ROPE_WEIGHT = 0.5
-HALO_POINTS = 3.0                        # a CEO sees a famous candidate's ratings this many points higher at the legend bar (her blind spot; the truth is unchanged)
+ROPE_WEIGHT = 0.0                        # esteem buys rope: at 1.0 a coach at the legend bar takes twice the heat to fire (recognition.esteem_ratio). 0 since 2026-10-10: the Commissioner wants organic outcomes, so fame buys no patience
+GM_ROPE_WEIGHT = 0.0                     # the same for GMs (was 0.5)
+HALO_POINTS = 0.0                        # at 3.0 a CEO saw a famous candidate's ratings this many points higher at the legend bar (her blind spot). 0 since 2026-10-10: fame is not a halo
 GM_FIRE_FACTOR = 1.5                     # GMs get more rope than coaches
 NEW_OWNER_CLEAN_HOUSE = 0.15             # chance (scaled by involvement) a new CEO fires the coach and the GM on arrival
 # general manager levers (small and capped; sized against the fairness bands)
@@ -655,7 +655,7 @@ def season_end(lg, year: int, pct: Dict[int, float], new_exiles, champion: int, 
         new_boss = t.id in out["new_owner_teams"]
         clean = new_boss and r.random() < NEW_OWNER_CLEAN_HOUSE * o.ratings["involvement"] / 50.0
         c, g = t.coach, (None if t.id in retired_gm else t.gm)
-        clean_coach = clean and not (c is not None and RC.is_famous(c))          # nobody sweeps out a famous coach
+        clean_coach = clean                                                       # a new CEO's clean-house is the same for every coach, famous or not (removed the famous-coach shield, 2026-10-10)
         thr_c = _fire_threshold(o, 1.0 + ROPE_WEIGHT * (RC.esteem_ratio(c) if c is not None else 0.0))
         thr_g = _fire_threshold(o, GM_FIRE_FACTOR * (1.0 + GM_ROPE_WEIGHT * (RC.esteem_ratio(g) if g is not None else 0.0)))
         can_coach = c is not None and t.id not in out["coach_retired"] and not (c.protected_until >= year)     # a guarantee (interviews.py) cannot be fired through

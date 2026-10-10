@@ -175,6 +175,8 @@ def run_season(league: League, year: int, rng: random.Random, opt: Options = Non
             staff_log = staff_cards.season_end(league, year, pct, new_exiles, champion, playoff_teams, recall_div)
             votes = set(staff_log["votes"])
             cards.ensure_cards(league, year)
+            import enrichment
+            off_log["enrichment"] = enrichment.run(league, year)     # the bios of this year's first-round and second-round draftees (flavour only)
             finance.apply_nudges(league)         # the fans' view of the spending reaches the CEO who earned it, for next year's approval
         else:
             cards.offseason_cards(league, year)

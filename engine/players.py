@@ -60,6 +60,7 @@ class Player:
     elevations: int = 0                  # times elevated from the practice squad to a game-day roster this season (at most 3)
     ir_games: int = 0                    # games since she went on injured reserve
     ir_designated: bool = False          # designated to return from injured reserve this season (uses one of the team's 8)
+    origin: Dict = field(default_factory=dict)    # where she came from (prospects.py): college, tier, date of birth, hometown, production grade, four college seasons
 
     def __post_init__(self):
         # Prior game histories are unavailable for founding players and pre-step-6 saves.

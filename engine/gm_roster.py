@@ -3,9 +3,10 @@
 The GM scouts and assembles the team. Step B gave her the offseason plan (gm_plan.py). Here the four things she does with it are hers too,
 each a Decision Point whose default is exactly what the engine's own rule did, so a league on the autopilot is unchanged:
 
-  * `gm_draft_pick`: the position of a first-round pick. The engine's draw is the default; she is shown the draw and the one position where a player
-    of that slot would add the most role utility (roles.py) to her club, and may take it instead. Later rounds stay with the scouts (the engine's
-    draw), as in the NFL, where the GM's board matters most at the top.
+  * `gm_draft_pick`: the prospect a first-round pick takes. The rule's pick (the best player on the consensus board, tilted toward the club's needs) is
+    the default; she is shown that prospect and the one among the top of the board who would add the most role utility (roles.py) to her club, as
+    the scouts' stat lines and her eye for talent give them to her, and may take the other instead. Later rounds stay with the scouts, as in the NFL,
+    where the GM's board matters most at the top.
   * `gm_resign`: whether to keep an important player (rated at the contract-table line or better) whose deal is up, or to extend one mid-contract.
     Only asked when the cap would allow the deal. A cornerstone (role utility far above the club's keep line) cannot be let go (the franchise tag
     exists to keep one), and a GM lets at most one important player walk against the rule in an offseason.
@@ -25,8 +26,9 @@ from __future__ import annotations
 import cards as C
 import roles
 
-ASK_ROUNDS = 1                       # draft rounds in which the GM chooses the position (0-based rounds below this): the first round, where her board matters most
-ALTERNATES = 1                       # positions offered besides the engine's draw: the one where a player of that slot would add the most role utility
+ASK_ROUNDS = 1                       # draft rounds in which the GM chooses the prospect (0-based rounds below this): the first round, where her board matters most
+ALTERNATES = 1                       # prospects offered besides the rule's: the one among the top of the board who would add the most role utility
+BOARD_WINDOW = 12                    # how far down the consensus board the GM looks for an alternate
 CORNERSTONE_MARGIN = 45.0             # a player whose role utility is this far above the club's keep line is a cornerstone: the GM cannot let her walk (the franchise tag exists to keep one)
 LET_GO_MAX = 1                       # most important players one GM can let walk in an offseason when the rule would keep them (the franchise tag and the cap bound a real GM the same way)
 FA_SHOWN = 2                         # free agents offered: the rule's pick and the next best fit
@@ -54,41 +56,57 @@ def _rank(lg, t) -> int:
 
 
 # ---- the draft -------------------------------------------------------------------------------------------------------------------------
-def draft_pick(lg, t, year: int, overall: int, rnd: int, drawn: str, rm, focus: str) -> str:
-    """The position the club takes at this pick: the engine's draw unless the GM chooses another in the first two rounds."""
+def draft_pick(lg, t, year: int, overall: int, rnd: int, drawn, board, rm, focus: str):
+    """The prospect the club takes at this pick: the rule's (`drawn`, a player on the board) unless the GM chooses another in the first round.
+    She is shown the rule's prospect and the best alternate among the top of the board, each as she sees them: college, the production grade the
+    scouts read off the stat lines (blurred by her eye), and the role utility a player of that grade would add to her roster."""
     g = t.gm
     if g is None or rnd >= ASK_ROUNDS:
         return drawn
     import decisions as D
-    import autotrade
+    import prospects as PR
     import staff_cards as SC
     from positions import POSITIONS, ROSTER_COUNTS
-    expect = autotrade._rookie_expect(overall, rm) + SC.gm_scouting_bonus(t)
+    bonus = SC.gm_scouting_bonus(t)
     counts = {p: 0 for p in POSITIONS}
     for q in t.roster:
         counts[q.pos] += 1
-    scored = []
-    for pos in POSITIONS:
-        if pos == drawn:
-            continue
-        if pos in ("K", "P") and (overall <= 100 or counts[pos] >= ROSTER_COUNTS[pos]):
-            continue                                       # no one spends a first- or second-round pick on a kicker or punter
-        scored.append((roles.utility(t.roster, pos, expect), pos))
-    scored.sort(key=lambda x: (-x[0], POSITIONS.index(x[1])))
-    pick_list = [drawn] + [pos for _, pos in scored[:ALTERNATES]]
+    seen = {}
 
-    def opt(pos):
-        u = roles.utility(t.roster, pos, expect)
-        return dict(id=pos, label=f"Take a {pos}", tags=dict(position=pos, role_utility=round(u, 1), would_be=roles.role_if_signed(t.roster, pos, expect),
-                                                              on_roster=counts[pos], roster_wants=ROSTER_COUNTS[pos]))
-    ctx = dict(draft="the draft", round=rnd + 1, overall_pick=overall, rookie_rating_expected_at_this_slot=round(expect, 1),
+    def see(p):
+        if p.id not in seen:
+            seen[p.id] = _eye(lg, g, "draft", year, p.id, p.origin["grade"]) + bonus
+        return seen[p.id]
+
+    scored = []
+    for p in board[:BOARD_WINDOW]:
+        if p is drawn:
+            continue
+        if p.pos in ("K", "P") and (overall <= 100 or counts[p.pos] >= ROSTER_COUNTS[p.pos]):
+            continue                                       # no one spends a first- or second-round pick on a kicker or punter
+        scored.append((roles.utility(t.roster, p.pos, see(p)), p))
+    scored.sort(key=lambda x: (-x[0], x[1].origin["class_rank"]))
+    pick_list = [drawn] + [p for _, p in scored[:ALTERNATES]]
+
+    def opt(p):
+        u = roles.utility(t.roster, p.pos, see(p))
+        o = p.origin
+        return dict(id=str(p.id), label=f"Take {p.pos} from {o['college']} (board rank {o['class_rank']})",
+                    tags=dict(position=p.pos, college=o["college"], board_rank=o["class_rank"], age=p.age, grade_as_you_see_her=round(see(p), 1),
+                              role_utility=round(u, 1), would_be=roles.role_if_signed(t.roster, p.pos, see(p)),
+                              senior_year=PR.stat_line(p.pos, o["stats"][-1]), on_roster=counts[p.pos], roster_wants=ROSTER_COUNTS[p.pos]))
+    ctx = dict(draft="the draft", round=rnd + 1, overall_pick=overall,
                your_plan="draft for need" if focus == "needs" else "draft the best player", your_team_strength_rank=_rank(lg, t),
-               note="You see your own roster exactly; the rookies are not made until you choose. Role utility is what a player of that slot adds in the role she would play.")
-    dp = D.DecisionPoint("gm_draft_pick", year, t.id, "gm", g, ctx, [opt(p) for p in pick_list], drawn, dict(team=t, strength_rank=ctx["your_team_strength_rank"]))
+               note="You see your own roster exactly. A prospect's grade is what the scouts read off her college production, blurred by your eye for talent; "
+                    "her true rating is not known until she plays. Role utility is what a player of that grade adds in the role she would play.")
+    dp = D.DecisionPoint("gm_draft_pick", year, t.id, "gm", g, ctx, [opt(p) for p in pick_list], str(drawn.id),
+                         dict(team=t, strength_rank=ctx["your_team_strength_rank"], true={str(p.id): (p.pos, p.ovr) for p in pick_list}))
     chosen = D.decide(lg, dp)
-    if chosen != drawn:
-        _log(g, year, f"took a {chosen} at pick {overall} (the board said {drawn})")
-    return chosen
+    if chosen != str(drawn.id):
+        took = next(p for p in pick_list if str(p.id) == chosen)
+        _log(g, year, f"took a {took.pos} from {took.origin['college']} at pick {overall} (the board said a {drawn.pos} from {drawn.origin['college']})")
+        return took
+    return drawn
 
 
 # ---- re-signing and extensions ----------------------------------------------------------------------------------------------------------

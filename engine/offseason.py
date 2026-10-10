@@ -26,6 +26,7 @@ import transactions as T
 import injuries as IJ
 import roles
 import gm_roster as GMR
+import prospects as PR
 
 CUT_CLAIMS_MAX = 3            # MODEL: most waiver claims one club makes at the cutdown
 CUT_CLAIM_MARGIN = 4.0        # MODEL: a cut player must beat the club's weakest player at her position by this many rating points to be claimed
@@ -90,19 +91,35 @@ def _team_counts(roster: List[Player]) -> Dict[str, int]:
     return c
 
 
-def _pick_rookie_position(roster: List[Player], overall: int, rng: random.Random, focus: str = "needs") -> str:
+def _position_weights(roster: List[Player], overall: int, focus: str = "needs") -> Dict[str, float]:
+    """How much a club wants a rookie at each position at this pick: its holes first (or the roster's proportions when the GM's plan is to take the best
+    player), and almost never a kicker or punter in the first two rounds."""
     counts = _team_counts(roster)
-    w = []
+    w = {}
     for pos in POSITIONS:
         need = ROSTER_COUNTS[pos] - counts[pos]
         if pos in ("K", "P"):
             x = 1.0 if need > 0 else 0.02
             if overall <= 100:                       # no one spends a first- or second-round pick on a kicker or punter
                 x *= 0.05
-            w.append(x)
+            w[pos] = x
         else:
-            w.append(max(0.15, need + 0.4) * ROSTER_COUNTS[pos] if focus == "needs" else float(ROSTER_COUNTS[pos]))     # the GM's draft focus (gm_plan.py)
-    return rng.choices(POSITIONS, w)[0]
+            w[pos] = max(0.15, need + 0.4) * ROSTER_COUNTS[pos] if focus == "needs" else float(ROSTER_COUNTS[pos])     # the GM's draft focus (gm_plan.py)
+    return w
+
+
+def _pick_rookie_position(roster: List[Player], overall: int, rng: random.Random, focus: str = "needs") -> str:
+    w = _position_weights(roster, overall, focus)
+    return rng.choices(POSITIONS, [w[p] for p in POSITIONS])[0]
+
+
+DRAFT_REACH = 0.15          # the rule's walk down the board: a prospect is taken with probability (the club's want for her position) / (this x its strongest want)
+
+
+def _rule_pick(board: List[Player], roster: List[Player], overall: int, rng: random.Random, focus: str) -> Player:
+    """The autopilot's selection: the best player on the consensus board, tilted toward the positions the club wants (prospects.best_available)."""
+    w = _position_weights(roster, overall, focus)
+    return PR.best_available(board, lambda p: w[p.pos], rng, DRAFT_REACH * max(w.values()))
 
 
 def _slot_floor(roster: List[Player], pos: str) -> float:
@@ -397,10 +414,15 @@ def run_roster_offseason(lg: League, rng: random.Random, rm: RosterModel, year: 
     def draft_pick_made(pk, overall, rnd):
         t = lg.by_id[pk.owner]
         mv.check_free(pk.key)                              # before anything is made for it: a used or held pick stops the draft cleanly
-        pos = _pick_rookie_position(t.roster, overall, rng, plan[t.id]["draft"])
-        pos = GMR.draft_pick(lg, t, year, overall, rnd, pos, rm, plan[t.id]["draft"])           # the GM may take another position in the first two rounds
-        p = make_player(rng, lg.new_id(), pos, clamp(rookie_ovr(overall, rm, rng) + SC.gm_scouting_bonus(t), 30, 95),
-                        rng.choice((22, 22, 22, 23)), t.id, draft_year=year, draft_pick=overall)
+        p = _rule_pick(board, t.roster, overall, rng, plan[t.id]["draft"])
+        p = GMR.draft_pick(lg, t, year, overall, rnd, p, board, rm, plan[t.id]["draft"])       # the GM may take another prospect in the first round
+        board.remove(p)
+        p.team_id, p.draft_pick = t.id, overall
+        bonus = SC.gm_scouting_bonus(t)                    # a good scouting department finds the better player at the same slot
+        if bonus:
+            for a in p.ratings:
+                p.ratings[a] = clamp(p.ratings[a] + bonus)
+            p.recompute()
         p.years_in_league = 0
         p.accrued_seasons = p.credited_seasons = 0
         EC.sign(p, EC.rookie_salary(overall), EC.ROOKIE_YEARS, share=EC.ROOKIE_BONUS_SHARE[rnd],
@@ -413,6 +435,9 @@ def run_roster_offseason(lg: League, rng: random.Random, rm: RosterModel, year: 
         elif pk.owner != pk.original:
             log["traded_picks_used"] = log.get("traded_picks_used", 0) + 1
 
+    n_class = R.DRAFT_ROUNDS * per + sum(len(mv.comp_picks(year, r + 1)) for r in range(R.DRAFT_ROUNDS))
+    board = PR.build_class(lg, rm, rng, year, n_class)     # this year's class: one row per prospect on the consensus board, best first
+    log["class_size"] = len(board)
     for rnd in range(R.DRAFT_ROUNDS):
         for orig in sorted(teams, key=lambda t: pick_of[t.id]):
             pk = mv.picks[(year, rnd + 1, orig.id)]

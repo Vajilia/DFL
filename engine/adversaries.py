@@ -190,7 +190,9 @@ class RosterOracle:
             return dp.default, "the rules"
         pick = max if top else min
         if dp.kind == "gm_draft_pick":
-            return pick(dp.options, key=lambda o: o["tags"]["role_utility"])["id"], "most role utility" if top else "least"
+            import roles
+            t, true = dp.internal["team"], dp.internal["true"]
+            return pick(dp.options, key=lambda o: roles.utility(t.roster, true[o["id"]][0], true[o["id"]][1]))["id"], "most true role utility" if top else "least"
         if dp.kind == "gm_resign":
             import roles
             p = dp.internal["player"]

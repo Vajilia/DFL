@@ -231,7 +231,8 @@ check("a coordinator who has earned it can be hired away as a head coach: no per
       and any(e["event"] == "promoted" for e in mover.career))
 L4.driver = Pick({})
 out = CO.season(L4, 8, {t.id: 0.5 for t in L4.teams}, set())
-check("and her old club refills the seat in the same offseason, with its head coach choosing", t_old.oc is not None and t_old.oc is not mover and any(h[0] == t_old.id for h in out["hired"]))
+check("and her old club refills the seat in the same offseason (a hire dated that year, by the head coach's round or the season's seat check)",
+      t_old.oc is not None and t_old.oc is not mover and any(e["event"] == "hired" and e["team"] == t_old.id and e["year"] == 8 for e in t_old.oc.career))
 L4.driver = None
 check("a coordinator with too little time in her seat is not on the head-coach market", all(c is not t_old.dc for c in CO.slate(L4, L4.teams[3], 9, set(), True, random.Random(2))) or t_old.dc.seasons_with_team >= CO.PROMOTE_MIN_YEARS)
 promos = [c for c in L.coaches if any(e["event"] == "promoted" for e in c.career)]
