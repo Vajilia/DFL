@@ -122,7 +122,8 @@ check("every team still has a coach and none is over the age limit",
 check("coaches retire and are replaced over 25 seasons", len(L.coaches) > 48 and sum(c.retired for c in L.coaches) > 10,
       f"{len(L.coaches)} coaches hired, {sum(c.retired for c in L.coaches)} retired")
 ages = [t.coach.age for t in L.teams]
-check("coach ages look sensible", 38 <= min(ages) and max(ages) <= C.COACH_MAX_AGE, f"{min(ages)}-{max(ages)}")
+import coordinators as CO  # noqa: E402
+check("coach ages look sensible (nobody younger than the creator's youngest coach: one pool now feeds head coaches and coordinators)", CO.POOL_AGE[0] <= min(ages) and max(ages) <= C.COACH_MAX_AGE, f"{min(ages)}-{max(ages)}")
 check("the league's coach effects stay centered near zero", abs(st.mean([t.coach.offense_points + t.coach.defense_points for t in L.teams])) < 0.4)
 
 

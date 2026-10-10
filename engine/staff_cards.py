@@ -321,7 +321,13 @@ def _recently_fired_here(card, team_id: int, year: int) -> bool:
 def _candidates(lg, kind: str, make, t, year: int, o, nxt: int, taken: set):
     """The three people a CEO sees: the card the old rule would have hired comes first (its number is `nxt`), then people between
     jobs who are still in the business (the carousel; nobody is offered to two teams in the same round), then fresh people."""
-    pool = lg.free_coaches if kind == "coach" else lg.free_gms
+    if kind == "coach":
+        # one coaching pool (coordinators.py): the CEO sees three people drawn from the pool of coaches between jobs and the coordinators on other
+        # clubs who have earned a head-coaching interview; every one of them is an existing person, and the first is the autopilot's choice
+        import coordinators as CO
+        cands = CO.slate(lg, t, year, taken, True, C._rng(lg.card_seed, "vets", kind, t.id, year, o.oid))
+        return cands, {id(c) for c in cands}
+    pool = lg.free_gms
     cands = [make(lg.card_seed, nxt, t.id)]
     avail = [c for c in pool if id(c) not in taken and not _recently_fired_here(c, t.id, year)]
     r = C._rng(lg.card_seed, "vets", kind, t.id, year, o.oid)
@@ -362,8 +368,16 @@ def _release(lg, kind: str, card, team_id: int, year: int):
 def _install(lg, kind: str, t, cands, vets, k: int, year: int):
     """Everyone not chosen is passed over (the vets simply stay where they are); the chosen one takes the job."""
     idf = _idf(kind)
-    pool_name = "free_coaches" if kind == "coach" else "free_gms"
     new = cands[k]
+    if kind == "coach":
+        import coordinators as CO
+        CO.take(lg, new, year)                      # she leaves the pool, or her coordinator seat (her old club refills it)
+        new.team_id, new.idle_years, new.heat, new.seasons_with_team = t.id, 0, 0.0, 0
+        new.retired, new.job = False, "head coach"
+        new.career.append({"year": year, "event": "hired", "team": t.id})
+        LV.seat_ref(lg, kind, new)
+        return new
+    pool_name = "free_gms"
     first_time = getattr(new, idf) >= CAND_BASE or k == 0
     for i, c in enumerate(cands):
         if i != k and id(c) not in vets:
@@ -392,7 +406,7 @@ def _hire_point(lg, s, year: int):
     kind, t, o, cands, vets = s["kind"], s["t"], s["o"], s["cands"], s["vets"]
     attrs, is_coach = (COACH_VIEW, True) if kind == "coach" else (tuple(GM_ATTRS), False)
     left = s["left"]
-    opts = [dict(id=f"candidate_{i}", label=f"Hire {cands[i].name}", tags={"between_jobs": id(cands[i]) in vets}, view=_person_view(lg, o, cands[i], year, attrs, is_coach))
+    opts = [dict(id=f"candidate_{i}", label=f"Hire {cands[i].name}", tags={"between_jobs": (cands[i].team_id is None) if kind == "coach" else id(cands[i]) in vets}, view=_person_view(lg, o, cands[i], year, attrs, is_coach))
             for i in left]
     return D.DecisionPoint(f"hire_{kind}", year, t.id, "owner", o, dict(team_needs="a head coach" if kind == "coach" else "a general manager",
                                                                          **({"refused_you": s["refused"]} if s["refused"] else {})), opts,
@@ -409,6 +423,10 @@ def _hire_round(lg, year: int, jobs) -> list:
     import interactions as IX
     import interviews as IV
     import tables as TB
+    n_coach = sum(1 for kind, _ in jobs if kind == "coach")
+    if n_coach:
+        import coordinators as CO
+        CO.top_up(lg, year, n_coach)                          # the creator keeps the coaching pool populated (only when it is under its target)
     made = {"coach": 0, "gm": 0}
     base = {"coach": lg._coach_ids, "gm": lg._gm_ids}
     taken: set = set()
@@ -434,7 +452,7 @@ def _hire_round(lg, year: int, jobs) -> list:
         for s in open_:
             cand = s["cands"][s["pick"]]
             attrs, is_coach = (COACH_VIEW, True) if s["kind"] == "coach" else (tuple(GM_ATTRS), False)
-            tables.append(IV.Interview(lg, year, s["t"], s["kind"], s["o"], cand, id(cand) in s["vets"], len(s["left"]) - 1,
+            tables.append(IV.Interview(lg, year, s["t"], s["kind"], s["o"], cand, (cand.team_id is None) if s["kind"] == "coach" else id(cand) in s["vets"], len(s["left"]) - 1,
                                        fires.get((s["kind"], s["t"].id), 0), _person_view(lg, s["o"], cand, year, attrs, is_coach)))
         TB.run_tables(lg, tables)
         for s, tb in zip(open_, tables):

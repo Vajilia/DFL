@@ -58,9 +58,9 @@ READABLE = ("2", "3")                          # layouts it can open: version 2 
                                                # and the first save upgrades the file to version 3; any other version is refused rather than guessed at
 
 # what the league record holds beyond the lists of people: every plain attribute of the League, so a new one cannot be forgotten
-PLAIN = ("has_rosters", "card_seed", "staff_on", "coaches_on", "fans_on", "interactions_on", "_coach_ids", "_owner_ids", "_gm_ids", "_coord_ids", "_cand_ids", "_media_ids", "pool", "finance_nudge", "proposals_made", "committee")
+PLAIN = ("has_rosters", "card_seed", "staff_on", "coaches_on", "fans_on", "interactions_on", "_coach_ids", "_owner_ids", "_gm_ids", "_cand_ids", "_media_ids", "pool", "finance_nudge", "proposals_made", "committee")
 LISTS = ("teams", "by_id", "free_agents", "new_id", "coaches", "retired_players", "owners", "gms", "archive", "driver", "choice_log", "passed_over",
-         "free_coaches", "free_gms", "coords", "free_coords", "titles", "hall", "fanbases", "media", "refs", "prev_pct", "movement")
+         "free_coaches", "free_gms", "titles", "hall", "fanbases", "media", "refs", "prev_pct", "movement")
 INT_KEYED = ("forecasts",)                     # card fields whose keys are numbers (JSON turns them into text)
 
 
@@ -97,9 +97,6 @@ def _everyone(lg):
     for o in lg.owners:
         if once(o):
             yield "owner", o.oid, o, o.status, o.team_id
-    for c in list(lg.coords):
-        if once(c):
-            yield "coord", c.cid, c, c.status, c.team_id
     for t in lg.teams:
         for p in list(t.roster or ()) + list(t.practice_squad) + list(t.ir):
             if p.card is not None and once(p.card):
@@ -130,14 +127,12 @@ def _classes() -> dict:
     import cards as C
     import fan_media_cards as FM
     import staff_cards as S
-    import coordinators as CO
-    return {"player": C.PlayerCard, "coach": C.CoachCard, "gm": S.GMCard, "owner": S.OwnerCard, "fans": FM.FanbaseCard, "media": FM.MediaCard,
-            "coord": CO.CoordCard}
+    return {"player": C.PlayerCard, "coach": C.CoachCard, "gm": S.GMCard, "owner": S.OwnerCard, "fans": FM.FanbaseCard, "media": FM.MediaCard}
 
 
 def _key(kind, card) -> int:
     return {"player": lambda c: c.pid, "coach": lambda c: c.cid, "gm": lambda c: c.gid, "owner": lambda c: c.oid,
-            "fans": lambda c: c.team_id, "media": lambda c: c.mid, "coord": lambda c: c.cid}[kind](card)
+            "fans": lambda c: c.team_id, "media": lambda c: c.mid}[kind](card)
 
 
 def _kind_of(card) -> str:
@@ -176,8 +171,10 @@ def _registry(lg) -> dict:
         add("gm", g)
     for o in list(lg.owners) + [t.owner for t in lg.teams if t.owner]:
         add("owner", o)
-    for c in list(lg.coords) + list(lg.free_coords) + [x for t in lg.teams for x in (t.oc, t.dc) if x is not None]:
-        add("coord", c)
+    for t in lg.teams:
+        for c in (t.oc, t.dc):
+            if c is not None:
+                add("coach", c)
     for f in lg.fanbases:
         add("fans", f)
     for m in lg.media:
@@ -216,8 +213,6 @@ def _league_record(lg, rng, year) -> dict:
     rec["free_coaches"] = [c.cid for c in lg.free_coaches]
     rec["free_gms"] = [g.gid for g in lg.free_gms]
     rec["passed_over"] = [["coach", c.cid] if hasattr(c, "cid") else ["gm", c.gid] for c in lg.passed_over]
-    rec["coords"] = [c.cid for c in lg.coords]
-    rec["free_coords"] = [c.cid for c in lg.free_coords]
     rec["titles"] = {str(k): v for k, v in lg.titles.items()}
     rec["fanbases"] = [f.team_id for f in lg.fanbases]
     rec["media"] = [m.mid for m in lg.media]
@@ -234,7 +229,7 @@ def _write_tables(db: sqlite3.Connection, lg, rng, year: int):
             cards.append((kind, ident, _dump({"card": _plain(card)})))
             continue
         status = {"coach": lambda c: "retired" if c.retired else "coaching" if c.team_id is not None else "between jobs",
-                  "gm": lambda c: c.status, "owner": lambda c: c.status, "coord": lambda c: c.status}[kind](card)
+                  "gm": lambda c: c.status, "owner": lambda c: c.status}[kind](card)
         people.append((kind, ident, card.name, status, card.team_id, card.age, card.trait, card.soul_pos, card.soul_neg, card.esteem, card.standing))
         cards.append((kind, ident, _dump({"card": _plain(card)})))
     for p in _players(lg):
@@ -335,8 +330,8 @@ def _rebuild(db: sqlite3.Connection):
         tm.owner = card("owner", t["owner"]) if t["owner"] is not None else None
         tm.gm = card("gm", t["gm"]) if t["gm"] is not None else None
         tm.fans = card("fans", t["fans"]) if t["fans"] is not None else None
-        tm.oc = card("coord", t["oc"]) if t.get("oc") is not None else None
-        tm.dc = card("coord", t["dc"]) if t.get("dc") is not None else None
+        tm.oc = card("coach", t["oc"]) if t.get("oc") is not None else None
+        tm.dc = card("coach", t["dc"]) if t.get("dc") is not None else None
         tm.scheme, tm.scheme_fit = dict(t.get("scheme", {})), dict(t.get("scheme_fit", {}))
         teams.append(tm)
     lg = League(teams)
@@ -352,8 +347,6 @@ def _rebuild(db: sqlite3.Connection):
     lg.free_coaches = [card("coach", i) for i in rec["free_coaches"]]
     lg.free_gms = [card("gm", i) for i in rec["free_gms"]]
     lg.passed_over = [card(k, i) for k, i in rec["passed_over"]]
-    lg.coords = [card("coord", i) for i in rec.get("coords", ())]
-    lg.free_coords = [card("coord", i) for i in rec.get("free_coords", ())]
     lg.titles = {int(k): list(v) for k, v in rec.get("titles", {}).items()}
     lg.fanbases = [card("fans", i) for i in rec["fanbases"]]
     lg.media = [card("media", i) for i in rec["media"]]

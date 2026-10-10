@@ -28,8 +28,8 @@ class Team:
     coach: object = None      # cards.CoachCard, the head coach
     owner: object = None      # staff_cards.OwnerCard
     gm: object = None         # staff_cards.GMCard
-    oc: object = None         # coordinators.CoordCard, the offensive coordinator (the head coach hires and fires her)
-    dc: object = None         # coordinators.CoordCard, the defensive coordinator
+    oc: object = None         # cards.CoachCard, the offensive coordinator (the head coach hires and fires her, from the one coaching pool)
+    dc: object = None         # cards.CoachCard, the defensive coordinator
     scheme: dict = field(default_factory=dict)       # this season's schemes after the head coach's say: {"offense": "pass", "defense": "balanced"}
     scheme_fit: dict = field(default_factory=dict)   # how well each scheme suits this season's roster, -1 to 1 (coordinators.preseason)
     fans: object = None       # fan_media_cards.FanbaseCard (belongs to the franchise, outlives its CEOs)
@@ -64,7 +64,7 @@ class League:
         self.card_seed = 0                 # seeds every character card; set from the league's own seed
         self.staff_on = True               # CEOs, GMs, recalls, firings
         self.coaches_on = True             # head coaches nudge team strength (turn off to compare)
-        self.coaches: list = []            # every head coach ever hired (the Archive keeps them)
+        self.coaches: list = []            # every coach card ever created, head coaches and coordinators alike (the Archive keeps them)
         self.retired_players: list = []    # retired players keep their cards
         self._coach_ids = 0
         self.owners: list = []             # every CEO and recall candidate ever generated
@@ -77,11 +77,8 @@ class League:
         self.choice_log: list = []         # every choice anyone made, the canonical record of the league's history
         self.passed_over: list = []        # candidate cards that were not hired (the Archive keeps them)
         self._cand_ids = 0
-        self.free_coaches: list = []       # coaches between jobs (fired or passed over): they live on and can be offered again
+        self.free_coaches: list = []       # the coaching pool: coaches between jobs (fired or passed over, or brought in by the character creator); the CEO hires her head coach from it and the head coach hires his coordinators from it
         self.free_gms: list = []
-        self.coords: list = []             # every coordinator ever hired (coordinators.py)
-        self.free_coords: list = []        # coordinators between jobs
-        self._coord_ids = 0
         self.titles: dict = {}             # team id -> the years it won the Diamond Coronation (the first priority of every role)
         self.refs: dict = {}               # the league's average coach and GM ratings (living.refresh_refs): effects are measured against these
         self.hall: list = []               # the Hall of Fame, in the order people were inducted
@@ -99,10 +96,6 @@ class League:
     def new_owner_id(self) -> int:
         self._owner_ids += 1
         return self._owner_ids
-
-    def new_coord_id(self) -> int:
-        self._coord_ids += 1
-        return self._coord_ids
 
     def new_gm_id(self) -> int:
         self._gm_ids += 1

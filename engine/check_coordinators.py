@@ -11,7 +11,9 @@ import sys
 import tempfile
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import cards as C  # noqa: E402
 import coordinators as CO  # noqa: E402
+import staff_cards as SC  # noqa: E402
 import decisions as D  # noqa: E402
 import gm_plan as GP  # noqa: E402
 import offseason as OFF  # noqa: E402
@@ -51,22 +53,25 @@ class Pick:
 
 # ---- the cards ---------------------------------------------------------------------------------------------
 L, rng, res = play(33, 8)
-first_names = [c.name for c in L.coords]
-check("every team has an offensive and a defensive coordinator, on her own side, with a unique id",
-      all(t.oc and t.dc and t.oc.side == "offense" and t.dc.side == "defense" for t in L.teams) and len({c.cid for c in L.coords}) == len(L.coords))
-check("a coordinator's name is not a head coach's", not ({c.name for c in L.coords} & {c.name for c in L.coaches}))
+first_names = [c.name for c in L.coaches]
+check("every team has an offensive and a defensive coordinator, who are ordinary coach cards doing that job, with a unique id",
+      all(isinstance(t.oc, C.CoachCard) and isinstance(t.dc, C.CoachCard) and t.oc.job == "offensive coordinator" and t.dc.job == "defensive coordinator" and t.coach.job == "head coach" for t in L.teams)
+      and len({c.cid for c in L.coaches}) == len(L.coaches))
+check("nobody holds two jobs: every head coach, coordinator and person in the pool is a different card",
+      len({id(x) for x in [t.coach for t in L.teams] + [t.oc for t in L.teams] + [t.dc for t in L.teams] + CO.pool(L)}) == 3 * 48 + len(CO.pool(L)))
 CO.refresh_refs(L)
 for side in CO.SIDES:
-    pts = [c.points for c in CO.seated(L, side)]
+    pts = [CO.points(c, side) for c in CO.seated(L, side)]
     check(f"the average {side} coordinator on the job is worth zero", abs(sum(pts) / len(pts)) < 0.03, f"{sum(pts) / len(pts):+.4f}")
-check("a coordinator's lift is capped", all(abs(c.points) <= CO.COORD_POINTS_AT_100 + 1e-12 for c in L.coords))
+check("a coordinator's lift is capped", all(abs(CO.points(c, s)) <= CO.COORD_POINTS_AT_100 + 1e-12 for s in CO.SIDES for c in CO.seated(L, s)))
 bound = CO.COORD_POINTS_AT_100 + CO.SCHEME_CAP
 check("a unit's whole coaching lift stays inside the cap", all(abs(x) <= bound + 1e-9 for t in L.teams for x in CO.lifts(t.coach, t)), f"bound {bound}")
 check("every team's scheme fits are mirrored and between -1 and 1",
       all(abs(t.scheme_fit["pass"] + t.scheme_fit["run"]) < 1e-9 and abs(t.scheme_fit["blitz"] + t.scheme_fit["coverage"]) < 1e-9
           and all(-1 <= v <= 1 for v in t.scheme_fit.values()) for t in L.teams))
 check("the card prints", all(k in CO.render_coord(L.teams[3].oc, L) for k in ("PLAYCALLING", "VISION", "offensive coordinator")))
-check("coordinators grow, fade and retire: some have retired, some are between jobs, ages move", any(c.status == "retired" for c in L.coords) and L.free_coords and all(len(c.history) >= 1 for c in L.coords))
+check("coordinators grow, fade and retire like any coach: some have retired as coordinators, ratings move", any(c.retired and any(e.get("job", "").endswith("coordinator") for e in c.career) for c in L.coaches)
+      and any(len(c.history) > 1 for t in L.teams for c in (t.oc, t.dc)))
 
 # ---- the Decision Points -----------------------------------------------------------------------------------
 kinds = {e["kind"] for e in L.choice_log}
@@ -82,8 +87,8 @@ check("head coaches fire coordinators, and every seat is filled again", len(fire
 # vision sharpens the proposal; gamecraft sharpens the veto
 t0 = L.teams[0]
 def share_best(vision, side="offense"):
-    c = CO.make_coord_card(L.card_seed, 9000 + int(vision), side, t0.id)
-    c.ratings["vision"] = vision
+    c = C.make_coach_card(L.card_seed, 90000 + int(vision), None, age=40)
+    c.ratings["gamecraft"] = vision
     n = 0
     for y in range(1, 301):
         dp = CO._scheme_point(L, t0, side, c, y, 5, 0.5)
@@ -117,14 +122,14 @@ CO.preseason(L, 100)
 worst = [CO.lifts(t.coach, t) for t in L.teams]
 check("even a league of the worst schemes, all approved, stays inside the cap",
       all(abs(x) <= bound + 1e-9 for pair in worst for x in pair) and all(t.scheme["offense"] != "balanced" or abs(t.scheme_fit["pass"]) < 0.02 for t in L.teams))
-before = len(L.coords)
+before = len(L.coaches)
 L.driver = Pick({"coord_review": lambda dp: "fire_both" if "fire_both" in dp.option_ids else dp.default})
 pct = {t.id: 0.5 for t in L.teams}
 out = CO.season(L, 101, pct, set())
-check("firing every coordinator fills every seat in the same offseason with people who have real ids",
-      all(t.oc and t.dc for t in L.teams) and len(out["fired"]) >= 70 and all(t.oc.cid < CO.CAND_BASE and t.dc.cid < CO.CAND_BASE for t in L.teams)
-      and len({c.cid for c in L.coords}) == len(L.coords), f"{len(out['fired'])} fired")
-check("candidates who were not hired never enter the league's books", len(L.coords) - before <= len(out["hired"]), f"{len(L.coords) - before} new cards for {len(out['hired'])} seats")
+check("firing every coordinator fills every seat in the same offseason, from the pool, and nobody holds two seats",
+      all(t.oc and t.dc for t in L.teams) and len(out["fired"]) >= 70 and len({id(x) for t in L.teams for x in (t.oc, t.dc)}) == 96
+      and not any(any(c is t.oc or c is t.dc for t in L.teams) for c in L.free_coaches), f"{len(out['fired'])} fired")
+check("the creator added people only to give each open seat a slate (the pool was topped up, not flooded)", len(L.coaches) - before <= 3 * len(out["hired"]) + CO.POOL_MIN, f"{len(L.coaches) - before} new cards for {len(out['hired'])} seats")
 L.driver = Pick({"coord_review": lambda dp: "keep_both"})
 out = CO.season(L, 102, pct, set())
 check("a head coach who keeps everyone fires no one (age and retirement still open seats, and those are filled)", not out["fired"] and all(t.oc and t.dc for t in L.teams))
@@ -160,22 +165,95 @@ team.roster = saved
 check("drafting for need goes for a missing position; drafting the best player does not", needs > 2 * best and best > 0, f"{needs:.3f} vs {best:.3f}")
 check("the GM's plan is on her card when it is not the old rule", any(g["action"].startswith("planned the offseason") for g in sum((t.gm.decision_log for t in Lt.teams), [])))
 
+# ---- one coaching pool ---------------------------------------------------------------------------------------
+class Choose(Pick):
+    pass
+
+
+
+L3, r3, _ = play(21, 6)
+before = L3._coach_ids
+n = len(CO.pool(L3))
+made = CO.top_up(L3, 7, 0)
+check("a pool at or over its target is left alone (no new people, no new ids)", (n >= CO.POOL_MIN and made == 0 and L3._coach_ids == before) or (n < CO.POOL_MIN and made == CO.POOL_MIN - n), f"{n} in the pool")
+L3.free_coaches = L3.free_coaches[:5]
+made = CO.top_up(L3, 7, 0)
+check("a pool that has run low is topped up to its target", len(CO.pool(L3)) == CO.POOL_MIN and made > 0, f"{made} new people")
+made = CO.top_up(L3, 7, 30)
+check("and to a slate for every open seat when many are open at once", len(CO.pool(L3)) >= CO.SLATE * 30, f"{len(CO.pool(L3))} in the pool for 30 seats")
+newest = [c for c in L3.coaches if any(e["event"] == "entered_coaching" for e in c.career)]
+check("the creator's new people are young coaches in the making", newest and all(CO.POOL_AGE[0] <= c.age <= CO.POOL_AGE[1] + 8 for c in newest), f"{len(newest)} people")
+
+# a head coach can hire a former head coach as a coordinator
+t1 = L3.teams[1]
+x = L3.teams[0].coach
+L3.driver = None
+SC._release(L3, "coach", x, 0, 7)
+x.career.append({"year": 7, "event": "fired", "team": 0})
+L3.teams[0].coach = None
+x.job = ""
+t1.oc = None
+keep = (CO.POOL_MIN, CO.SLATE)
+L3.free_coaches = [c for c in L3.free_coaches if c is x][:1] + [c for c in L3.free_coaches if c is not x][:2]
+CO.POOL_MIN = 0
+L3.driver = Pick({"hire_coordinator": lambda dp: next(k for k, c in dp.internal["candidates"].items() if c is x)})
+hired = CO._hire_round(L3, 7, [(t1, "offense")])
+CO.POOL_MIN = keep[0]
+check("a head coach can hire a former head coach as her coordinator, from the same pool", t1.oc is x and x.job == "offensive coordinator" and CO.was_head_coach(x)
+      and not any(c is x for c in L3.free_coaches), hired[0][2] if hired else "")
+L3.driver = None
+
+# a coordinator on another club can be hired away as a head coach, and her club refills her seat in the same offseason
+L4, r4, _ = play(5, 7)
+t_new, t_old = L4.teams[7], L4.teams[9]
+mover = t_old.oc
+mover.seasons_with_team = CO.PROMOTE_MIN_YEARS
+old_boss = t_old.coach
+t_new.coach = None
+class TakeCoordinator(Pick):
+    name = "take-coordinator"
+cands_seen = []
+def pick_coord(dp):
+    cands_seen.extend(dp.internal["candidates"].values())
+    return next((k for k, c in dp.internal["candidates"].items() if c is mover), dp.default)
+L4.driver = Pick({"hire_coach": pick_coord})
+r = random.Random(1)
+orig = CO.slate
+def forced(lg, t, year, taken, head, rr):
+    got = orig(lg, t, year, taken, head, rr)
+    if head and mover not in got:
+        got[-1] = mover
+    return got
+CO.slate = forced
+SC._hire_round(L4, 8, [("coach", t_new)])
+CO.slate = orig
+check("a coordinator who has earned it can be hired away as a head coach: no permission step, she leaves her seat", t_new.coach is mover and mover.job == "head coach" and t_old.oc is None
+      and any(e["event"] == "promoted" for e in mover.career))
+L4.driver = Pick({})
+out = CO.season(L4, 8, {t.id: 0.5 for t in L4.teams}, set())
+check("and her old club refills the seat in the same offseason, with its head coach choosing", t_old.oc is not None and t_old.oc is not mover and any(h[0] == t_old.id for h in out["hired"]))
+L4.driver = None
+check("a coordinator with too little time in her seat is not on the head-coach market", all(c is not t_old.dc for c in CO.slate(L4, L4.teams[3], 9, set(), True, random.Random(2))) or t_old.dc.seasons_with_team >= CO.PROMOTE_MIN_YEARS)
+promos = [c for c in L.coaches if any(e["event"] == "promoted" for e in c.career)]
+check("over eight seasons some coordinators were hired away as head coaches", len(promos) >= 5, f"{len(promos)} promotions")
+fh = [c for c in L.coaches if CO.was_head_coach(c) and any(e["event"] == "hired" and "coordinator" in str(e.get("job", "")) for e in c.career)]
+check("and some coordinators had been head coaches before", len(fh) >= 5, f"{len(fh)} former head coaches")
+
 # ---- saves, determinism, old leagues --------------------------------------------------------------------------
 path = tempfile.mktemp(suffix=".db")
 La3, ra3, _ = play(7, 5)
 store.save(path, La3, ra3, 5)
 Lb, rb, yb = store.load(path)
 same = all(a.oc.name == b.oc.name and a.dc.name == b.dc.name and a.scheme == b.scheme and a.oc.heat == b.oc.heat for a, b in zip(La3.teams, Lb.teams))
-check("coordinators, schemes, free coordinators and the Coronation list survive a save", same and len(Lb.coords) == len(La3.coords) and len(Lb.free_coords) == len(La3.free_coords) and Lb.titles == La3.titles)
+check("coordinators, schemes, the coaching pool and the Coronation list survive a save", same and len(Lb.coaches) == len(La3.coaches) and len(Lb.free_coaches) == len(La3.free_coaches) and Lb.titles == La3.titles)
 x = run_season(La3, 6, ra3, Options(engine="fast", keep_boxes=False))
 y = run_season(Lb, 6, rb, Options(engine="fast", keep_boxes=False))
 check("a loaded league plays on exactly as the original (champion and every coordinator)", x.champion == y.champion and all(a.oc.name == b.oc.name and a.dc.name == b.dc.name for a, b in zip(La3.teams, Lb.teams)))
 check("a snapshot of the league (pickle) keeps them too", all(t.oc is not None for t in pickle.loads(pickle.dumps(La3)).teams))
-check("same seed, same coordinators (every one, hired through eight seasons)", [c.name for c in play(33, 8)[0].coords] == first_names)
+check("same seed, same coaching world (every coach card, created and hired through eight seasons)", [c.name for c in play(33, 8)[0].coaches] == first_names)
 for t in Lb.teams:
     t.oc = t.dc = None
     t.scheme, t.scheme_fit = {}, {}
-Lb.coords, Lb.free_coords = [], []
 run_season(Lb, 7, rb, Options(engine="fast", keep_boxes=False))
 check("a league saved before coordinators existed gets them at the next preseason and plays on", all(t.oc and t.dc for t in Lb.teams))
 print()

@@ -60,7 +60,8 @@ check("every candidate who is not hired is kept, and is a person who lives on (b
       0 < len(L.passed_over) <= 2 * hires and all(c.team_id is None or c.career[-1]["event"] == "hired" for c in L.passed_over))
 free = L.free_coaches + L.free_gms
 check("people between jobs are alive and unemployed: not retired, not on a team", free and all(c.team_id is None and not getattr(c, "retired", False) and getattr(c, "status", "") != "retired" for c in free), f"{len(free)} between jobs")
-check("under the autopilot nobody between jobs is ever re-hired (the autopilot keeps the rule it had)", all(sum(e["event"] == "hired" for e in c.career) == 1 for c in L.coaches))
+check("under the autopilot the one coaching pool is used: people between jobs are re-hired, each still one card with one identity",
+      any(sum(e["event"] == "hired" for e in c.career) >= 2 for c in L.coaches) and len({c.cid for c in L.coaches}) == len(L.coaches))
 ids = [c.cid for c in L.coaches]
 check("every hired coach has a unique id", len(ids) == len(set(ids)))
 people = {id(c): c for c in list(L.coaches) + [c for c in L.passed_over if hasattr(c, "cid")]}
@@ -205,7 +206,7 @@ Lc2, _, _ = play(5, 30, driver=ADV.CarouselRider())
 rehired = [c for c in Lc2.coaches if len({e["team"] for e in c.career if e["event"] == "hired"}) >= 2]
 check("CEOs who choose them re-hire people between jobs, who keep their one card and identity", len(rehired) > 5 and len({c.cid for c in Lc2.coaches}) == len(Lc2.coaches),
       f"{len(rehired)} coaches have worked for 2 or more teams")
-check("a re-hired coach keeps her ratings history and her soul (same card, same people)", all(c.soul_pos and c.career[0]["event"] in ("hired", "passed_over", "interviewed") for c in rehired))
+check("a re-hired coach keeps her ratings history and her soul (same card, same people)", all(c.soul_pos and c.career[0]["event"] in ("hired", "passed_over", "interviewed", "entered_coaching") for c in rehired))
 check("no one is ever on two teams at once", all(sum(1 for t in Lc2.teams if t.coach is c) <= 1 for c in Lc2.coaches) and len({id(t.coach) for t in Lc2.teams}) == 48 and len({id(t.gm) for t in Lc2.teams}) == 48)
 
 # ---- scenes still explain what happened, whoever decided -------------------------------------------------------------------

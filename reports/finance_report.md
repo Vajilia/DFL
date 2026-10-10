@@ -4,16 +4,16 @@
 
 ## Revenue and surplus
 
-Mean revenue 195M a club; mean surplus 61M (lowest -17M, 10th percentile 11M, 90th 98M, highest 160M). 3.0% of club-seasons end in a loss.
+Mean revenue 195M a club; mean surplus 61M (lowest -18M, 10th percentile 11M, 90th 98M, highest 160M). 3.0% of club-seasons end in a loss.
 
 ## The CEO's draw and the Fund
 
-Mean draw 50M. 1.8% of club-seasons hit the $100M cap (82 of 4608); the excess sent to the Equalization Fund averages 8.3M a season across the league.
+Mean draw 50M. 1.3% of club-seasons hit the $100M cap (58 of 4608); the excess sent to the Equalization Fund averages 5.2M a season across the league.
 
 ## Subsidies and forced sales
 
-Subsidies from CEOs' draws average 0.3M a season; CEOs put 0.0M a season of their own money into clubs the reserve and subsidies could not cover. 3 forced-sale votes were called in 96 league-seasons; 3 CEOs were forced to sell.
+Subsidies from CEOs' draws average 0.2M a season; CEOs put 0.0M a season of their own money into clubs the reserve and subsidies could not cover. 2 forced-sale votes were called in 96 league-seasons; 1 CEOs were forced to sell.
 
 ## Tenure
 
-129 CEOs completed their tenure: average 13.2 seasons (shortest 10, longest 20). Recalls and forced sales end tenures early and are not counted here.
+128 CEOs completed their tenure: average 13.0 seasons (shortest 10, longest 20). Recalls and forced sales end tenures early and are not counted here.

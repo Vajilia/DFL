@@ -99,7 +99,7 @@ check("every scene has at least a CEO claim and an evidence verdict", all(e["cla
 cards = list(La.owners) + list(La.coaches) + list(La.gms) + list(La.fanbases) + list(La.media)
 vals = [v for c in cards for v in c.relationships.values()]
 check("relationships stay between -100 and +100", vals and all(-100 <= v <= 100 for v in vals), f"{len(vals)} relationships")
-fired_coaches = [c for c in La.coaches if any(e["event"] == "fired" for e in c.career)]
+fired_coaches = [c for c in La.coaches if any(e["event"] == "fired" and "job" not in e for e in c.career)]      # head coaches: a coordinator is fired by her head coach, not a CEO
 check("fired coaches hold a grudge against the CEO who fired them", all(any(k.startswith("owner:") and v < 0 for k, v in c.relationships.items()) for c in fired_coaches),
       f"{len(fired_coaches)} fired coaches")
 recalled = [o for o in La.owners if o.status == "recalled"]

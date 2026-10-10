@@ -178,6 +178,7 @@ class CoachCard:
     seasons_with_team: int = 0
     retired: bool = False
     idle_years: int = 0                      # years spent between jobs
+    job: str = ""                            # what she does now: "head coach", "offensive coordinator", "defensive coordinator", or "" between jobs (coordinators.py)
     protected_until: int = 0                 # her contract's guarantee (interviews.py): the CEO cannot fire her in a review of this year or earlier
     # the soul (fixed at birth) and the living parts (living.py)
     soul_pos: str = ""
@@ -433,6 +434,7 @@ def _hire(lg, team, year: int):
     c = make_coach_card(lg.card_seed, cid, team.id)
     c.career.append({"year": year, "event": "hired", "team": team.id})
     team.coach = c
+    c.job = "head coach"
     lg.coaches.append(c)
     LV.seat_ref(lg, "coach", c)
 
