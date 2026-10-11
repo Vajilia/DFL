@@ -174,7 +174,9 @@ check("a shrewd operator sees candidates more clearly than a money pit", sum(err
 La, ra, _ = play(33, 3, driver=D.AgentDriver(slow, timeout=0.001))
 Lb, rb, _ = play(33, 3)
 check("when no agent answers in time the league completes exactly as the autopilot would play it",
-      FP.fingerprint_of(La, ra) == FP.fingerprint_of(Lb, rb) and all(e["status"] == "no_answer" for e in La.choice_log))
+      FP.fingerprint_of(La, ra) == FP.fingerprint_of(Lb, rb)
+      and all(e["status"] == "no_answer" for e in La.choice_log if e["driver"] != "staff")
+      and all(e["driver"] == "staff" and e["chosen"] == e["default"] for e in La.choice_log if e["kind"] == "gm_draft_pick" and e["status"] != "no_answer"))
 RELEASE_SLOW.set()
 
 # ---- the choice log is the history: replay reproduces it ---------------------------------------------------------------

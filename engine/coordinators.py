@@ -30,6 +30,7 @@ from typing import Dict
 
 import cards as C
 import living as LV
+import relations
 
 # ---- dials (PLACEHOLDER, not league rules) -------------------------------------------------------
 COORD_POINTS_AT_100 = C.COACH_POINTS_AT_100     # a 100-rated play-caller (against the league's average one) is worth this much margin, as for a head coach
@@ -275,7 +276,7 @@ def _veto_point(lg, t, side: str, c, scheme: str, year: int, rank: int):
             dict(id="veto", label=f"Veto it: the {side} plays balanced", tags={"your_view_of_fit": sees})]
     default = "veto" if sees < VETO_BAR else "approve"
     ctx = dict(coordinator=c.name, unit=side, proposed_scheme=scheme, your_view_of_fit=sees, your_team_strength_rank=rank,
-               coordinator_view=dict(playcalling=c.ratings[side], vision=c.ratings["gamecraft"]))
+               coordinator_view=dict(playcalling=c.ratings[side], vision=c.ratings["gamecraft"]), **relations.gm_note(t))
     return D.DecisionPoint("scheme_veto", year, t.id, "coach", t.coach, ctx, opts, default, dict(team=t, fit=true, strength_rank=rank))
 
 
@@ -305,7 +306,7 @@ def _review_point(lg, t, year: int, new_hc: bool, defaults: dict):
     rank = 1 + sum(1 for x in lg.teams if x.strength > t.strength)
     ctx = dict(new_head_coach=new_hc, team_strength_rank=rank,
                coordinators={s: dict(name=c.name, unit=c.job, heat=round(c.heat, 2), years_here=c.seasons_with_team,
-                                     seen=_perceived(lg, t, c, c_side(s), year)) for s, c in cands.items()})
+                                     seen=_perceived(lg, t, c, c_side(s), year)) for s, c in cands.items()}, **relations.gm_note(t))
     return D.DecisionPoint("coord_review", year, t.id, "coach", t.coach, ctx, opts, default, dict(team=t, strength_rank=rank))
 
 
@@ -381,7 +382,7 @@ def _hire_round(lg, year: int, jobs) -> list:
             continue
         opts = [dict(id=f"candidate_{i}", label=f"Hire {c.name}", tags={"between_jobs": True, "former_head_coach": was_head_coach(c)},
                      view=dict(age=c.age, former_head_coach=was_head_coach(c), **_perceived(lg, t, c, side, year))) for i, c in enumerate(cands)]
-        dps.append(D.DecisionPoint("hire_coordinator", year, t.id, "coach", t.coach, dict(team_needs=f"a {TITLE[side]}", unit=side), opts,
+        dps.append(D.DecisionPoint("hire_coordinator", year, t.id, "coach", t.coach, dict(team_needs=f"a {TITLE[side]}", unit=side, **relations.gm_note(t)), opts,
                                    "candidate_0", dict(team=t, strength_rank=1 + sum(1 for x in lg.teams if x.strength > t.strength),
                                                        candidates={f"candidate_{i}": c for i, c in enumerate(cands)})))
     live = [d for d in dps if d is not None]

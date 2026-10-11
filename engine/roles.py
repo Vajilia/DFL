@@ -38,6 +38,32 @@ def judged_on(actor_kind: str) -> str:
     return JUDGED_ON.get(actor_kind, "")
 
 
+# ---- the two spheres (the Commissioner, 2026-10-11) -------------------------------------------------------------------------------------
+# The GM and the head coach are equals with separate, clearly defined spheres. The GM (with her scouting staff) makes every player-personnel decision,
+# every pick in the draft included. The head coach decides coaching (the coordinators he hires and fires, the schemes, who plays, how players are
+# developed). Neither has any say in the other's sphere. They are asked to pull the same way, toward the Coronation, but the GM is in no way obliged to
+# build the roster the head coach would like, and the head coach is in no way obliged to use it the way she would like. The CEO judges both. Nor is the head coach obliged to cooperate with the GM: most pairs
+# get on, some become a great team and some bitter lifelong enemies (relations.py); that road is each side's own.
+SPHERES = {
+    "gm": "Your sphere is player personnel, and it is wholly yours: the scouting staff and every pick in the draft, re-signings and extensions, free agents, "
+          "trades and the contract talks with players. You have no say in coaching: who coaches, the schemes, who plays. The head coach is your equal; "
+          "you are asked to pull the same way, but neither of you is obliged to cooperate: you may build a roster she would not choose, and how well you two get on is a road you each travel.",
+    "coach": "Your sphere is coaching, and it is wholly yours: the coordinators you hire and fire, the schemes you approve, who plays and how players are "
+             "developed. You have no say in player personnel: who is drafted, signed, re-signed or traded. The GM is your equal; you are asked to pull the "
+             "same way, but you are not obliged to use the roster the way she would like.",
+    "coordinator": "Your sphere is your side of the ball: the plays you call and the scheme you propose, which the head coach may approve or veto. You have no say in player personnel.",
+    "owner": "Your sphere is the club as a business and the two football seats: you hire and fire the GM and the head coach and set what the club spends. You do not pick players or call plays.",
+    "player": "Your sphere is your own career: your contract and whether you sign it.",
+    "fans": "Your sphere is your support: whether you come, spend and stay.",
+}
+PERSONNEL_KINDS = ("gm_draft_pick", "gm_resign", "gm_free_agent", "gm_trade_sell", "gm_trade_buy", "gm_draft_focus", "gm_cap_plan", "contract_offer", "contract_counter")
+COACHING_KINDS = ("coord_review", "scheme_veto", "hire_coordinator", "coord_scheme")
+
+
+def sphere_of(actor_kind: str) -> str:
+    return SPHERES.get(actor_kind, "")
+
+
 def slot_floor(roster, pos: str) -> float:
     """The rating of the weakest starter at a position (what a newcomer has to beat to start)."""
     at = sorted((p.ovr for p in roster if p.pos == pos), reverse=True)

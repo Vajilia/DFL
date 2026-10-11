@@ -83,11 +83,11 @@ check("each seat has a plain-words yardstick; the Coronation tops every decision
 # ---- the autopilot: everything is asked, everything is the rule's answer -----------------------------------------------
 L1, _, res1 = play(33, 6)
 by = {k: [e for e in L1.choice_log if e["kind"] == k] for k in KINDS}
-check("the GM is asked about draft positions (round 1), re-signings, free agents who would start and trades",
+check("the GM is asked about every draft pick, re-signings, free agents who would start and trades",
       all(len(v) > 0 for v in by.values()), {k: len(v) for k, v in by.items()})
-check("the draft asks about the first round each year: 48 picks, the GMs' own, wherever they were traded", len(by["gm_draft_pick"]) == 6 * R.TOTAL_TEAMS, len(by["gm_draft_pick"]))
+check("the draft asks about every pick, all seven rounds and the compensatory picks: the GMs' own, wherever the picks were traded", len(by["gm_draft_pick"]) >= 6 * R.DRAFT_ROUNDS * R.TOTAL_TEAMS and {e["id"] for e in by["gm_draft_pick"]} and len(by["gm_draft_pick"]) < 6 * (R.DRAFT_ROUNDS * R.TOTAL_TEAMS + 60), len(by["gm_draft_pick"]))
 check("on the autopilot every answer is the rule's own answer", all(e["chosen"] == e["default"] and e["status"] == "ok" for k in KINDS for e in by[k]))
-check("a draft pick offers the rule's prospect and one other (the one with the most role utility on the top of the board)", all(e["default"] in e["options"] and len(e["options"]) == 2 for e in by["gm_draft_pick"]))
+check("a draft pick offers the rule's prospect and one other (the one with the most role utility on the top of the board)", all(e["default"] in e["options"] and 1 <= len(e["options"]) <= 2 for e in by["gm_draft_pick"]) and sum(len(e["options"]) == 2 for e in by["gm_draft_pick"]) > 0.95 * len(by["gm_draft_pick"]))
 check("the GM who starts a trade is asked (the seller of a veteran, or the club moving up in a pick swap), once per trade, and trades happen",
       len(by["gm_trade_sell"]) > 0 and len(by["gm_trade_buy"]) > 0 and len(by["gm_trade_sell"]) + len(by["gm_trade_buy"]) >= trades(L1) > 0, f"{trades(L1)} trades")
 
@@ -184,7 +184,10 @@ check("a GM who always lets people go loses at most one important player a year 
 ag = AG.StandIn()
 Ls, rs, _ = play(33, 4, D.AgentDriver(ag, workers=4))
 mine = [e for e in Ls.choice_log if e["kind"] in KINDS]
-check("the stand-in agent answers every GM roster decision, none falls back to the autopilot", len(mine) > 0 and all(e["status"] == "ok" and e["driver"] == "agent" for e in mine), len(mine))
+check("the stand-in agent answers every GM roster decision, none falls back to the autopilot", len(mine) > 0 and all(e["status"] == "ok" for e in mine)
+      and all(e["driver"] == "agent" for e in mine if e["kind"] != "gm_draft_pick") and {e["driver"] for e in mine if e["kind"] == "gm_draft_pick"} == {"agent", "staff"}
+      and all(e["chosen"] == e["default"] for e in mine if e["driver"] == "staff"),
+      "agent GM: rounds 1-2 by the agent, rounds 3-7 by her scouting staff; everything else by the agent")
 check("a stand-in GM chooses by role utility, so some answers differ from the rule and some match", any(e["chosen"] != e["default"] for e in mine) and any(e["chosen"] == e["default"] for e in mine))
 check("a stand-in's notes to self land on the GM's card", any(n["kind"] in KINDS for t in Ls.teams for n in t.gm.notes))
 Lf, _, _ = play(33, 4, D.AgentDriver(AG.Flaky(AG.StandIn(), every=3), workers=4))
@@ -199,6 +202,54 @@ check("a club without a GM keeps the rule: nothing is asked and the draw stands"
       and GMR.free_agent(Ln, Ln.teams[0], 1, [(1.0, Ln.teams[0].roster[0]), (0.5, Ln.teams[0].roster[1])], Ln.teams[0].roster[0], lambda c: 1.0) is Ln.teams[0].roster[0])
 Lr, _, _ = play(5, 6, D.RandomLegalDriver(seed=3))
 check("with every GM choosing at random the league plays on with full, legal rosters", all(len(t.roster) == ROSTER_SIZE for t in Lr.teams) and all(EC.payroll(t) <= EC.limit(t) + 1e-6 for t in Lr.teams))
+
+# ---- two spheres: the GM owns player personnel, the head coach owns coaching, neither reaches into the other's (the Commissioner, 2026-10-11) -------------
+import re  # noqa: E402
+here = os.path.dirname(os.path.abspath(__file__))
+
+
+def source(name):
+    return open(os.path.join(here, name)).read()
+
+
+check("every personnel decision is the GM's (or, at a contract table with a player, the club's GM), every coaching decision a coach's or coordinator's, and each seat's sphere is stated",
+      all(roles.sphere_of(k) for k in ("gm", "coach", "coordinator", "owner", "player", "fans"))
+      and "player personnel" in roles.sphere_of("gm") and "coaching" in roles.sphere_of("coach") and "no say in coaching" in roles.sphere_of("gm") and "no say in player personnel" in roles.sphere_of("coach"))
+seen_kinds = {}
+Lsp = new_league(random.Random(33), rosters=True)
+
+
+class Spy:
+    name = "spy"
+
+    def choose(self, dp):
+        seen_kinds.setdefault(dp.kind, set()).add(dp.actor_kind)
+        seen_kinds.setdefault("_priority_" + dp.kind, set()).add(bool(dp.priority.get("your_sphere")))
+        return dp.default, "spy"
+
+
+Lsp.driver = Spy()
+for y in range(1, 4):
+    run_season(Lsp, y, random.Random(y), Options(engine="fast", keep_boxes=False))
+pers = [k for k in roles.PERSONNEL_KINDS if k in seen_kinds]
+coach = [k for k in roles.COACHING_KINDS if k in seen_kinds]
+check("the personnel decisions are made only by GMs (draft picks, re-signings, free agents, trades, the GM's plan), the coaching ones only by coaches and coordinators",
+      len(pers) >= 5 and all(seen_kinds[k] <= {"gm", "owner"} for k in pers) and all(seen_kinds[k] == {"gm"} for k in pers if k.startswith("gm_"))
+      and len(coach) >= 3 and all(seen_kinds[k] <= {"coach", "coordinator"} for k in coach), {k: sorted(seen_kinds[k]) for k in pers + coach})
+check("every decision shows the seat's own sphere", all(v == {True} for k, v in seen_kinds.items() if k.startswith("_priority_")))
+check("the CEO's and the players' decisions are not the GM's or the coach's: no personnel or coaching kind is asked of the CEO except at a table where the club has no GM",
+      all(seen_kinds.get(k, set()) <= {"gm", "owner"} for k in roles.PERSONNEL_KINDS))
+gm_src = source("gm_roster.py") + source("gm_plan.py")
+hc_src = source("coordinators.py")
+check("the GM's code never touches a coach, a coordinator or a scheme: she has no say in coaching",
+      not re.search(r"\.(coach|oc|dc|scheme)\s*=[^=]", gm_src) and not re.search(r"(free_coaches|hire_coach|_hire_round|coord_review|scheme_veto)", gm_src.replace("hire_coach", "") if False else gm_src))
+check("the coaching code never signs, cuts, trades or drafts a player: the head coach has no say in personnel",
+      not re.search(r"\b(roster|practice_squad|free_agents)\.(append|remove|insert|extend)\b", hc_src) and "EC.sign" not in hc_src and "EC.release" not in hc_src)
+# cooperation is the GM's choice: she is shown what her head coach wants and may ignore it
+Lc = new_league(random.Random(33), rosters=True)
+tc = Lc.teams[0]
+view = GMR._hc(tc)
+check("the GM is shown her head coach's wishes and told she need not follow them", view["head_coach"] == tc.coach.name and "obliged" in view["note"] and "Neither" in view["note"])
 
 print()
 if failures:

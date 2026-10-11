@@ -51,6 +51,7 @@ class DecisionPoint:
         self.internal = internal or {}
         self.id = ""                       # set by the guard
         self.priority: dict = {}           # the Diamond Coronation line every role sees first (set by the guard: coronation())
+        self.delegated = False             # True: a routine call of the seat's staff (e.g. a late-round draft pick); an agent driver leaves it to the staff
 
     @property
     def option_ids(self) -> List[str]:
@@ -82,6 +83,11 @@ def _judged(actor_kind: str) -> str:
     return roles.judged_on(actor_kind)
 
 
+def _sphere(actor_kind: str) -> str:
+    import roles
+    return roles.sphere_of(actor_kind)
+
+
 def card_view(role: str, a) -> dict:
     """The decider's card as an agent sees it: who she is, what she is like, what she has done lately, and her own notes. Long lists
     on the card (career, honors, decisions) are summarized and the latest entries shown; the card itself keeps everything."""
@@ -105,6 +111,16 @@ class PolicyDriver:
 
     def choose(self, dp: DecisionPoint):
         return dp.default, "autopilot"
+
+
+class StaffDriver(PolicyDriver):
+    """The seat's own staff making a routine call (the GM's scouting staff in the later rounds of the draft): the engine's rule, logged as the staff's.
+    An agent driver (one that costs a real call) hands such decisions here; the test drivers (random, adversaries, replay) keep them, so the
+    fairness sweeps still cover every pick."""
+    name = "staff"
+
+
+STAFF = StaffDriver()
 
 
 class RandomLegalDriver:
@@ -152,6 +168,7 @@ class AgentDriver:
     "reason": text, "note": text} or a bare option id. If it raises or takes longer than `timeout` seconds the guard falls back to
     the autopilot. Decisions that do not depend on each other arrive together (choose_many) and are answered in parallel."""
     name = "agent"
+    hands_routine_to_staff = True      # a real call is dear: decisions flagged `delegated` are made by the seat's staff
 
     def __init__(self, ask: Callable[[dict], object], timeout: float = 30.0, workers: int = DEFAULT_WORKERS):
         self.ask, self.timeout, self.workers = ask, timeout, workers
@@ -212,9 +229,10 @@ def decide_many(lg, dps: List[DecisionPoint]) -> List[str]:
     for dp in dps:
         dp.id = _next_id(lg, dp, taken)
         taken.add(dp.id)
-        dp.priority = dict(coronation(lg, dp.team_id), you_are_judged_on=_judged(dp.actor_kind))
+        dp.priority = dict(coronation(lg, dp.team_id), you_are_judged_on=_judged(dp.actor_kind), your_sphere=_sphere(dp.actor_kind))
     base = getattr(lg, "driver", None) or PolicyDriver()
     drivers = [base.driver_for(dp) if hasattr(base, "driver_for") else base for dp in dps]
+    drivers = [STAFF if dp.delegated and getattr(d, "hands_routine_to_staff", False) else d for dp, d in zip(dps, drivers)]
     answers: list = [None] * len(dps)
     for drv in {id(d): d for d in drivers}.values():
         idx = [i for i, d in enumerate(drivers) if d is drv]

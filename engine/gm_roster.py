@@ -3,10 +3,11 @@
 The GM scouts and assembles the team. Step B gave her the offseason plan (gm_plan.py). Here the four things she does with it are hers too,
 each a Decision Point whose default is exactly what the engine's own rule did, so a league on the autopilot is unchanged:
 
-  * `gm_draft_pick`: the prospect a first-round pick takes. The rule's pick (the best player on the consensus board, tilted toward the club's needs) is
-    the default; she is shown that prospect and the one among the top of the board who would add the most role utility (roles.py) to her club, as
-    the scouts' stat lines and her eye for talent give them to her, and may take the other instead. Later rounds stay with the scouts, as in the NFL,
-    where the GM's board matters most at the top.
+  * `gm_draft_pick`: the prospect every pick takes, all seven rounds and the compensatory picks (the Commissioner, 2026-10-11: the GM and her scouting
+    staff make every pick). The rule's pick (the best player on the consensus board, tilted toward the club's needs) is the default; she is shown that
+    prospect and the one among the top of the board who would add the most role utility (roles.py) to her club, as the scouts' stat lines give them to
+    her, and may take the other instead. In the first round she reads the board with her own eye for talent (`evaluation`); after it the scouting staff
+    reports (`scouting`, a little less sharp: STAFF_EXTRA).
   * `gm_resign`: whether to keep an important player (rated at the contract-table line or better) whose deal is up, or to extend one mid-contract.
     Only asked when the cap would allow the deal. A cornerstone (role utility far above the club's keep line) cannot be let go (the franchise tag
     exists to keep one), and a GM lets at most one important player walk against the rule in an offseason.
@@ -18,6 +19,10 @@ What she sees. She sees her own roster exactly. She sees other clubs' players th
 `evaluation` rating (about one rating point for the best eye, about six for the worst), and a trade's value in draft-chart points by her `trades`
 rating. The blur comes from the GM's own card seed, never from the engine's random stream. Role utility (roles.py) is computed from what she sees.
 
+Her sphere. Player personnel is wholly hers; coaching is wholly the head coach's, and she has no say in it (roles.SPHERES says so at the top of every
+decision either of them makes). She is shown what her head coach would like (`your_head_coach`) and is asked to pull the same way, but is in no way
+obliged to. Nothing in this module touches a coach, a coordinator or a scheme (a test reads the source to make sure).
+
 Everything here is bounded by the engine: the cap, the roster limits, tenders and the trade rules still decide what can happen, and the fairness bands
 are re-tested with agents choosing at random.
 """
@@ -26,7 +31,9 @@ from __future__ import annotations
 import cards as C
 import roles
 
-ASK_ROUNDS = 1                       # draft rounds in which the GM chooses the prospect (0-based rounds below this): the first round, where her board matters most
+ASK_ROUNDS = 7                       # draft rounds in which the GM chooses the prospect: every one (the Commissioner, 2026-10-11: the GM and her scouting staff make every pick)
+PERSONAL_ROUNDS = 2                   # rounds an agent GM picks in person; later rounds go to her scouting staff, to keep a real agent's calls few
+STAFF_EXTRA = 2.0                    # extra blur on a prospect the scouting staff reports on (rounds 2 to 7) rather than the GM's own eye: the staff's rating is the `scouting` rating on her card
 ALTERNATES = 1                       # prospects offered besides the rule's: the one among the top of the board who would add the most role utility
 BOARD_WINDOW = 12                    # how far down the consensus board the GM looks for an alternate
 CORNERSTONE_MARGIN = 45.0             # a player whose role utility is this far above the club's keep line is a cornerstone: the GM cannot let her walk (the franchise tag exists to keep one)
@@ -37,9 +44,23 @@ EYE_BASE, EYE_SPAN = 1.0, 20.0       # blur sd on a rating = EYE_BASE + (100 - r
 TRADE_BLUR_BASE, TRADE_BLUR_SPAN = 0.03, 700.0     # blur on a chart value = TRADE_BLUR_BASE + (100 - rating)/TRADE_BLUR_SPAN
 
 
-def _eye(lg, g, kind: str, year: int, key, ovr: float) -> float:
+def _eye(lg, g, kind: str, year: int, key, ovr: float, rating: str = "evaluation", extra: float = 0.0) -> float:
+    """What the GM sees of a player: the rating blurred by her eye for talent (`evaluation`), or, for the scouting staff's reports, by the staff's rating
+    (`scouting`) plus the extra blur of a report written by someone else."""
     r = C._rng(lg.card_seed, "gmview", g.gid, year, kind, key)
-    return round(ovr + r.gauss(0.0, EYE_BASE + (100.0 - g.ratings["evaluation"]) / EYE_SPAN), 1)
+    return round(ovr + r.gauss(0.0, EYE_BASE + extra + (100.0 - g.ratings[rating]) / EYE_SPAN), 1)
+
+
+def _hc(t) -> dict:
+    """What the GM knows of her head coach's wishes. Information only: the roster is hers to build, and the head coach has no say in it (roles.SPHERES)."""
+    c = t.coach
+    if c is None:
+        return dict(head_coach="none at present")
+    import relations
+    return dict(head_coach=c.name, personality=c.trait, schemes_this_season=dict(t.scheme) if t.scheme else "not yet set",
+                how_well_the_roster_suits_them={k: round(v, 2) for k, v in (t.scheme_fit or {}).items()}, **relations.view(t, "gm"),
+                note="She would like a roster that suits her schemes. Neither of you is obliged to cooperate with the other, and she has no say in who is on your roster. "
+                     "Most pairs get on and some become a great team; others become bitter enemies. That road is yours to travel.")
 
 
 def _chart(lg, g, kind: str, year: int, key, points: float) -> float:
@@ -75,7 +96,8 @@ def draft_pick(lg, t, year: int, overall: int, rnd: int, drawn, board, rm, focus
 
     def see(p):
         if p.id not in seen:
-            seen[p.id] = _eye(lg, g, "draft", year, p.id, p.origin["grade"]) + bonus
+            seen[p.id] = (_eye(lg, g, "draft", year, p.id, p.origin["grade"]) if rnd == 0
+                          else _eye(lg, g, "draft", year, p.id, p.origin["grade"], rating="scouting", extra=STAFF_EXTRA)) + bonus
         return seen[p.id]
 
     scored = []
@@ -96,11 +118,12 @@ def draft_pick(lg, t, year: int, overall: int, rnd: int, drawn, board, rm, focus
                               role_utility=round(u, 1), would_be=roles.role_if_signed(t.roster, p.pos, see(p)),
                               senior_year=PR.stat_line(p.pos, o["stats"][-1]), on_roster=counts[p.pos], roster_wants=ROSTER_COUNTS[p.pos]))
     ctx = dict(draft="the draft", round=rnd + 1, overall_pick=overall,
-               your_plan="draft for need" if focus == "needs" else "draft the best player", your_team_strength_rank=_rank(lg, t),
-               note="You see your own roster exactly. A prospect's grade is what the scouts read off her college production, blurred by your eye for talent; "
+               your_plan="draft for need" if focus == "needs" else "draft the best player", your_team_strength_rank=_rank(lg, t), your_head_coach=_hc(t),
+               note="You see your own roster exactly. A prospect's grade is what the scouts read off her college production, blurred by your eye for talent (in the first round) or by your scouting staff's (after it); "
                     "her true rating is not known until she plays. Role utility is what a player of that grade adds in the role she would play.")
     dp = D.DecisionPoint("gm_draft_pick", year, t.id, "gm", g, ctx, [opt(p) for p in pick_list], str(drawn.id),
                          dict(team=t, strength_rank=ctx["your_team_strength_rank"], true={str(p.id): (p.pos, p.ovr) for p in pick_list}))
+    dp.delegated = rnd >= PERSONAL_ROUNDS        # an agent GM makes rounds 1 and 2 herself; her scouting staff makes the rest (each is still logged)
     chosen = D.decide(lg, dp)
     if chosen != str(drawn.id):
         took = next(p for p in pick_list if str(p.id) == chosen)
@@ -129,7 +152,7 @@ def resign(lg, rm, t, year: int, p, price: float, wants: bool, keep, extension: 
     ctx = dict(player=dict(position=p.pos, age=p.age, rating_as_you_see_her=seen, seasons_in_league=p.years_in_league),
                what="an extension before her contract runs out" if extension else "her contract is up",
                her_price_per_year_m=round(price, 2), role_utility_to_you=round(u, 1),
-               her_role_if_kept=roles.role_if_signed(rest, p.pos, seen), your_team_strength_rank=_rank(lg, t),
+               her_role_if_kept=roles.role_if_signed(rest, p.pos, seen), your_team_strength_rank=_rank(lg, t), your_head_coach=_hc(t),
                note="The cap allows this deal. If you let her go she reaches the market, and you fill her place from the draft or free agency.")
     opts = [dict(id="re_sign", label="Extend her now" if extension else "Re-sign her", tags=dict(price_m=round(price, 2))),
             dict(id="let_walk", label="Pass on the extension" if extension else "Let her go", tags={})]
@@ -158,7 +181,7 @@ def free_agent(lg, t, year: int, cands, best, price_of):
         opts.append(dict(id=f"p{c.id}", label=f"Sign a {c.pos}",
                          tags=dict(position=c.pos, age=c.age, rating_as_you_see_her=seen, price_m=round(price_of(c), 2),
                                    role_utility=round(roles.utility(t.roster, c.pos, seen), 1), would_be=roles.role_if_signed(t.roster, c.pos, seen))))
-    ctx = dict(market="free agency", open_positions=sorted({c.pos for _, c in top}), your_team_strength_rank=_rank(lg, t),
+    ctx = dict(market="free agency", open_positions=sorted({c.pos for _, c in top}), your_team_strength_rank=_rank(lg, t), your_head_coach=_hc(t),
                note="These are the best fits for the holes in your roster that you can afford. The rest of your open places are filled after.")
     chosen = D.decide(lg, D.DecisionPoint("gm_free_agent", year, t.id, "gm", g, ctx, opts, f"p{best.id}",
                                                   dict(team=t, candidates={f"p{c.id}": c for _, c in top}, strength_rank=ctx["your_team_strength_rank"])))
@@ -204,7 +227,7 @@ def trade_ok(lg, rm, a: int, b: int, pa, pb, ka, kb, pts: float, year: int, week
                    you_get=dict(players=[view(q) for q in rp], picks=[_pick_text(lg, k) for k in get_k]),
                    chart_points_you_give=_chart(lg, g, "tradeg", year, (me, other, tuple(give_p), tuple(give_k)), _side_points(lg, rm, give_p, give_k, t)),
                    chart_points_you_get=_chart(lg, g, "tradeg", year, (other, me, tuple(get_p), tuple(get_k)), _side_points(lg, rm, get_p, get_k, o)),
-                   role_utility_you_lose=round(lost, 1), role_utility_you_gain=round(gained, 1), your_team_strength_rank=_rank(lg, t))
+                   role_utility_you_lose=round(lost, 1), role_utility_you_gain=round(gained, 1), your_team_strength_rank=_rank(lg, t), your_head_coach=_hc(t))
         dps.append(D.DecisionPoint(kind, year, me, "gm", g, ctx,
                                    [dict(id="accept", label="Agree to the trade", tags={}), dict(id="decline", label="Decline", tags={})], "accept",
                                    dict(team=t, strength_rank=_rank(lg, t), true_give=_side_points(lg, rm, give_p, give_k, t), true_get=_side_points(lg, rm, get_p, get_k, o))))

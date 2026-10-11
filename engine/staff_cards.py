@@ -24,6 +24,7 @@ from typing import Dict, List, Optional, Tuple
 import card_pools as CP
 import cards as C
 import living as LV
+import relations as RL
 import rules as R
 
 # ---- dials (PLACEHOLDER, not league rules) ---------------------------------------------------
@@ -297,7 +298,7 @@ def _review_point(lg, t, year, o, c, g, can_coach, default_fc, default_fg, new_b
     fb = getattr(t, "fans", None)
     context = dict(
         record_this_season=round(pct.get(t.id, 0.5), 3), record_last_season=None if lg.prev_pct.get(t.id) is None else round(lg.prev_pct[t.id], 3),
-        exiled_this_year=bool(exiled),
+        exiled_this_year=bool(exiled), how_your_gm_and_coach_get_on=RL.pair_view(t) or "not yet known",
         fan_approval_of_you=round(o.approval, 3), facing_a_recall_vote_this_year=bool(tid_voted), you_are_a_new_ceo=bool(new_boss),
         press_effect_on_fans=None if fb is None else round(fb.last_sway, 3),
         coach=None if c is None else dict(_person_view(lg, o, c, year, COACH_VIEW, True), seasons_with_team=c.seasons_with_team,

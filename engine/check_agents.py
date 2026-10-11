@@ -147,6 +147,7 @@ agent = AG.StandIn()
 
 class OneAtATime:
     name = "agent"
+    hands_routine_to_staff = True               # as the real pool does
 
     def choose(self, dp):
         return agent(dp.public())
