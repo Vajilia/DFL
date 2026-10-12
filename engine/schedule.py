@@ -317,7 +317,12 @@ def build_schedule(league, rng: random.Random) -> List[Game]:
     """The 18-game regular-season schedule for the 40 active teams."""
     slot_team = league.slot_map()
     games = []
-    for week, hs, aws, kind in generate_template(rng):
+    fixed = getattr(league, "schedule_template", None)
+    if fixed:                   # the Commissioner's skeleton: the same slot layout every season, filled by whoever holds each tier slot (seeded from last season's final division ranks)
+        template = [(w, tuple(h), tuple(a), k) for w, h, a, k in fixed]
+    else:
+        template = generate_template(rng)
+    for week, hs, aws, kind in template:
         games.append(Game(week, slot_team[hs].id, slot_team[aws].id, kind))
     games.sort(key=lambda g: (g.week, g.home))
     return games

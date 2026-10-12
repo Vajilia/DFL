@@ -73,7 +73,7 @@ class League:
         self.archive: list = []            # plain-fact event log (recalls, firings, hirings); the Archive proper comes later
         self.fans_on = True                # fanbase and media cards decide CEO approval (turn off for the old placeholder model)
         self.founding_class = "veterans"     # how the league began: "veterans" or "rookies" (Founding Day)
-        self.first_schedule = None         # the first season's schedule as (week, home id, away id, kind), when the Commissioner's own is used (identity.py)
+        self.schedule_template = None      # the Commissioner's fixed slot template as (week, home slot, away slot, kind), slot = (conf, div, tier); None = a fresh random template each season (identity.py)
         self.founding = None               # the record of Founding Day (founding.py): dated events and each club's story
         self.interactions_on = True        # Required interactions are written up as scenes (never changes an outcome)
         self.prev_pct: dict = {}           # last season's win% by team, for the scenes' evidence
@@ -164,7 +164,7 @@ def new_league(rng: random.Random, rosters: bool = False, coaches: bool = True, 
         ID.apply(teams)                      # the real clubs, their seeds as tiers and the eight clubs that start in exile
     lg = League(teams)
     if identity:
-        lg.first_schedule = ID.first_season_games(teams)
+        lg.schedule_template = ID.slot_template(teams)
     lg.card_seed = hash(rng.getstate()[1]) % (2 ** 31)    # reads the generator without drawing from it
     lg.coaches_on = coaches
     lg.staff_on = coaches and staff        # CEOs and GMs (and firing); needs the coaches
@@ -192,7 +192,7 @@ def give_rosters(lg: League, rng: random.Random, rookies: bool = False):
     import economy
     economy.init_contracts(lg)
     refresh_strengths(lg)
-    if lg.first_schedule is None:                     # with the Commissioner's own first season the tiers are his seeds, not the rosters' ranking
+    if lg.schedule_template is None:                  # with the Commissioner's own template the first season's tiers are his seeds, not the rosters' ranking
         for div_id in range(R.TOTAL_DIVISIONS):
             act = sorted(lg.active_in_division(div_id), key=lambda t: -t.strength)
             for rank, t in enumerate(act, start=1):

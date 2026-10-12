@@ -4,8 +4,13 @@ made them).
 A club is its city and nickname ("Oklahoma City Outlaws"), its abbreviation, venue, location and three colours. Each division lists its five clubs by their
 2000 seeding and the club that starts in exile, and that is how the founding league is laid out: engine team ids run in the workbook's order, six to a
 division (seeds 1 to 5, then the exile), the first season's tiers are the seeds, and the eight exiled clubs start in exile. The first season's schedule is the
-workbook's own (it is checked against the rulebook here). From the second season on the engine builds the schedule as it always has. Nothing about a club's
-identity is read by any rule; it is how the league is shown and told.
+workbook's own (it is checked against the rulebook here).
+
+The workbook's schedule is a SKELETON: every game is between two slots (conference, division, seed), not two named clubs. The first seeds were drawn by chance;
+from then on each division's clubs are re-seeded by the previous season's final division rankings (the engine's `next_tiers`, with the eight returning exiles
+placed by the rulebook), and the same slot layout is filled by whoever now holds each seed. So the template is fixed, it is endless, and the NFL's rules are
+adapted to it rather than the other way round. `slot_template` makes it; `schedule.build_schedule` fills it every season. Nothing about a club's identity is
+read by any rule; it is how the league is shown and told.
 """
 from __future__ import annotations
 
@@ -68,6 +73,29 @@ def first_season_games(teams: list) -> List[tuple]:
             else:
                 kind = "tier"
             out.append((w, h.id, a.id, kind))
+    return out
+
+
+def slot_template(teams: list) -> List[tuple]:
+    """The workbook's first season as a fixed slot template: (week, home slot, away slot, kind), slot = (conference, division, seed). Call after `apply`."""
+    slot = {t.id: (t.conf, t.div, t.tier) for t in teams if t.status == "active"}
+    return [(w, slot[h], slot[a], k) for w, h, a, k in first_season_games(teams)]
+
+
+def slot_times(teams: list) -> Dict[tuple, tuple]:
+    """(week, home slot, away slot) -> (game number, day offset from the week's Saturday, kickoff), the workbook's timing for each slot game. Call after `apply`."""
+    import datetime as dt
+    import calendar_dfl as CAL
+    by_name = {t.name: t for t in teams}
+    out = {}
+    with open(os.path.join(DATA, "schedule_2000.csv"), newline="") as f:
+        for r in csv.DictReader(f):
+            if not r["season"]:
+                continue
+            w = int(r["week"])
+            h, a = by_name[r["home"]], by_name[r["away"]]
+            day = dt.date.fromisoformat(r["date"]) - CAL.week_saturday(2000, w)
+            out[(w, (h.conf, h.div, h.tier), (a.conf, a.div, a.tier))] = (int(r["game"]), day.days, r["kickoff"])
     return out
 
 

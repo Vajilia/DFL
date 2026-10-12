@@ -58,7 +58,7 @@ READABLE = ("2", "3")                          # layouts it can open: version 2 
                                                # and the first save upgrades the file to version 3; any other version is refused rather than guessed at
 
 # what the league record holds beyond the lists of people: every plain attribute of the League, so a new one cannot be forgotten
-PLAIN = ("has_rosters", "card_seed", "staff_on", "coaches_on", "fans_on", "interactions_on", "_coach_ids", "_owner_ids", "_gm_ids", "_cand_ids", "_media_ids", "pool", "finance_nudge", "proposals_made", "committee", "founding_class", "founding", "first_schedule")
+PLAIN = ("has_rosters", "card_seed", "staff_on", "coaches_on", "fans_on", "interactions_on", "_coach_ids", "_owner_ids", "_gm_ids", "_cand_ids", "_media_ids", "pool", "finance_nudge", "proposals_made", "committee", "founding_class", "founding", "schedule_template")
 LISTS = ("teams", "by_id", "free_agents", "new_id", "coaches", "retired_players", "owners", "gms", "archive", "driver", "enricher", "choice_log", "passed_over",
          "free_coaches", "free_gms", "titles", "hall", "fanbases", "media", "refs", "prev_pct", "movement")
 INT_KEYED = ("forecasts",)                     # card fields whose keys are numbers (JSON turns them into text)

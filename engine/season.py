@@ -79,10 +79,7 @@ def run_season(league: League, year: int, rng: random.Random, opt: Options = Non
             coordinators.preseason(league, year)      # every coordinator proposes a scheme and the head coach may veto it
         refresh_strengths(league)          # fresh power ratings for the placeholder-style readers
     runner.service_year = year
-    if getattr(league, "first_schedule", None) and year == 1:
-        games = [Game(w, h, a, k) for w, h, a, k in league.first_schedule]       # the Commissioner's own first season (identity.py)
-    else:
-        games = build_schedule(league, rng)
+    games = build_schedule(league, rng)          # the Commissioner's fixed slot template when the league has one, else a fresh random one
     if opt.validate_schedule:
         errs = check_schedule(league, games)
         if errs:

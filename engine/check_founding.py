@@ -117,12 +117,12 @@ check("each division's five active clubs hold tiers 1 to 5 by the workbook's see
       and {t.name: t.tier for t in lg.teams if t.status == "active"}["Montana Outriders"] == 1 and {t.name: t.tier for t in lg.teams}["Idaho Tomahawks"] == 5)
 check("each division's clubs sit together by name (Northwest: Montana, Seattle, Utah, Calgary, Idaho, Portland)", [t.name.split()[0] for t in lg.teams[:6]] == ["Montana", "Seattle", "Utah", "Calgary", "Idaho", "Portland"])
 check("the Commissioner's 2000 schedule passes every rulebook check (18 games, one bye in weeks 15-19, blocks, tiers, 9 home games each)",
-      check_schedule(lg, [Game(w, h, a, k) for w, h, a, k in lg.first_schedule]) == [] and len(lg.first_schedule) == 360)
-check("the first season plays that schedule: 360 regular-season games, Montana's first opponent is Carolina on 7/2", len([g for g in lg.first_schedule if g[0] == 1]) == 20
+      check_schedule(lg, [Game(w, h, a, k) for w, h, a, k in ID.first_season_games(lg.teams)]) == [] and len(ID.first_season_games(lg.teams)) == 360)
+check("the first season plays that schedule: 360 regular-season games, Montana's first opponent is Carolina on 7/2", len([g for g in ID.first_season_games(lg.teams) if g[0] == 1]) == 20
       and ID.game_times()[(1, 11)][2:] == ("Montana Outriders", "Carolina Copperheads") and ID.game_times()[(1, 11)][0] == "2000-07-02")
 check("the dates in his schedule are the calendar's: every week starts on the day calendar_dfl says", all(
     K.game_days(2000, w)[0].isoformat() == min(v[0] for (ww, g), v in ID.game_times().items() if ww == w) for w in range(1, 20)))
-check("the identities and the first schedule survive saving and loading", [list(x) for x in L2.first_schedule] == [list(x) for x in lg2.first_schedule] and [t.identity for t in L2.teams] == [t.identity for t in lg2.teams]
+check("the identities and the first schedule survive saving and loading", [[list(x) if isinstance(x, tuple) else x for x in r] for r in L2.schedule_template] == [[list(x) if isinstance(x, tuple) else x for x in r] for r in lg2.schedule_template] and [t.identity for t in L2.teams] == [t.identity for t in lg2.teams]
       and [t.name for t in L2.teams] == [t.name for t in lg2.teams])
 played = res[0].games if hasattr(res[0], "games") else None
 check("season 1 of the founding league is played under the club names and ends with a champion who is one of the 40 active clubs", res[0].champion in {t.id for t in lg2.teams if t.identity})
