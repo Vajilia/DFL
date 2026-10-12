@@ -357,3 +357,21 @@ The Commissioner's picture: the engine stays wherever it runs and the web page i
 * **Export (`site_export.py`).** The first season is now played by the drive engine (the one the league really uses) with the log on, instead of the quick engine, so the page shows real games: 401 games (360 regular season, 28 Ambassador, 13 playoff), each with players, team totals, drives and plays (about 4 MB of the page; the server compresses it). Players with no card are named the way their card would be named. Results of the 2000 season therefore differ from the earlier snapshot.
 * **Page.** Each game has a page (box score, play by play, team stats, leaders, drives) that opens on the finished game. "Watch replay" plays the log from kickoff at a watchable pace: 60 game minutes take about 36 real minutes at 1x, with a 20 second halftime, speeds 1x, 4x, 16x, 60x, pause and skip to final. The page holds no football rules; it adds up what the engine recorded, and a browser check confirms its totals equal the engine's for all 401 games.
 * **Later.** The live runner on the server will play each game at its scheduled kickoff and feed the same log to the same page. Shelved: blind play calling by the coordinators (see above).
+
+## The live league (2026-10-12)
+
+The engine runs on the server and the website only watches (the Commissioner's picture). `engine/live.py` plays each league year with the real drive engine and the
+play log on (`site_export.play_season`), then reveals the year on the real clock.
+* **Time.** One league year is 168 real hours (a real week), the last 1.5 h kept clear so a late-December Coronation can finish. A league date maps linearly onto the
+  rest, so a game kicks off at the real moment its league date and kickoff time correspond to. A game takes about 36 real minutes (0.6 real seconds per game second plus
+  a 20 s halftime), the same numbers the replay uses. Playoff matchups are announced 20 real minutes before kickoff. The first kickoff is chosen once by the Commissioner.
+* **Feed** (`--out`, default `/var/www/dfl/live`): meta.json, season.json (schedule, no scores), results.json (revealed finals, games in progress with score and clock, announced
+  playoff games, and only once decided the seeds, division ranks, exits and champion), history.json, g/<year>_<id>.json (the plays so far; everything once final). Nothing in it
+  is ahead of the clock (`check_live.py`).
+* **Restarts lose nothing.** Every year is a pure function of the seed, so the runner replays the years already gone (about two seconds each) and carries on from the clock.
+* **The page** (`build_site.py --live`) has no result baked in; it polls results.json every 3 s, adds up records and standings from the revealed finals (provisional order by win
+  percentage, point difference, points for; the engine's own tiebreakers apply once the regular season ends), has a Live tab (in progress, up next, just finished, champions),
+  and a game page that fills in play by play.
+* **Server.** `deploy/dfl-live.service` (systemd, its own `dfl` account, Pacific time), `deploy/start-live.sh` (asks for the first kickoff once), `deploy/update.sh`
+  (rebuilds the live page and restarts the runner). The founding snapshot is not kept next to the live page because year 1 is the same season: it would show the results early.
+* **Not yet:** the Director, the Commissioner page, agents; the live league is the engine on autopilot, as the snapshot was.

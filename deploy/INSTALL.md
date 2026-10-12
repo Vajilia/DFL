@@ -36,10 +36,25 @@ point it at the server and tell Claude; it is one line to change.
 - **Change the website login:** `bash /opt/dfl/deploy/render.sh`
 - **If something goes wrong:** copy whatever the Console printed and paste it to Claude.
 
+## 3b. The live league
+
+Setup gives you a snapshot of the founding season. To run the league live on the server (it plays each game at its kickoff and the page follows):
+
+1. Open the Console and type this one line, then Enter:
+
+       curl -fsSL https://raw.githubusercontent.com/Vajilia/dfl/step6-rebuild/deploy/start-live.sh | bash
+
+2. The first time it asks **"First kickoff:"**. Type the date and time in Pacific time, like `2026-10-17 09:00`, and press Enter. It then starts the runner
+   (a systemd service named `dfl-live`, so it keeps running when you close the Console and starts again if the server restarts).
+3. Open the website and look at the **Live** tab. Until the first kickoff it counts down; then games appear as they are played.
+
+A league year takes one real week (a game about 36 minutes). Typing the line again later just updates the code and restarts the runner; the league carries on from the clock,
+nothing is lost. To see how it is doing: `systemctl status dfl-live`, or `journalctl -u dfl-live -n 20`.
+
 ## What this does and does not do
 
-It serves a snapshot of the founding league (the seed-7 export that the page is built from). It is not yet the always-running league: that
-is the later step (Director, scheduled seasons, agents), and it will run on this same server. Nothing on the page can change anything.
+The page is a read-only window; nothing on it can change anything. The live league is the engine on autopilot (no agents yet: the Director, the Commissioner page and the
+agents come later and will run on this same server).
 
 ## What the script does (for the curious or the cautious)
 

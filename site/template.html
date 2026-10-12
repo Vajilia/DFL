@@ -147,20 +147,28 @@ const clubLink = (c, extra = "") => `<a class="club" href="#club-${c.abbr}">${ba
 const stripe = c => `<div class="stripe" style="background:linear-gradient(90deg,${c.colors[0]} 0 52%,${c.colors[1]} 52% 82%,${c.colors[2]} 82% 100%)"></div>`;
 const slotOf = g => { const wd = dateOf(g.date).getDay(); if (wd === 6) return ["Saturday night", 4]; if (wd === 1) return ["Monday night", 5]; const h = +g.time.split(":")[0]; return h < 12 ? ["Sunday morning", 1] : h < 15 ? ["Sunday afternoon", 2] : ["Sunday evening", 3]; };
 const conf = i => D.conferences[i];
-const seedOf = {}; Object.entries(D.seeds).forEach(([cf, ids]) => ids.forEach((id, k) => seedOf[id] = k + 1));
+let seedOf = {}; const reseed = () => { seedOf = {}; Object.entries(D.seeds).forEach(([cf, ids]) => ids.forEach((id, k) => seedOf[id] = k + 1)); }; reseed();
+clubs.forEach(c => { c.exiled0 = c.exiled; });             // who began in exile on Founding Day (a club's status changes year to year in a live league)
 const players = []; clubs.forEach(c => c.roster.forEach((p, i) => { p.club = c; p.idx = i; players.push(p); }));
 const winner = g => g.hp > g.ap ? g.home : g.ap > g.hp ? g.away : null;
 const money = m => "$" + m.toFixed(2) + "M";
-const ptsOf = c => D.games.filter(g => g.home === c.id || g.away === c.id).reduce((s, g) => s + slotOf(g)[1], 0);
-const allPts = clubs.filter(c => !c.exiled).map(ptsOf);
+const G0 = D.games2000 || D.games;                         // the 2000 schedule, for the guide's time-slot table
+const ptsOf = c => G0.filter(g => g.home === c.id || g.away === c.id).reduce((s, g) => s + slotOf(g)[1], 0);
+const allPts = clubs.filter(c => !c.exiled0).map(ptsOf);
 const rangeLo = Math.min(...allPts), rangeHi = Math.max(...allPts);
 
 /* ---------- pages ---------- */
 function standings() {
-  const ch = byId[D.champion], final = D.playoffs[D.playoffs.length - 1];
-  let h = `<div class="stack"><div class="champion">${badge(ch, "lg")}<div><div class="eyebrow">Diamond Coronation · ${fmtLong(D.calendar.coronation)}</div><h2>${e(ch.name)}</h2>
+  let h;
+  if (D.champion == null) {
+    h = `<div class="stack"><div class="champion" style="background:var(--soft);border-color:var(--line)"><div><div class="eyebrow">Season ${D.season}</div><h2>${e(phaseText())}</h2><p style="color:var(--muted)">${e(LIVE ? "Standings are what the games played so far add up to. Clubs are ordered by winning percentage, then points difference; the league's own tiebreakers are applied when the regular season ends." : "")}</p></div></div>
+    <p class="note">A read-only window on the league. Everything here is the engine's own record; nothing on this page changes the league.</p>`;
+  } else {
+    const ch = byId[D.champion], final = D.playoffs[D.playoffs.length - 1];
+    h = `<div class="stack"><div class="champion">${badge(ch, "lg")}<div><div class="eyebrow">Diamond Coronation · ${fmtLong(D.calendar.coronation)}</div><h2>${e(ch.name)}</h2>
     <p>Season ${D.season} champions, ${rec(ch.record)} in the regular season. Final: ${e(byId[D.champion].abbr)} ${D.champion === final.home ? final.hp : final.ap}, ${e(byId[D.champion === final.home ? final.away : final.home].abbr)} ${D.champion === final.home ? final.ap : final.hp}.</p></div></div>
-    <p class="note">A read-only window on the league. This is the first season of the founding class, played by the engine on the autopilot with no agents yet. Numbers shown are the engine's own.</p>`;
+    <p class="note">A read-only window on the league. ${LIVE ? "" : "This is the first season of the founding class, played by the engine on the autopilot with no agents yet. "}Numbers shown are the engine's own.</p>`;
+  }
   D.conferences.forEach((cn, ci) => {
     h += `<section class="stack" style="padding-top:0"><h1 style="font-size:36px">${e(cn)} Conference</h1><div class="grid wide">`;
     for (let di = 0; di < 4; di++) {
@@ -179,15 +187,16 @@ function standings() {
 
 function playoffs() {
   const names = { playoff_wc: ["Wild card", "wild_card"], playoff_div: ["Divisional round", "divisional"], playoff_conf: ["Conference championship", "conference"], playoff_final: ["Diamond Coronation", "coronation"] };
-  const gm = (g) => { const w = winner(g); return `<div class="game" style="grid-template-columns:1fr"><div class="teams">${[g.away, g.home].map(id => `<div><span>${clubLink(byId[id])}</span><span class="sc ${w === id ? "won" : "lost"}">${id === g.home ? g.hp : g.ap}</span></div>`).join("")}</div>${g.id && D.box[g.id] ? `<a class="more" style="padding:0 14px 8px;display:block" href="#game-${g.id}">Box score and replay</a>` : ""}</div>`; };
+  const gm = (g) => { if (g.home == null) return `<div class="game" style="grid-template-columns:1fr"><span style="color:var(--muted)">Matchup set shortly before kickoff${g.start ? " · " + realTime(g.start) : ""}</span></div>`;
+    const w = winner(g), played = g.hp != null; return `<div class="game" style="grid-template-columns:1fr"><div class="teams">${[g.away, g.home].map(id => `<div><span>${clubLink(byId[id])}</span><span class="sc ${played ? (w === id ? "won" : "lost") : ""}">${played ? (id === g.home ? g.hp : g.ap) : ""}</span></div>`).join("")}</div>${hasBox(g) ? `<a class="more" style="padding:0 14px 8px;display:block" href="#game-${g.id}">${g.live ? "Watch live" : "Box score and replay"}</a>` : ""}</div>`; };
   let h = `<div class="stack"><h1>Playoffs</h1><p class="note">Seven clubs a conference qualify. The Diamond Coronation is the league's championship game, played on the last Sunday of the year.</p><div class="grid">`;
   [0, 1].forEach(ci => {
     const six = D.playoffs.slice(ci * 6, ci * 6 + 6);
-    h += `<div class="stack" style="padding-top:0;gap:12px"><h2>${e(conf(ci))}</h2><div class="tablewrap"><table><thead><tr><th>Seed</th><th class="l">Club</th><th>Record</th></tr></thead><tbody>${(D.seeds[ci] || []).map((id, k) => `<tr><td>${k + 1}</td><td class="l">${clubLink(byId[id])}</td><td>${rec(byId[id].record)}</td></tr>`).join("")}</tbody></table></div>`;
+    h += `<div class="stack" style="padding-top:0;gap:12px"><h2>${e(conf(ci))}</h2><div class="tablewrap"><table><thead><tr><th>Seed</th><th class="l">Club</th><th>Record</th></tr></thead><tbody>${((D.seeds || {})[ci] || []).map((id, k) => `<tr><td>${k + 1}</td><td class="l">${clubLink(byId[id])}</td><td>${rec(byId[id].record)}</td></tr>`).join("")}</tbody></table></div>`;
     ["playoff_wc", "playoff_div", "playoff_conf"].forEach(k => { const gs = six.filter(g => g.kind === k); h += `<div class="tablewrap"><div class="day">${names[k][0]}<span>${fmtDate(D.calendar.playoff_dates[names[k][1]])}</span></div>${gs.map(gm).join("")}</div>`; });
     h += `</div>`;
   });
-  const f = D.playoffs[12];
+  const f = D.playoffs[12] || { kind: "playoff_final" };
   h += `</div><div class="tablewrap"><div class="day">Diamond Coronation<span>${fmtDate(D.calendar.playoff_dates.coronation)}</span></div>${gm(f)}</div></div>`;
   return h;
 }
@@ -195,7 +204,7 @@ function playoffs() {
 function gameRow(g, focus) {
   const w = winner(g), played = g.hp != null;
   const row = id => `<div><span>${clubLink(byId[id])}</span><span class="sc ${played ? (w === id ? "won" : w === null ? "" : "lost") : ""}">${played ? (id === g.home ? g.hp : g.ap) : ""}</span></div>`;
-  return `<div class="game"><span class="t">${fmtTime(g.time)}${g.kind === "division" ? '<span class="tag">Division</span>' : g.kind === "nonconf" ? '<span class="tag">Interconf.</span>' : ""}${g.id && D.box[g.id] ? `<a class="more" href="#game-${g.id}">${played ? "Box score" : "Watch"}</a>` : ""}</span><div class="teams">${row(g.away)}${row(g.home)}</div></div>`;
+  return `<div class="game"><span class="t">${fmtTime(g.time)}${g.kind === "division" ? '<span class="tag">Division</span>' : g.kind === "nonconf" ? '<span class="tag">Interconf.</span>' : ""}${hasBox(g) ? `<a class="more" href="#game-${g.id}">${g.live ? "Live" : "Box score"}</a>` : ""}</span><div class="teams">${row(g.away)}${row(g.home)}</div></div>`;
 }
 
 function schedule(week) {
@@ -232,11 +241,11 @@ function club(abbr) {
   <div class="grid"><div class="card"><h3>${D.season}</h3><dl class="kv" style="margin-top:12px">`;
   if (c.exiled) h += `<dt>Status</dt><dd>In exile; played the Ambassador Season ${c.ambassador.w}-${c.ambassador.l}</dd>`;
   else h += `<dt>Record</dt><dd><b>${rec(r)}</b> · ${r.pf} points for, ${r.pa} against</dd><dt>Division finish</dt><dd>${r.div_rank} of 5${c.id === D.champion ? " · <b>Diamond Coronation champions</b>" : r.playoffs ? ` · playoff seed ${seedOf[c.id]}${r.exit ? ", out in the " + e(r.exit.replace("_", " ")) : ""}` : ""}</dd>`;
-  h += `<dt>Founding seed</dt><dd>${c.exiled ? "in exile" : c.seed}</dd><dt>Completed on Founding Day</dt><dd>${c.founding_order} of 48</dd><dt>Colours</dt><dd>${c.colors.map((x, i) => `<span class="sw" style="background:${x}"></span>${e(c.color_names[i])}`).join(" &nbsp; ")}</dd></dl></div>
+  h += `<dt>Founding seed</dt><dd>${c.exiled0 ? "in exile" : c.seed}</dd><dt>Completed on Founding Day</dt><dd>${c.founding_order} of 48</dd><dt>Colours</dt><dd>${c.colors.map((x, i) => `<span class="sw" style="background:${x}"></span>${e(c.color_names[i])}`).join(" &nbsp; ")}</dd></dl></div>
     <div class="card"><h3>Front office</h3><div class="people" style="margin-top:12px">${person("CEO", P.ceo)}${person("General manager", P.gm)}${person("Head coach", P.head_coach)}${person("Offensive coordinator", P.offensive_coordinator)}${person("Defensive coordinator", P.defensive_coordinator)}</div></div></div>
   <div class="card"><h3>Founding Day</h3><p style="margin-top:8px">${e(c.story)}</p></div>`;
-  if (!c.exiled) { h += `<div class="stack" style="gap:8px;padding-top:0"><h2>Schedule and results</h2><div class="tablewrap"><table><thead><tr><th>Wk</th><th class="l">Date</th><th class="l">Opponent</th><th>Result</th><th class="hide-sm l">Slot</th></tr></thead><tbody>${games.map(g => { const home = g.home === c.id, o = byId[home ? g.away : g.home], mine = home ? g.hp : g.ap, th = home ? g.ap : g.hp, res = mine > th ? "W" : mine < th ? "L" : "T";
-      return `<tr><td>${g.week}</td><td class="l">${fmtDate(g.date)}</td><td class="l">${home ? "vs" : "at"} ${clubLink(o)}</td><td><a href="#game-${g.id}" title="Box score and replay"><b>${res}</b> ${mine}-${th}</a></td><td class="hide-sm l">${slotOf(g)[0]}</td></tr>`; }).join("")}</tbody></table></div></div>`; }
+  if (!c.exiled) { h += `<div class="stack" style="gap:8px;padding-top:0"><h2>Schedule and results</h2><div class="tablewrap"><table><thead><tr><th>Wk</th><th class="l">Date</th><th class="l">Opponent</th><th>Result</th><th class="hide-sm l">Slot</th></tr></thead><tbody>${games.map(g => { const home = g.home === c.id, o = byId[home ? g.away : g.home], mine = home ? g.hp : g.ap, th = home ? g.ap : g.hp, res = mine == null ? "" : mine > th ? "W" : mine < th ? "L" : "T";
+      return `<tr><td>${g.week}</td><td class="l">${fmtDate(g.date)}</td><td class="l">${home ? "vs" : "at"} ${clubLink(o)}</td><td>${mine == null ? `<span style="color:var(--muted)">${g.live ? "live" : fmtTime(g.time)}</span>` : `<a href="#game-${g.id}" title="Box score and replay"><b>${res}</b> ${mine}-${th}</a>`}</td><td class="hide-sm l">${slotOf(g)[0]}</td></tr>`; }).join("")}</tbody></table></div></div>`; }
   h += `<div class="stack" style="gap:8px;padding-top:0"><h2>Founding roster</h2><p class="note">The 53 players on Founding Day, all rookies. Rating is the engine's overall.</p>`;
   POSITIONS.forEach(([grp, ps]) => { const rows = c.roster.map((p, i) => [p, i]).filter(([p]) => ps.includes(p.pos));
     h += `<div class="tablewrap"><table><thead><tr><th>${grp}</th><th>Pos</th><th>Age</th><th>Ovr</th><th class="hide-sm l">College</th></tr></thead><tbody>${rows.map(([p, i]) => `<tr><td><a href="#player-${c.abbr}-${i}"><b>${e(p.name)}</b></a></td><td>${p.pos}</td><td>${p.age}</td><td>${p.ovr}</td><td class="hide-sm l">${e(p.college)}</td></tr>`).join("")}</tbody></table></div>`; });
@@ -297,9 +306,9 @@ function calendarPage() {
 
 
 function guide() {
-  const wk1 = D.games.filter(g => g.week === 1), slotCount = {};
+  const wk1 = G0.filter(g => g.week === 1), slotCount = {};
   wk1.forEach(g => { const n = slotOf(g)[0]; slotCount[n] = (slotCount[n] || 0) + 1; });
-  const byPts = {}; clubs.filter(c => !c.exiled).forEach(c => { const p = ptsOf(c); (byPts[p] = byPts[p] || []).push(c); });
+  const byPts = {}; clubs.filter(c => !c.exiled0).forEach(c => { const p = ptsOf(c); (byPts[p] = byPts[p] || []).push(c); });
   const divName = n => { const c = clubs[(n - 1) * 6]; return `${c.conference.slice(0, 1)}: ${c.division}`; };
   const L = ["A", "B", "C", "D", "E", "F", "G", "H"];
   const rows = D.evolution.map(y => `<tr><td>${y.year}${y.swapped ? ' <span class="tag" title="Conferences swapped this season">swap</span>' : ""}</td><td>${fmtShort(y.opener)}</td><td>${fmtShort(y.coronation)}</td><td>${y.offseason_days}</td>${y.slots.map(n => `<td>${n}</td>`).join("")}</tr>`).join("");
@@ -392,7 +401,9 @@ function leadersHtml(S, b, side) {
 
 let REPLAY = null;
 function game(id) {
-  const g = gameById[id], b = D.box[id]; if (!g || !b) return notFound();
+  const g = gameById[id], b = D.box[id]; if (!g) return notFound();
+  if (!b) return LIVE ? waitingGame(g) : notFound();
+  const live = LIVE && b.live;
   const H = byId[g.home], A = byId[g.away], plays = b.p;
   const stage = g.kind && g.kind.startsWith("playoff") ? ({ playoff_wc: "Wild card", playoff_div: "Divisional round", playoff_conf: "Conference championship", playoff_final: "Diamond Coronation" }[g.kind]) : g.week ? `Week ${g.week}` : "";
   const when = g.date ? `${fmtDate(g.date)}, ${fmtTime(g.time)}` : "";
@@ -402,16 +413,21 @@ function game(id) {
     <div class="mid"><div style="display:flex;justify-content:center;align-items:center;gap:20px"><span class="pts" id="sa">0</span><b id="st" style="font-size:16px;min-width:76px">Final</b><span class="pts" id="sh">0</span></div></div>
     <div class="side r">${badge(H, "lg")}<div><div class="nm">${e(H.name)}</div><small style="color:var(--muted)">${rec(H.record)} · home</small></div></div></div>
   <div style="margin-top:14px"><div class="field" id="field" aria-hidden="true"><span class="ez l"></span><span class="ez r"></span><span class="first" id="first"></span><span class="ball" id="ball"></span></div><p id="sit" style="margin-top:6px;color:var(--muted);font-size:14px;max-width:none"></p></div>
-  <div class="controls" style="margin-top:12px"><button class="btn primary" id="watch">Watch replay</button><button class="btn" id="pause" disabled>Pause</button><label style="color:var(--muted);font-size:14px">Speed <select id="speed"><option value="1">1x (about ${realLen} min)</option><option value="4">4x</option><option value="16">16x</option><option value="60">60x</option></select></label><button class="btn" id="final">Skip to final</button></div></div>
+  ${live ? `<p class="note" style="margin-top:12px"><b style="color:var(--accent)">LIVE</b> This game is being played now. Each play appears here as it happens, and you can replay it once it is over.</p>` : `<div class="controls" style="margin-top:12px"><button class="btn primary" id="watch">Watch replay</button><button class="btn" id="pause" disabled>Pause</button><label style="color:var(--muted);font-size:14px">Speed <select id="speed"><option value="1">1x (about ${realLen} min)</option><option value="4">4x</option><option value="16">16x</option><option value="60">60x</option></select></label><button class="btn" id="final">Skip to final</button></div>`}</div>
   <div class="grid wide"><div class="stack" style="padding-top:0;gap:8px"><h3>Play by play</h3><div class="tablewrap feed" id="feed"></div></div>
   <div class="stack" style="padding-top:0;gap:16px"><div class="card"><h3>Team stats</h3><div id="tstats" style="margin-top:8px"></div></div>
   <div class="card"><h3>${e(A.abbr)} leaders</h3><div class="lead" id="la"></div></div><div class="card"><h3>${e(H.abbr)} leaders</h3><div class="lead" id="lh"></div></div></div></div>
   <div class="stack" style="padding-top:0;gap:8px"><h3>Drives</h3><div class="tablewrap"><table><thead><tr><th>#</th><th class="l">Team</th><th>Qtr</th><th>Start</th><th>Plays</th><th>Yds</th><th>Time</th><th class="l">Result</th></tr></thead><tbody id="drv"></tbody></table></div></div>
   <p class="note">${e(KICKOFF_NOTE)} A game's 60 minutes replay in about ${realLen} minutes at 1x.</p></div>`;
 }
+function waitingGame(g) {
+  if (g.home == null) return `<div class="stack"><h1>Game</h1><p class="note">The two clubs for this game are not known yet. They are announced about 20 minutes before kickoff.</p></div>`;
+  const H = byId[g.home], A = byId[g.away];
+  return `<div class="stack"><div class="eyebrow"><a href="#live" style="text-decoration:underline">Live</a></div><h1>${e(A.name)} at ${e(H.name)}</h1><p class="note">${g.start > serverNow() ? `Kickoff is ${e(realTime(g.start))} (${e(inText(g.start))}). The page fills in by itself.` : "Waiting for the first plays…"}</p></div>`;
+}
 function startGame(id) {
   const g = gameById[id], b = D.box[id]; if (!g || !b) return;
-  const H = byId[g.home], A = byId[g.away], plays = b.p, $ = x => document.getElementById(x);
+  const H = byId[g.home], A = byId[g.away], plays = b.p, $ = x => document.getElementById(x), live = LIVE && b.live;
   const names = [H.name, A.name];            // side 0 is home
   const lastOfDrive = plays.map((p, i) => !plays[i + 1] || plays[i + 1][13] !== p[13]);
   const real = pl => pl[14] * REAL_PER_GAME + ((pl[10] >= 3 || pl[12]) ? HALFTIME_PAUSE : 0);
@@ -421,46 +437,136 @@ function startGame(id) {
   function paint(final) {
     const lp = S.last, [sa, sh] = [S.score[1], S.score[0]];
     $("sa").textContent = sa; $("sh").textContent = sh;
-    const done = S.i >= plays.length;
+    const done = !live && S.i >= plays.length;
     if (done) { $("sa").textContent = g.ap; $("sh").textContent = g.hp; }
-    $("st").textContent = done ? (b.n ? `Final / OT${b.n > 1 ? b.n : ""}` : "Final") : lp ? clock(lp[10], lp[11], lp[12]) : "Kickoff";
+    $("st").textContent = done ? (b.n ? `Final / OT${b.n > 1 ? b.n : ""}` : "Final") : lp ? (live ? "LIVE · " : "") + clock(lp[10], lp[11], lp[12]) : live ? "LIVE" : "Kickoff";
     const nx = plays[S.i];
     if (nx) { const off = nx[0]; $("sit").innerHTML = `<span class="poss"></span><b>${e(names[off])}</b> ball · ${ordn(nx[1])} &amp; ${nx[2]} at ${spot(nx[3])}`; const X = p => (off === 0 ? 93 - .86 * p : 7 + .86 * p) + "%"; $("ball").style.display = ""; $("ball").style.left = X(nx[3]); $("first").style.left = X(Math.min(100, nx[3] + nx[2])); }
-    else { $("sit").textContent = done ? "Final." : ""; $("ball").style.display = "none"; $("first").style.left = "-10%"; }
+    else { $("sit").textContent = done ? "Final." : live ? "Live: the next play appears when it is run." : ""; $("ball").style.display = "none"; $("first").style.left = "-10%"; }
     $("tstats").innerHTML = rowsFor().map(([lab, f]) => `<div class="statrow"><span>${f(S.tm[1])}</span><span>${lab}</span><span style="text-align:left">${f(S.tm[0])}</span></div>`).join("")
       .replace(/^/, `<div class="statrow" style="font-weight:700"><span>${e(A.abbr)}</span><span></span><span style="text-align:left">${e(H.abbr)}</span></div>`);
     $("la").innerHTML = leadersHtml(S, b, 1); $("lh").innerHTML = leadersHtml(S, b, 0);
     $("drv").innerHTML = b.dr.slice(0, S.drivesDone).map((d, k) => `<tr><td>${k + 1}</td><td class="l">${e(names[d[0]])}</td><td>${d[1]}</td><td>${spot(d[2])}</td><td>${d[3]}</td><td>${d[4]}</td><td>${mmss(d[5])}</td><td class="l">${e(d[6].replace(/_/g, " ").toLowerCase())}${d[7] || d[8] ? ` (${d[7] || d[8]} pts)` : ""}</td></tr>`).join("");
   }
   const lineHtml = i => { const pl = plays[i], [txt, cls] = playText(b, pl), first = i === 0 || plays[i - 1][13] !== pl[13];
-    return `<div class="${cls}"><span class="c">${clock(pl[10], pl[11], pl[12])}</span><span>${e(txt)}</span></div>` + (first ? `<div class="hd"><span class="c"></span><span>Drive ${pl[13] + 1}: ${e(names[pl[0]])}, starting at ${b.dr[pl[13]] ? spot(b.dr[pl[13]][2]) : "?"}</span></div>` : ""); };
+    return `<div class="${cls}"><span class="c">${clock(pl[10], pl[11], pl[12])}</span><span>${e(txt)}</span></div>` + (first ? `<div class="hd"><span class="c"></span><span>Drive ${pl[13] + 1}: ${e(names[pl[0]])}, starting at ${spot(b.dr[pl[13]] ? b.dr[pl[13]][2] : pl[3])}</span></div>` : ""); };
   function step() { const pl = plays[S.i]; applyPlay(S, b, pl); if (lastOfDrive[S.i]) endDrive(S, b, pl[13]); $("feed").insertAdjacentHTML("afterbegin", lineHtml(S.i)); S.i++; }
   function reset() { S = freshState(b); $("feed").innerHTML = ""; vt = 0; paint(); }
   function finish() { stop(); while (S.i < plays.length) step(); b.dr.forEach((d, k) => { if (k >= S.drivesDone) endDrive(S, b, k); }); paint(true); }
-  function stop() { if (timer) clearInterval(timer); timer = null; running = false; $("pause").disabled = true; $("pause").textContent = "Pause"; }
+  function stop() { if (timer) clearInterval(timer); timer = null; running = false; if (live) return; $("pause").disabled = true; $("pause").textContent = "Pause"; }
   function run() { running = true; $("pause").disabled = false; $("pause").textContent = "Pause";
     timer = setInterval(() => { vt += 0.1 * speed; let moved = false; while (S.i < plays.length && real(plays[S.i]) <= vt) { step(); moved = true; } if (moved) paint(); if (S.i >= plays.length) finish(); }, 100); }
-  $("watch").onclick = () => { stop(); reset(); run(); };
-  $("pause").onclick = () => { if (running) { clearInterval(timer); timer = null; running = false; $("pause").textContent = "Resume"; } else run(); };
-  $("speed").onchange = ev => { speed = +ev.target.value; };
-  $("final").onclick = () => finish();
+  if (!live) {
+    $("watch").onclick = () => { stop(); reset(); run(); };
+    $("pause").onclick = () => { if (running) { clearInterval(timer); timer = null; running = false; $("pause").textContent = "Resume"; } else run(); };
+    $("speed").onchange = ev => { speed = +ev.target.value; };
+    $("final").onclick = () => finish();
+  }
   REPLAY = { stop, finish, state: () => S, reset, step, paint };
   finish();                                  // open on the finished game; "Watch replay" starts it from kickoff
 }
 
+
+/* ---------- live mode: the engine plays elsewhere; this page watches its feed ---------- */
+const LIVE = !!D.live;
+const FEED = { season: null, results: null, year: 0, sig: "", err: null, skew: 0, tried: {} };
+const hasBox = g => !!g.id && (LIVE ? (g.final || g.live) : !!D.box[g.id]);
+const realTime = ms => new Date(ms).toLocaleString([], { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+const serverNow = () => Date.now() - FEED.skew;
+const inText = ms => { const s = Math.round((ms - serverNow()) / 1000); if (s < 60) return s <= 0 ? "now" : "in " + s + " s"; const m = s / 60; if (m < 90) return "in " + Math.round(m) + " min"; const h = s / 3600; return h < 48 ? "in " + h.toFixed(1) + " h" : "in " + (h / 24).toFixed(1) + " days"; };
+const simDate = () => FEED.results && FEED.results.sim ? new Date(FEED.results.sim) : null;
+function phaseText() {
+  const R = FEED.results; if (!LIVE) return `Season ${D.season}`;
+  if (!R) return "Connecting to the league";
+  if (!R.year) return "The league has not begun";
+  const regs = D.games, started = regs.filter(g => g.final || g.live), done = regs.length && regs.every(g => g.final);
+  const sd = simDate();
+  if (!started.length) return `Offseason: the first kickoff is ${realTime(regs.length ? Math.min(...regs.map(g => g.start)) : 0)}`;
+  if (!done) { const wk = Math.max(...started.map(g => g.week)); return `Week ${wk} of 19${sd ? ` · league date ${fmtShort(sd.toISOString().slice(0, 10))}` : ""}`; }
+  if (D.champion != null) return `${byId[D.champion].name} are the champions`;
+  return "The playoffs";
+}
+const wp = r => (r.w + r.t / 2) / Math.max(1, r.w + r.l + r.t);
+function derive() {
+  const R = FEED.results, S = FEED.season, fin = R.final || {}, nowx = R.now || {};
+  D.season = S.season; D.calendar = S.calendar;
+  clubs.forEach(c => { c.exiled = S.exiled.includes(c.id); c.record = { w: 0, l: 0, t: 0, pf: 0, pa: 0 }; c.ambassador = { w: 0, l: 0, t: 0, pf: 0, pa: 0 }; });
+  const mk = (a, i) => { const [id, week, home, away, start, kind, when] = a, f = fin[id];
+    return { id, week, game: i, date: when.slice(0, 10), time: when.slice(11, 16), home, away, kind, start, hp: f ? f[0] : null, ap: f ? f[1] : null, ot: f ? f[2] : 0, final: !!f, live: !f && !!nowx[id] }; };
+  D.games = S.games.map(mk); D.ambassador = S.amb.map(mk);
+  D.playoffs = S.po.map(([id, kind, start, when], i) => { const t = (R.po || {})[id], f = fin[id];
+    return { id, kind, start, date: when.slice(0, 10), time: when.slice(11, 16), home: t ? t[0] : null, away: t ? t[1] : null, hp: f ? f[0] : null, ap: f ? f[1] : null, ot: f ? f[2] : 0, final: !!f, live: !f && !!nowx[id] }; });
+  const add = (r, pf, pa) => { r.pf += pf; r.pa += pa; if (pf > pa) r.w++; else if (pf < pa) r.l++; else r.t++; };
+  D.games.forEach(g => { if (g.final) { add(byId[g.home].record, g.hp, g.ap); add(byId[g.away].record, g.ap, g.hp); } });
+  D.ambassador.forEach(g => { if (g.final) { add(byId[g.home].ambassador, g.hp, g.ap); add(byId[g.away].ambassador, g.ap, g.hp); } });
+  D.seeds = R.seeds || {}; D.division_ranks = {};
+  for (let did = 0; did < 8; did++) {
+    const act = clubs.filter(c => c.did === did && !c.exiled);
+    const order = R.division_ranks && R.division_ranks[did] ? R.division_ranks[did] : act.sort((a, b) => wp(b.record) - wp(a.record) || (b.record.pf - b.record.pa) - (a.record.pf - a.record.pa) || b.record.pf - a.record.pf).map(c => c.id);
+    D.division_ranks[did] = order; order.forEach((id, k) => { byId[id].record.div_rank = k + 1; });
+  }
+  D.champion = R.champion != null ? R.champion : null;
+  clubs.forEach(c => { c.record.playoffs = Object.values(D.seeds).some(ids => ids.includes(c.id)); c.record.exit = (R.exits || {})[c.id] || ""; });
+  reseed();
+  Object.keys(gameById).forEach(k => delete gameById[k]); [D.games, D.ambassador, D.playoffs].forEach(L => L.forEach(g => { if (g.id) gameById[g.id] = g; }));
+  document.getElementById("foot").innerHTML = `Diamond Football League · season ${D.season}, live. The engine plays elsewhere and this page only watches what it records; nothing here changes the league.`;
+}
+async function getJSON(path) { const r = await fetch("live/" + path + (path.includes("?") ? "&" : "?") + "t=" + Date.now(), { cache: "no-store" }); if (!r.ok) throw new Error(path + " " + r.status); return r.json(); }
+async function loadBox(id) {
+  try { D.box[id] = await getJSON(`g/${FEED.results.year}_${id}.json`); } catch (err) { D.box[id] = null; }
+  return D.box[id];
+}
+function routeParts() { return (location.hash.slice(1) || (LIVE ? "live" : "standings")).split("-"); }
+async function poll() {
+  try {
+    const R = await getJSON("results.json");
+    FEED.skew = Date.now() - R.t; FEED.err = null;
+    if (R.year && FEED.year !== R.year) { FEED.season = await getJSON("season.json"); FEED.year = R.year; D.box = {}; FEED.tried = {}; }
+    const sig = JSON.stringify([R.year, R.final, R.now, R.po, R.seeds, R.champion, R.live]);
+    const first = !FEED.results, changed = sig !== FEED.sig;
+    FEED.results = R; FEED.sig = sig;
+    if (R.year) derive();
+    const parts = routeParts();
+    if (parts[0] === "game" && gameById[parts[1]]) { const b = D.box[parts[1]]; if (!b || b.live || !FEED.tried[parts[1]]) { FEED.tried[parts[1]] = true; const before = b ? b.p.length : -1, after = await loadBox(parts[1]); if (first || changed || (after ? after.p.length : -1) !== before || (b && b.live && after && !after.live)) render(false); return; } }
+    if (first || changed) render(false);
+    else if (parts[0] === "live") render(false);
+  } catch (err) { FEED.err = String(err); if (!FEED.results) { document.getElementById("app").innerHTML = `<div class="stack"><h1>Live</h1><p class="note">Cannot reach the league's feed (${e(FEED.err)}). Trying again.</p></div>`; } }
+}
+function livePage() {
+  const R = FEED.results;
+  if (!R) return `<div class="stack"><h1>Live</h1><p class="note">Connecting to the league…</p></div>`;
+  if (!R.year) return `<div class="stack"><h1>Live</h1><div class="champion" style="background:var(--soft);border-color:var(--line)"><div><div class="eyebrow">Founding Day</div><h2>The league has not begun</h2><p>It starts ${e(realTime(R.epoch))} (${e(inText(R.epoch))}).</p></div></div></div>`;
+  const all = [...D.games, ...D.ambassador, ...D.playoffs.filter(g => g.home != null)];
+  const live = all.filter(g => g.live), done = all.filter(g => g.final).sort((a, b) => b.start - a.start).slice(0, 8), next = all.filter(g => !g.final && !g.live).sort((a, b) => a.start - b.start).slice(0, 10);
+  const stage = g => g.kind && g.kind.startsWith("playoff") ? ({ playoff_wc: "Wild card", playoff_div: "Divisional", playoff_conf: "Conference championship", playoff_final: "Diamond Coronation" }[g.kind]) : g.kind === "ambassador" ? "Ambassador Season" : `Week ${g.week}`;
+  const row = (g, mid) => `<a class="gamelink" href="#game-${g.id}"><div class="game" style="grid-template-columns:190px 1fr"><span class="t">${mid}<span class="tag">${e(stage(g))}</span></span><div class="teams">${[g.away, g.home].map(id => `<div><span class="club">${badge(byId[id], "sm")}<span class="nm">${e(byId[id].name)}</span></span>${g.final ? `<span class="sc ${winner(g) === id ? "won" : "lost"}">${id === g.home ? g.hp : g.ap}</span>` : g.live ? `<span class="sc">${R.now[g.id][id === g.home ? 0 : 1]}</span>` : ""}</div>`).join("")}</div></div></a>`;
+  const clk = id => { const n = R.now[id]; return (n[4] ? "OT" : "Q" + n[2]) + " " + Math.floor(n[3] / 60) + ":" + String(n[3] % 60).padStart(2, "0"); };
+  const sd = simDate();
+  let h = `<div class="stack"><h1>Live</h1><div class="champion" style="background:var(--soft);border-color:var(--line)"><div><div class="eyebrow">Season ${D.season}${sd ? " · league date " + fmtLong(sd.toISOString().slice(0, 10)) : ""}</div><h2>${e(phaseText())}</h2></div></div>`;
+  h += `<h2>In progress</h2>` + (live.length ? `<div class="tablewrap">${live.map(g => row(g, `<b style="color:var(--accent)">LIVE</b> ${clk(g.id)}`)).join("")}</div>` : `<p class="note">No game is being played right now.</p>`);
+  h += `<h2>Up next</h2>` + (next.length ? `<div class="tablewrap">${next.map(g => row(g, `${e(realTime(g.start))}<small style="color:var(--muted)">${inText(g.start)}</small>`)).join("")}</div>` : `<p class="note">No more games are scheduled this season.</p>`);
+  if (done.length) h += `<h2>Just finished</h2><div class="tablewrap">${done.map(g => row(g, `Final${g.ot ? " / OT" : ""}`)).join("")}</div>`;
+  if ((R.history || []).length) h += `<h2>Champions</h2><div class="tablewrap"><table><tbody>${R.history.slice().reverse().map(x => `<tr><td class="l">${x.year}</td><td class="l">${clubLink(byId[x.champion])}</td></tr>`).join("")}</tbody></table></div>`;
+  return h + `<p class="note">Times are in your time zone. A game takes about 36 minutes; a league year takes one real week. Games appear here when they kick off and their plays appear as they happen.</p></div>`;
+}
+
 /* ---------- router, tabs, search ---------- */
-const TABS = [["standings", "Standings"], ["schedule", "Schedule"], ["guide", "How it works"], ["playoffs", "Playoffs"], ["clubs", "Clubs"], ["players", "Players"], ["founding", "Founding Day"], ["calendar", "Calendar"]];
-function route() {
-  const parts = (location.hash.slice(1) || "standings").split("-"), page = parts[0];
-  const html = page === "standings" ? standings() : page === "schedule" ? schedule(+parts[1] || 1) : page === "guide" ? guide() : page === "playoffs" ? playoffs() : page === "clubs" ? clubsPage() : page === "club" ? club(parts[1])
+const TABS = (LIVE ? [["live", "Live"]] : []).concat([["standings", "Standings"], ["schedule", "Schedule"], ["guide", "How it works"], ["playoffs", "Playoffs"], ["clubs", "Clubs"], ["players", "Players"], ["founding", "Founding Day"], ["calendar", "Calendar"]]);
+const curWeek = () => { const g = D.games.filter(x => !x.final).sort((a, b) => a.week - b.week)[0]; return g ? g.week : 19; };
+function render(scroll = true) {
+  const parts = routeParts(), page = parts[0];
+  if (LIVE && !FEED.results) { document.getElementById("app").innerHTML = `<div class="stack"><h1>Live</h1><p class="note">Connecting to the league…</p></div>`; return; }
+  if (LIVE && !FEED.results.year && page !== "live" && ["standings", "schedule", "playoffs", "club"].includes(page)) { location.hash = "live"; return; }
+  const html = page === "live" ? livePage() : page === "standings" ? standings() : page === "schedule" ? schedule(+parts[1] || (LIVE ? curWeek() : 1)) : page === "guide" ? guide() : page === "playoffs" ? playoffs() : page === "clubs" ? clubsPage() : page === "club" ? club(parts[1])
     : page === "game" ? game(parts[1]) : page === "player" ? player(parts[1], +parts[2]) : page === "players" ? playersPage() : page === "founding" ? founding() : page === "calendar" ? calendarPage() : notFound();
   if (REPLAY) { REPLAY.stop(); REPLAY = null; }
   document.getElementById("app").innerHTML = html;
   if (page === "game") startGame(parts[1]);
   const section = page === "club" ? "clubs" : page === "player" ? "players" : page === "game" ? "schedule" : page;
   document.getElementById("tabs").innerHTML = TABS.map(([k, n]) => `<a href="#${k}" ${k === section ? 'aria-current="page"' : ""}>${n}</a>`).join("");
-  window.scrollTo(0, 0);
+  if (scroll) window.scrollTo(0, 0);
 }
+const route = () => render(true);
 window.addEventListener("hashchange", route);
 document.getElementById("foot").innerHTML = `Diamond Football League · season ${D.season} as played by the engine's autopilot. A read-only view; nothing here changes the league.`;
 const q = document.getElementById("q"), res = document.getElementById("res");
@@ -470,5 +576,5 @@ q.addEventListener("input", () => { const s = q.value.trim().toLowerCase(); if (
 res.addEventListener("click", () => { res.hidden = true; q.value = ""; });
 document.addEventListener("click", ev => { if (!ev.target.closest(".search")) res.hidden = true; });
 q.addEventListener("keydown", ev => { if (ev.key === "Enter") { const a = res.querySelector("a"); if (a) { location.hash = a.getAttribute("href"); res.hidden = true; q.value = ""; } } if (ev.key === "Escape") res.hidden = true; });
-route();
+if (LIVE) { route(); poll(); setInterval(poll, 3000); } else route();
 </script>

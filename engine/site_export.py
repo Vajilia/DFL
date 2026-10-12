@@ -75,6 +75,43 @@ def _box(res, names: dict) -> dict:
     return dict(n=res.ot_periods, tb=1 if res.coin_flip_tiebreak else 0, pl=pl, tm=tm, dr=dr, p=plays)
 
 
+def calendar_for(cal_year: int) -> dict:
+    """One year's calendar as the page wants it (dates as ISO strings)."""
+    po = K.playoffs(cal_year)
+    return dict(year=cal_year, opener=K.opener(cal_year).isoformat(), trade_deadline=K.trade_deadline(cal_year).isoformat(), coronation=K.coronation(cal_year).isoformat(),
+                playoff_dates={k: po[k].isoformat() for k in ("wild_card", "divisional", "conference", "coronation")},
+                week_saturdays={w: K.week_saturday(cal_year, w).isoformat() for w in range(1, K.REGULAR_WEEKS + 1)},
+                offseason=[dict(name=e.name, start=e.start.isoformat(), end=e.end.isoformat(), note=e.note) for e in K.offseason(cal_year)],
+                season=[dict(name=e.name, start=e.start.isoformat(), end=e.end.isoformat(), note=e.note) for e in K.in_season(cal_year)])
+
+
+def play_season(lg, rng, year: int):
+    """Play one league year with the drive engine and the play log on. Returns (result, {player id: full name}): every player who took part is named, the way her card
+    would name her if she has no card yet (a released player is gone from every list by the season's end, so names are taken as each game is played)."""
+    import game_engine
+    seen, real_sim = {}, game_engine.simulate_game
+    def spy(home, away, *a, **k):                         # remember who played, by name, as each game is played (a released player is gone from every list by season's end)
+        for lu in (home, away):
+            for grp in (lu.qb, lu.rbs, lu.wrs, lu.te, lu.ol, lu.dl, lu.lb, lu.cb, lu.s, lu.k, lu.p):
+                for q in (grp if isinstance(grp, list) else [grp]):
+                    seen.setdefault(q.id, q.display_name or (f"{q.card.first} {q.card.last}" if q.card else f"P{q.id:05d}"))
+        return real_sim(home, away, *a, **k)
+    game_engine.simulate_game = spy
+    try:
+        res = run_season(lg, year, rng, Options(engine="drives", keep_boxes=True, record_plays=True))
+    finally:
+        game_engine.simulate_game = real_sim
+    everyone = [q for t in lg.teams for q in list(t.roster) + list(t.practice_squad)] + list(lg.free_agents) + list(getattr(lg, "retired_players", ()))
+    names = {p.id: (p.display_name or (f"{p.card.first} {p.card.last}" if p.card else f"P{p.id:05d}")) for p in everyone}
+    names.update({pid: n for pid, n in seen.items() if not (n[0] == "P" and n[1:].isdigit())})
+    import cards as CD
+    for r_ in [g.result for g in res.games + res.ambassador_games + res.playoff_games if g.result is not None]:
+        for pid in r_.players:                              # a player with no card yet (or already gone from every list) is named the way her card would be
+            if names.get(pid, "P0")[0] == "P" and names.get(pid, "P0")[1:].isdigit() or pid not in names:
+                names[pid] = " ".join(CD.make_name(lg.card_seed, pid))
+    return res, names
+
+
 def export(seed: int = 7) -> dict:
     lg, rng = F.open_league(seed)
     fnd = lg.founding
@@ -96,27 +133,7 @@ def export(seed: int = 7) -> dict:
         for r in csv.DictReader(f):
             if r["season"]:
                 times[(int(r["week"]), r["home"], r["away"])] = (r["date"], r["kickoff"], int(r["game"]))
-    import game_engine
-    seen, real_sim = {}, game_engine.simulate_game
-    def spy(home, away, *a, **k):                         # remember who played, by name, as each game is played (a released player is gone from every list by season's end)
-        for lu in (home, away):
-            for grp in (lu.qb, lu.rbs, lu.wrs, lu.te, lu.ol, lu.dl, lu.lb, lu.cb, lu.s, lu.k, lu.p):
-                for q in (grp if isinstance(grp, list) else [grp]):
-                    seen.setdefault(q.id, q.display_name or (f"{q.card.first} {q.card.last}" if q.card else f"P{q.id:05d}"))
-        return real_sim(home, away, *a, **k)
-    game_engine.simulate_game = spy
-    try:
-        res = run_season(lg, 1, rng, Options(engine="drives", keep_boxes=True, record_plays=True))
-    finally:
-        game_engine.simulate_game = real_sim
-    everyone = [q for t in lg.teams for q in list(t.roster) + list(t.practice_squad)] + list(lg.free_agents) + list(getattr(lg, "retired_players", ()))
-    names = {p.id: (p.display_name or (f"{p.card.first} {p.card.last}" if p.card else f"P{p.id:05d}")) for p in everyone}
-    names.update({pid: n for pid, n in seen.items() if not (n[0] == "P" and n[1:].isdigit())})
-    import cards as CD
-    for r_ in [g.result for g in res.games + res.ambassador_games + res.playoff_games if g.result is not None]:
-        for pid in r_.players:                              # a player with no card yet (or already gone from every list) is named the way her card would be
-            if names.get(pid, "P0")[0] == "P" and names.get(pid, "P0")[1:].isdigit() or pid not in names:
-                names[pid] = " ".join(CD.make_name(lg.card_seed, pid))
+    res, names = play_season(lg, rng, 1)
     box = {}
     def keep(gid, g):
         if g.result is not None and g.result.plays is not None:
@@ -143,11 +160,7 @@ def export(seed: int = 7) -> dict:
     for tid in {t for s in res.seeds.values() for t in s}:
         by_id[tid]["record"]["playoffs"] = True
     seeds = {str(k): v for k, v in res.seeds.items()}
-    cal = dict(year=2000, opener=K.opener(2000).isoformat(), trade_deadline=K.trade_deadline(2000).isoformat(), coronation=K.coronation(2000).isoformat(),
-               playoff_dates={k: v.isoformat() for k, v in stage_date.items()},
-               week_saturdays={w: K.week_saturday(2000, w).isoformat() for w in range(1, K.REGULAR_WEEKS + 1)},
-               offseason=[dict(name=e.name, start=e.start.isoformat(), end=e.end.isoformat(), note=e.note) for e in K.offseason(2000)],
-               season=[dict(name=e.name, start=e.start.isoformat(), end=e.end.isoformat(), note=e.note) for e in K.in_season(2000)])
+    cal = calendar_for(2000)
     evolution = []
     for y in range(2000, 2040):                           # forty seasons of the schedule: the calendar and which division fills each slot division
         flip, shift = rotation(y - 1999)
