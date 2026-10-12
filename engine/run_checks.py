@@ -19,7 +19,7 @@ from concurrent.futures import ThreadPoolExecutor
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 FAST = """agents autotrade calendar cards ceo contracts coordinators elevations enrichment extensions founding gm_roster governance injuries movement phase0 phase1
-prospects relations rosters rulebook service service_pay skeleton tiebreaks ties transactions verdicts""".split()
+prospects relations rosters rulebook service service_pay site skeleton tiebreaks ties transactions verdicts""".split()
 
 
 def scripts():

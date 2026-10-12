@@ -1,0 +1,301 @@
+<title>Diamond Football League</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800&family=IBM+Plex+Mono:wght@400;500&family=Source+Sans+3:wght@400;600;700&display=swap">
+<style>
+/* Layout: a sports almanac you can browse. Cool ink-and-paper neutrals, one facet-teal accent and a gold kept for the Coronation; each club brings its own colours through its badge and stripe. */
+:root {
+  --bg: #ECEFF3; --surface: #FFFFFF; --ink: #141A21; --muted: #586372; --line: #D3DAE2; --soft: #F4F6F9;
+  --accent: #0A6B76; --accent-ink: #FFFFFF; --gold: #8A5F00; --gold-bg: #F7EBC4; --win: #141A21;
+  --display: "Big Shoulders Display", "Arial Narrow", "Helvetica Neue", sans-serif;
+  --body: "Source Sans 3", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0F141A; --surface: #172029; --ink: #E8EDF2; --muted: #9AA6B3; --line: #2A3643; --soft: #1C2630;
+  --accent: #54C5D0; --accent-ink: #0B1217; --gold: #E6BA4C; --gold-bg: #3A3014; --win: #FFFFFF; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #0F141A; --surface: #172029; --ink: #E8EDF2; --muted: #9AA6B3; --line: #2A3643; --soft: #1C2630;
+  --accent: #54C5D0; --accent-ink: #0B1217; --gold: #E6BA4C; --gold-bg: #3A3014; --win: #FFFFFF; color-scheme: dark; }
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 16px; line-height: 1.5; padding-inline: 16px; padding-block: 0 48px; }
+a { color: inherit; text-decoration: none; }
+a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 3px; }
+.wrap { max-width: 1080px; margin-inline: auto; }
+header.top { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 20px; padding-block: 16px 10px; max-width: 1080px; margin-inline: auto; }
+.brand { font-family: var(--display); font-weight: 800; font-size: 28px; letter-spacing: .02em; text-transform: uppercase; line-height: 1; display: flex; align-items: center; gap: 10px; }
+.brand i { width: 22px; height: 22px; background: var(--accent); transform: rotate(45deg) scale(.82); display: inline-block; }
+.search { position: relative; flex: 1 1 220px; max-width: 360px; margin-left: auto; min-width: 0; }
+.search input { width: 100%; font: inherit; padding: 8px 12px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); color: var(--ink); }
+.results { position: absolute; z-index: 5; left: 0; right: 0; top: calc(100% + 4px); background: var(--surface); border: 1px solid var(--line); border-radius: 8px; box-shadow: 0 8px 24px rgba(0,0,0,.18); max-height: 60vh; overflow: auto; }
+.results a { display: flex; align-items: center; gap: 10px; padding: 8px 12px; }
+.results a:hover, .results a:focus-visible { background: var(--soft); }
+.results small { color: var(--muted); margin-left: auto; font-family: var(--mono); font-size: 12px; }
+nav.tabs { flex-basis: 100%; display: flex; flex-wrap: wrap; gap: 4px 4px; border-bottom: 1px solid var(--line); padding-bottom: 8px; }
+nav.tabs a { font-family: var(--display); font-weight: 700; font-size: 18px; letter-spacing: .04em; text-transform: uppercase; padding: 4px 12px; border-radius: 4px; color: var(--muted); }
+nav.tabs a:hover { color: var(--ink); }
+nav.tabs a[aria-current="page"] { background: var(--ink); color: var(--bg); }
+h1, h2, h3 { font-family: var(--display); font-weight: 800; letter-spacing: .02em; text-transform: uppercase; line-height: 1.05; margin: 0; text-wrap: balance; }
+h1 { font-size: clamp(34px, 6vw, 56px); } h2 { font-size: 28px; } h3 { font-size: 20px; }
+p { margin: 0; max-width: 68ch; }
+.note { background: var(--soft); border: 1px solid var(--line); border-radius: 8px; padding: 10px 14px; color: var(--muted); font-size: 14px; max-width: none; }
+.stack { display: flex; flex-direction: column; gap: 24px; padding-top: 20px; }
+.row { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; }
+.eyebrow { font-family: var(--mono); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px; min-width: 0; }
+.grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); }
+.grid.wide { grid-template-columns: repeat(auto-fit, minmax(min(100%, 500px), 1fr)); }
+.grid.tight { grid-template-columns: repeat(auto-fill, minmax(min(100%, 230px), 1fr)); gap: 10px; }
+.badge { display: inline-flex; align-items: center; justify-content: center; flex: none; width: 2.6em; height: 2.6em; font-size: 14px; border-radius: 9px; font-family: var(--display); font-weight: 800; letter-spacing: .03em; background: var(--p); box-shadow: inset 0 0 0 2.5px var(--t); }
+.badge.lg { font-size: 30px; border-radius: 16px; box-shadow: inset 0 0 0 5px var(--t); } .badge.sm { font-size: 11px; }
+.stripe { height: 10px; border-radius: 5px; }
+.champion { display: flex; flex-wrap: wrap; align-items: center; gap: 14px 20px; background: var(--gold-bg); border: 1px solid var(--gold); border-radius: 12px; padding: 16px 20px; }
+.champion .eyebrow { color: var(--gold); }
+.champion h2 { font-size: 34px; }
+.tablewrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+table { border-collapse: collapse; width: 100%; font-size: 15px; }
+th, td { padding: 8px 7px; text-align: right; white-space: nowrap; border-bottom: 1px solid var(--line); font-variant-numeric: tabular-nums; }
+th { font-family: var(--mono); font-weight: 500; font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); background: var(--soft); }
+th:first-child, td:first-child { text-align: left; } td.l, th.l { text-align: left; }
+tr:last-child td { border-bottom: 0; }
+.club { display: inline-flex; align-items: center; gap: 10px; font-weight: 600; }
+.club:hover span.nm { text-decoration: underline; text-decoration-color: var(--accent); text-underline-offset: 3px; }
+.seed { display: inline-block; min-width: 20px; padding: 0 5px; margin-left: 8px; border-radius: 10px; background: var(--accent); color: var(--accent-ink); font-family: var(--mono); font-size: 11px; text-align: center; }
+.seed.gold { background: var(--gold); color: var(--surface); }
+.exile td { color: var(--muted); background: var(--soft); font-style: italic; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { font-family: var(--mono); font-size: 13px; padding: 5px 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); color: var(--ink); }
+.chip[aria-current="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.chip.bye { border-style: dashed; color: var(--muted); font-size: 11px; display: flex; align-items: center; }
+.game { display: grid; grid-template-columns: 84px 1fr; gap: 4px 12px; align-items: start; padding: 10px 14px; border-bottom: 1px solid var(--line); }
+.game:last-child { border-bottom: 0; }
+.game .t { font-family: var(--mono); font-size: 13px; color: var(--muted); white-space: nowrap; display: flex; flex-direction: column; align-items: flex-start; gap: 4px; }
+.game .teams { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.game .teams > div { display: flex; align-items: center; gap: 8px; justify-content: space-between; }
+.game .sc { font-family: var(--mono); font-variant-numeric: tabular-nums; min-width: 2.4ch; text-align: right; }
+.won { font-weight: 700; color: var(--win); }
+.lost { color: var(--muted); }
+.tag { font-family: var(--mono); font-size: 11px; border: 1px solid var(--line); border-radius: 4px; padding: 1px 6px; color: var(--muted); }
+.day { padding: 8px 14px; background: var(--soft); border-bottom: 1px solid var(--line); font-family: var(--display); font-weight: 700; letter-spacing: .05em; text-transform: uppercase; display: flex; gap: 12px; align-items: baseline; flex-wrap: wrap; }
+.day span { font-family: var(--mono); font-size: 12px; color: var(--muted); letter-spacing: 0; text-transform: none; font-weight: 400; }
+.kv { display: grid; grid-template-columns: minmax(110px, 160px) 1fr; gap: 8px 16px; }
+.kv dt { color: var(--muted); font-size: 14px; } .kv dd { margin: 0; min-width: 0; }
+.people { display: grid; gap: 12px 24px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); }
+.people b { display: block; } .people small { color: var(--muted); }
+.sw { display: inline-block; width: 14px; height: 14px; border-radius: 3px; vertical-align: -2px; margin-right: 6px; border: 1px solid var(--line); }
+.bio { max-width: 68ch; }
+.ovr { font-family: var(--display); font-weight: 800; font-size: 44px; line-height: 1; }
+.timeline { width: 100%; height: auto; display: block; }
+.timeline text { fill: var(--ink); font-family: var(--mono); font-size: 12px; } .timeline .mut { fill: var(--muted); }
+.timeline .off { fill: var(--line); } .timeline .wk { fill: var(--accent); } .timeline .po { fill: var(--ink); } .timeline .co { fill: var(--gold); } .timeline line { stroke: var(--muted); stroke-width: 1; }
+select, .btn { font: inherit; padding: 7px 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); color: var(--ink); max-width: 100%; }
+.btn { cursor: pointer; }
+.hide-sm { display: table-cell; }
+@media (max-width: 640px) { .hide-sm { display: none; } .kv { grid-template-columns: 1fr; gap: 2px; } .kv dd { margin-bottom: 8px; } .game { grid-template-columns: 78px 1fr; } }
+@media (prefers-reduced-motion: no-preference) { .card, .chip, nav.tabs a { transition: border-color .15s, background-color .15s; } }
+footer { max-width: 1080px; margin: 40px auto 0; color: var(--muted); font-size: 13px; }
+</style>
+
+<header class="top">
+  <a class="brand" href="#standings" aria-label="Diamond Football League, home"><i></i>Diamond Football League</a>
+  <div class="search"><input id="q" type="search" placeholder="Find a player or club" autocomplete="off" aria-label="Find a player or club"><div class="results" id="res" hidden></div></div>
+  <nav class="tabs" id="tabs" aria-label="Sections"></nav>
+</header>
+<main class="wrap" id="app"></main>
+<footer id="foot"></footer>
+<script id="data" type="application/json">__DATA__</script>
+<script>
+"use strict";
+const D = JSON.parse(document.getElementById("data").textContent);
+const clubs = D.clubs, byId = {}, byAbbr = {};
+clubs.forEach((c, i) => { c.index = i; c.did = Math.floor(i / 6); byId[c.id] = c; byAbbr[c.abbr] = c; });
+const POSITIONS = [["Offense", ["QB", "RB", "WR", "TE", "OL"]], ["Defense", ["DL", "LB", "CB", "S"]], ["Special teams", ["K", "P"]]];
+const POSNAME = { QB: "Quarterback", RB: "Running back", WR: "Wide receiver", TE: "Tight end", OL: "Offensive line", DL: "Defensive line", LB: "Linebacker", CB: "Cornerback", S: "Safety", K: "Kicker", P: "Punter" };
+const MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"], DOW = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const e = s => String(s == null ? "" : s).replace(/[&<>"']/g, ch => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch]));
+const dateOf = iso => new Date(iso + "T12:00:00");
+const fmtDate = iso => { const d = dateOf(iso); return `${DOW[d.getDay()]}, ${MON[d.getMonth()]} ${d.getDate()}`; };
+const fmtLong = iso => { const d = dateOf(iso); return `${MON[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`; };
+const fmtShort = iso => { const d = dateOf(iso); return `${MON[d.getMonth()]} ${d.getDate()}`; };
+const fmtTime = t => { const [h, m] = t.split(":").map(Number); return `${((h + 11) % 12) + 1}:${String(m).padStart(2, "0")} ${h < 12 ? "am" : "pm"}`; };
+const lum = hex => { const n = parseInt(hex.slice(1), 16), f = v => { v /= 255; return v <= .03928 ? v / 12.92 : Math.pow((v + .055) / 1.055, 2.4); }; return .2126 * f(n >> 16) + .7152 * f((n >> 8) & 255) + .0722 * f(n & 255); };
+const pct = r => { const g = r.w + r.l + r.t; return g ? ((r.w + r.t / 2) / g).toFixed(3).replace(/^0/, "") : ".000"; };
+const rec = r => r ? `${r.w}-${r.l}${r.t ? "-" + r.t : ""}` : "";
+const badge = (c, size = "") => `<span class="badge ${size}" style="--p:${c.colors[0]};--s:${c.colors[1]};--t:${c.colors[2]};color:${lum(c.colors[0]) > .4 ? "#101418" : "#fff"}" aria-hidden="true">${e(c.abbr)}</span>`;
+const clubLink = (c, extra = "") => `<a class="club" href="#club-${c.abbr}">${badge(c, "sm")}<span class="nm">${e(c.name)}</span>${extra}</a>`;
+const stripe = c => `<div class="stripe" style="background:linear-gradient(90deg,${c.colors[0]} 0 52%,${c.colors[1]} 52% 82%,${c.colors[2]} 82% 100%)"></div>`;
+const slotOf = g => { const wd = dateOf(g.date).getDay(); if (wd === 6) return ["Saturday night", 4]; if (wd === 1) return ["Monday night", 5]; const h = +g.time.split(":")[0]; return h < 12 ? ["Sunday morning", 1] : h < 15 ? ["Sunday afternoon", 2] : ["Sunday evening", 3]; };
+const conf = i => D.conferences[i];
+const seedOf = {}; Object.entries(D.seeds).forEach(([cf, ids]) => ids.forEach((id, k) => seedOf[id] = k + 1));
+const players = []; clubs.forEach(c => c.roster.forEach((p, i) => { p.club = c; p.idx = i; players.push(p); }));
+const winner = g => g.hp > g.ap ? g.home : g.ap > g.hp ? g.away : null;
+const money = m => "$" + m.toFixed(2) + "M";
+const ptsOf = c => D.games.filter(g => g.home === c.id || g.away === c.id).reduce((s, g) => s + slotOf(g)[1], 0);
+const allPts = clubs.filter(c => !c.exiled).map(ptsOf);
+const rangeLo = Math.min(...allPts), rangeHi = Math.max(...allPts);
+
+/* ---------- pages ---------- */
+function standings() {
+  const ch = byId[D.champion], final = D.playoffs[D.playoffs.length - 1];
+  let h = `<div class="stack"><div class="champion">${badge(ch, "lg")}<div><div class="eyebrow">Diamond Coronation · ${fmtLong(D.calendar.coronation)}</div><h2>${e(ch.name)}</h2>
+    <p>Season ${D.season} champions, ${rec(ch.record)} in the regular season. Final: ${e(byId[D.champion].abbr)} ${D.champion === final.home ? final.hp : final.ap}, ${e(byId[D.champion === final.home ? final.away : final.home].abbr)} ${D.champion === final.home ? final.ap : final.hp}.</p></div></div>
+    <p class="note">A read-only window on the league. This is the first season of the founding class, played by the engine on the autopilot with no agents yet. Numbers shown are the engine's own.</p>`;
+  D.conferences.forEach((cn, ci) => {
+    h += `<section class="stack" style="padding-top:0"><h1 style="font-size:36px">${e(cn)} Conference</h1><div class="grid wide">`;
+    for (let di = 0; di < 4; di++) {
+      const did = ci * 4 + di, members = clubs.filter(c => c.did === did), order = D.division_ranks[did] || [];
+      const active = order.map(id => byId[id]), exiled = members.filter(c => c.exiled);
+      h += `<div class="stack" style="padding-top:0;gap:8px"><h3>${e(members[0].division)}</h3><div class="tablewrap"><table><thead><tr><th>Club</th><th>W</th><th>L</th><th>T</th><th>Pct</th><th class="hide-sm">PF</th><th class="hide-sm">PA</th><th>Diff</th></tr></thead><tbody>`;
+      active.forEach(c => { const r = c.record, d = r.pf - r.pa, sd = seedOf[c.id];
+        h += `<tr><td>${clubLink(c, c.id === D.champion ? `<span class="seed gold" title="Champion">◆</span>` : sd ? `<span class="seed" title="Playoff seed ${sd}">${sd}</span>` : "")}</td><td>${r.w}</td><td>${r.l}</td><td>${r.t}</td><td>${pct(r)}</td><td class="hide-sm">${r.pf}</td><td class="hide-sm">${r.pa}</td><td>${d > 0 ? "+" : ""}${d}</td></tr>`; });
+      exiled.forEach(c => { const a = c.ambassador; h += `<tr class="exile"><td>${clubLink(c)}</td><td colspan="7" style="text-align:left;white-space:normal">In exile this season · Ambassador Season ${a.w}-${a.l}${a.t ? "-" + a.t : ""}</td></tr>`; });
+      h += `</tbody></table></div></div>`;
+    }
+    h += `</div></section>`;
+  });
+  return h + `</div>`;
+}
+
+function playoffs() {
+  const names = { playoff_wc: ["Wild card", "wild_card"], playoff_div: ["Divisional round", "divisional"], playoff_conf: ["Conference championship", "conference"], playoff_final: ["Diamond Coronation", "coronation"] };
+  const gm = (g) => { const w = winner(g); return `<div class="game" style="grid-template-columns:1fr"><div class="teams">${[g.away, g.home].map(id => `<div><span>${clubLink(byId[id])}</span><span class="sc ${w === id ? "won" : "lost"}">${id === g.home ? g.hp : g.ap}</span></div>`).join("")}</div></div>`; };
+  let h = `<div class="stack"><h1>Playoffs</h1><p class="note">Seven clubs a conference qualify. The Diamond Coronation is the league's championship game, played on the last Sunday of the year.</p><div class="grid">`;
+  [0, 1].forEach(ci => {
+    const six = D.playoffs.slice(ci * 6, ci * 6 + 6);
+    h += `<div class="stack" style="padding-top:0;gap:12px"><h2>${e(conf(ci))}</h2><div class="tablewrap"><table><thead><tr><th>Seed</th><th class="l">Club</th><th>Record</th></tr></thead><tbody>${(D.seeds[ci] || []).map((id, k) => `<tr><td>${k + 1}</td><td class="l">${clubLink(byId[id])}</td><td>${rec(byId[id].record)}</td></tr>`).join("")}</tbody></table></div>`;
+    ["playoff_wc", "playoff_div", "playoff_conf"].forEach(k => { const gs = six.filter(g => g.kind === k); h += `<div class="tablewrap"><div class="day">${names[k][0]}<span>${fmtDate(D.calendar.playoff_dates[names[k][1]])}</span></div>${gs.map(gm).join("")}</div>`; });
+    h += `</div>`;
+  });
+  const f = D.playoffs[12];
+  h += `</div><div class="tablewrap"><div class="day">Diamond Coronation<span>${fmtDate(D.calendar.playoff_dates.coronation)}</span></div>${gm(f)}</div></div>`;
+  return h;
+}
+
+function gameRow(g, focus) {
+  const w = winner(g), played = g.hp != null;
+  const row = id => `<div><span>${clubLink(byId[id])}</span><span class="sc ${played ? (w === id ? "won" : w === null ? "" : "lost") : ""}">${played ? (id === g.home ? g.hp : g.ap) : ""}</span></div>`;
+  return `<div class="game"><span class="t">${fmtTime(g.time)}${g.kind === "division" ? '<span class="tag">Division</span>' : g.kind === "nonconf" ? '<span class="tag">Interconf.</span>' : ""}</span><div class="teams">${row(g.away)}${row(g.home)}</div></div>`;
+}
+
+function schedule(week) {
+  week = Math.min(19, Math.max(1, week || 1));
+  const games = D.games.filter(g => g.week === week), cal = D.calendar;
+  let chips = "";
+  for (let w = 1; w <= 19; w++) { chips += `<a class="chip" href="#schedule-${w}" ${w === week ? 'aria-current="true"' : ""}>${w}</a>`; if ([4, 9, 14].includes(w)) chips += `<span class="chip bye" title="League-wide bye">bye</span>`; }
+  const byDate = {}; games.forEach(g => (byDate[g.date] = byDate[g.date] || []).push(g));
+  const label = { 6: "Saturday night football", 0: "Sunday", 1: "Monday night football" };
+  let h = `<div class="stack"><h1>Schedule</h1><div class="chips" role="navigation" aria-label="Weeks">${chips}</div><h2>Week ${week}</h2>`;
+  Object.keys(byDate).sort().forEach(d => { const wd = dateOf(d).getDay(); h += `<div class="tablewrap"><div class="day">${label[wd]}<span>${fmtDate(d)}</span></div>${byDate[d].sort((a, b) => a.time.localeCompare(b.time) || a.game - b.game).map(g => gameRow(g)).join("")}</div>`; });
+  if (week >= 15) { const playing = new Set(); games.forEach(g => { playing.add(g.home); playing.add(g.away); });
+    const bye = clubs.filter(c => !c.exiled && !playing.has(c.id)); h += `<p class="note"><b>On bye:</b> ${bye.map(c => e(c.name)).join(", ")}.</p>`; }
+  const amb = D.ambassador.filter(g => g.week === week);
+  if (amb.length) h += `<div class="tablewrap"><div class="day">Ambassador Season<span>the clubs in exile · played this week</span></div>${amb.map(g => gameRow(Object.assign({ time: "12:00", kind: "" }, g))).join("").replace(/<span class="t">12:00 pm<\/span>/g, `<span class="t"></span>`)}</div>`;
+  return h + `</div>`;
+}
+
+function clubsPage() {
+  let h = `<div class="stack"><h1>Clubs</h1><p class="note">Forty-eight clubs in eight divisions. One club in each division is in exile each season, and the eight that start in exile are marked.</p>`;
+  D.conferences.forEach((cn, ci) => { h += `<h2>${e(cn)} Conference</h2><div class="grid">`;
+    for (let di = 0; di < 4; di++) { const members = clubs.filter(c => c.did === ci * 4 + di);
+      h += `<div class="card"><h3>${e(members[0].division)}</h3><div class="stack" style="gap:6px;padding-top:12px">${members.map(c => `<a class="club" href="#club-${c.abbr}" style="justify-content:space-between;width:100%"><span class="club">${badge(c, "sm")}<span class="nm">${e(c.name)}</span></span><span class="tag">${c.exiled ? "exile" : rec(c.record)}</span></a>`).join("")}</div></div>`; }
+    h += `</div>`; });
+  return h + `</div>`;
+}
+
+function club(abbr) {
+  const c = byAbbr[abbr]; if (!c) return notFound();
+  const games = D.games.filter(g => g.home === c.id || g.away === c.id).sort((a, b) => a.week - b.week);
+  const slots = {}; games.forEach(g => { const [n] = slotOf(g); slots[n] = (slots[n] || 0) + 1; });
+  const pts = ptsOf(c), r = c.record, P = c.people;
+  const person = (role, p) => p ? `<div><small class="eyebrow">${role}</small><b>${e(p.name)}</b><small>${e(p.trait)} · ${e(p.hometown)}</small></div>` : "";
+  let h = `<div class="stack"><div class="row" style="align-items:flex-start">${badge(c, "lg")}<div style="min-width:0"><div class="eyebrow">${e(c.conference)} · ${e(c.division)}</div><h1>${e(c.name)}</h1><p style="color:var(--muted)">${e(c.venue)}, ${e(c.location)}</p></div></div>${stripe(c)}
+  <div class="grid"><div class="card"><h3>${D.season}</h3><dl class="kv" style="margin-top:12px">`;
+  if (c.exiled) h += `<dt>Status</dt><dd>In exile; played the Ambassador Season ${c.ambassador.w}-${c.ambassador.l}</dd>`;
+  else h += `<dt>Record</dt><dd><b>${rec(r)}</b> · ${r.pf} points for, ${r.pa} against</dd><dt>Division finish</dt><dd>${r.div_rank} of 5${c.id === D.champion ? " · <b>Diamond Coronation champions</b>" : r.playoffs ? ` · playoff seed ${seedOf[c.id]}${r.exit ? ", out in the " + e(r.exit.replace("_", " ")) : ""}` : ""}</dd>
+    <dt>Time-slot points</dt><dd><b>${pts}</b> of a league range ${rangeLo} to ${rangeHi} <small style="color:var(--muted)">(Monday night 5, Saturday night 4, Sunday evening 3, afternoon 2, morning 1)</small></dd>`;
+  h += `<dt>Founding seed</dt><dd>${c.exiled ? "in exile" : c.seed}</dd><dt>Completed on Founding Day</dt><dd>${c.founding_order} of 48</dd><dt>Colours</dt><dd>${c.colors.map((x, i) => `<span class="sw" style="background:${x}"></span>${e(c.color_names[i])}`).join(" &nbsp; ")}</dd></dl></div>
+    <div class="card"><h3>Front office</h3><div class="people" style="margin-top:12px">${person("CEO", P.ceo)}${person("General manager", P.gm)}${person("Head coach", P.head_coach)}${person("Offensive coordinator", P.offensive_coordinator)}${person("Defensive coordinator", P.defensive_coordinator)}</div></div></div>
+  <div class="card"><h3>Founding Day</h3><p style="margin-top:8px">${e(c.story)}</p></div>`;
+  if (!c.exiled) { h += `<div class="stack" style="gap:8px;padding-top:0"><h2>Schedule and results</h2><div class="tablewrap"><table><thead><tr><th>Wk</th><th class="l">Date</th><th class="l">Opponent</th><th>Result</th><th class="hide-sm l">Slot</th></tr></thead><tbody>${games.map(g => { const home = g.home === c.id, o = byId[home ? g.away : g.home], mine = home ? g.hp : g.ap, th = home ? g.ap : g.hp, res = mine > th ? "W" : mine < th ? "L" : "T";
+      return `<tr><td>${g.week}</td><td class="l">${fmtDate(g.date)}</td><td class="l">${home ? "vs" : "at"} ${clubLink(o)}</td><td><b>${res}</b> ${mine}-${th}</td><td class="hide-sm l">${slotOf(g)[0]}</td></tr>`; }).join("")}</tbody></table></div></div>`; }
+  h += `<div class="stack" style="gap:8px;padding-top:0"><h2>Founding roster</h2><p class="note">The 53 players on Founding Day, all rookies. Rating is the engine's overall.</p>`;
+  POSITIONS.forEach(([grp, ps]) => { const rows = c.roster.map((p, i) => [p, i]).filter(([p]) => ps.includes(p.pos));
+    h += `<div class="tablewrap"><table><thead><tr><th>${grp}</th><th>Pos</th><th>Age</th><th>Ovr</th><th class="hide-sm l">College</th></tr></thead><tbody>${rows.map(([p, i]) => `<tr><td><a href="#player-${c.abbr}-${i}"><b>${e(p.name)}</b></a></td><td>${p.pos}</td><td>${p.age}</td><td>${p.ovr}</td><td class="hide-sm l">${e(p.college)}</td></tr>`).join("")}</tbody></table></div>`; });
+  return h + `</div></div>`;
+}
+
+function player(abbr, idx) {
+  const c = byAbbr[abbr], p = c && c.roster[idx]; if (!p) return notFound();
+  const prev = idx > 0 ? `<a class="chip" href="#player-${abbr}-${idx - 1}">← ${e(c.roster[idx - 1].name)}</a>` : "", next = idx < c.roster.length - 1 ? `<a class="chip" href="#player-${abbr}-${idx + 1}">${e(c.roster[idx + 1].name)} →</a>` : "";
+  return `<div class="stack"><div class="row" style="align-items:flex-start">${badge(c, "lg")}<div style="min-width:0"><div class="eyebrow">${e(POSNAME[p.pos] || p.pos)} · <a href="#club-${abbr}" style="text-decoration:underline">${e(c.name)}</a></div><h1>${e(p.name)}</h1></div></div>
+  <div class="grid"><div class="card"><div class="row"><div><div class="eyebrow">Overall</div><div class="ovr">${p.ovr}</div></div><dl class="kv" style="flex:1 1 220px"><dt>Age</dt><dd>${p.age}</dd><dt>College</dt><dd>${e(p.college)}</dd><dt>Hometown</dt><dd>${e(p.hometown)}</dd><dt>Temperament</dt><dd>${e(p.trait)}</dd><dt>Contract</dt><dd>${money(p.salary)} a year, ${p.years} year${p.years === 1 ? "" : "s"} left</dd></dl></div></div>
+  <div class="card"><h3>Backstory</h3><p class="bio" style="margin-top:8px">${e(p.bio)}</p></div></div><div class="chips">${prev}${next}</div></div>`;
+}
+
+function playersPage() {
+  const html = `<div class="stack"><h1>Players</h1><div class="row"><input id="pq" type="search" class="btn" placeholder="Name or college" aria-label="Filter players" style="min-width:220px"><select id="pp" aria-label="Position"><option value="">All positions</option>${Object.keys(POSNAME).map(k => `<option value="${k}">${POSNAME[k]}</option>`).join("")}</select><span class="eyebrow" id="pc"></span></div><div class="tablewrap"><table><thead><tr><th>Player</th><th class="l">Club</th><th>Pos</th><th>Age</th><th>Ovr</th><th class="hide-sm l">College</th></tr></thead><tbody id="pt"></tbody></table></div></div>`;
+  setTimeout(() => { const q = document.getElementById("pq"), pp = document.getElementById("pp"), t = document.getElementById("pt"), pc = document.getElementById("pc");
+    const draw = () => { const s = q.value.trim().toLowerCase(), pos = pp.value;
+      const hit = players.filter(p => (!pos || p.pos === pos) && (!s || p.name.toLowerCase().includes(s) || p.college.toLowerCase().includes(s))).sort((a, b) => b.ovr - a.ovr);
+      pc.textContent = `${hit.length} players${hit.length > 100 ? ", best 100 shown" : ""}`;
+      t.innerHTML = hit.slice(0, 100).map(p => `<tr><td><a href="#player-${p.club.abbr}-${p.idx}"><b>${e(p.name)}</b></a></td><td class="l">${clubLink(p.club)}</td><td>${p.pos}</td><td>${p.age}</td><td>${p.ovr}</td><td class="hide-sm l">${e(p.college)}</td></tr>`).join(""); };
+    q.addEventListener("input", draw); pp.addEventListener("change", draw); draw(); }, 0);
+  return html;
+}
+
+let showAll = false;
+function founding() {
+  const F = D.founding, byKind = {};
+  F.events.forEach(ev => { const k = byKind[ev.kind] = byKind[ev.kind] || { n: 0, lo: ev.date, hi: ev.date }; k.n++; if (ev.date < k.lo) k.lo = ev.date; if (ev.date > k.hi) k.hi = ev.date; });
+  const KN = { ceo: "CEO seated", gm: "General manager named", head_coach: "Head coach named", coordinators: "Coordinators named", roster: "Roster drafted", practice_squad: "Practice squad signed", cutdown: "Cutdown to 53" };
+  const order = clubs.slice().sort((a, b) => a.founding_order - b.founding_order);
+  let h = `<div class="stack"><h1>Founding Day</h1><div class="card"><div class="eyebrow">${fmtLong(F.date)}</div><p style="margin-top:6px">${e(F.provenance)}</p><p style="margin-top:10px">Every player in the league is a rookie from the founding class (${e(F.class_of)}). The first game is ${fmtLong(F.first_game)}.</p></div>
+  <h2>The first offseason</h2><div class="tablewrap"><table><thead><tr><th class="l">Step</th><th>From</th><th>To</th><th>Clubs</th></tr></thead><tbody>${Object.keys(KN).filter(k => byKind[k]).map(k => `<tr><td class="l">${KN[k]}</td><td>${fmtShort(byKind[k].lo)}</td><td>${fmtShort(byKind[k].hi)}</td><td>${byKind[k].n}</td></tr>`).join("")}</tbody></table></div>
+  <h2>The order the clubs were completed</h2><div class="grid tight">${order.map(c => `<div class="row" style="gap:10px;flex-wrap:nowrap"><span class="eyebrow" style="width:2ch;text-align:right">${c.founding_order}</span>${clubLink(c)}</div>`).join("")}</div>
+  <h2>Day by day</h2><div class="row"><select id="fc" aria-label="Club"><option value="">All clubs</option>${clubs.map(c => `<option value="${c.id}">${e(c.name)}</option>`).join("")}</select></div><div class="tablewrap"><table><thead><tr><th class="l">Date</th><th class="l">What happened</th></tr></thead><tbody id="fe"></tbody></table></div><button class="btn" id="fm" hidden>Show every entry</button></div>`;
+  setTimeout(() => { const sel = document.getElementById("fc"), body = document.getElementById("fe"), more = document.getElementById("fm");
+    const draw = () => { let ev = F.events.slice().sort((a, b) => a.date.localeCompare(b.date)); if (sel.value) ev = ev.filter(x => String(x.team) === sel.value);
+      const cap = sel.value || showAll ? ev.length : 30; body.innerHTML = ev.slice(0, cap).map(x => `<tr><td class="l">${fmtShort(x.date)}</td><td class="l" style="white-space:normal">${e(x.text)}</td></tr>`).join(""); more.hidden = !!sel.value || showAll || ev.length <= cap; more.textContent = `Show all ${ev.length} entries`; };
+    sel.addEventListener("change", draw); more.addEventListener("click", () => { showAll = true; draw(); }); draw(); }, 0);
+  return h;
+}
+
+function calendarPage() {
+  const C = D.calendar, y = C.year, start = Date.UTC(y, 0, 1), span = (Date.UTC(y, 11, 31) - start) / 864e5 + 1, X = iso => 20 + 960 * ((dateOf(iso).getTime() - dateOf(y + "-01-01").getTime()) / 864e5) / span;
+  let svg = `<svg class="timeline" viewBox="0 0 1000 150" role="img" aria-label="The ${y} year: offseason, nineteen weeks, playoffs and the Coronation"><rect class="off" x="20" y="58" width="${X(C.opener) - 20}" height="22" rx="3"/>`;
+  for (let w = 1; w <= 19; w++) { const s = C.week_saturdays[w]; svg += `<rect class="wk" x="${X(s)}" y="58" width="${Math.max(3, 960 * 3 / span)}" height="22"/>`; }
+  Object.entries(C.playoff_dates).forEach(([k, d]) => svg += `<rect class="${k === "coronation" ? "co" : "po"}" x="${X(d)}" y="58" width="${Math.max(3, 960 / span * 1.2)}" height="22"/>`);
+  const mk = (iso, label, up, anchor) => `<line x1="${X(iso)}" x2="${X(iso)}" y1="${up ? 40 : 82}" y2="${up ? 58 : 100}"/><text x="${X(iso)}" y="${up ? 34 : 116}" text-anchor="${anchor || "middle"}">${label}</text>`;
+  const draft = C.offseason.find(x => x.name === "draft").start;
+  svg += mk(draft, "Draft " + fmtShort(draft), true) + mk(C.opener, "First game " + fmtShort(C.opener), false) + mk(C.trade_deadline, "Trade deadline " + fmtShort(C.trade_deadline), true) + mk(C.playoff_dates.wild_card, "Playoffs " + fmtShort(C.playoff_dates.wild_card), false, "end") + mk(C.coronation, "Coronation " + fmtShort(C.coronation), true, "end");
+  svg += MON.map((m, i) => `<text class="mut" x="${X(y + "-" + String(i + 1).padStart(2, "0") + "-01") + 4}" y="142" style="font-size:11px">${m}</text>`).join("") + `</svg>`;
+  const rows = es => es.map(x => `<tr><td class="l">${e(x.name.replace(/_/g, " "))}</td><td>${fmtShort(x.start)}${x.end !== x.start ? " to " + fmtShort(x.end) : ""}</td><td class="l hide-sm" style="white-space:normal">${e(x.note)}</td></tr>`).join("");
+  return `<div class="stack"><h1>Calendar</h1><p>Every season begins on January 1. The Diamond Coronation is played on the last Sunday of the year, and the first game falls 183 days earlier, on a Saturday. Everything between January 1 and the day before the first game is the offseason.</p>
+  <div class="card">${svg}</div>
+  <div class="grid"><div class="stack" style="padding-top:0;gap:8px"><h2>Offseason</h2><div class="tablewrap"><table><thead><tr><th class="l">What</th><th>When</th><th class="l hide-sm">Note</th></tr></thead><tbody>${rows(C.offseason)}</tbody></table></div></div>
+  <div class="stack" style="padding-top:0;gap:8px"><h2>The season</h2><div class="tablewrap"><table><thead><tr><th class="l">What</th><th>When</th><th class="l hide-sm">Note</th></tr></thead><tbody>${rows(C.season)}</tbody></table></div></div></div></div>`;
+}
+
+function notFound() { return `<div class="stack"><h1>Not found</h1><p>That page does not exist. <a href="#standings" style="text-decoration:underline">Back to the standings.</a></p></div>`; }
+
+/* ---------- router, tabs, search ---------- */
+const TABS = [["standings", "Standings"], ["schedule", "Schedule"], ["playoffs", "Playoffs"], ["clubs", "Clubs"], ["players", "Players"], ["founding", "Founding Day"], ["calendar", "Calendar"]];
+function route() {
+  const parts = (location.hash.slice(1) || "standings").split("-"), page = parts[0];
+  const html = page === "standings" ? standings() : page === "schedule" ? schedule(+parts[1] || 1) : page === "playoffs" ? playoffs() : page === "clubs" ? clubsPage() : page === "club" ? club(parts[1])
+    : page === "player" ? player(parts[1], +parts[2]) : page === "players" ? playersPage() : page === "founding" ? founding() : page === "calendar" ? calendarPage() : notFound();
+  document.getElementById("app").innerHTML = html;
+  const section = page === "club" ? "clubs" : page === "player" ? "players" : page;
+  document.getElementById("tabs").innerHTML = TABS.map(([k, n]) => `<a href="#${k}" ${k === section ? 'aria-current="page"' : ""}>${n}</a>`).join("");
+  window.scrollTo(0, 0);
+}
+window.addEventListener("hashchange", route);
+document.getElementById("foot").innerHTML = `Diamond Football League · season ${D.season} as played by the engine's autopilot. A read-only view; nothing here changes the league.`;
+const q = document.getElementById("q"), res = document.getElementById("res");
+q.addEventListener("input", () => { const s = q.value.trim().toLowerCase(); if (s.length < 2) { res.hidden = true; return; }
+  const cs = clubs.filter(c => c.name.toLowerCase().includes(s) || c.abbr.toLowerCase() === s).slice(0, 4), ps = players.filter(p => p.name.toLowerCase().includes(s)).slice(0, 8);
+  res.innerHTML = cs.map(c => `<a href="#club-${c.abbr}">${badge(c, "sm")}<span>${e(c.name)}</span><small>club</small></a>`).join("") + ps.map(p => `<a href="#player-${p.club.abbr}-${p.idx}">${badge(p.club, "sm")}<span>${e(p.name)}</span><small>${p.pos} · ${e(p.club.abbr)}</small></a>`).join("") || `<a href="#players"><span>No match</span></a>`; res.hidden = false; });
+res.addEventListener("click", () => { res.hidden = true; q.value = ""; });
+document.addEventListener("click", ev => { if (!ev.target.closest(".search")) res.hidden = true; });
+q.addEventListener("keydown", ev => { if (ev.key === "Enter") { const a = res.querySelector("a"); if (a) { location.hash = a.getAttribute("href"); res.hidden = true; q.value = ""; } } if (ev.key === "Escape") res.hidden = true; });
+route();
+</script>
