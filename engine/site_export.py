@@ -38,6 +38,43 @@ def _player(p):
                 salary=round(p.salary, 2), years=p.years_left, trait=c.trait, bio=c.bio or "")
 
 
+def _short(name: str) -> str:
+    """'Kiara Johnson' -> 'K. Johnson' for the play feed."""
+    parts = name.split()
+    return name if len(parts) < 2 else f"{parts[0][0]}. {' '.join(parts[1:])}"
+
+
+TURN = {False: 0, None: 0, "INT": 1, "FUMBLE": 2}
+OT_REG, OT_POST = 600, 900
+
+
+def _box(res, names: dict) -> dict:
+    """One game's record for the page: players, team totals, drives and the play log, all from the engine's own box score. The page keeps no football rules:
+    it replays this log and adds up what the engine recorded (engine/check_playlog.py proves the replay gives the box score back)."""
+    ids = sorted(res.players)
+    idx = {pid: i for i, pid in enumerate(ids)}
+    pl = [[names.get(pid, f"P{pid:05d}"), res.players[pid]["pos"], res.players[pid]["team"]] for pid in ids]
+    tm = [[t["plays"], t["yards"], t["pass_yds"], t["rush_yds"], t["first_downs"], t["turnovers"], t["sacks"], t["punts"], t["third_conv"], t["third_att"],
+           int(round(t["top_secs"])), t["pass_cmp"], t["pass_att"], t["rush_att"], t["fga"], t["fgm"]] for t in res.team]
+    dr = [[d["side"], d["quarter"], d["start"], d["plays"], d["yards"], d["secs"], d["result"], d["pts"], d["def_pts"]] for d in res.drives]
+    plays, prev_left, period, last_gt = [], None, 0, 0
+    for (off, q, down, to_go, pos, yds, to, kind, a, b, c, q2, left, ot, di) in res.plays:
+        if not ot:
+            gt = (q2 - 1) * 900 + (900 - left)
+        else:
+            if prev_left is None or left > prev_left:                 # a new overtime period begins
+                period += 1
+                gt = max(last_gt, 3600) + 20
+            else:
+                gt = last_gt + max(1, prev_left - left)
+            prev_left = left
+        gt = max(gt, last_gt)
+        last_gt = gt
+        plays.append([off, down, to_go, pos, yds, TURN[to], kind, idx.get(a, -1) if a is not None else -1, idx.get(b, -1) if (b is not None and kind != "FG") else (b if b is not None else -1),
+                      idx.get(c, -1) if (c is not None and kind != "FG") else (c if c is not None else -1), q2, left, 1 if ot else 0, di, gt])
+    return dict(n=res.ot_periods, tb=1 if res.coin_flip_tiebreak else 0, pl=pl, tm=tm, dr=dr, p=plays)
+
+
 def export(seed: int = 7) -> dict:
     lg, rng = F.open_league(seed)
     fnd = lg.founding
@@ -59,16 +96,41 @@ def export(seed: int = 7) -> dict:
         for r in csv.DictReader(f):
             if r["season"]:
                 times[(int(r["week"]), r["home"], r["away"])] = (r["date"], r["kickoff"], int(r["game"]))
-    res = run_season(lg, 1, rng, Options(engine="fast", keep_boxes=False))
+    import game_engine
+    seen, real_sim = {}, game_engine.simulate_game
+    def spy(home, away, *a, **k):                         # remember who played, by name, as each game is played (a released player is gone from every list by season's end)
+        for lu in (home, away):
+            for grp in (lu.qb, lu.rbs, lu.wrs, lu.te, lu.ol, lu.dl, lu.lb, lu.cb, lu.s, lu.k, lu.p):
+                for q in (grp if isinstance(grp, list) else [grp]):
+                    seen.setdefault(q.id, q.display_name or (f"{q.card.first} {q.card.last}" if q.card else f"P{q.id:05d}"))
+        return real_sim(home, away, *a, **k)
+    game_engine.simulate_game = spy
+    try:
+        res = run_season(lg, 1, rng, Options(engine="drives", keep_boxes=True, record_plays=True))
+    finally:
+        game_engine.simulate_game = real_sim
+    everyone = [q for t in lg.teams for q in list(t.roster) + list(t.practice_squad)] + list(lg.free_agents) + list(getattr(lg, "retired_players", ()))
+    names = {p.id: (p.display_name or (f"{p.card.first} {p.card.last}" if p.card else f"P{p.id:05d}")) for p in everyone}
+    names.update({pid: n for pid, n in seen.items() if not (n[0] == "P" and n[1:].isdigit())})
+    import cards as CD
+    for r_ in [g.result for g in res.games + res.ambassador_games + res.playoff_games if g.result is not None]:
+        for pid in r_.players:                              # a player with no card yet (or already gone from every list) is named the way her card would be
+            if names.get(pid, "P0")[0] == "P" and names.get(pid, "P0")[1:].isdigit() or pid not in names:
+                names[pid] = " ".join(CD.make_name(lg.card_seed, pid))
+    box = {}
+    def keep(gid, g):
+        if g.result is not None and g.result.plays is not None:
+            box[gid] = _box(g.result, {pid: _short(n) for pid, n in names.items()})
+        return gid
     games = []
     for g in sorted(res.games, key=lambda g: (g.week, g.home)):
         h, a = by_id[g.home], by_id[g.away]
         d, k, n = times[(g.week, h["name"], a["name"])]
-        games.append(dict(week=g.week, game=n, date=d, time=k, home=h["id"], away=a["id"], kind=g.kind, hp=g.home_pts, ap=g.away_pts))
-    amb = [dict(week=g.week, home=g.home, away=g.away, hp=g.home_pts, ap=g.away_pts) for g in sorted(res.ambassador_games, key=lambda g: (g.week, g.home))]
+        games.append(dict(id=keep(f"r{g.week}_{g.home}", g), week=g.week, game=n, date=d, time=k, home=h["id"], away=a["id"], kind=g.kind, hp=g.home_pts, ap=g.away_pts, ot=g.result.ot_periods if g.result else 0))
+    amb = [dict(id=keep(f"a{g.week}_{g.home}", g), week=g.week, home=g.home, away=g.away, hp=g.home_pts, ap=g.away_pts) for g in sorted(res.ambassador_games, key=lambda g: (g.week, g.home))]
     po = playoffs = K.playoffs(2000)
     stage_date = {"wild_card": po["wild_card"], "divisional": po["divisional"], "conference": po["conference"], "coronation": po["coronation"]}
-    pgames = [dict(kind=g.kind, home=g.home, away=g.away, hp=g.home_pts, ap=g.away_pts) for g in res.playoff_games]
+    pgames = [dict(id=keep(f"p{i}", g), kind=g.kind, home=g.home, away=g.away, hp=g.home_pts, ap=g.away_pts) for i, g in enumerate(res.playoff_games)]
     for tid, s in res.stats.items():
         c = by_id[tid]
         c["record"] = dict(w=s.wins, l=s.losses, t=s.ties, pf=s.pf, pa=s.pa, exit=res.exits.get(tid, ""))
@@ -96,7 +158,7 @@ def export(seed: int = 7) -> dict:
     return dict(
         league="Diamond Football League", season=2000, champion=res.champion, seeds=seeds, division_ranks={str(k): v for k, v in ranks.items()},
         founding=dict(date=fnd["date"], class_of=fnd["class_of"], provenance=fnd["provenance"], events=fnd["events"], first_game=fnd["first_game"]),
-        clubs=clubs, evolution=evolution, games=games, ambassador=amb, playoffs=pgames, calendar=cal, conferences=list(R.CONFERENCES),
+        clubs=clubs, evolution=evolution, box=box, games=games, ambassador=amb, playoffs=pgames, calendar=cal, conferences=list(R.CONFERENCES),
         divisions=[dict(conference=c["conference"], name=c["division"]) for c in clubs[::6]])
 
 

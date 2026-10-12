@@ -176,6 +176,14 @@ class _Game:
                 return p
         return players[-1]
 
+    def _log(self, off, down, to_go, pos, yards, turnover, kind, a=None, b=None, c=None):
+        """Record one play (only when play recording is on; it reads the game and never draws a random number). Kinds: PC completion
+        (passer, target, tackler), PI incomplete (passer, target), SK sack (passer, sacker), IN interception (passer, target, picker),
+        RU run (carrier, tackler), FG kick (kicker, 1 if good, distance), PU punt (punter). After the usual seven fields come the kind,
+        the three players, the quarter and seconds left once the play is over, whether it is overtime, and which drive of the game it belongs to."""
+        self.res.plays.append((off, self.quarter, down, to_go, pos, yards, turnover, kind, a, b, c,
+                               self.quarter, int(max(self.t, 0)), bool(self.in_ot), len(self.res.drives)))
+
     # -- clock ----------------------------------------------------------------
     def _tick(self, secs: float, off: int):
         if self.in_ot or self.quarter in (2, 4):
@@ -277,6 +285,8 @@ class _Game:
                         self._bump(kd, "fga")
                         made = self._fg_make(off, fg_dist)
                         self._tick(5 + 0, off)
+                        if self.rec:
+                            self._log(off, 4, to_go, pos, fg_dist, False, "FG", k.id, 1 if made else 0, int(fg_dist))
                         if made:
                             tm["fgm"] += 1
                             self._bump(kd, "fgm")
@@ -295,6 +305,8 @@ class _Game:
                     self._bump(pd, "punts")
                     gross = rng.gauss(P.punt_gross, P.punt_sd) + P.punt_pow * (me.feats["p_pow"] - P.ref)
                     self._tick(8, off)
+                    if self.rec:
+                        self._log(off, 4, to_go, pos, int(min(gross, 100 - pos)), False, "PU", lu_o.p.id)
                     if pos + gross >= 100:
                         net_spot = 20
                         self._bump(pd, "punt_yds", int(100 - pos))
@@ -329,6 +341,7 @@ class _Game:
 
             turnover = False
             play_yards = 0
+            kind = a_ = b_ = c_ = None
             if rng.random() < pr:
                 # ---------------- pass play ----------------
                 qb = lu_o.qb
@@ -342,6 +355,7 @@ class _Game:
                     self._bump(qd, "sack_yds", -sy)
                     sacker = self._pick(lu_d.rushers, lu_d.rush_cum)
                     self._bump(self._p(sacker), "sacks")
+                    kind, a_, b_ = "SK", qb.id, sacker.id
                     self._tick(max(5.0, (P.t_sack + jit) * hf), off)
                     secs_used += 0
                     if rng.random() < P.fumble_sack:
@@ -361,6 +375,7 @@ class _Game:
                         play_yards = air
                         picker = self._pick(lu_d.pickers, lu_d.pick_cum)
                         self._bump(self._p(picker), "ints")
+                        kind, a_, b_, c_ = "IN", qb.id, target.id, picker.id
                         self._tick(max(4.0, 8 * hf), off)
                     elif u < me.p_int + me.p_comp:
                         y = int(rng.gammavariate(P.comp_yds_shape, me.mean_cy / P.comp_yds_shape))
@@ -374,6 +389,7 @@ class _Game:
                         self._bump(td_, "rec_yds", y)
                         tk = self._pick(lu_d.tacklers, lu_d.tackle_cum)
                         self._bump(self._p(tk), "tackles")
+                        kind, a_, b_, c_ = "PC", qb.id, target.id, tk.id
                         self._tick(max(4.0, (P.t_complete + jit) * hf), off)
                         if y >= dist_goal:
                             self._bump(qd, "pass_td")
@@ -382,6 +398,7 @@ class _Game:
                             turnover = "FUMBLE"
                             self._bump(td_, "fumbles_lost")
                     else:
+                        kind, a_, b_ = "PI", qb.id, target.id
                         self._tick(max(3.0, (P.t_incomplete + jit * 0.3) * (0.8 if hurry else 1.0)), off)
             else:
                 # ---------------- run play ----------------
@@ -397,6 +414,7 @@ class _Game:
                 self._bump(cd, "rush_yds", y)
                 tk = self._pick(lu_d.tacklers, lu_d.tackle_cum)
                 self._bump(self._p(tk), "tackles")
+                kind, a_, b_ = "RU", carrier.id, tk.id
                 self._tick(max(5.0, (P.t_run + jit) * hf), off)
                 if y >= dist_goal:
                     self._bump(cd, "rush_td")
@@ -412,6 +430,8 @@ class _Game:
                 yards += play_yards
                 tm["yards"] += play_yards
             pos_after = pos + play_yards
+            if self.rec:
+                self._log(off, down, to_go, pos, play_yards, turnover, kind, a_, b_, c_)
             if pos_after <= 0 and not turnover:
                 # tackled in the end zone: safety, and the scoring team gets the ball after a free kick
                 self.score[1 - off] += 2
@@ -419,9 +439,6 @@ class _Game:
                 result = "SAFETY"
                 next_start = int(min(45, max(25, rng.gauss(35, 5))))
                 break
-
-            if self.rec:
-                res.plays.append((off, q0, down, to_go, pos, play_yards, turnover))
 
             # ---------------- what happened ----------------
             if turnover:
