@@ -341,3 +341,7 @@ DigitalOcean droplet (Ubuntu 24.04, 2 GB, weekly backups), Caddy for automatic h
 login set on the server (bcrypt hash in /etc/caddy/Caddyfile, never in the repo), ports 22/80/443 only. `deploy/` holds setup.sh, update.sh,
 render.sh, the Caddyfile template and INSTALL.md. The repository is public, so the server clones it with no key. Today the page is a static
 snapshot; the live league service later runs on the same server. Not yet run on a real droplet.
+
+## Club names (2026-10-12)
+
+The Commissioner replaced 27 nicknames (data/teams.csv and the first-season schedule, data/schedule_2000.csv). Jacksonville became **Florida Fangs** (abbreviation FLA; venue and location unchanged: EverBank Stadium, Jacksonville, FL). Nicknames are spelled exactly as he wrote them, including "Riviters" (Pittsburgh) and "Vaqueras" (San Antonio). Colours were not changed. `engine/import_workbook.py` would restore the old names if it were run again from the old workbook, so the CSV files are now the source of truth.
