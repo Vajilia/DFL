@@ -69,6 +69,7 @@ def facts(lg, p) -> dict:
     return dict(name=c.name, first=c.first, position=p.pos, age=p.age, born=o["dob"], hometown=o["hometown"], college=o["college"], college_tier=o["tier"],
                 background=c.path, personality=c.trait, wants=c.wants, fears=c.fears, level=C.tier_label(p.ovr),
                 senior_year=_senior(p.pos, o["stats"][-1]), college_seasons=[dict(o["stats"][i], line=PR.stat_line(p.pos, o["stats"][i])) for i in range(4)],
+                founding=bool(o.get("founding")), team=(lg.by_id[p.team_id].name if p.team_id in lg.by_id else None),
                 draft=None if drafted is None else dict(year=drafted["year"], pick=drafted["pick"], team=lg.by_id[drafted["team"]].name if drafted.get("team") in lg.by_id else None))
 
 
@@ -81,7 +82,10 @@ def code_bio(lg, p) -> str:
     small = f["college_tier"] == 3
     opening = r.choice((f"{f['name']} grew up in {f['hometown']}, {path}.", f"Out of {f['hometown']}, {f['name']} is {path}."))
     college = (f"She played at {f['college']}" + (", a program few scouts pass through, " if small else " ") + f"and as a senior {f['senior_year']}.")
-    if f["draft"] is None:
+    if f["founding"]:
+        pro = r.choice((f"She is a member of the Founding Class of 2000, assigned to {f['team']} when the league opened; every game she plays is the first of its kind.",
+                        f"She turned pro with the league itself in 2000, one of the first players ever to sign with {f['team']}."))
+    elif f["draft"] is None:
         pro = r.choice(("She came to camp as a free agent and had to earn every rep.", "Nobody drafted her; she signed on and has been proving it ever since."))
     elif f["draft"]["pick"] <= 48:
         pro = f"{f['draft']['team']} took her with pick {f['draft']['pick']} in {f['draft']['year']}, in the first round."

@@ -34,7 +34,7 @@ from positions import POSITIONS, ROSTER_COUNTS
 # ---- dials (placeholders, not rules) -----------------------------------------------------------------------------------------------------
 GRADE_SD = 4.0                    # the scouting noise on a prospect: her production grade is her true rating plus this (sd)
 PROD_FLOOR_RANK = 120             # kickers and punters appear in the class only below this consensus rank (as in the NFL, where they go late)
-CALENDAR_BASE = 2025               # league year 1 is the 2026 season: a date of birth is a real calendar date
+CALENDAR_BASE = 1999               # league year n is calendar year 1999 + n (Founding Day is 1/1/2000): a date of birth is a real calendar date
 SEASONS = ("FR", "SO", "JR", "SR")
 GAMES = (11, 12, 12, 13)
 

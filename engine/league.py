@@ -71,6 +71,8 @@ class League:
         self.gms: list = []
         self.archive: list = []            # plain-fact event log (recalls, firings, hirings); the Archive proper comes later
         self.fans_on = True                # fanbase and media cards decide CEO approval (turn off for the old placeholder model)
+        self.founding_class = "veterans"     # how the league began: "veterans" or "rookies" (Founding Day)
+        self.founding = None               # the record of Founding Day (founding.py): dated events and each club's story
         self.interactions_on = True        # Required interactions are written up as scenes (never changes an outcome)
         self.prev_pct: dict = {}           # last season's win% by team, for the scenes' evidence
         self.driver = None                 # who makes the choices (decisions.py); None means the autopilot
@@ -133,7 +135,7 @@ class League:
         return {t.id: (t.status, t.tier, round(t.strength, 3)) for t in self.teams}
 
 
-def new_league(rng: random.Random, rosters: bool = False, coaches: bool = True, staff: bool = True, fans: bool = True, interactions: bool = True) -> League:
+def new_league(rng: random.Random, rosters: bool = False, coaches: bool = True, staff: bool = True, fans: bool = True, interactions: bool = True, founding: str = "veterans") -> League:
     """MODEL starting league: random strengths, one random team per division starts
     in exile, and the rest take tiers 1-5 in order of strength."""
     teams: List[Team] = []
@@ -161,12 +163,13 @@ def new_league(rng: random.Random, rosters: bool = False, coaches: bool = True, 
     lg.staff_on = coaches and staff        # CEOs and GMs (and firing); needs the coaches
     lg.fans_on = lg.staff_on and fans      # fanbases and media; they feed CEO approval
     lg.interactions_on = lg.staff_on and interactions   # scenes for firings, recall votes and exile determinations
+    lg.founding_class = founding        # "veterans" (the league as every test has known it) or "rookies" (Founding Day: everyone fresh from college)
     if rosters:
-        give_rosters(lg, rng)
+        give_rosters(lg, rng, rookies=(founding == "rookies"))
     return lg
 
 
-def give_rosters(lg: League, rng: random.Random):
+def give_rosters(lg: League, rng: random.Random, rookies: bool = False):
     """Build 53-player rosters and 16-player practice squads. Each team's scalar strength is then replaced by its roster's
     power rating, and tiers follow that rating inside each division."""
     from lineup import build_lineup
@@ -174,8 +177,8 @@ def give_rosters(lg: League, rng: random.Random):
     from players import TEAM_OFFSET_SD
     for t in lg.teams:
         off = rng.gauss(0.0, TEAM_OFFSET_SD)
-        t.roster = build_roster(rng, lg.new_id, t.id, off)
-        t.practice_squad = build_practice_squad(rng, lg.new_id, t.id, off)
+        t.roster = build_roster(rng, lg.new_id, t.id, off, rookies)
+        t.practice_squad = build_practice_squad(rng, lg.new_id, t.id, off, rookies)
     lg.has_rosters = True
     import cards
     cards.init_league_cards(lg, 0)

@@ -99,6 +99,14 @@ def random_age(rng: random.Random) -> int:
     return rng.choices(AGES, AGE_WEIGHTS)[0]
 
 
+# The founding class (the Commissioner, 2026-10-12): on Founding Day every player is a rookie, fresh from college, so every career can be watched from its
+# first day. A young player gains about 3 rating points a year until 23, so the founding ratings are set a little under the usual so that the league's
+# talent does not balloon in its first two seasons (engine/check_founding.py measures it).
+FOUNDING_AGES = (21, 22, 23)
+FOUNDING_AGE_WEIGHTS = (4, 4, 2)
+FOUNDING_RATING_SHIFT = -4.0
+
+
 class IdSource:
     def __init__(self, start: int = 1):
         self.next = start
@@ -109,20 +117,22 @@ class IdSource:
         return v
 
 
-def build_practice_squad(rng: random.Random, new_id: IdSource, team_id: int, team_offset: float) -> List[Player]:
+def build_practice_squad(rng: random.Random, new_id: IdSource, team_id: int, team_offset: float, rookies: bool = False) -> List[Player]:
     """A founding team's practice squad: 16 young players, mostly in their first or second season, well below the roster's backups."""
     out: List[Player] = []
     for i in range(R.PRACTICE_SQUAD_SIZE):
         pos = POSITIONS[i % len(POSITIONS)] if i < len(POSITIONS) else rng.choices(POSITIONS, [ROSTER_COUNTS[x] for x in POSITIONS])[0]
         age = rng.choice((22, 22, 23, 23, 24))
-        p = make_player(rng, new_id(), pos, clamp(rng.gauss(46.0, 5.0) + team_offset * 0.25, 30, 70), age, team_id)
-        p.years_in_league = age - 22
+        p = make_player(rng, new_id(), pos, clamp(rng.gauss(46.0, 5.0) + team_offset * 0.25 + (FOUNDING_RATING_SHIFT if rookies else 0.0), 30, 70), age, team_id)
+        p.years_in_league = 0 if rookies else age - 22
+        if rookies:
+            p.age = {22: 21, 23: 22, 24: 23}[age]
         p.accrued_seasons = p.credited_seasons = 0
         out.append(p)
     return out
 
 
-def build_roster(rng: random.Random, new_id: IdSource, team_id: int, team_offset: float) -> List[Player]:
+def build_roster(rng: random.Random, new_id: IdSource, team_id: int, team_offset: float, rookies: bool = False) -> List[Player]:
     players: List[Player] = []
     for pos in POSITIONS:
         for slot in range(ROSTER_COUNTS[pos]):
@@ -130,5 +140,12 @@ def build_roster(rng: random.Random, new_id: IdSource, team_id: int, team_offset
                 ovr = rng.gauss(STARTER_OVR_MEAN, STARTER_OVR_SD) + team_offset
             else:
                 ovr = rng.gauss(BACKUP_OVR_MEAN, BACKUP_OVR_SD) + team_offset * 0.5
-            players.append(make_player(rng, new_id(), pos, clamp(ovr, 30, 95), random_age(rng), team_id))
+            if rookies:
+                age = rng.choices(FOUNDING_AGES, FOUNDING_AGE_WEIGHTS)[0]
+                p = make_player(rng, new_id(), pos, clamp(ovr + FOUNDING_RATING_SHIFT, 30, 95), age, team_id)
+                p.years_in_league = 0
+                p.accrued_seasons = p.credited_seasons = 0
+            else:
+                p = make_player(rng, new_id(), pos, clamp(ovr, 30, 95), random_age(rng), team_id)
+            players.append(p)
     return players
