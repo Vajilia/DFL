@@ -334,3 +334,10 @@ Test changes, stated plainly: `check_living` now asserts the three dials are zer
 
 **Narrative note, not simulation (2026-10-12).** The schedule's real origin, for a story later: it began in 1988 as simple scheduling matrices drawn by hand on graph paper, with the games played by dice, and grew over nearly forty years into the seed-driven, endlessly repeating skeleton the engine now uses. The Commissioner's reading of "nearly 40 year evolution" on the website's schedule page was this history, not the forty simulated seasons (the forty-season table stays, as it is useful for long tests). Nothing in the engine depends on it; the schedule page can carry the story when the Commissioner wants it told.
 
+
+## Hosting the website (2026-10-12)
+
+DigitalOcean droplet (Ubuntu 24.04, 2 GB, weekly backups), Caddy for automatic https with an sslip.io address (no domain needed), a single shared
+login set on the server (bcrypt hash in /etc/caddy/Caddyfile, never in the repo), ports 22/80/443 only. `deploy/` holds setup.sh, update.sh,
+render.sh, the Caddyfile template and INSTALL.md. The repository is public, so the server clones it with no key. Today the page is a static
+snapshot; the live league service later runs on the same server. Not yet run on a real droplet.

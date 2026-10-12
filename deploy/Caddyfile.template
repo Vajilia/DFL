@@ -1,0 +1,14 @@
+# The Diamond Football League website. Filled in by deploy/render.sh (host, user and password hash come from the server, never from the repo).
+__HOST__ {
+	encode gzip
+	basic_auth {
+		__USER__ __HASH__
+	}
+	root * /var/www/dfl
+	file_server
+	header {
+		X-Robots-Tag "noindex, nofollow"
+		X-Content-Type-Options nosniff
+		Referrer-Policy no-referrer
+	}
+}

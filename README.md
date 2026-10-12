@@ -93,6 +93,7 @@ A seeded league engine with 53-player rosters, character cards, a drive-by-drive
     python engine/run_checks.py -j 2       # the FAST tier (28 scripts, about 11 minutes on two cores): run after every change
     python engine/run_checks.py --slow     # the SLOW tier (fairness over 16 leagues, decisions, store, drive-engine): before a milestone push or overnight
     python engine/build_site.py            # build the read-only website (site/index.html) from the engine's founding league and its first season
+    bash deploy/setup.sh                   # on a fresh Ubuntu 24.04 server: install the website (see deploy/INSTALL.md)
     python engine/check_skeleton.py        # the Commissioner's schedule skeleton: his year 1, legal under every re-seeding
     python engine/check_relations.py       # the GM and head coach relationship meters
     python engine/check_prospects.py       # the draft class, colleges and college statistics, the draft off the board
