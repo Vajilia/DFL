@@ -171,6 +171,8 @@ FAIR_COMPETITION_BANDS = {
     "returner_avg_finish":  (2.8, 3.4, "average division finish of a team back from exile (3.0 = league average)"),
     "returner_win_div":     (0.10, 0.30, "share of returning teams that win their division"),
     "returner_fifth_again": (0.10, 0.30, "share of returning teams that finish 5th again"),
+    "returner_top3_in_3":   (0.75, 0.97, "share of clubs back from exile that finish 3rd or better in their division at least once in their first three seasons back (the Commissioner: able to be competitive within three seasons; luck alone gives about 0.94)"),
+    "returner_playoff_first": (0.20, 0.55, "share of clubs back from exile that make the playoffs in their first season back (the Commissioner: the exile benefits must never be an automatic playoff spot; luck alone gives about 0.35)"),
     "exile_effect":         (-0.5, 0.5, "extra team rating (points, about half a win per point) a team has two years after finishing 5th compared with one that finished 4th"),
     "exile_double_early":   (0.00, 0.10, "share of exiled teams that get a top-8 pick in the lottery and then a top-16 pick in their second draft"),
     "stuck_at_bottom":      (0.00, 0.10, "share of team-seasons that follow three straight bottom-two finishes (pure luck gives about 0.06; exile years are skipped)"),

@@ -45,6 +45,8 @@ def measure_league(seed: int, seasons: int, engine: str = "fast", opt: Options =
     champs, repeat, top_wins, top_n = [], 0, 0, 0
     ret_fin: List[int] = []
     prev_returners: List[int] = []
+    cohorts: List[dict] = []                 # clubs back from exile: their first three seasons (the Commissioner's standard, 2026-10-12)
+    done_cohorts: List[dict] = []
     finishes: Dict[int, List[int]] = defaultdict(list)
     stuck, stuck_n = 0, 0
     hist = []
@@ -54,6 +56,14 @@ def measure_league(seed: int, seasons: int, engine: str = "fast", opt: Options =
         legends = {t.id for t in lg.teams if t.coach is not None and t.coach.standing in ("legend", "Hall of Famer") and t.status == "active"}   # led by a coach the media calls a legend
         res = run_season(lg, y, rng, opt)
         pct = {tid: float(s.pct) for tid, s in res.stats.items()}
+        fin_now = {t: pos for ranks in res.division_ranks.values() for pos, t in enumerate(ranks, start=1)}
+        po_now = {t for seeds in res.seeds.values() for t in seeds}
+        for c in cohorts:                            # a club that is exiled again before the three seasons are up counts as finishing last
+            c["fin"].append(fin_now.get(c["tid"], 5)); c["po"].append(c["tid"] in po_now)
+        done_cohorts += [c for c in cohorts if len(c["fin"]) == 3]
+        cohorts = [c for c in cohorts if len(c["fin"]) < 3]
+        if y >= burn:
+            cohorts += [dict(tid=t, fin=[], po=[]) for t in res.returners]
         hist.append(dict(start=strengths, ranks=res.division_ranks, pick={t: p for p, t, _ in res.draft}, new=res.new_exiles))
         if y > burn:
             sd_by_season.append(st.pstdev(pct.values()))
@@ -124,6 +134,8 @@ def measure_league(seed: int, seasons: int, engine: str = "fast", opt: Options =
         "returner_avg_finish": st.mean(ret_fin),
         "returner_win_div": sum(f == 1 for f in ret_fin) / n_ret,
         "returner_fifth_again": sum(f == 5 for f in ret_fin) / n_ret,
+        "returner_top3_in_3": sum(min(c["fin"]) <= 3 for c in done_cohorts) / max(1, len(done_cohorts)),
+        "returner_playoff_first": sum(c["po"][0] for c in done_cohorts) / max(1, len(done_cohorts)),
         "stuck_at_bottom": stuck / max(1, stuck_n),
         "exile_double_early": early / max(1, n_new),
         "_xy": (xs, ys, five),
