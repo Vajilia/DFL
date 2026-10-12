@@ -313,11 +313,27 @@ def generate_template(rng: random.Random) -> List[Tuple[int, Slot, Slot, str]]:
     return games
 
 
-def build_schedule(league, rng: random.Random) -> List[Game]:
-    """The 18-game regular-season schedule for the 40 active teams."""
+def rotation(year: int) -> Tuple[int, int]:
+    """(conference flip, division shift) for a league year, for the Commissioner's fixed template (2026-10-12).
+
+    Year 1 is the identity: slot division A is the conference's first division, B its second, and so on. Each year the divisions of a conference move one slot
+    round (year 2: slot A is used by the fourth division, slot B by the first), because the schedule's core is built inside the conference. When the divisions
+    have made a full turn (every fifth year) the conferences swap as well (slot A is used by the fifth division, B by the sixth ... slot E by the first), and the
+    next full turn swaps them back, so the whole pattern repeats every eight years."""
+    D = R.DIVISIONS_PER_CONFERENCE
+    return ((year - 1) // D) % 2, (year - 1) % D
+
+
+def build_schedule(league, rng: random.Random, year: int = None) -> List[Game]:
+    """The 18-game regular-season schedule for the 40 active teams. With the Commissioner's fixed template and a league year, the divisions rotate through its
+    slot divisions (`rotation`); without a year the template is filled as it stands."""
     slot_team = league.slot_map()
     games = []
     fixed = getattr(league, "schedule_template", None)
+    if fixed and year:
+        flip, shift = rotation(year)
+        D = R.DIVISIONS_PER_CONFERENCE
+        slot_team = {(c, d, t): slot_team[(c ^ flip, (d - shift) % D, t)] for (c, d, t) in slot_team}
     if fixed:                   # the Commissioner's skeleton: the same slot layout every season, filled by whoever holds each tier slot (seeded from last season's final division ranks)
         template = [(w, tuple(h), tuple(a), k) for w, h, a, k in fixed]
     else:
