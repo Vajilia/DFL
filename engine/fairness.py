@@ -163,16 +163,38 @@ def evaluate(per_league: List[Dict[str, float]]):
     return rows
 
 
+def verdicts(per_league: List[Dict[str, float]], rows) -> Dict[str, tuple]:
+    """name -> (verdict, standard error). A band is "inside" when the pooled value is within it, "edge" when it is outside by no more than two standard errors of the
+    league-to-league spread (so it cannot be told apart from chance with this many leagues: run more leagues before acting), and "outside" when it is further than
+    that. Only "outside" is a reason to move a dial. The worst-league title count is a maximum, not a mean, so it has no error bar and is judged strictly."""
+    out = {}
+    n = len(per_league)
+    for name, v, lo, hi, ok, a, b, meaning in rows:
+        vals = [d[name] for d in per_league]
+        se = 0.0 if name == "worst_league_titles" or n < 2 else st.stdev(vals) / n ** 0.5
+        miss = max(lo - v, v - hi, 0.0)
+        out[name] = ("inside" if ok else "edge" if miss <= 2 * se else "outside", se)
+    return out
+
+
+def clearly_outside(per_league, rows) -> List[str]:
+    return [k for k, (v, _) in verdicts(per_league, rows).items() if v == "outside"]
+
+
 def run(engine: str, seeds, seasons: int, **kw):
     per = [measure_league(s, seasons, engine, **kw) for s in seeds]
     return per, evaluate(per)
 
 
-def table(rows) -> str:
-    L = ["| Trend | This league | Fair-competitiveness band | Inside? | Range across leagues |", "| --- | --- | --- | --- | --- |"]
+def table(rows, per_league=None) -> str:
+    """The report table. With the leagues' own measurements it adds a column for the verdict with its error bar (inside / edge / outside)."""
+    vd = verdicts(per_league, rows) if per_league else {}
+    L = ["| Trend | This league | Fair-competitiveness band | Inside? | Range across leagues |" + (" Verdict (error bar) |" if vd else ""),
+         "| --- | --- | --- | --- | --- |" + (" --- |" if vd else "")]
     for name, v, lo, hi, ok, a, b, meaning in rows:
         f = (lambda x: f"{x:.3f}") if name not in ("max_titles_in_20", "worst_league_titles", "returner_avg_finish", "exile_effect") else (lambda x: f"{x:.0f}" if name == "worst_league_titles" else f"{x:.2f}")
-        L.append(f"| {meaning} | {f(v)} | {f(lo)} to {f(hi)} | {'yes' if ok else '**NO**'} | {f(a)} to {f(b)} |")
+        extra = f" {vd[name][0]} (+/- {vd[name][1]:.3f}) |" if vd else ""
+        L.append(f"| {meaning} | {f(v)} | {f(lo)} to {f(hi)} | {'yes' if ok else '**NO**'} | {f(a)} to {f(b)} |{extra}")
     return "\n".join(L)
 
 
@@ -193,9 +215,10 @@ if __name__ == "__main__":
         for eng, n in (("fast", 12), ("drives", 6)):
             per, rows = run(eng, range(100, 100 + n), 48)
             bad = [r[0] for r in rows if not r[4]]
+            far = clearly_outside(per, rows)
             out.append(f"## {eng} engine, {n} leagues x 48 seasons\n")
-            out.append(table(rows))
-            out.append("\n" + ("All trends inside the bands.\n" if not bad else f"Outside the bands: {', '.join(bad)}.\n"))
+            out.append(table(rows, per))
+            out.append("\n" + ("All trends inside the bands.\n" if not bad else f"Outside the bands: {', '.join(bad)}. Clearly outside (beyond two error bars): {', '.join(far) or 'none'}.\n"))
         open(os.path.join(root, "reports", "fairness_report.md"), "w").write("\n".join(out))
         print("wrote reports/fairness_report.md")
         sys.exit(0)
