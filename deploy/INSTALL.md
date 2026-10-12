@@ -18,7 +18,7 @@ $12 a month. You do the account and the server; the password is typed only on th
 
 1. Open the droplet and click **Console** (top right). A black terminal opens in the browser and logs you in as root. If it asks for the
    login, user `root` and the server password from step 1.
-2. Paste this single line and press Enter:
+2. Type this single line (the Console's paste can add hidden characters that break the command, so typing it is safer) and press Enter:
 
        curl -fsSL https://raw.githubusercontent.com/Vajilia/dfl/step6-rebuild/deploy/setup.sh | bash
 

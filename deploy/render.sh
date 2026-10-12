@@ -3,6 +3,8 @@
 # The password is asked for on this machine only; the repository never sees it.
 set -euo pipefail
 [ "$(id -u)" -eq 0 ] || { echo "Run as root."; exit 1; }
+# When started through a pipe (curl | bash) the keyboard is not stdin; read the answers from the terminal instead.
+[ -t 0 ] || exec < /dev/tty
 HERE="$(cd "$(dirname "$0")" && pwd)"
 HOST="$(cat /etc/dfl/host)"
 CUR_USER="$(cat /etc/dfl/user 2>/dev/null || echo dfl)"
