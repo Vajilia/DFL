@@ -23,6 +23,10 @@ check("wins equal losses across the league (ties count once each side)", sum(c["
 check("the eight clubs in exile each played seven Ambassador games", all(sum(c["ambassador"][k] for k in "wlt") == 7 for c in d["clubs"] if c["exiled"]) and len(d["ambassador"]) == 28)
 check("thirteen playoff games and a champion among the 14 playoff clubs", len(d["playoffs"]) == 13 and d["champion"] in {t for s in d["seeds"].values() for t in s} and sum(len(s) for s in d["seeds"].values()) == 14)
 check("the same seed gives the same site data", site_export.export(7)["games"] == d["games"] and site_export.export(7)["champion"] == d["champion"])
+ev = d["evolution"]
+check("forty seasons of the schedule (2000 to 2039), year 1 in order, the pattern repeating every eight years, every season a permutation of the eight divisions",
+      len(ev) == 40 and ev[0]["slots"] == list(range(1, 9)) and all(ev[i]["slots"] == ev[i + 8]["slots"] for i in range(32)) and all(sorted(e["slots"]) == list(range(1, 9)) for e in ev)
+      and ev[1]["slots"][:4] == [4, 1, 2, 3] and ev[4]["slots"] == [5, 6, 7, 8, 1, 2, 3, 4])
 out = os.path.join(tempfile.mkdtemp(), "i.html")
 n = build_site.build(out, 7)
 html = open(out, encoding="utf-8").read()

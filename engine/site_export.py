@@ -19,6 +19,7 @@ import calendar_dfl as K
 import founding as F
 import identity as ID
 import rules as R
+from schedule import rotation
 from season import Options, run_season
 
 POS_ORDER = ["QB", "RB", "WR", "TE", "OL", "DL", "LB", "CB", "S", "K", "P"]
@@ -85,10 +86,17 @@ def export(seed: int = 7) -> dict:
                week_saturdays={w: K.week_saturday(2000, w).isoformat() for w in range(1, K.REGULAR_WEEKS + 1)},
                offseason=[dict(name=e.name, start=e.start.isoformat(), end=e.end.isoformat(), note=e.note) for e in K.offseason(2000)],
                season=[dict(name=e.name, start=e.start.isoformat(), end=e.end.isoformat(), note=e.note) for e in K.in_season(2000)])
+    evolution = []
+    for y in range(2000, 2040):                           # forty seasons of the schedule: the calendar and which division fills each slot division
+        flip, shift = rotation(y - 1999)
+        D4 = R.DIVISIONS_PER_CONFERENCE
+        evolution.append(dict(year=y, opener=K.opener(y).isoformat(), coronation=K.coronation(y).isoformat(), trade_deadline=K.trade_deadline(y).isoformat(),
+                              offseason_days=K.offseason_days(y), swapped=bool(flip), shift=shift,
+                              slots=[(c ^ flip) * D4 + (d - shift) % D4 + 1 for c in range(2) for d in range(D4)]))
     return dict(
         league="Diamond Football League", season=2000, champion=res.champion, seeds=seeds, division_ranks={str(k): v for k, v in ranks.items()},
         founding=dict(date=fnd["date"], class_of=fnd["class_of"], provenance=fnd["provenance"], events=fnd["events"], first_game=fnd["first_game"]),
-        clubs=clubs, games=games, ambassador=amb, playoffs=pgames, calendar=cal, conferences=list(R.CONFERENCES),
+        clubs=clubs, evolution=evolution, games=games, ambassador=amb, playoffs=pgames, calendar=cal, conferences=list(R.CONFERENCES),
         divisions=[dict(conference=c["conference"], name=c["division"]) for c in clubs[::6]])
 
 

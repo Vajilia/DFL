@@ -77,7 +77,7 @@ tr:last-child td { border-bottom: 0; }
 .tag { font-family: var(--mono); font-size: 11px; border: 1px solid var(--line); border-radius: 4px; padding: 1px 6px; color: var(--muted); }
 .day { padding: 8px 14px; background: var(--soft); border-bottom: 1px solid var(--line); font-family: var(--display); font-weight: 700; letter-spacing: .05em; text-transform: uppercase; display: flex; gap: 12px; align-items: baseline; flex-wrap: wrap; }
 .day span { font-family: var(--mono); font-size: 12px; color: var(--muted); letter-spacing: 0; text-transform: none; font-weight: 400; }
-.kv { display: grid; grid-template-columns: minmax(110px, 160px) 1fr; gap: 8px 16px; }
+.kv { margin: 0; display: grid; grid-template-columns: minmax(110px, 160px) 1fr; gap: 8px 16px; }
 .kv dt { color: var(--muted); font-size: 14px; } .kv dd { margin: 0; min-width: 0; }
 .people { display: grid; gap: 12px 24px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); }
 .people b { display: block; } .people small { color: var(--muted); }
@@ -204,14 +204,12 @@ function clubsPage() {
 function club(abbr) {
   const c = byAbbr[abbr]; if (!c) return notFound();
   const games = D.games.filter(g => g.home === c.id || g.away === c.id).sort((a, b) => a.week - b.week);
-  const slots = {}; games.forEach(g => { const [n] = slotOf(g); slots[n] = (slots[n] || 0) + 1; });
-  const pts = ptsOf(c), r = c.record, P = c.people;
+  const r = c.record, P = c.people;
   const person = (role, p) => p ? `<div><small class="eyebrow">${role}</small><b>${e(p.name)}</b><small>${e(p.trait)} · ${e(p.hometown)}</small></div>` : "";
   let h = `<div class="stack"><div class="row" style="align-items:flex-start">${badge(c, "lg")}<div style="min-width:0"><div class="eyebrow">${e(c.conference)} · ${e(c.division)}</div><h1>${e(c.name)}</h1><p style="color:var(--muted)">${e(c.venue)}, ${e(c.location)}</p></div></div>${stripe(c)}
   <div class="grid"><div class="card"><h3>${D.season}</h3><dl class="kv" style="margin-top:12px">`;
   if (c.exiled) h += `<dt>Status</dt><dd>In exile; played the Ambassador Season ${c.ambassador.w}-${c.ambassador.l}</dd>`;
-  else h += `<dt>Record</dt><dd><b>${rec(r)}</b> · ${r.pf} points for, ${r.pa} against</dd><dt>Division finish</dt><dd>${r.div_rank} of 5${c.id === D.champion ? " · <b>Diamond Coronation champions</b>" : r.playoffs ? ` · playoff seed ${seedOf[c.id]}${r.exit ? ", out in the " + e(r.exit.replace("_", " ")) : ""}` : ""}</dd>
-    <dt>Time-slot points</dt><dd><b>${pts}</b> of a league range ${rangeLo} to ${rangeHi} <small style="color:var(--muted)">(Monday night 5, Saturday night 4, Sunday evening 3, afternoon 2, morning 1)</small></dd>`;
+  else h += `<dt>Record</dt><dd><b>${rec(r)}</b> · ${r.pf} points for, ${r.pa} against</dd><dt>Division finish</dt><dd>${r.div_rank} of 5${c.id === D.champion ? " · <b>Diamond Coronation champions</b>" : r.playoffs ? ` · playoff seed ${seedOf[c.id]}${r.exit ? ", out in the " + e(r.exit.replace("_", " ")) : ""}` : ""}</dd>`;
   h += `<dt>Founding seed</dt><dd>${c.exiled ? "in exile" : c.seed}</dd><dt>Completed on Founding Day</dt><dd>${c.founding_order} of 48</dd><dt>Colours</dt><dd>${c.colors.map((x, i) => `<span class="sw" style="background:${x}"></span>${e(c.color_names[i])}`).join(" &nbsp; ")}</dd></dl></div>
     <div class="card"><h3>Front office</h3><div class="people" style="margin-top:12px">${person("CEO", P.ceo)}${person("General manager", P.gm)}${person("Head coach", P.head_coach)}${person("Offensive coordinator", P.offensive_coordinator)}${person("Defensive coordinator", P.defensive_coordinator)}</div></div></div>
   <div class="card"><h3>Founding Day</h3><p style="margin-top:8px">${e(c.story)}</p></div>`;
@@ -275,13 +273,43 @@ function calendarPage() {
   <div class="stack" style="padding-top:0;gap:8px"><h2>The season</h2><div class="tablewrap"><table><thead><tr><th class="l">What</th><th>When</th><th class="l hide-sm">Note</th></tr></thead><tbody>${rows(C.season)}</tbody></table></div></div></div></div>`;
 }
 
+
+function guide() {
+  const wk1 = D.games.filter(g => g.week === 1), slotCount = {};
+  wk1.forEach(g => { const n = slotOf(g)[0]; slotCount[n] = (slotCount[n] || 0) + 1; });
+  const byPts = {}; clubs.filter(c => !c.exiled).forEach(c => { const p = ptsOf(c); (byPts[p] = byPts[p] || []).push(c); });
+  const divName = n => { const c = clubs[(n - 1) * 6]; return `${c.conference.slice(0, 1)}: ${c.division}`; };
+  const L = ["A", "B", "C", "D", "E", "F", "G", "H"];
+  const rows = D.evolution.map(y => `<tr><td>${y.year}${y.swapped ? ' <span class="tag" title="Conferences swapped this season">swap</span>' : ""}</td><td>${fmtShort(y.opener)}</td><td>${fmtShort(y.coronation)}</td><td>${y.offseason_days}</td>${y.slots.map(n => `<td>${n}</td>`).join("")}</tr>`).join("");
+  return `<div class="stack"><h1>How the schedule works</h1>
+  <p>The schedule is a fixed layout of games between <b>slots</b>, not between named clubs. A slot is a conference, a division and a seed from 1 to 5. Each season the clubs take their seats in the slots, and the same layout is played again. It was built once and it repeats without end.</p>
+  <h2>The shape of a season</h2>
+  <div class="card"><dl class="kv"><dt>Length</dt><dd>19 weeks, 18 games, one bye for each club in weeks 15 to 19. Nine games at home and nine away. A league-wide bye follows weeks 4, 9 and 14.</dd>
+  <dt>Weeks 1 to 4</dt><dd>Four interconference games: a club meets the club with its own seed in each of the four divisions of the other conference.</dd>
+  <dt>Weeks 5 to 14</dt><dd>Four division games, and six games against the other three divisions of its own conference, chosen by seed: seed 1 meets seeds 1 and 2, seed 2 meets 1 and 3, seed 3 meets 2 and 4, seed 4 meets 3 and 5, seed 5 meets 4 and 5.</dd>
+  <dt>Weeks 15 to 19</dt><dd>The second round of division games. Every club plays each division rival twice, once at each ground.</dd></dl></div>
+  <h2>Seeds</h2>
+  <p>The first seeds, in 2000, were drawn by chance. After that a club's seed is its final place in its division the season before: first place is seed 1, and so on up to fourth place as seed 4. The fifth-place club goes into exile for a season, and a club coming back from exile takes seed 5. So the schedule follows last season's results, and the strongest clubs meet each other more often.</p>
+  <h2>The rotation</h2>
+  <p>Each division is also given a seat in the layout, and the seats rotate. In 2000 the layout's first division is each conference's first division. In 2001 the fourth division moves into that seat and the others move up one, so over four seasons every division sits in every seat. The rotation stays inside the conference, because the schedule's core is built there. In the fifth season the conferences swap, and the next full turn swaps them back, so the whole pattern repeats every eight years. Division games are always between clubs of the same division.</p>
+  <h2>Time slots</h2>
+  <p>Every kickoff is worth points, so that no club is given better times than the others: Monday night 5, Saturday night 4, Sunday evening 3, Sunday afternoon 2 and Sunday morning 1. A full week has ${Object.entries(slotCount).map(([k, v]) => `${v} on ${k.toLowerCase()}`).join(", ")}.</p>
+  <p>In 2000 every playing club finished between ${rangeLo} and ${rangeHi} points:</p>
+  <div class="tablewrap"><table><thead><tr><th class="l">Points</th><th class="l">Clubs</th></tr></thead><tbody>${Object.keys(byPts).sort((a, b) => b - a).map(p => `<tr><td class="l">${p}</td><td class="l" style="white-space:normal">${byPts[p].map(c => `<a href="#club-${c.abbr}" style="text-decoration:underline;text-decoration-color:var(--line)">${e(c.abbr)}</a>`).join(", ")}</td></tr>`).join("")}</tbody></table></div>
+  <p>The rotation is what keeps this level over time. A club holding the same seed ends any four seasons within one point of the same seed in any other division, and exactly level after eight. What is left is the seed itself, about a point a season between the best and the worst seats, and that follows the standings.</p>
+  <h2>Forty seasons</h2>
+  <p>The calendar moves with the year, since the Diamond Coronation is the last Sunday of December and the first game is 183 days before it. The numbers on the right show which division fills each of the eight seats, A to H, in each season: seats A to D belong to one conference's divisions and E to H to the other's.</p>
+  <div class="tablewrap"><table><thead><tr><th class="l">Season</th><th>First game</th><th>Coronation</th><th>Offseason days</th>${L.map(x => `<th>${x}</th>`).join("")}</tr></thead><tbody>${rows}</tbody></table></div>
+  <div class="card"><div class="eyebrow">Divisions</div><div class="grid tight" style="margin-top:8px">${[1, 2, 3, 4, 5, 6, 7, 8].map(n => `<div><b>${n}</b> &nbsp;${e(divName(n))}</div>`).join("")}</div></div></div>`;
+}
+
 function notFound() { return `<div class="stack"><h1>Not found</h1><p>That page does not exist. <a href="#standings" style="text-decoration:underline">Back to the standings.</a></p></div>`; }
 
 /* ---------- router, tabs, search ---------- */
-const TABS = [["standings", "Standings"], ["schedule", "Schedule"], ["playoffs", "Playoffs"], ["clubs", "Clubs"], ["players", "Players"], ["founding", "Founding Day"], ["calendar", "Calendar"]];
+const TABS = [["standings", "Standings"], ["schedule", "Schedule"], ["guide", "How it works"], ["playoffs", "Playoffs"], ["clubs", "Clubs"], ["players", "Players"], ["founding", "Founding Day"], ["calendar", "Calendar"]];
 function route() {
   const parts = (location.hash.slice(1) || "standings").split("-"), page = parts[0];
-  const html = page === "standings" ? standings() : page === "schedule" ? schedule(+parts[1] || 1) : page === "playoffs" ? playoffs() : page === "clubs" ? clubsPage() : page === "club" ? club(parts[1])
+  const html = page === "standings" ? standings() : page === "schedule" ? schedule(+parts[1] || 1) : page === "guide" ? guide() : page === "playoffs" ? playoffs() : page === "clubs" ? clubsPage() : page === "club" ? club(parts[1])
     : page === "player" ? player(parts[1], +parts[2]) : page === "players" ? playersPage() : page === "founding" ? founding() : page === "calendar" ? calendarPage() : notFound();
   document.getElementById("app").innerHTML = html;
   const section = page === "club" ? "clubs" : page === "player" ? "players" : page;
