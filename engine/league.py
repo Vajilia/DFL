@@ -43,6 +43,7 @@ class Team:
     reserve: float = 0.0      # the club's cash reserve, $ millions (finance.py): a CEO's reinvested profit; it only covers the club's own losses
     fines: float = 0.0        # fines this year, $ millions (discipline.py); held against the year in finance.py
     books: List[dict] = field(default_factory=list)    # the last few years' accounts (finance.py)
+    identity: dict = field(default_factory=dict)       # the club's city, nickname, abbreviation, venue, location and colours (identity.py); no rule reads it
 
     @property
     def division_id(self) -> int:
@@ -72,6 +73,7 @@ class League:
         self.archive: list = []            # plain-fact event log (recalls, firings, hirings); the Archive proper comes later
         self.fans_on = True                # fanbase and media cards decide CEO approval (turn off for the old placeholder model)
         self.founding_class = "veterans"     # how the league began: "veterans" or "rookies" (Founding Day)
+        self.first_schedule = None         # the first season's schedule as (week, home id, away id, kind), when the Commissioner's own is used (identity.py)
         self.founding = None               # the record of Founding Day (founding.py): dated events and each club's story
         self.interactions_on = True        # Required interactions are written up as scenes (never changes an outcome)
         self.prev_pct: dict = {}           # last season's win% by team, for the scenes' evidence
@@ -135,7 +137,7 @@ class League:
         return {t.id: (t.status, t.tier, round(t.strength, 3)) for t in self.teams}
 
 
-def new_league(rng: random.Random, rosters: bool = False, coaches: bool = True, staff: bool = True, fans: bool = True, interactions: bool = True, founding: str = "veterans") -> League:
+def new_league(rng: random.Random, rosters: bool = False, coaches: bool = True, staff: bool = True, fans: bool = True, interactions: bool = True, founding: str = "veterans", identity: bool = False) -> League:
     """MODEL starting league: random strengths, one random team per division starts
     in exile, and the rest take tiers 1-5 in order of strength."""
     teams: List[Team] = []
@@ -157,7 +159,12 @@ def new_league(rng: random.Random, rosters: bool = False, coaches: bool = True, 
                 t.tier = rank
             teams.extend(members + [exiled])
     teams.sort(key=lambda t: t.id)
+    if identity:
+        import identity as ID
+        ID.apply(teams)                      # the real clubs, their seeds as tiers and the eight clubs that start in exile
     lg = League(teams)
+    if identity:
+        lg.first_schedule = ID.first_season_games(teams)
     lg.card_seed = hash(rng.getstate()[1]) % (2 ** 31)    # reads the generator without drawing from it
     lg.coaches_on = coaches
     lg.staff_on = coaches and staff        # CEOs and GMs (and firing); needs the coaches
@@ -185,10 +192,11 @@ def give_rosters(lg: League, rng: random.Random, rookies: bool = False):
     import economy
     economy.init_contracts(lg)
     refresh_strengths(lg)
-    for div_id in range(R.TOTAL_DIVISIONS):
-        act = sorted(lg.active_in_division(div_id), key=lambda t: -t.strength)
-        for rank, t in enumerate(act, start=1):
-            t.tier = rank
+    if lg.first_schedule is None:                     # with the Commissioner's own first season the tiers are his seeds, not the rosters' ranking
+        for div_id in range(R.TOTAL_DIVISIONS):
+            act = sorted(lg.active_in_division(div_id), key=lambda t: -t.strength)
+            for rank, t in enumerate(act, start=1):
+                t.tier = rank
 
 
 def refresh_strengths(lg: League):

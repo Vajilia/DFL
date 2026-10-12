@@ -32,7 +32,7 @@ def open_league(seed: int, **kw) -> Tuple[object, random.Random]:
     """A new league on Founding Day: only rookies, and the record of how the clubs came together."""
     from league import new_league
     rng = random.Random(seed)
-    lg = new_league(rng, rosters=True, founding="rookies", **kw)
+    lg = new_league(rng, rosters=True, founding="rookies", identity=True, **kw)
     describe(lg)
     return lg, rng
 

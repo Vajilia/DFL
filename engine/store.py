@@ -58,7 +58,7 @@ READABLE = ("2", "3")                          # layouts it can open: version 2 
                                                # and the first save upgrades the file to version 3; any other version is refused rather than guessed at
 
 # what the league record holds beyond the lists of people: every plain attribute of the League, so a new one cannot be forgotten
-PLAIN = ("has_rosters", "card_seed", "staff_on", "coaches_on", "fans_on", "interactions_on", "_coach_ids", "_owner_ids", "_gm_ids", "_cand_ids", "_media_ids", "pool", "finance_nudge", "proposals_made", "committee", "founding_class", "founding")
+PLAIN = ("has_rosters", "card_seed", "staff_on", "coaches_on", "fans_on", "interactions_on", "_coach_ids", "_owner_ids", "_gm_ids", "_cand_ids", "_media_ids", "pool", "finance_nudge", "proposals_made", "committee", "founding_class", "founding", "first_schedule")
 LISTS = ("teams", "by_id", "free_agents", "new_id", "coaches", "retired_players", "owners", "gms", "archive", "driver", "enricher", "choice_log", "passed_over",
          "free_coaches", "free_gms", "titles", "hall", "fanbases", "media", "refs", "prev_pct", "movement")
 INT_KEYED = ("forecasts",)                     # card fields whose keys are numbers (JSON turns them into text)
@@ -204,7 +204,7 @@ def _league_record(lg, rng, year) -> dict:
                          dead_now=t.dead_now, dead_next=t.dead_next, designations=t.designations, cash=t.cash, topup=t.topup, fund_cash=t.fund_cash, reserve=t.reserve, fines=t.fines, books=t.books,
                          coach=t.coach.cid if t.coach else None, owner=t.owner.oid if t.owner else None, gm=t.gm.gid if t.gm else None,
                          fans=t.fans.team_id if t.fans else None, oc=t.oc.cid if t.oc else None, dc=t.dc.cid if t.dc else None,
-                         scheme=t.scheme, scheme_fit=t.scheme_fit) for t in lg.teams]
+                         scheme=t.scheme, scheme_fit=t.scheme_fit, identity=t.identity) for t in lg.teams]
     rec["free_agents"] = [p.id for p in lg.free_agents]
     rec["retired_players"] = [p.id for p in lg.retired_players]
     rec["coaches"] = [c.cid for c in lg.coaches]
@@ -334,6 +334,7 @@ def _rebuild(db: sqlite3.Connection):
         tm.oc = card("coach", t["oc"]) if t.get("oc") is not None else None
         tm.dc = card("coach", t["dc"]) if t.get("dc") is not None else None
         tm.scheme, tm.scheme_fit = dict(t.get("scheme", {})), dict(t.get("scheme_fit", {}))
+        tm.identity = dict(t.get("identity", {}))
         teams.append(tm)
     lg = League(teams)
     for k in PLAIN:

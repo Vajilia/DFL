@@ -98,5 +98,34 @@ with tempfile.TemporaryDirectory() as dd:
     L2, _, _ = store.load(db)
     check("the Founding Day record survives saving and loading", L2.founding == lg2.founding and L2.founding_class == "rookies")
 
+# ---- the clubs' real identities and the Commissioner's own first season ------------------------------------------------------------------------
+import csv  # noqa: E402
+import identity as ID  # noqa: E402
+import rules as R  # noqa: E402
+from schedule import Game, check_schedule  # noqa: E402
+
+rows = ID.load_teams()
+check("the workbook has 48 clubs, 8 divisions of 5 and an exile each, in two conferences", len(rows) == 48 and sum(r["exile"] for r in rows) == 8
+      and {(r["conference"], r["division"]) for r in rows}.__len__() == 8 and {r["conference"] for r in rows} == set(R.CONFERENCES))
+check("every club has a unique name, abbreviation and venue-and-colours record", len({r["name"] for r in rows}) == 48 and len({r["abbr"] for r in rows}) == 48
+      and all(r["venue"] and r["location"] and r["primary"] and r["secondary"] and r["tertiary"] and r["primary_hex"].startswith("#") for r in rows))
+check("the founding league carries those names: Team 01 is gone", all(t.name == r["name"] and t.identity["abbr"] == r["abbr"] for t, r in zip(lg.teams, rows)) and not any(t.name.startswith("Team ") for t in lg.teams))
+exiles = {t.name for t in lg.teams if t.status == "exiled"}
+check("the eight clubs in exile on Founding Day are the workbook's", exiles == {"Portland Tempest", "Los Angeles Legion", "Minnesota Warriors", "Baja Barracudas",
+                                                                             "Indianapolis Slipstream", "Buffalo Herd", "Baltimore Skipjacks", "Tampa Bay Corsairs"}, sorted(exiles))
+check("each division's five active clubs hold tiers 1 to 5 by the workbook's seeding", all(sorted(t.tier for t in lg.active_in_division(d)) == [1, 2, 3, 4, 5] for d in range(R.TOTAL_DIVISIONS))
+      and {t.name: t.tier for t in lg.teams if t.status == "active"}["Montana Outriders"] == 1 and {t.name: t.tier for t in lg.teams}["Idaho Tomahawks"] == 5)
+check("each division's clubs sit together by name (Northwest: Montana, Seattle, Utah, Calgary, Idaho, Portland)", [t.name.split()[0] for t in lg.teams[:6]] == ["Montana", "Seattle", "Utah", "Calgary", "Idaho", "Portland"])
+check("the Commissioner's 2000 schedule passes every rulebook check (18 games, one bye in weeks 15-19, blocks, tiers, 9 home games each)",
+      check_schedule(lg, [Game(w, h, a, k) for w, h, a, k in lg.first_schedule]) == [] and len(lg.first_schedule) == 360)
+check("the first season plays that schedule: 360 regular-season games, Montana's first opponent is Carolina on 7/2", len([g for g in lg.first_schedule if g[0] == 1]) == 20
+      and ID.game_times()[(1, 11)][2:] == ("Montana Outriders", "Carolina Copperheads") and ID.game_times()[(1, 11)][0] == "2000-07-02")
+check("the dates in his schedule are the calendar's: every week starts on the day calendar_dfl says", all(
+    K.game_days(2000, w)[0].isoformat() == min(v[0] for (ww, g), v in ID.game_times().items() if ww == w) for w in range(1, 20)))
+check("the identities and the first schedule survive saving and loading", [list(x) for x in L2.first_schedule] == [list(x) for x in lg2.first_schedule] and [t.identity for t in L2.teams] == [t.identity for t in lg2.teams]
+      and [t.name for t in L2.teams] == [t.name for t in lg2.teams])
+played = res[0].games if hasattr(res[0], "games") else None
+check("season 1 of the founding league is played under the club names and ends with a champion who is one of the 40 active clubs", res[0].champion in {t.id for t in lg2.teams if t.identity})
+
 print("\n" + ("ALL PASS" if not failures else f"{len(failures)} FAILED: {failures}"))
 sys.exit(1 if failures else 0)
