@@ -17,7 +17,8 @@ Feed (all under --out, written atomically; nothing in it is ahead of the clock):
     meta.json      {seed, epoch_ms, year_hours}        fixed for the life of the league
     season.json    the current year's schedule: no scores, no matchups for playoff games not yet announced
     results.json   revealed finals, games in progress, announced playoff games, and, once they are decided, seeds, division ranks, exits, champion; plus the clock
-    g/<id>.json    a game's players, completed drives and the plays so far (all of them once final)
+    season_<year>.json, results_<year>.json    each year's schedule and results, kept after the year ends
+    g/<year>_<id>.json    a game's players, completed drives and the plays so far (all of them once final)
     history.json   the champions of the years already over
 """
 from __future__ import annotations
@@ -382,7 +383,9 @@ class Runner:
             write_json(os.path.join(self.out, "results.json"), dict(t=int(now_ms), year=0, final={}, live=[], po={}, history=[], epoch=w.epoch_ms, shift=int(shift), paused=self.paused()))
             return None
         if self.sched_year != n:
-            write_json(os.path.join(self.out, "season.json"), s.schedule_file(now_ms))
+            sf = s.schedule_file(now_ms)
+            write_json(os.path.join(self.out, "season.json"), sf)
+            write_json(os.path.join(self.out, f"season_{n}.json"), sf)      # kept for good: a finished season's schedule, so its games can be listed later
             write_json(os.path.join(self.out, "history.json"), w.history)
             self.sched_year = n
         for g in s.games:
@@ -397,6 +400,7 @@ class Runner:
         out = s.results_file(now_ms, w.history)
         out["shift"], out["paused"] = int(shift), self.paused()          # the real time lost to pauses (the page adds it to the league's clock to show real times), and whether the league is paused now
         write_json(os.path.join(self.out, "results.json"), out)
+        write_json(os.path.join(self.out, f"results_{n}.json"), out)    # the same, kept per year (the last write of a year is its final results)
         return out
 
 
