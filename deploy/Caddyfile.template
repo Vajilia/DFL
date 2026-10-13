@@ -4,8 +4,13 @@ __HOST__ {
 	basic_auth {
 		__USER__ __HASH__
 	}
-	root * /var/www/dfl
-	file_server
+	handle /api/* {
+		reverse_proxy 127.0.0.1:8081
+	}
+	handle {
+		root * /var/www/dfl
+		file_server
+	}
 	header {
 		X-Robots-Tag "noindex, nofollow"
 		X-Content-Type-Options nosniff

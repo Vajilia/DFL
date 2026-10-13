@@ -100,6 +100,8 @@ A seeded league engine with 53-player rosters, character cards, a drive-by-drive
     python engine/check_blocks.py          # blocks pacing: 2/5-minute gaps, about 30-minute games, a 56-hour year, pause and resume, restarts change nothing
     bash deploy/reset-live.sh              # on the server: erase the live league and start a new one (the old feed is archived)
     bash deploy/pause-live.sh pause|resume|status   # on the server: pause the live league
+    bash deploy/enable-controls.sh         # on the server, once: the website's Pause / Resume button (a small local service behind the site login)
+    python engine/check_control.py         # the pause switch: refuses calls without the header, legacy leagues cannot be paused, the runner obeys it
     python engine/check_playlog.py         # the play log: recording changes nothing, and replaying it gives the box score back
     python engine/check_skeleton.py        # the Commissioner's schedule skeleton: his year 1, legal under every re-seeding
     python engine/check_relations.py       # the GM and head coach relationship meters
