@@ -588,7 +588,7 @@ function startGame(id) {
 
 /* ---------- live mode: the engine plays elsewhere; this page watches its feed ---------- */
 const LIVE = !!D.live;
-const FEED = { season: null, results: null, year: 0, sig: "", err: null, skew: 0, tried: {} };
+const FEED = { season: null, results: null, year: 0, sig: "", err: null, skew: 0, tried: {}, cur: { R: null, S: null, year: 0 }, view: null };      // season/results/year are the season being shown; cur is always the league's current season; view is the year number of a finished season being looked at (null when live)
 const hasBox = g => !!g.id && (LIVE ? (g.final || g.live) : !!D.box[g.id]);
 const wallShift = () => (FEED.results && FEED.results.shift) || 0;      // the real time the league has lost to pauses: league-clock times plus this are wall-clock times
 const realTime = ms => new Date(ms + wallShift()).toLocaleString([], { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
@@ -643,7 +643,18 @@ async function poll() {
     const R = await getJSON("results.json");
     FEED.skew = Date.now() - R.t; FEED.err = null;
     if (!CTL.asked) await ctlLoad();
-    if (R.year && FEED.year !== R.year) { FEED.season = await getJSON("season.json"); FEED.year = R.year; if (FEED.season.real_per_game) REAL_PER_GAME = FEED.season.real_per_game; if (FEED.season.halftime != null) HALFTIME_PAUSE = FEED.season.halftime; D.box = {}; FEED.tried = {}; }
+    if (R.year && FEED.cur.year !== R.year) {
+      FEED.cur.S = await getJSON("season.json"); FEED.cur.year = R.year;
+      if (FEED.cur.S.real_per_game) REAL_PER_GAME = FEED.cur.S.real_per_game; if (FEED.cur.S.halftime != null) HALFTIME_PAUSE = FEED.cur.S.halftime;
+      if (!FEED.view) { FEED.season = FEED.cur.S; FEED.year = R.year; D.box = {}; FEED.tried = {}; }
+    }
+    FEED.cur.R = R;
+    if (FEED.view) {                                    // a finished season is on show: nothing live touches it; only its game files are fetched when asked for
+      const pv = routeParts();
+      if (pv[0] === "game" && gameById[pv[1]] && !D.box[pv[1]] && !FEED.tried[pv[1]]) { FEED.tried[pv[1]] = true; await loadBox(pv[1]); render(false); }
+      else if (pv[0] === "seasons") render(false);
+      return;
+    }
     const sig = JSON.stringify([R.year, R.final, R.now, R.po, R.seeds, R.champion, R.live, R.paused, R.shift]);
     const first = !FEED.results, changed = sig !== FEED.sig;
     FEED.results = R; FEED.sig = sig;
@@ -654,6 +665,34 @@ async function poll() {
     else if (parts[0] === "live") render(false);
   } catch (err) { FEED.err = String(err); if (!FEED.results) { document.getElementById("app").innerHTML = `<div class="stack"><h1>Live</h1><p class="note">Cannot reach the league's feed (${e(FEED.err)}). Trying again.</p></div>`; } }
 }
+/* Past seasons: the server keeps season_<n>.json and results_<n>.json for every year, so a finished season is shown by the same code as the live one, from those two files. */
+async function startView(k) {
+  try {
+    const [S, R] = await Promise.all([getJSON(`season_${k}.json`), getJSON(`results_${k}.json`)]);
+    FEED.view = k; FEED.season = S; FEED.results = R; FEED.year = k; FEED.sig = ""; D.box = {}; FEED.tried = {};
+    derive();
+    if (location.hash === "#standings") render(true); else location.hash = "standings";
+  } catch (err) { FEED.seasonErr = "Season " + k + " could not be loaded (" + err.message + ")."; if (location.hash === "#seasons") render(false); else location.hash = "seasons"; }
+}
+function endView() {
+  if (!FEED.view) return;
+  FEED.view = null; FEED.season = FEED.cur.S; FEED.results = FEED.cur.R; FEED.year = FEED.cur.year; FEED.sig = ""; D.box = {}; FEED.tried = {};
+  if (FEED.results && FEED.results.year) derive();
+}
+function seasonsPage(k) {
+  const R = FEED.cur.R;
+  if (k) { FEED.seasonErr = null; startView(+k); return `<div class="stack"><h1>Seasons</h1><p class="note">Loading season…</p></div>`; }
+  if (!R || !R.year) return `<div class="stack"><h1>Seasons</h1><p class="note">The league has not begun.</p></div>`;
+  const hist = R.history || [], cy = FEED.cur.S ? FEED.cur.S.season : "";
+  let h = `<div class="stack"><h1>Seasons</h1><p class="note">Every season keeps its standings, schedule, box scores and statistics. Pick one to look back at it exactly as it finished.</p>${FEED.seasonErr ? `<p class="note"><b>${e(FEED.seasonErr)}</b></p>` : ""}<div class="tablewrap"><table><thead><tr><th class="l">Season</th><th class="l">Champion</th><th></th></tr></thead><tbody>`;
+  h += `<tr><td class="l">${e(cy)} ${FEED.view ? "" : '<span class="tag">viewing</span>'}</td><td class="l" style="color:var(--muted)">in progress</td><td class="l"><a href="#live">Live</a></td></tr>`;
+  for (let i = hist.length - 1; i >= 0; i--) {
+    const x = hist[i];
+    h += `<tr><td class="l">${x.year}${FEED.view === i + 1 ? ' <span class="tag">viewing</span>' : ""}</td><td class="l">${x.champion != null && byId[x.champion] ? clubLink(byId[x.champion]) : "–"}</td><td class="l"><a href="#seasons-${i + 1}">View season</a></td></tr>`;
+  }
+  return h + `</tbody></table></div>${hist.length ? "" : `<p class="note">No season has finished yet; the first one is listed here once its Diamond Coronation has been played.</p>`}</div>`;
+}
+document.addEventListener("click", ev => { if (ev.target.closest("[data-live]")) { ev.preventDefault(); endView(); if (location.hash === "#live") render(true); else location.hash = "live"; } });
 /* The league's Pause / Resume button. It exists only when the server has the pause switch (api/state answers) and the league is a blocks league. */
 const CTL = { state: null, busy: false, err: null, asked: false };
 async function ctlLoad() {
@@ -832,16 +871,18 @@ async function statsRun(kind) {
 }
 
 /* ---------- router, tabs, search ---------- */
-const TABS = (LIVE ? [["live", "Live"]] : []).concat([["standings", "Standings"], ["schedule", "Schedule"], ["guide", "How it works"], ["playoffs", "Playoffs"], ["clubs", "Clubs"], ["players", "Players"], ["stats", "Statistics"], ["founding", "Founding Day"], ["calendar", "Calendar"]]);
+const TABS = (LIVE ? [["live", "Live"]] : []).concat([["standings", "Standings"], ["schedule", "Schedule"], ["guide", "How it works"], ["playoffs", "Playoffs"], ["clubs", "Clubs"], ["players", "Players"], ["stats", "Statistics"]].concat(LIVE ? [["seasons", "Seasons"]] : []).concat([["founding", "Founding Day"], ["calendar", "Calendar"]]));
 const curWeek = () => { const g = D.games.filter(x => !x.final).sort((a, b) => a.week - b.week)[0]; return g ? g.week : 19; };
 function render(scroll = true) {
   const parts = routeParts(), page = parts[0];
   if (LIVE && !FEED.results) { document.getElementById("app").innerHTML = `<div class="stack"><h1>Live</h1><p class="note">Connecting to the league…</p></div>`; return; }
+  if (LIVE && FEED.view && page === "live") { endView(); }
   if (LIVE && !FEED.results.year && page !== "live" && ["standings", "schedule", "playoffs", "club"].includes(page)) { location.hash = "live"; return; }
   const html = page === "live" ? livePage() : page === "standings" ? standings() : page === "schedule" ? schedule(+parts[1] || (LIVE ? curWeek() : 1)) : page === "guide" ? guide() : page === "playoffs" ? playoffs() : page === "clubs" ? clubsPage() : page === "club" ? club(parts[1])
-    : page === "game" ? game(parts[1]) : page === "player" ? player(parts[1], +parts[2]) : page === "players" ? playersPage() : page === "stats" ? statsPage(parts[1]) : page === "founding" ? founding() : page === "calendar" ? calendarPage() : notFound();
+    : page === "game" ? game(parts[1]) : page === "player" ? player(parts[1], +parts[2]) : page === "players" ? playersPage() : page === "stats" ? statsPage(parts[1]) : page === "seasons" ? seasonsPage(parts[1]) : page === "founding" ? founding() : page === "calendar" ? calendarPage() : notFound();
   if (REPLAY) { REPLAY.stop(); REPLAY = null; }
-  document.getElementById("app").innerHTML = html;
+  const banner = LIVE && FEED.view && page !== "seasons" ? `<div class="stack" style="padding-bottom:0"><p class="note" style="margin:0"><b>You are looking back at season ${e(D.season)}, a finished season.</b> <a href="#seasons">All seasons</a> · <a href="#live" data-live="1">Back to live</a></p></div>` : "";
+  document.getElementById("app").innerHTML = banner + html;
   if (page === "game") startGame(parts[1]);
   const section = page === "club" ? "clubs" : page === "player" ? "players" : page === "game" ? "schedule" : page;
   document.getElementById("tabs").innerHTML = TABS.map(([k, n]) => `<a href="#${k}" ${k === section ? 'aria-current="page"' : ""}>${n}</a>`).join("");

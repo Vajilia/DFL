@@ -440,3 +440,9 @@ downloads the finished games and fills the tables in). Games are chosen by group
 Players are told apart by the engine's player id, now the fourth entry of a box's player list (older boxes fall back to club, name and position). Not tracked, so not shown: fumbles, punting, kick and
 punt returns, long plays, extra points. "G" is the number of games a player took part in a counted play.
 Live, the tab downloads each finished game's file once (six at a time) and keeps the replay for the rest of the league year; about 360 small files, then nothing more except the games that finish later.
+
+## Past seasons on the live page
+
+The Commissioner asked that finished games stay viewable (box score, not replay). They always were (every game's file is kept, per year, and the Schedule and club pages link them), but the Live page listed only the latest 8, so games seemed to vanish. The Live page now has a "Show 20 more" button, and a new **Seasons** tab (live leagues) lists the season in progress and every finished season with its champion. Opening a past season shows it with the same pages as the live season (Standings, Schedule, Playoffs, box scores, Statistics), under a banner with "Back to live".
+
+How it works: the server writes `season_<n>.json` and `results_<n>.json` for every year, and when a year turns over it closes the books on the old one (`Runner.finalize`: every game file and the results as they stood at the Coronation's end, whatever the ticks did near the end). The page needs nothing else: `derive()` already builds everything from one season file and one results file, so a past season is those two files swapped in. Not covered: a league restarted across a year boundary does not rewrite the year that ended while it was down; club and player pages still show the build's rosters, not the rosters of that year. Tested by `check_past_seasons.py` (a league run through three seasons).
