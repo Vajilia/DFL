@@ -682,12 +682,14 @@ function paceText() {
   if (sc && sc.pacing === "blocks") { const h = sc.year_hours || 0; return `A game takes about ${g} minutes and the league runs block after block${h ? "; this league year takes about " + Math.round(h) + " hours" : ""}. A league can be paused and picks up where it stopped.`; }
   return `A game takes about ${g} minutes; a league year takes one real week.`;
 }
+const LIVE_SHOW = { n: 8 };
+document.addEventListener("click", ev => { const b = ev.target.closest("[data-more]"); if (b) { LIVE_SHOW.n += 20; render(false); } });
 function livePage() {
   const R = FEED.results;
   if (!R) return `<div class="stack"><h1>Live</h1><p class="note">Connecting to the league…</p></div>`;
   if (!R.year) return `<div class="stack"><h1>Live</h1><div class="champion" style="background:var(--soft);border-color:var(--line)"><div><div class="eyebrow">Founding Day</div><h2>The league has not begun</h2><p>It starts ${e(realTime(R.epoch))} (${e(inText(R.epoch))}).</p></div></div></div>`;
   const all = [...D.games, ...D.ambassador, ...D.playoffs.filter(g => g.home != null)];
-  const live = all.filter(g => g.live), done = all.filter(g => g.final).sort((a, b) => b.start - a.start).slice(0, 8), next = all.filter(g => !g.final && !g.live).sort((a, b) => a.start - b.start).slice(0, 10);
+  const live = all.filter(g => g.live), finals = all.filter(g => g.final).sort((a, b) => b.start - a.start), done = finals.slice(0, LIVE_SHOW.n), next = all.filter(g => !g.final && !g.live).sort((a, b) => a.start - b.start).slice(0, 10);
   const stage = g => g.kind && g.kind.startsWith("playoff") ? ({ playoff_wc: "Wild card", playoff_div: "Divisional", playoff_conf: "Conference championship", playoff_final: "Diamond Coronation" }[g.kind]) : g.kind === "ambassador" ? "Ambassador Season" : `Week ${g.week}`;
   const row = (g, mid) => `<a class="gamelink" href="#game-${g.id}"><div class="game" style="grid-template-columns:190px 1fr"><span class="t">${mid}<span class="tag">${e(stage(g))}</span></span><div class="teams">${[g.away, g.home].map(id => `<div><span class="club">${badge(byId[id], "sm")}<span class="nm">${e(byId[id].name)}</span></span>${g.final ? `<span class="sc ${winner(g) === id ? "won" : "lost"}">${id === g.home ? g.hp : g.ap}</span>` : g.live ? `<span class="sc">${R.now[g.id][id === g.home ? 0 : 1]}</span>` : ""}</div>`).join("")}</div></div></a>`;
   const clk = id => { const n = R.now[id]; return (n[4] ? "OT" : "Q" + n[2]) + " " + Math.floor(n[3] / 60) + ":" + String(n[3] % 60).padStart(2, "0"); };
@@ -697,7 +699,7 @@ function livePage() {
   h += ctlHtml(R);
   h += `<h2>In progress</h2>` + (live.length ? `<div class="tablewrap">${live.map(g => row(g, `<b style="color:var(--accent)">LIVE</b> ${clk(g.id)}`)).join("")}</div>` : `<p class="note">No game is being played right now.</p>`);
   h += `<h2>Up next</h2>` + (next.length ? `<div class="tablewrap">${next.map(g => row(g, `${e(realTime(g.start))}<small style="color:var(--muted)">${inText(g.start)}</small>`)).join("")}</div>` : `<p class="note">No more games are scheduled this season.</p>`);
-  if (done.length) h += `<h2>Just finished</h2><div class="tablewrap">${done.map(g => row(g, `Final${g.ot ? " / OT" : ""}`)).join("")}</div>`;
+  if (done.length) h += `<h2>Just finished</h2><div class="tablewrap">${done.map(g => row(g, `Final${g.ot ? " / OT" : ""}`)).join("")}</div>` + (finals.length > done.length ? `<p><button class="btn" data-more="1">Show 20 more (${finals.length - done.length} earlier this season)</button> <small style="color:var(--muted)">Every finished game keeps its box score; the <a href="#schedule">Schedule</a> lists them all by week.</small></p>` : `<p class="note">Every finished game keeps its box score; the <a href="#schedule">Schedule</a> lists them all by week.</p>`);
   if ((R.history || []).length) h += `<h2>Champions</h2><div class="tablewrap"><table><tbody>${R.history.slice().reverse().map(x => `<tr><td class="l">${x.year}</td><td class="l">${clubLink(byId[x.champion])}</td></tr>`).join("")}</tbody></table></div>`;
   return h + `<p class="note">Times are in your time zone. ${paceText()} Games appear here when they kick off and their plays appear as they happen.</p></div>`;
 }
