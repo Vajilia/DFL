@@ -84,6 +84,29 @@ if sync_playwright is not None:
     check("rules 2: the page's replay of all 401 games gives the engine's totals, penalties and penalty yards included", r2["bad"] == 0 and r2["pens"] > 3000 and r2["tos"] > 500, str(r2["bad"]) + " " + str(r2["pens"]) + " " + str(r2["tos"]))
     check("rules 2: the page's penalty names and automatic-first-down list are the engine's", r2["names"] == list(game_engine.PENALTY_NAMES) and r2["afd"] == [i for i, p in enumerate(game_engine.PENALTIES) if p[3]], str(r2["names"][:3]))
     check("rules 2: every play of forty games reads as a sentence, and the game page opens without script errors", r2["text"] and not errs2 and "penalt" in txt2.lower(), str(errs2[:2]))
+if sync_playwright is not None:
+    # ---- the Statistics tab: team and player tables add up to the same totals from the same replays ----
+    JS3 = """async () => { const run = ++STATS.run; await statsLoad(statGames("reg"), run, () => {});
+      const rs = statGames("reg").map(g => STATS.cache[g.id]).filter(Boolean), tr = teamRows(rs, "off"), td = teamRows(rs, "def"), sum = (L, f) => Math.round(L.reduce((a, r) => a + f(r), 0));
+      const pass = playerRows(rs, "pass", ""), rec = playerRows(rs, "recv", ""), ru = playerRows(rs, "rush", ""), df = playerRows(rs, "def", ""), kk = playerRows(rs, "kick", "");
+      return { games: rs.length, clubs: tr.length, gp: sum(tr, t => t.gp), pts: D.games.reduce((a, g) => a + g.hp + g.ap, 0), offPts: sum(tr, t => t.ppg * t.gp), defPts: sum(td, t => t.papg * t.gp),
+        passP: sum(pass, r => r.yds), recP: sum(rec, r => r.yds), teamPass: sum(tr, t => t.pypg * t.gp), rushP: sum(ru, r => r.yds), teamRush: sum(tr, t => t.rypg * t.gp), sacks: sum(df, r => r.sacks), teamSacks: sum(td, t => t.sks * t.gp),
+        fg: sum(kk, r => r.fgm), maxgp: Math.max(...pass.concat(ru, rec, df).map(r => r.gp)), pen: sum(tr, t => t.pen * t.gp) }; }"""
+    with sync_playwright() as pw:
+        br = pw.chromium.launch(); pg = br.new_page(); errs3 = []
+        pg.on("pageerror", lambda e: errs3.append(str(e)))
+        pg.goto("file://" + out2)
+        r3 = pg.evaluate(JS3)
+        txts = []
+        for hsh in ("stats", "stats-team", "stats-player"):
+            pg.evaluate(f"location.hash='{hsh}'"); pg.wait_for_timeout(600); txts.append(pg.evaluate("document.getElementById('app').innerText"))
+        rows = pg.evaluate("document.querySelectorAll('#sbody tbody tr').length")
+        br.close()
+    check("statistics: every one of the 360 regular-season games is counted, for 40 clubs, 18 games each", r3["games"] == 360 and r3["clubs"] == 40 and r3["gp"] == 720, str(r3))
+    check("statistics: team points for and against add up to the games' scores", r3["offPts"] == r3["pts"] == r3["defPts"], str(r3))
+    check("statistics: players' passing, receiving and rushing yards equal the teams', and sacks and field goals add up", r3["passP"] == r3["recP"] == r3["teamPass"] and r3["rushP"] == r3["teamRush"] and r3["sacks"] == r3["teamSacks"] and r3["fg"] > 500 and r3["pen"] > 3000, str(r3))
+    check("statistics: no player appears in more than 18 regular-season games, so one player is one row", r3["maxgp"] <= 18, str(r3["maxgp"]))
+    check("statistics: the fork page, the team page and the player page open without script errors", not errs3 and "team statistics" in txts[0].lower() and "player statistics" in txts[0].lower() and "pts/g" in txts[1].lower() and "yds" in txts[2].lower() and rows > 20, str(errs3[:2]))
 out = os.path.join(tempfile.mkdtemp(), "i.html")
 n = build_site.build(out, 7)
 html = open(out, encoding="utf-8").read()

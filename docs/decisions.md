@@ -431,3 +431,12 @@ standings are exactly what they were (a season hash at version 1 is unchanged: 0
   included, at both versions).
 - **The game page** has a drive-chart header: the field with the ball, line of scrimmage, first-down line and the drive's trail, down and distance, possession, timeouts left (pips under each club), and a
   chart of every drive so far. The "Score by time" chart was removed at the Commissioner's request.
+
+## Statistics tab (the Commissioner, 2026-10-13)
+
+A Statistics tab forks into Team statistics (offense and defense per club) and Player statistics (passing, rushing, receiving, defense, kicking). Like the rest of the page it keeps no football rules:
+it replays every finished game's play log with the same `applyPlay` the game page uses and adds up what comes out (`check_site.py`: team and player totals agree; `check_stats_live.py`: the live page
+downloads the finished games and fills the tables in). Games are chosen by group (regular season, playoffs, Ambassador Season, all); columns sort on a click; the player table can be limited to a club.
+Players are told apart by the engine's player id, now the fourth entry of a box's player list (older boxes fall back to club, name and position). Not tracked, so not shown: fumbles, punting, kick and
+punt returns, long plays, extra points. "G" is the number of games a player took part in a counted play.
+Live, the tab downloads each finished game's file once (six at a time) and keeps the replay for the rest of the league year; about 360 small files, then nothing more except the games that finish later.

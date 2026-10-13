@@ -54,7 +54,7 @@ def _box(res, names: dict) -> dict:
     it replays this log and adds up what the engine recorded (engine/check_playlog.py proves the replay gives the box score back)."""
     ids = sorted(res.players)
     idx = {pid: i for i, pid in enumerate(ids)}
-    pl = [[names.get(pid, f"P{pid:05d}"), res.players[pid]["pos"], res.players[pid]["team"]] for pid in ids]
+    pl = [[names.get(pid, f"P{pid:05d}"), res.players[pid]["pos"], res.players[pid]["team"], pid] for pid in ids]      # the id lets the Statistics page add one player up across games
     tm = [[t["plays"], t["yards"], t["pass_yds"], t["rush_yds"], t["first_downs"], t["turnovers"], t["sacks"], t["punts"], t["third_conv"], t["third_att"],
            int(round(t["top_secs"])), t["pass_cmp"], t["pass_att"], t["rush_att"], t["fga"], t["fgm"]] for t in res.team]
     dr = [[d["side"], d["quarter"], d["start"], d["plays"], d["yards"], d["secs"], d["result"], d["pts"], d["def_pts"]] for d in res.drives]
