@@ -415,3 +415,19 @@ A league with no `parity` in its meta is `tight`. Profiles exist so the league's
 - **loose** (not built): a very generous cap, lower minimums, no exile boost. To be measured first (`engine/fairness.py`), then shipped.
 
 `python engine/check_parity.py` tests both; `bash deploy/reset-live.sh` asks which profile a new league gets.
+
+## Rules version 2: penalties and timeouts (the Commissioner, 2026-10-13)
+
+A league is created with a rules version (`meta.json` `rules`, `live.py --rules {1,2}`, default 2 for new leagues). A league with no `rules` in its meta is version 1: its plays, scores and
+standings are exactly what they were (a season hash at version 1 is unchanged: 0f72647f305e7ed9, 55,746 plays). Version 2 changes outcomes, so it cannot be applied to a league already running.
+
+- **Penalties** (`game_engine.PENALTIES`, 20 NFL-style fouls from a weighted list): each scrimmage down has a chance (`pen_rate`, 8.5%) of an accepted penalty; the down is wiped (no play, no
+  drive play counted), the yardage is enforced, and the down is replayed or a new one earned. Offense fouls move the ball back (half the distance to the goal when that is nearer); some defense fouls
+  (pass interference, holding, offside...) are an automatic first down; pass interference is a spot foul. Declined, offsetting and kicking-game penalties are not modelled. Over a 360-game
+  season: about 11.9 penalties and 88 penalty yards a game (the NFL: about 11-12 and 90-95); points a game 42.5 against 41.9.
+- **Timeouts**: three a half, two in overtime. A trailing team (within 16) may call one after a clock-running play late in the half (Q2 under 2:00, Q4 under 5:00), saving up to 12 seconds.
+- **Log**: a play record gets two more fields (timeouts left, home and away) and two new kinds: "PN" (penalty number, side fouled, culprit, signed yards for the offense) and "TO" (team, timeouts
+  left). The box carries `v: 2` and per-team penalty totals. The page still keeps no football rules: it replays the log (`check_site.py` proves the replay gives back each team's totals, penalties
+  included, at both versions).
+- **The game page** has a drive-chart header: the field with the ball, line of scrimmage, first-down line and the drive's trail, down and distance, possession, timeouts left (pips under each club), and a
+  chart of every drive so far. The "Score by time" chart was removed at the Commissioner's request.

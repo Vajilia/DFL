@@ -59,7 +59,9 @@ def _box(res, names: dict) -> dict:
            int(round(t["top_secs"])), t["pass_cmp"], t["pass_att"], t["rush_att"], t["fga"], t["fgm"]] for t in res.team]
     dr = [[d["side"], d["quarter"], d["start"], d["plays"], d["yards"], d["secs"], d["result"], d["pts"], d["def_pts"]] for d in res.drives]
     plays, prev_left, period, last_gt = [], None, 0, 0
-    for (off, q, down, to_go, pos, yds, to, kind, a, b, c, q2, left, ot, di) in res.plays:
+    v2 = bool(res.plays) and len(res.plays[0]) > 15                     # rules version 2 carries each side's timeouts left after the play
+    for rec in res.plays:
+        (off, q, down, to_go, pos, yds, to, kind, a, b, c, q2, left, ot, di) = rec[:15]
         if not ot:
             gt = (q2 - 1) * 900 + (900 - left)
         else:
@@ -71,9 +73,17 @@ def _box(res, names: dict) -> dict:
             prev_left = left
         gt = max(gt, last_gt)
         last_gt = gt
-        plays.append([off, down, to_go, pos, yds, TURN[to], kind, idx.get(a, -1) if a is not None else -1, idx.get(b, -1) if (b is not None and kind != "FG") else (b if b is not None else -1),
-                      idx.get(c, -1) if (c is not None and kind != "FG") else (c if c is not None else -1), q2, left, 1 if ot else 0, di, gt])
-    return dict(n=res.ot_periods, tb=1 if res.coin_flip_tiebreak else 0, pl=pl, tm=tm, dr=dr, p=plays)
+        if kind in ("PN", "TO"):                                          # a penalty (number, side fouled, offender) or a timeout (team, timeouts left): numbers, not players
+            row = [off, down, to_go, pos, yds, 0, kind, a, b, idx.get(c, -1) if c is not None and c >= 0 else -1, q2, left, 1 if ot else 0, di, gt]
+        else:
+            row = [off, down, to_go, pos, yds, TURN[to], kind, idx.get(a, -1) if a is not None else -1, idx.get(b, -1) if (b is not None and kind != "FG") else (b if b is not None else -1),
+                   idx.get(c, -1) if (c is not None and kind != "FG") else (c if c is not None else -1), q2, left, 1 if ot else 0, di, gt]
+        plays.append(row + (list(rec[15:17]) if v2 else []))
+    out = dict(n=res.ot_periods, tb=1 if res.coin_flip_tiebreak else 0, pl=pl, tm=tm, dr=dr, p=plays)
+    if v2:
+        out["v"] = 2                                                      # rules version 2: penalties and timeouts are in the log
+        out["pen"] = [[t["pen"], t["pen_yds"]] for t in res.team]
+    return out
 
 
 def calendar_for(cal_year: int) -> dict:
@@ -86,7 +96,7 @@ def calendar_for(cal_year: int) -> dict:
                 season=[dict(name=e.name, start=e.start.isoformat(), end=e.end.isoformat(), note=e.note) for e in K.in_season(cal_year)])
 
 
-def play_season(lg, rng, year: int):
+def play_season(lg, rng, year: int, rules: int = 1):
     """Play one league year with the drive engine and the play log on. Returns (result, {player id: full name}): every player who took part is named, the way her card
     would name her if she has no card yet (a released player is gone from every list by the season's end, so names are taken as each game is played)."""
     import game_engine
@@ -99,7 +109,7 @@ def play_season(lg, rng, year: int):
         return real_sim(home, away, *a, **k)
     game_engine.simulate_game = spy
     try:
-        res = run_season(lg, year, rng, Options(engine="drives", keep_boxes=True, record_plays=True, **parity.options()))
+        res = run_season(lg, year, rng, Options(engine="drives", keep_boxes=True, record_plays=True, engine_params=(game_engine.EngineParams(rules=rules) if rules >= 2 else None), **parity.options()))
     finally:
         game_engine.simulate_game = real_sim
     everyone = [q for t in lg.teams for q in list(t.roster) + list(t.practice_squad)] + list(lg.free_agents) + list(getattr(lg, "retired_players", ()))
@@ -113,7 +123,7 @@ def play_season(lg, rng, year: int):
     return res, names
 
 
-def export(seed: int = 7) -> dict:
+def export(seed: int = 7, rules: int = 1) -> dict:
     lg, rng = F.open_league(seed)
     fnd = lg.founding
     clubs = []
@@ -134,7 +144,7 @@ def export(seed: int = 7) -> dict:
         for r in csv.DictReader(f):
             if r["season"]:
                 times[(int(r["week"]), r["home"], r["away"])] = (r["date"], r["kickoff"], int(r["game"]))
-    res, names = play_season(lg, rng, 1)
+    res, names = play_season(lg, rng, 1, rules)
     box = {}
     def keep(gid, g):
         if g.result is not None and g.result.plays is not None:

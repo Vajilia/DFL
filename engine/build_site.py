@@ -27,8 +27,8 @@ def spoiler_free(d: dict) -> dict:
     return d
 
 
-def build(out: str, seed: int = 7, live: bool = False) -> int:
-    d = site_export.export(seed)
+def build(out: str, seed: int = 7, live: bool = False, rules: int = 1) -> int:
+    d = site_export.export(seed, rules)
     data = json.dumps(spoiler_free(d) if live else d, separators=(",", ":")).replace("</", "<\\/")      # safe inside a script tag
     html = open(os.path.join(ROOT, "site", "template.html"), encoding="utf-8").read().replace("__DATA__", data)
     with open(out, "w", encoding="utf-8") as f:

@@ -76,12 +76,45 @@ class EngineParams:
     kick_return_start: float = 26.0
     # fourth down
     go_short_prob: float = 0.35
+    # rules version 2 (new leagues only; version 1 draws no extra random number, so it plays exactly as before)
+    rules: int = 1
+    pen_rate: float = 0.085            # chance a scrimmage down is wiped out by an accepted penalty (NFL: about 11 a game between the two teams)
+    timeout_prob: float = 0.75         # a trailing team with a timeout left, late in a half, calls one after a play that kept the clock running
+    timeout_refund: float = 12.0       # the most seconds of clock a timeout saves
 
 
 Q_SECS = 900
 OT_SECS = R.OVERTIME_MINUTES_REGULAR * 60       # regular season: one overtime period, a tie if still level
 OT_SECS_POST = R.OVERTIME_MINUTES_POST * 60     # postseason: periods of this length until someone wins
 MAX_OT = 4
+
+
+# The penalty list (rules version 2): (name, who is fouled: 0 offense / 1 defense, yards (0 = spot foul), automatic first down, when: "pre" snap or "live", plays: "any"/"pass"/"run", weight, who commits it).
+# Weights follow how often the NFL calls each one. Only accepted penalties are modelled: the down is wiped out (no play), the yardage is enforced, and the down is replayed unless the
+# yards or the automatic first down earn a new one. Declined and offsetting penalties, and penalties on kicks, are not modelled.
+PENALTIES = (
+    ("Offensive holding", 0, 10, False, "live", "any", 14, "ol"),
+    ("False start", 0, 5, False, "pre", "any", 14, "ol"),
+    ("Offside", 1, 5, False, "pre", "any", 7, "dl"),
+    ("Defensive pass interference", 1, 0, True, "live", "pass", 6, "cb"),
+    ("Defensive holding", 1, 5, True, "live", "any", 6, "cb"),
+    ("Illegal formation", 0, 5, False, "pre", "any", 3, "ol"),
+    ("Delay of game", 0, 5, False, "pre", "any", 5, "qb"),
+    ("Unnecessary roughness", 1, 15, True, "live", "any", 4, "lb"),
+    ("Roughing the passer", 1, 15, True, "live", "pass", 3, "dl"),
+    ("Neutral zone infraction", 1, 5, False, "pre", "any", 4, "dl"),
+    ("Encroachment", 1, 5, False, "pre", "any", 3, "dl"),
+    ("Illegal block in the back", 0, 10, False, "live", "any", 3, "rb"),
+    ("Ineligible receiver downfield", 0, 5, False, "live", "pass", 2, "ol"),
+    ("Illegal motion", 0, 5, False, "pre", "any", 2, "wr"),
+    ("Face mask", 1, 15, True, "live", "any", 3, "lb"),
+    ("Illegal use of hands", 1, 5, True, "live", "any", 3, "s"),
+    ("Offensive pass interference", 0, 10, False, "live", "pass", 2, "wr"),
+    ("Illegal contact", 1, 5, True, "live", "pass", 2, "cb"),
+    ("Tripping", 0, 10, False, "live", "run", 1, "ol"),
+    ("Too many men on the field", 1, 5, False, "pre", "any", 1, None),
+)
+PENALTY_NAMES = tuple(p[0] for p in PENALTIES)
 
 FIELDS_OFF = ("pass_att", "pass_cmp", "pass_yds", "pass_td", "pass_int", "sacked", "sack_yds", "rush_att",
               "rush_yds", "rush_td", "targets", "rec", "rec_yds", "rec_td", "fumbles_lost")
@@ -101,7 +134,7 @@ class GameResult:
         self.drives: List[dict] = []
         self.team = [dict(plays=0, yards=0, pass_yds=0, rush_yds=0, first_downs=0, turnovers=0, sacks=0,
                           punts=0, third_att=0, third_conv=0, fourth_att=0, fourth_conv=0, top_secs=0,
-                          drives=0, fga=0, fgm=0, pass_att=0, pass_cmp=0, rush_att=0, sack_yds=0)
+                          drives=0, fga=0, fgm=0, pass_att=0, pass_cmp=0, rush_att=0, sack_yds=0, pen=0, pen_yds=0)
                      for _ in range(2)]
         self.players: Dict[int, dict] = {}
         self.injured = []
@@ -131,6 +164,7 @@ class _Game:
         self.quarter = 1
         self.t = Q_SECS
         self.ended = False
+        self.to = [3, 3]                    # timeouts left, home and away (rules version 2): three a half, two in overtime
 
     # -- setup ----------------------------------------------------------------
     def _side(self, lu: Lineup, bonus: float) -> _Side:
@@ -179,10 +213,11 @@ class _Game:
     def _log(self, off, down, to_go, pos, yards, turnover, kind, a=None, b=None, c=None):
         """Record one play (only when play recording is on; it reads the game and never draws a random number). Kinds: PC completion
         (passer, target, tackler), PI incomplete (passer, target), SK sack (passer, sacker), IN interception (passer, target, picker),
-        RU run (carrier, tackler), FG kick (kicker, 1 if good, distance), PU punt (punter). After the usual seven fields come the kind,
+        RU run (carrier, tackler), FG kick (kicker, 1 if good, distance), PU punt (punter), and in rules version 2 PN penalty (penalty number, 0 if the offense
+        was fouled and 1 if the defense, the offender) and TO timeout (the team that called it, timeouts it has left). After the usual seven fields come the kind,
         the three players, the quarter and seconds left once the play is over, whether it is overtime, and which drive of the game it belongs to."""
-        self.res.plays.append((off, self.quarter, down, to_go, pos, yards, turnover, kind, a, b, c,
-                               self.quarter, int(max(self.t, 0)), bool(self.in_ot), len(self.res.drives)))
+        rec = (off, self.quarter, down, to_go, pos, yards, turnover, kind, a, b, c, self.quarter, int(max(self.t, 0)), bool(self.in_ot), len(self.res.drives))
+        self.res.plays.append(rec + ((self.to[0], self.to[1]) if self.P.rules >= 2 else ()))     # version 2 adds each side's timeouts left
 
     # -- clock ----------------------------------------------------------------
     def _tick(self, secs: float, off: int):
@@ -209,6 +244,47 @@ class _Game:
         if not behind:
             return False
         return (self.quarter == 4 and self.t < 300) or (self.quarter == 2 and self.t < 120)
+
+    # -- penalties and timeouts (rules version 2) -------------------------------
+    def _penalty(self, off: int, is_pass: bool, down: int, to_go: int, pos: int, hurry: bool):
+        """Draw an accepted penalty for this scrimmage down, or None. Returns (number, fouled side, signed yards for the offense, first down, culprit id or -1)."""
+        P, rng = self.P, self.rng
+        if rng.random() >= P.pen_rate:
+            return None
+        kinds = [(i, p) for i, p in enumerate(PENALTIES) if p[5] == "any" or p[5] == ("pass" if is_pass else "run")]
+        x = rng.random() * sum(p[6] for _, p in kinds)
+        pick = kinds[-1]
+        for i, p in kinds:
+            x -= p[6]
+            if x < 0:
+                pick = (i, p)
+                break
+        i, (name, side, yds, afd, when, _plays, _w, who) = pick
+        lu = self.sides[off if side == 0 else 1 - off].lu
+        group = {"ol": lu.ol, "dl": lu.dl, "lb": lu.lb, "cb": lu.cb, "s": lu.s, "rb": lu.rbs, "wr": lu.wrs, "qb": [lu.qb]}.get(who)
+        who_ = rng.choice(group) if group else None
+        if who_ is not None:
+            self._p(who_)                                   # the offender is named in the box even with no other stat (a lookup, no random number)
+        return i, side, yds, afd, who_.id if who_ is not None else -1
+
+    def _timeout_check(self, off: int, down: int, to_go: int, pos: int, spent: float):
+        """After a play that kept the clock running: late in a half, the trailing team (within two scores) with a timeout left may call one and save some of the clock."""
+        P = self.P
+        q = self.quarter
+        if self.in_ot or self.period_over or not ((q == 2 and self.t <= 120) or (q == 4 and self.t <= 300)):
+            return
+        a, b = self.score[0], self.score[1]
+        if a == b or abs(a - b) > 16:
+            return
+        trail = 0 if a < b else 1
+        if self.to[trail] <= 0 or self.rng.random() >= P.timeout_prob:
+            return
+        self.to[trail] -= 1
+        back = min(P.timeout_refund, max(0.0, spent))
+        self.t += back
+        self.res.team[off]["top_secs"] -= back
+        if self.rec:
+            self._log(off, down, to_go, pos, 0, False, "TO", trail, self.to[trail])
 
     # -- kicks ----------------------------------------------------------------
     def _kick_start(self) -> int:
@@ -338,11 +414,50 @@ class _Game:
             hurry = self._hurry(off)
             hf = P.hurry_factor if hurry else 1.0
             jit = rng.gauss(0.0, P.t_jitter)
+            is_pass = rng.random() < pr                      # the one draw that decides run or pass (it used to sit in the branch below)
+
+            if P.rules >= 2:                                 # an accepted penalty wipes the down out: no play, the yardage is enforced, the down is replayed or a new one earned
+                pen = self._penalty(off, is_pass, down, to_go, pos, hurry)
+                if pen is not None:
+                    pi, side, pyds, afd, culprit = pen
+                    if down == 3:
+                        tm["third_att"] -= 1
+                    if down == 4:
+                        tm["fourth_att"] -= 1
+                    spot_foul = pyds == 0
+                    if side == 0:                            # the offense is fouled against: it goes back, half the distance to its own goal at most
+                        gain = -min(pyds, pos // 2)
+                        new_pos, new_down, new_togo = pos + gain, down, to_go - gain
+                        first = False
+                        pen_team = off
+                    else:                                    # the defense is fouled against: the offense goes forward, half the distance to the goal at most
+                        if spot_foul:
+                            gain = int(max(5, min(40, rng.gauss(17, 9))))
+                            gain = min(gain, max(0, dist_goal - 1))
+                        else:
+                            gain = min(pyds, dist_goal // 2)
+                        new_pos = pos + gain
+                        first = afd or gain >= to_go
+                        new_down, new_togo = (1, min(10, 100 - new_pos)) if first else (down, to_go - gain)
+                        pen_team = 1 - off
+                    tm_pen = res.team[pen_team]
+                    tm_pen["pen"] += 1
+                    tm_pen["pen_yds"] += abs(gain)
+                    live = PENALTIES[pi][4] == "live"
+                    self._tick(max(3.0, (9.0 if live else 4.0) * hf), off)
+                    if self.rec:
+                        self._log(off, down, to_go, pos, gain, False, "PN", pi, side, culprit)
+                    pos, down, to_go = new_pos, new_down, new_togo
+                    if self.period_over:
+                        result = "END_PERIOD"
+                        break
+                    continue
+                t_before, q_before = self.t, self.quarter
 
             turnover = False
             play_yards = 0
             kind = a_ = b_ = c_ = None
-            if rng.random() < pr:
+            if is_pass:
                 # ---------------- pass play ----------------
                 qb = lu_o.qb
                 qd = self._p(qb)
@@ -504,6 +619,8 @@ class _Game:
             if self.period_over:
                 result = "END_PERIOD"
                 break
+            if P.rules >= 2 and kind in ("RU", "PC", "SK") and self.quarter == q_before:
+                self._timeout_check(off, down, to_go, pos, t_before - self.t)
 
         rec = dict(team=me.name, side=off, quarter=q0, start=start, plays=plays, yards=yards,
                    secs=int(tm["top_secs"] - start_secs_total), result=result, pts=pts, def_pts=def_pts)
@@ -533,6 +650,7 @@ def simulate_game(home: Lineup, away: Lineup, rng: random.Random, params: Engine
                 half_done = True
                 g.quarter = 3
                 g.t = Q_SECS
+                g.to = [3, 3]
                 g.period_over = False
                 off = 1 - receive_first
                 start = g._kick_start()
@@ -569,6 +687,7 @@ def _overtime(g: _Game, rng: random.Random, allow_tie: bool = False):
     for period in range(1, periods + 1):
         res.ot_periods = period
         g.t = secs
+        g.to = [2, 2]
         g.period_over = False
         if start is None:
             start = g._kick_start()
