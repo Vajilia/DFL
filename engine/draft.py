@@ -43,11 +43,11 @@ def build_draft_order(*, new_exiles: List[int], returners: List[int], active_ids
                       lottery_pool: str, weights, returner_slot: str = "by_record") -> Tuple[List[Tuple[int, int, str]], List[int]]:
     """Returns ([(pick, team_id, band), ...] for all 48 picks, lottery pool worst->best)."""
     playoff_ids = set(playoff_exits)
-    pool = new_exiles if lottery_pool == "just_finished_fifth" else returners
-    if lottery_pool not in ("just_finished_fifth", "just_finished_exile"):
+    if lottery_pool not in ("just_finished_fifth", "just_finished_exile", "none"):
         raise ValueError(lottery_pool)
-    pool_order = worst_to_best(pool, stats, rng, log, "lottery_order")
-    lottery = run_lottery(pool_order, weights, rng)
+    pool = [] if lottery_pool == "none" else new_exiles if lottery_pool == "just_finished_fifth" else returners     # "none": no lottery; the exiled clubs pick by record like the rest
+    pool_order = worst_to_best(pool, stats, rng, log, "lottery_order") if pool else []
+    lottery = run_lottery(pool_order, weights, rng) if pool else []
 
     if returner_slot not in ("by_record", "end_of_band", "start_of_band"):
         raise ValueError(returner_slot)

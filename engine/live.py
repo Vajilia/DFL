@@ -36,6 +36,7 @@ import calendar_dfl as K
 import founding as F
 import identity as ID
 import rules as R
+import parity
 import site_export as SE
 from schedule import rotation
 
@@ -271,13 +272,14 @@ class Season:
 
 
 class World:
-    def __init__(self, seed: int, epoch_ms: int, pacing: str = "legacy", rpg=None, half=None):
+    def __init__(self, seed: int, epoch_ms: int, pacing: str = "legacy", rpg=None, half=None, profile: str = "tight"):
         """pacing "legacy": the epoch is Founding Day and a league year is YEAR_HOURS real hours (the first live league). "blocks": the epoch is the first kickoff and
         the league runs block after block (see BLOCK_REAL_PER_GAME); rpg and half are the league's real seconds per game second and halftime pause."""
         assert pacing in PACINGS, pacing
         self.seed, self.epoch_ms, self.pacing = seed, epoch_ms, pacing
         self.rpg = (BLOCK_REAL_PER_GAME if pacing == "blocks" else REAL_PER_GAME) if rpg is None else float(rpg)
         self.half = HALFTIME_PAUSE if half is None else float(half)
+        self.profile = parity.apply(profile)                 # the parity profile's dials are set before the league is opened
         self.lg, self.rng = F.open_league(seed)
         self.times = ID.slot_times(self.lg.teams)         # taken now, while the tiers are the founding seeds
         self.year = 0
@@ -333,7 +335,7 @@ class Runner:
     def __init__(self, out: str, seed: int, epoch_ms: int, meta=None):
         """meta: the league's meta.json as it was fixed when the league was made (a restart passes it back unchanged); without it, the first live league's legacy meta."""
         m = meta or dict(seed=seed, epoch_ms=epoch_ms, year_hours=YEAR_HOURS, real_per_game=REAL_PER_GAME, halftime=HALFTIME_PAUSE)
-        self.out, self.world = out, World(seed, epoch_ms, m.get("pacing", "legacy"), m.get("real_per_game"), m.get("halftime"))
+        self.out, self.world = out, World(seed, epoch_ms, m.get("pacing", "legacy"), m.get("real_per_game"), m.get("halftime"), m.get("parity", "tight"))
         self.meta = m
         self.pauses = [list(p) for p in m.get("pauses", [])]    # [[real ms the league was paused, real ms it was resumed or None while it is paused]]: part of the league's history
         write_json(os.path.join(out, "meta.json"), m)
@@ -404,6 +406,7 @@ def main(argv=None):
     ap.add_argument("--opener-at", help="local time of the first kickoff, e.g. 2026-10-13T09:00 (only when the league is first started)")
     ap.add_argument("--every", type=float, default=3.0, help="seconds between writes")
     ap.add_argument("--init", action="store_true", help="only write meta.json (fixing the opener) and stop; the service then carries on from it")
+    ap.add_argument("--parity", choices=parity.NAMES, default="tight", help="how much the league regulates salaries and protects weak clubs (a NEW league only): tight (the rules as written) or none")
     ap.add_argument("--pacing", choices=PACINGS, default="blocks", help="how a NEW league runs: blocks (continuous, about 30-minute games) or legacy (a league year spread over a real week)")
     a = ap.parse_args(argv)
     meta = os.path.join(a.out, "meta.json")
@@ -418,7 +421,7 @@ def main(argv=None):
         seed = a.seed
         if a.pacing == "blocks":
             epoch = int(dt.datetime.fromisoformat(a.opener_at).timestamp() * 1000)       # the first kickoff itself
-            m = dict(seed=seed, epoch_ms=epoch, pacing="blocks", real_per_game=BLOCK_REAL_PER_GAME, halftime=HALFTIME_PAUSE, engine_commit=engine_commit())
+            m = dict(seed=seed, epoch_ms=epoch, pacing="blocks", real_per_game=BLOCK_REAL_PER_GAME, halftime=HALFTIME_PAUSE, engine_commit=engine_commit(), parity=a.parity)
         else:
             epoch = opener_epoch(dt.datetime.fromisoformat(a.opener_at))
             m = dict(seed=seed, epoch_ms=epoch, year_hours=YEAR_HOURS, real_per_game=REAL_PER_GAME, halftime=HALFTIME_PAUSE)

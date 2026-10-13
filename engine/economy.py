@@ -39,6 +39,7 @@ from positions import ROSTER_SIZE
 CAP = 100.0                  # $ millions, never inflates
 BANK_LIMIT = 125.0           # the most a team may go into a season with
 FLOOR_FRAC = 0.90            # payroll floor, as a share of the cap (about; the Commissioner agreed)
+REGULATED = True             # parity profile "none" (parity.py) turns this off: no cap, no floor, no bank, no Equalization Fund
 ABSORPTION = 0.5             # share of an exiled team's payroll the league absorbs for the exile season (rules text)
 
 # the pay scale (PLACEHOLDER)
@@ -224,6 +225,8 @@ def new_year(t):
 
 def limit(t) -> float:
     """What this team may spend this season."""
+    if not REGULATED:
+        return 1.0e6                                          # no cap: nothing a club does can reach it
     return min(BANK_LIMIT, CAP + t.bank)
 
 
@@ -273,6 +276,9 @@ def close_season(lg, returners, year: int) -> dict:
     forfeited = shortfall = absorbed = 0.0
     for t in lg.teams:
         pay = payroll(t)
+        if not REGULATED:                                     # no cap and no floor: nothing is banked, topped up or pooled
+            t.bank = 0.0
+            continue
         if t.id in ret:                                       # the exile season: the league absorbs half, and the floor does not apply (a 7-game season)
             eff = pay * (1.0 - ABSORPTION)
             absorbed += pay - eff

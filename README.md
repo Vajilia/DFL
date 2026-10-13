@@ -98,6 +98,7 @@ A seeded league engine with 53-player rosters, character cards, a drive-by-drive
     python engine/live.py --out DIR [--opener-at 2026-10-17T09:00]   # the live runner: plays each league year on the real clock into a feed the page watches
     python engine/check_live.py            # the live runner: nothing ahead of the clock, finals equal the engine, restarts change nothing, the page build holds no result
     python engine/check_blocks.py          # blocks pacing: 2/5-minute gaps, about 30-minute games, a 56-hour year, pause and resume, restarts change nothing
+    python engine/check_parity.py          # parity profiles: tight changes nothing; none removes the cap, floor, exile help and lottery
     bash deploy/reset-live.sh              # on the server: erase the live league and start a new one (the old feed is archived)
     bash deploy/pause-live.sh pause|resume|status   # on the server: pause the live league
     bash deploy/enable-controls.sh         # on the server, once: the website's Pause / Resume button (a small local service behind the site login)

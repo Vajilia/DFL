@@ -53,7 +53,7 @@ nothing is lost. To see how it is doing: `systemctl status dfl-live`, or `journa
 
 - **Pause / resume** (new leagues only): `bash /opt/dfl/deploy/pause-live.sh pause`, `... resume`, `... status`. A paused league stands still and picks up where it stopped.
 - **Pause button on the website** (new leagues only): run `bash /opt/dfl/deploy/enable-controls.sh` once. It starts a small local service (`dfl-control`) and adds one route to the website configuration, behind the same login; it refuses to stay on if the route could be reached without the password. The Live tab then shows a Pause / Resume button. Anyone with the website login can use it, and it pauses the league for everyone watching.
-- **Start over** (erase the league and begin again; the old feed is kept in `/var/lib/dfl-archive`): `bash /opt/dfl/deploy/reset-live.sh`. It asks for the first kickoff and a seed.
+- **Start over** (erase the league and begin again; the old feed is kept in `/var/lib/dfl-archive`): `bash /opt/dfl/deploy/reset-live.sh`. It asks for the first kickoff, a seed and a parity profile (tight = the rules as written; none = no cap, floor, exile help or lottery).
 
 ## What this does and does not do
 

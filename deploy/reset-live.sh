@@ -16,17 +16,20 @@ main() {
   [ "$SURE" = "reset" ] || { echo "Nothing was changed."; exit 1; }
 
   echo "When should the very first kickoff be? Pacific time as year-month-day hour:minute, for example  2026-10-17 19:00  (Saturday night is when block 1 would be)"
-  local WHEN="" SEED=""
+  local WHEN="" SEED="" PARITY=""
   read -r -p "First kickoff: " WHEN < /dev/tty
   read -r -p "Seed (Enter for 7; the same seed always makes the same league): " SEED < /dev/tty
   SEED="${SEED:-7}"
+  read -r -p "Parity (Enter for tight = the rules as written; none = no cap, floor, exile help or lottery): " PARITY < /dev/tty
+  PARITY="${PARITY:-tight}"
+  case "$PARITY" in tight|none) ;; *) echo "Parity must be  tight  or  none. Nothing was changed."; exit 1;; esac
   case "$SEED" in ''|*[!0-9]*) echo "The seed must be a whole number. Nothing was changed."; exit 1;; esac
   WHEN="${WHEN/ /T}"
 
   # Check the new league can be made before the old one is touched.
   local CHECK; CHECK="$(mktemp -d)"
   chown dfl:dfl "$CHECK"
-  su -s /bin/bash dfl -c "TZ=America/Los_Angeles python3 -I $APP/engine/live.py --out $CHECK --opener-at '$WHEN' --seed $SEED --pacing blocks --init" \
+  su -s /bin/bash dfl -c "TZ=America/Los_Angeles python3 -I $APP/engine/live.py --out $CHECK --opener-at '$WHEN' --seed $SEED --pacing blocks --parity $PARITY --init" \
     || { rm -rf "$CHECK"; echo "That first kickoff was not understood. Nothing was changed."; exit 1; }
 
   echo "== 1/4 Stop the runner"
@@ -52,7 +55,7 @@ main() {
   sleep 4
   systemctl is-active dfl-live
   echo
-  echo "The new league is running; its first kickoff is $WHEN Pacific. Open https://$(cat /etc/dfl/host) and look at the Live tab."
+  echo "The new league is running; its first kickoff is $WHEN Pacific, parity $PARITY. Open https://$(cat /etc/dfl/host) and look at the Live tab."
 }
 main "$@"
 exit
