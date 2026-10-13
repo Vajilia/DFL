@@ -523,6 +523,7 @@ async function poll() {
   try {
     const R = await getJSON("results.json");
     FEED.skew = Date.now() - R.t; FEED.err = null;
+    if (!CTL.asked) await ctlLoad();
     if (R.year && FEED.year !== R.year) { FEED.season = await getJSON("season.json"); FEED.year = R.year; if (FEED.season.real_per_game) REAL_PER_GAME = FEED.season.real_per_game; if (FEED.season.halftime != null) HALFTIME_PAUSE = FEED.season.halftime; D.box = {}; FEED.tried = {}; }
     const sig = JSON.stringify([R.year, R.final, R.now, R.po, R.seeds, R.champion, R.live, R.paused, R.shift]);
     const first = !FEED.results, changed = sig !== FEED.sig;
@@ -534,6 +535,29 @@ async function poll() {
     else if (parts[0] === "live") render(false);
   } catch (err) { FEED.err = String(err); if (!FEED.results) { document.getElementById("app").innerHTML = `<div class="stack"><h1>Live</h1><p class="note">Cannot reach the league's feed (${e(FEED.err)}). Trying again.</p></div>`; } }
 }
+/* The league's Pause / Resume button. It exists only when the server has the pause switch (api/state answers) and the league is a blocks league. */
+const CTL = { state: null, busy: false, err: null, asked: false };
+async function ctlLoad() {
+  CTL.asked = true;
+  try { const r = await fetch("api/state", { cache: "no-store" }); CTL.state = r.ok ? await r.json() : null; } catch (err) { CTL.state = null; }
+}
+async function ctlSet(pause) {
+  if (CTL.busy) return;
+  CTL.busy = true; CTL.err = null; render(false);
+  try {
+    const r = await fetch(pause ? "api/pause" : "api/resume", { method: "POST", headers: { "Content-Type": "application/json", "X-DFL": "1" }, body: "{}" });
+    if (r.ok) CTL.state = await r.json(); else CTL.err = "That did not work (" + r.status + "). Try again in a moment.";
+  } catch (err) { CTL.err = "Cannot reach the server. Try again in a moment."; }
+  CTL.busy = false; poll();
+}
+function ctlHtml(R) {
+  const c = CTL.state;
+  if (!c || !c.pausable) return "";
+  const wants = c.paused, is = !!R.paused;
+  const label = CTL.busy || wants !== is ? (wants ? "Pausing…" : "Resuming…") : (is ? "Resume league" : "Pause league");
+  return `<p><button class="btn${is ? " primary" : ""}" data-ctl="${is ? "resume" : "pause"}"${CTL.busy || wants !== is ? " disabled" : ""}>${label}</button> <small style="color:var(--muted)">${is ? "Everyone watching sees the league stand still until it is resumed." : "Pausing stops the league for everyone watching; resume to pick up where it stopped."}</small>${CTL.err ? ` <small style="color:var(--accent)">${e(CTL.err)}</small>` : ""}</p>`;
+}
+document.addEventListener("click", ev => { const b = ev.target.closest("[data-ctl]"); if (b && !b.disabled) ctlSet(b.dataset.ctl === "pause"); });
 function paceText() {
   const sc = FEED.season, rpg = REAL_PER_GAME, g = Math.round((3600 * rpg + HALFTIME_PAUSE) / 60);
   if (sc && sc.pacing === "blocks") { const h = sc.year_hours || 0; return `A game takes about ${g} minutes and the league runs block after block${h ? "; this league year takes about " + Math.round(h) + " hours" : ""}. A league can be paused and picks up where it stopped.`; }
@@ -551,6 +575,7 @@ function livePage() {
   const sd = simDate();
   let h = `<div class="stack"><h1>Live</h1><div class="champion" style="background:var(--soft);border-color:var(--line)"><div><div class="eyebrow">Season ${D.season}${sd ? " · league date " + fmtLong(ymd(sd)) : ""}</div><h2>${e(phaseText())}</h2></div></div>`;
   if (R.paused) h += `<p class="note"><b>The league is paused.</b> Everything stands still and picks up where it stopped when it is resumed.</p>`;
+  h += ctlHtml(R);
   h += `<h2>In progress</h2>` + (live.length ? `<div class="tablewrap">${live.map(g => row(g, `<b style="color:var(--accent)">LIVE</b> ${clk(g.id)}`)).join("")}</div>` : `<p class="note">No game is being played right now.</p>`);
   h += `<h2>Up next</h2>` + (next.length ? `<div class="tablewrap">${next.map(g => row(g, `${e(realTime(g.start))}<small style="color:var(--muted)">${inText(g.start)}</small>`)).join("")}</div>` : `<p class="note">No more games are scheduled this season.</p>`);
   if (done.length) h += `<h2>Just finished</h2><div class="tablewrap">${done.map(g => row(g, `Final${g.ot ? " / OT" : ""}`)).join("")}</div>`;
