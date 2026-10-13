@@ -403,3 +403,15 @@ windows ran together as one block of 18 games. The Commissioner asked for the NF
 apart (a game is about 36), so each block is over before the next opens (an overtime game can spill up to five minutes into the next). A week still fits its three real hours, the Coronation
 still ends more than an hour before the year does (checked over twelve years), the Ambassador games play in the window at or before their time, and the league date shown follows the latest window
 opened rather than the straight-line clock. Also: the player page shows the position (name tag and a Position line).
+
+## Parity profiles (the Commissioner, 2026-10-13)
+
+Every league is created with a profile, kept in its `meta.json` (`parity`) and applied before the league is opened each time the runner starts, so a restart plays the same rules.
+A league with no `parity` in its meta is `tight`. Profiles exist so the league's regulation can be tested against itself: each is a test bed, none is "the" answer.
+
+- **tight**: the rules as written (cap, floor, bank, Equalization Fund, half an exiled club's payroll absorbed, the exiled clubs hold lottery picks 1-8). Nothing changes; a six-season fingerprint is identical to the code before profiles.
+- **none**: no salary or fairness regulation. No cap, floor, bank or Fund; no maximum contract; no staff pay limits; nothing absorbed for an exiled club; no lottery (the exiled clubs draft by record
+  like everyone else, so the draft is plain reverse order within its bands). The structure stays: divisions, the exile of the five-placed clubs, the draft, free agency at market prices. Conduct fines still pool.
+- **loose** (not built): a very generous cap, lower minimums, no exile boost. To be measured first (`engine/fairness.py`), then shipped.
+
+`python engine/check_parity.py` tests both; `bash deploy/reset-live.sh` asks which profile a new league gets.

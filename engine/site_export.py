@@ -20,6 +20,7 @@ import founding as F
 import identity as ID
 import rules as R
 from schedule import rotation
+import parity
 from season import Options, run_season
 
 POS_ORDER = ["QB", "RB", "WR", "TE", "OL", "DL", "LB", "CB", "S", "K", "P"]
@@ -98,7 +99,7 @@ def play_season(lg, rng, year: int):
         return real_sim(home, away, *a, **k)
     game_engine.simulate_game = spy
     try:
-        res = run_season(lg, year, rng, Options(engine="drives", keep_boxes=True, record_plays=True))
+        res = run_season(lg, year, rng, Options(engine="drives", keep_boxes=True, record_plays=True, **parity.options()))
     finally:
         game_engine.simulate_game = real_sim
     everyone = [q for t in lg.teams for q in list(t.roster) + list(t.practice_squad)] + list(lg.free_agents) + list(getattr(lg, "retired_players", ()))
