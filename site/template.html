@@ -107,6 +107,8 @@ select, .btn { font: inherit; padding: 7px 10px; border: 1px solid var(--line); 
 .field { position: relative; height: 34px; border-radius: 6px; background: repeating-linear-gradient(90deg, var(--soft) 0 9.5%, var(--line) 9.5% 10%); border: 1px solid var(--line); overflow: hidden; }
 .field .ez { position: absolute; top: 0; bottom: 0; width: 7%; background: color-mix(in srgb, var(--accent) 25%, var(--surface)); } .field .ez.l { left: 0; } .field .ez.r { right: 0; }
 .field .ball { position: absolute; top: 5px; width: 22px; height: 22px; margin-left: -11px; border-radius: 50%; background: var(--ink); border: 3px solid var(--surface); transition: left .35s; }
+.field .trail { position: absolute; top: 13px; height: 8px; border-radius: 4px; background: var(--accent); opacity: .45; transition: left .35s, width .35s; }
+.tl { width: 100%; height: auto; display: block; } .tl text { font-family: var(--mono); font-size: 10px; fill: var(--muted); } .tl .gl { stroke: var(--line); stroke-width: 1; } .tl .ln { fill: none; stroke-width: 2.5; stroke-linejoin: round; } .tlkey { display: flex; gap: 16px; font-family: var(--mono); font-size: 12px; color: var(--muted); margin-top: 4px; } .tlkey i { display: inline-block; width: 14px; height: 3px; margin-right: 6px; vertical-align: middle; }
 .field .first { position: absolute; top: 0; bottom: 0; width: 3px; margin-left: -1px; background: var(--gold); opacity: .9; }
 .controls { display: flex; flex-wrap: wrap; gap: 8px 10px; align-items: center; }
 .btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 700; }
@@ -435,8 +437,9 @@ function game(id) {
   <div class="card"><div class="board"><div class="side">${badge(A, "lg")}<div><div class="nm">${e(A.name)}</div><small style="color:var(--muted)">${rec(A.record)} · away</small></div></div>
     <div class="mid"><div style="display:flex;justify-content:center;align-items:center;gap:20px"><span class="pts" id="sa">0</span><b id="st" style="font-size:16px;min-width:76px">Final</b><span class="pts" id="sh">0</span></div></div>
     <div class="side r">${badge(H, "lg")}<div><div class="nm">${e(H.name)}</div><small style="color:var(--muted)">${rec(H.record)} · home</small></div></div></div>
-  <div style="margin-top:14px"><div class="field" id="field" aria-hidden="true"><span class="ez l"></span><span class="ez r"></span><span class="first" id="first"></span><span class="ball" id="ball"></span></div><p id="sit" style="margin-top:6px;color:var(--muted);font-size:14px;max-width:none"></p></div>
+  <div style="margin-top:14px"><div class="field" id="field" aria-hidden="true"><span class="ez l"></span><span class="ez r"></span><span class="trail" id="trail"></span><span class="first" id="first"></span><span class="ball" id="ball"></span></div><p id="sit" style="margin-top:6px;color:var(--muted);font-size:14px;max-width:none"></p></div>
   ${live ? `<p class="note" style="margin-top:12px"><b style="color:var(--accent)">LIVE</b> This game is being played now. Each play appears here as it happens, and you can replay it once it is over.</p>` : `<div class="controls" style="margin-top:12px"><button class="btn primary" id="watch">Watch replay</button><button class="btn" id="pause" disabled>Pause</button><label style="color:var(--muted);font-size:14px">Speed <select id="speed"><option value="1">1x (about ${realLen} min)</option><option value="4">4x</option><option value="16">16x</option><option value="60">60x</option></select></label><button class="btn" id="final">Skip to final</button></div>`}</div>
+  <div class="card" style="margin-top:16px"><h3>Score by time</h3><div id="tl" style="margin-top:8px"></div></div>
   <div class="grid wide"><div class="stack" style="padding-top:0;gap:8px"><h3>Play by play</h3><div class="tablewrap feed" id="feed"></div></div>
   <div class="stack" style="padding-top:0;gap:16px"><div class="card"><h3>Team stats</h3><div id="tstats" style="margin-top:8px"></div></div>
   <div class="card"><h3>${e(A.abbr)} leaders</h3><div class="lead" id="la"></div></div><div class="card"><h3>${e(H.abbr)} leaders</h3><div class="lead" id="lh"></div></div></div></div>
@@ -447,6 +450,19 @@ function waitingGame(g) {
   if (g.home == null) return `<div class="stack"><h1>Game</h1><p class="note">The two clubs for this game are not known yet. They are announced about 20 minutes before kickoff.</p></div>`;
   const H = byId[g.home], A = byId[g.away];
   return `<div class="stack"><div class="eyebrow"><a href="#live" style="text-decoration:underline">Live</a></div><h1>${e(A.name)} at ${e(H.name)}</h1><p class="note">${g.start > serverNow() ? `Kickoff is ${e(realTime(g.start))} (${e(inText(g.start))}). The page fills in by itself.` : "Waiting for the first plays…"}</p></div>`;
+}
+/* Score by game time: a step line per club, built from the drives finished so far (the points of a drive count at the time its last play ran). */
+function timelineHtml(b, S, abbr, plays) {
+  const W = 600, Ht = 150, L = 26, R = 8, T = 8, B = 20, last = plays.length ? plays[plays.length - 1][14] : 3600, tot = Math.max(3600, Math.ceil(last / 300) * 300);
+  const pts = [[0, 0, 0]], sc = [0, 0];
+  b.dr.slice(0, S.drivesDone).forEach((d, k) => { if (!d[7] && !d[8]) return; let t = 0; for (let i = plays.length - 1; i >= 0; i--) if (plays[i][13] === k) { t = plays[i][14]; break; } sc[d[0]] += d[7]; sc[1 - d[0]] += d[8]; pts.push([t, sc[0], sc[1]]); });
+  const now = S.last ? S.last[14] : 0, mx = Math.max(7, ...sc) , top = Math.ceil(mx / 7) * 7;
+  const X = t => L + (W - L - R) * t / tot, Y = v => T + (Ht - T - B) * (1 - v / top);
+  const path = j => { let d = `M${X(0)},${Y(0)}`, prev = 0; pts.slice(1).forEach(p => { d += `L${X(p[0])},${Y(prev)}L${X(p[0])},${Y(p[j])}`; prev = p[j]; }); return d + `L${X(Math.max(now, pts[pts.length - 1][0]))},${Y(prev)}`; };
+  let g = ""; for (let v = 0; v <= top; v += 7) g += `<line class="gl" x1="${L}" x2="${W - R}" y1="${Y(v)}" y2="${Y(v)}"/><text x="${L - 4}" y="${Y(v) + 3}" text-anchor="end">${v}</text>`;
+  for (let q = 0; q * 900 <= tot; q++) { const t = q * 900; g += `<line class="gl" x1="${X(t)}" x2="${X(t)}" y1="${T}" y2="${Ht - B}"/><text x="${X(t) + 3}" y="${Ht - 6}">${q < 4 ? "Q" + (q + 1) : t === 3600 && tot > 3600 ? "OT" : ""}</text>`; }
+  return `<svg class="tl" viewBox="0 0 ${W} ${Ht}" role="img" aria-label="Score by game time">${g}<path class="ln" stroke="var(--gold)" stroke-dasharray="6 4" d="${path(2)}"/><path class="ln" stroke="var(--accent)" d="${path(1)}"/></svg>`
+    + `<div class="tlkey"><span><i style="background:var(--gold)"></i>${e(abbr[1])} ${sc[1]}</span><span><i style="background:var(--accent)"></i>${e(abbr[0])} ${sc[0]}</span></div>`;
 }
 function startGame(id) {
   const g = gameById[id], b = D.box[id]; if (!g || !b) return;
@@ -464,8 +480,16 @@ function startGame(id) {
     if (done) { $("sa").textContent = g.ap; $("sh").textContent = g.hp; }
     $("st").textContent = done ? (b.n ? `Final / OT${b.n > 1 ? b.n : ""}` : "Final") : lp ? (live ? "LIVE · " : "") + clock(lp[10], lp[11], lp[12]) : live ? "LIVE" : "Kickoff";
     const nx = plays[S.i];
-    if (nx) { const off = nx[0]; $("sit").innerHTML = `<span class="poss"></span><b>${e(names[off])}</b> ball · ${ordn(nx[1])} &amp; ${nx[2]} at ${spot(nx[3])}`; const X = p => (off === 0 ? 93 - .86 * p : 7 + .86 * p) + "%"; $("ball").style.display = ""; $("ball").style.left = X(nx[3]); $("first").style.left = X(Math.min(100, nx[3] + nx[2])); }
-    else { $("sit").textContent = done ? "Final." : live ? "Live: the next play appears when it is run." : ""; $("ball").style.display = "none"; $("first").style.left = "-10%"; }
+    if (nx) { const off = nx[0]; $("sit").innerHTML = `<span class="poss"></span><b>${e(names[off])}</b> ball · ${ordn(nx[1])} &amp; ${nx[2]} at ${spot(nx[3])}`; const X = p => (off === 0 ? 93 - .86 * p : 7 + .86 * p) + "%"; $("ball").style.display = ""; $("ball").style.left = X(nx[3]); let k0 = S.i; while (k0 > 0 && plays[k0 - 1][13] === nx[13]) k0--; const st0 = plays[k0][3], xa = parseFloat(X(st0)), xb = parseFloat(X(nx[3])); $("trail").style.display = ""; $("trail").style.left = Math.min(xa, xb) + "%"; $("trail").style.width = Math.abs(xb - xa) + "%"; $("first").style.left = X(Math.min(100, nx[3] + nx[2])); }
+    else {
+      $("sit").textContent = done ? "Final." : live ? "Live: the next play appears when it is run." : ""; $("first").style.left = "-10%"; $("ball").style.display = "none"; $("trail").style.display = "none";
+      if (lp && ["RU", "PC", "SK"].includes(lp[6]) && !lp[5]) {      // between plays the ball rests where the last run, catch or sack ended
+        const X = p => (lp[0] === 0 ? 93 - .86 * p : 7 + .86 * p), end = Math.max(0, Math.min(100, lp[3] + lp[4]));
+        let k0 = S.i - 1; while (k0 > 0 && plays[k0 - 1][13] === lp[13]) k0--;
+        const xa = X(plays[k0][3]), xb = X(end); $("ball").style.display = ""; $("ball").style.left = xb + "%"; $("trail").style.display = ""; $("trail").style.left = Math.min(xa, xb) + "%"; $("trail").style.width = Math.abs(xb - xa) + "%";
+      }
+    }
+    $("tl").innerHTML = timelineHtml(b, S, abbr, plays);
     $("tstats").innerHTML = rowsFor().map(([lab, f]) => `<div class="statrow"><span>${f(S.tm[1])}</span><span>${lab}</span><span style="text-align:left">${f(S.tm[0])}</span></div>`).join("")
       .replace(/^/, `<div class="statrow" style="font-weight:700"><span>${e(A.abbr)}</span><span></span><span style="text-align:left">${e(H.abbr)}</span></div>`);
     $("la").innerHTML = leadersHtml(S, b, 1); $("lh").innerHTML = leadersHtml(S, b, 0);
