@@ -124,6 +124,8 @@ select, .btn { font: inherit; padding: 7px 10px; border: 1px solid var(--line); 
 .dch .bar { position: relative; height: 12px; border-radius: 3px; background: var(--soft); border: 1px solid var(--line); } .dch .seg { position: absolute; top: 2px; height: 6px; border-radius: 3px; min-width: 3px; } .dch .seg.r::after, .dch .seg.l::before { position: absolute; top: -3px; font-size: 10px; line-height: 12px; } .dch .seg.r::after { content: "\25B6"; right: -7px; } .dch .seg.l::before { content: "\25C0"; left: -7px; }
 .dch .ez0 { position: absolute; top: 0; bottom: 0; width: 7%; background: color-mix(in srgb, var(--muted) 20%, transparent); } .dch .res { color: var(--ink); } .dch .res.sc { color: var(--accent); font-weight: 700; } .dch .res.tn { color: #B3261E; font-weight: 600; }
 .controls { display: flex; flex-wrap: wrap; gap: 8px 10px; align-items: center; }
+button.chip { cursor: pointer; } .stat-th { cursor: pointer; user-select: none; } .stat-th:hover { color: var(--ink); } .stat-th.on { color: var(--ink); }
+a.fork { display: block; color: var(--ink); } a.fork:hover { border-color: var(--ink); } a.fork h3 { margin-bottom: 6px; }
 .btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 700; }
 .feed { max-height: 460px; overflow: auto; font-size: 15px; } .feed > div { display: grid; grid-template-columns: 74px 1fr; gap: 10px; padding: 7px 14px; border-bottom: 1px solid var(--line); }
 .feed .c { font-family: var(--mono); font-size: 12px; color: var(--muted); padding-top: 3px; } .feed .big { background: var(--gold-bg); font-weight: 700; } .feed .turn { color: #B3261E; font-weight: 600; } .feed .pen { color: var(--gold); font-weight: 600; } .feed .tmo { color: var(--muted); font-style: italic; } .feed .hd { background: var(--soft); color: var(--muted); font-family: var(--mono); font-size: 12px; }
@@ -700,15 +702,142 @@ function livePage() {
   return h + `<p class="note">Times are in your time zone. ${paceText()} Games appear here when they kick off and their plays appear as they happen.</p></div>`;
 }
 
+
+/* ---------- statistics: every finished game of the season, replayed with the same applyPlay the game page uses ---------- */
+const STATS = { year: null, cache: {}, failed: {}, pending: {}, run: 0, v2: false, ui: { scope: "reg", off: "off", cat: "pass", club: "", sort: {} } };
+const SCOPES = [["reg", "Regular season"], ["po", "Playoffs"], ["amb", "Ambassador Season"], ["all", "All games"]];
+const statGames = scope => (scope === "reg" ? D.games : scope === "po" ? D.playoffs : scope === "amb" ? D.ambassador : [...D.games, ...D.ambassador, ...D.playoffs]).filter(g => g.id && g.home != null && g.hp != null);
+function replayStats(g, b) {
+  const S = freshState(b);
+  b.p.forEach((pl, i) => { applyPlay(S, b, pl); if (!b.p[i + 1] || b.p[i + 1][13] !== pl[13]) endDrive(S, b, pl[13]); });
+  b.dr.forEach((x, k) => { if (k >= S.drivesDone) endDrive(S, b, k); });
+  return { g, tm: S.tm, v2: b.v === 2, pl: b.pl.map((p, i) => ({ key: p[3] != null ? "p" + p[3] : [p[2] === 0 ? g.home : g.away, p[0], p[1]].join("|"), name: p[0], pos: p[1], club: p[2] === 0 ? g.home : g.away, st: S.pl[i] })) };
+}
+/* Finished games only; a box fetched while its game was still on is fetched again. Several at a time; a run that has been left behind (another page, another year) stops. */
+async function statsLoad(games, run, progress) {
+  const yr = LIVE ? FEED.year : D.season;
+  if (STATS.year !== yr) { STATS.year = yr; STATS.cache = {}; STATS.failed = {}; STATS.pending = {}; STATS.v2 = false; }
+  const need = games.filter(g => !STATS.cache[g.id] && !STATS.failed[g.id]);
+  let at = 0, done = 0;
+  const one = async g => {
+    let b = D.box[g.id];
+    if (LIVE && (!b || b.live)) b = await (STATS.pending[g.id] = STATS.pending[g.id] || loadBox(g.id)).finally(() => { delete STATS.pending[g.id]; });
+    if (!b || b.live) { STATS.failed[g.id] = true; return; }
+    STATS.cache[g.id] = replayStats(g, b);
+  };
+  const worker = async () => { while (at < need.length && run === STATS.run) { const g = need[at++]; await one(g); done++; if (run === STATS.run) progress(done, need.length); } };
+  await Promise.all([0, 1, 2, 3, 4, 5].map(worker));
+  STATS.v2 = Object.values(STATS.cache).some(r => r.v2);
+}
+const f1 = n => (Math.round(n * 10) / 10).toFixed(1), pc1 = (a, b) => b ? f1(100 * a / b) : "–", per = (a, n) => n ? a / n : 0;
+function teamRows(rs, view) {
+  const T = {};
+  rs.forEach(r => [0, 1].forEach(s => {
+    const id = s === 0 ? r.g.home : r.g.away, m = r.tm[s], o = r.tm[1 - s], t = T[id] = T[id] || { id, gp: 0, pf: 0, pa: 0, plays: 0, yds: 0, pyd: 0, ryd: 0, first: 0, t3c: 0, t3a: 0, to: 0, cmp: 0, att: 0, skt: 0, pen: 0, penyds: 0, top: 0, oplays: 0, oyds: 0, opyd: 0, oryd: 0, ofirst: 0, ot3c: 0, ot3a: 0, take: 0, sks: 0 };
+    t.gp++; t.pf += s === 0 ? r.g.hp : r.g.ap; t.pa += s === 0 ? r.g.ap : r.g.hp;
+    t.plays += m.plays; t.yds += m.yards; t.pyd += m.pass_yds; t.ryd += m.rush_yds; t.first += m.first; t.t3c += m.t3c; t.t3a += m.t3a; t.to += m.to; t.cmp += m.cmp; t.att += m.att; t.skt += o.sacks; t.pen += m.pen; t.penyds += m.penyds; t.top += m.top;
+    t.oplays += o.plays; t.oyds += o.yards; t.opyd += o.pass_yds; t.oryd += o.rush_yds; t.ofirst += o.first; t.ot3c += o.t3c; t.ot3a += o.t3a; t.take += o.to; t.sks += m.sacks;
+  }));
+  return Object.values(T).map(t => view === "off"
+    ? { id: t.id, gp: t.gp, ppg: per(t.pf, t.gp), ypg: per(t.yds, t.gp), pypg: per(t.pyd, t.gp), rypg: per(t.ryd, t.gp), ypp: per(t.yds, t.plays), fdpg: per(t.first, t.gp), t3: per(t.t3c, t.t3a) * 100, cmp: per(t.cmp, t.att) * 100, tog: per(t.to, t.gp), skt: per(t.skt, t.gp), pen: per(t.pen, t.gp), peny: per(t.penyds, t.gp), top: per(t.top, t.gp) }
+    : { id: t.id, gp: t.gp, papg: per(t.pa, t.gp), ypg: per(t.oyds, t.gp), pypg: per(t.opyd, t.gp), rypg: per(t.oryd, t.gp), ypp: per(t.oyds, t.oplays), fdpg: per(t.ofirst, t.gp), t3: per(t.ot3c, t.ot3a) * 100, take: per(t.take, t.gp), sks: per(t.sks, t.gp) });
+}
+const TEAM_COLS = {
+  off: [["gp", "G", 0, "Games"], ["ppg", "Pts/G", 1, "Points scored a game"], ["ypg", "Yds/G", 1, "Yards a game"], ["pypg", "Pass/G", 1, "Passing yards a game", 1], ["rypg", "Rush/G", 1, "Rushing yards a game", 1], ["ypp", "Y/Play", 2, "Yards a play"], ["fdpg", "1st/G", 1, "First downs a game", 1],
+    ["t3", "3rd %", 1, "Third downs converted", 1], ["cmp", "Cmp %", 1, "Pass completion percentage", 1], ["tog", "TO/G", 2, "Turnovers committed a game (lower is better)", 0, 1], ["skt", "Sacked/G", 2, "Times sacked a game (lower is better)", 1, 1], ["pen", "Pen/G", 1, "Penalties a game", 1, 1], ["peny", "PenYd/G", 1, "Penalty yards a game", 1, 1], ["top", "TOP/G", 0, "Time of possession a game, in seconds", 1]],
+  def: [["gp", "G", 0, "Games"], ["papg", "Pts/G", 1, "Points allowed a game (lower is better)", 0, 1], ["ypg", "Yds/G", 1, "Yards allowed a game (lower is better)", 0, 1], ["pypg", "Pass/G", 1, "Passing yards allowed a game", 1, 1], ["rypg", "Rush/G", 1, "Rushing yards allowed a game", 1, 1], ["ypp", "Y/Play", 2, "Yards allowed a play (lower is better)", 0, 1],
+    ["fdpg", "1st/G", 1, "First downs allowed a game", 1, 1], ["t3", "3rd %", 1, "Third downs allowed to convert (lower is better)", 1, 1], ["take", "Takeaways/G", 2, "Turnovers forced a game"], ["sks", "Sacks/G", 2, "Sacks a game"]]
+};
+const PLAYER_CATS = [["pass", "Passing"], ["rush", "Rushing"], ["recv", "Receiving"], ["def", "Defense"], ["kick", "Kicking"]];
+function playerRows(rs, cat, club) {
+  const P = {};
+  rs.forEach(r => r.pl.forEach(q => {
+    if (club !== "" && String(q.club) !== club) return;
+    const s = q.st; if (!s || !Object.keys(s).length) return;
+    const t = P[q.key] = P[q.key] || { key: q.key, name: q.name, pos: q.pos, club: q.club, gp: 0, st: {} };
+    t.gp++; t.club = q.club; Object.keys(s).forEach(k => { t.st[k] = (t.st[k] || 0) + s[k]; });
+  }));
+  const v = x => x || 0;
+  const rate = s => { const a = v(s.att); if (!a) return 0; const c = x => Math.max(0, Math.min(2.375, x)); return (c((v(s.cmp) / a - .3) * 5) + c((v(s.pyd) / a - 3) * .25) + c(v(s.ptd) / a * 20) + c(2.375 - v(s.int) / a * 25)) / 6 * 100; };
+  const rows = Object.values(P).map(t => { const s = t.st; return Object.assign({ id: t.key, name: t.name, pos: t.pos, club: t.club, gp: t.gp },
+    cat === "pass" ? { cmp: v(s.cmp), att: v(s.att), pct: per(v(s.cmp), v(s.att)) * 100, yds: v(s.pyd), ypa: per(v(s.pyd), v(s.att)), td: v(s.ptd), int: v(s.int), sk: v(s.sacked), rate: rate(s), _has: v(s.att) > 0 }
+    : cat === "rush" ? { car: v(s.car), yds: v(s.cyd), ypc: per(v(s.cyd), v(s.car)), td: v(s.ctd), ypg: per(v(s.cyd), t.gp), _has: v(s.car) > 0 }
+    : cat === "recv" ? { tgt: v(s.tgt), rec: v(s.rec), yds: v(s.ryd), ypr: per(v(s.ryd), v(s.rec)), td: v(s.rtd), pct: per(v(s.rec), v(s.tgt)) * 100, ypg: per(v(s.ryd), t.gp), _has: v(s.tgt) > 0 }
+    : cat === "def" ? { tkl: v(s.tkl), sacks: v(s.sacks), ints: v(s.ints), _has: v(s.tkl) + v(s.sacks) + v(s.ints) > 0 }
+    : { fgm: v(s.fgm), fga: v(s.fga), pct: per(v(s.fgm), v(s.fga)) * 100, _has: v(s.fga) > 0 }); });
+  return rows.filter(r => r._has);
+}
+const PLAYER_COLS = {
+  pass: [["gp", "G", 0, "Games"], ["cmp", "Cmp", 0, "Completions"], ["att", "Att", 0, "Attempts"], ["pct", "Cmp %", 1, "Completion percentage", 1], ["yds", "Yds", 0, "Passing yards"], ["ypa", "Y/A", 1, "Yards an attempt", 1], ["td", "TD", 0, "Touchdown passes"], ["int", "INT", 0, "Interceptions thrown", 0, 1], ["sk", "Sacked", 0, "Times sacked", 1, 1], ["rate", "Rate", 1, "Passer rating"]],
+  rush: [["gp", "G", 0, "Games"], ["car", "Car", 0, "Carries"], ["yds", "Yds", 0, "Rushing yards"], ["ypc", "Y/C", 1, "Yards a carry"], ["td", "TD", 0, "Rushing touchdowns"], ["ypg", "Yds/G", 1, "Yards a game", 1]],
+  recv: [["gp", "G", 0, "Games"], ["tgt", "Tgt", 0, "Targets"], ["rec", "Rec", 0, "Receptions"], ["yds", "Yds", 0, "Receiving yards"], ["ypr", "Y/R", 1, "Yards a reception", 1], ["td", "TD", 0, "Receiving touchdowns"], ["pct", "Catch %", 1, "Receptions of targets", 1], ["ypg", "Yds/G", 1, "Yards a game", 1]],
+  def: [["gp", "G", 0, "Games"], ["tkl", "Tkl", 0, "Tackles credited"], ["sacks", "Sacks", 0, "Sacks"], ["ints", "INT", 0, "Interceptions"]],
+  kick: [["gp", "G", 0, "Games"], ["fgm", "FGM", 0, "Field goals made"], ["fga", "FGA", 0, "Field goals tried"], ["pct", "FG %", 1, "Field goal percentage"]]
+};
+const PLAYER_DEFAULT = { pass: "yds", rush: "yds", recv: "yds", def: "tkl", kick: "fgm" };
+function statTable(cols, rows, sort, first, limit) {
+  const col = cols.find(c => c[0] === sort.key) || cols[0], dir = sort.dir || 1;
+  rows = rows.slice().sort((a, b) => dir * ((b[col[0]] || 0) - (a[col[0]] || 0)) || (b.gp || 0) - (a.gp || 0));
+  const shown = rows.slice(0, limit), fmt = (c, r) => { const v = r[c[0]]; return c[2] === 0 ? (c[0] === "top" ? Math.floor(v / 60) + ":" + String(Math.round(v % 60)).padStart(2, "0") : String(Math.round(v * 10) / 10)) : v.toFixed(c[2]); };
+  return `<div class="tablewrap"><table><thead><tr>${first[0]}${cols.map(c => `<th class="stat-th${c[0] === col[0] ? " on" : ""}${c[4] ? " hide-sm" : ""}" data-sort="${c[0]}" title="${e(c[3])}" aria-sort="${c[0] === col[0] ? (dir > 0 ? "descending" : "ascending") : "none"}">${c[1]}${c[0] === col[0] ? (dir > 0 ? " ▾" : " ▴") : ""}</th>`).join("")}</tr></thead><tbody>`
+    + shown.map(r => `<tr>${first[1](r)}${cols.map(c => `<td${c[4] ? ' class="hide-sm"' : ""}>${fmt(c, r)}</td>`).join("")}</tr>`).join("") + `</tbody></table></div>` + (rows.length > limit ? `<p class="note">Showing the top ${limit} of ${rows.length}.</p>` : "");
+}
+function statsPage(kind) {
+  if (kind !== "team" && kind !== "player") return `<div class="stack"><h1>Statistics</h1><p class="note">Every finished game of the season, added up as the games are played.</p><div class="grid">
+    <a class="card fork" href="#stats-team"><h3>Team statistics</h3><p>Offense and defense for every club: points, yards, first downs, third downs, turnovers, sacks${LIVE || STATS.v2 ? ", penalties" : ""}.</p></a>
+    <a class="card fork" href="#stats-player"><h3>Player statistics</h3><p>Passing, rushing, receiving, defense and kicking leaders, sortable, for the whole league or one club.</p></a></div></div>`;
+  const U = STATS.ui, chip = (href, label, on) => `<a class="chip" href="${href}" ${on ? 'aria-current="true"' : ""}>${label}</a>`;
+  const view = kind === "team" ? `<div class="chips" role="group" aria-label="View"><button class="chip" data-off="off" ${U.off === "off" ? 'aria-current="true"' : ""}>Offense</button><button class="chip" data-off="def" ${U.off === "def" ? 'aria-current="true"' : ""}>Defense</button></div>`
+    : `<div class="chips" role="group" aria-label="Category">${PLAYER_CATS.map(([k, n]) => `<button class="chip" data-cat="${k}" ${U.cat === k ? 'aria-current="true"' : ""}>${n}</button>`).join("")}</div>`;
+  const scopes = `<select id="ssc" aria-label="Games">${SCOPES.map(([k, n]) => `<option value="${k}" ${U.scope === k ? "selected" : ""}>${n}</option>`).join("")}</select>`;
+  const clubSel = kind === "player" ? `<select id="scl" aria-label="Club"><option value="">All clubs</option>${clubs.slice().sort((a, b) => a.name.localeCompare(b.name)).map(c => `<option value="${c.id}" ${String(c.id) === U.club ? "selected" : ""}>${e(c.name)}</option>`).join("")}</select>` : "";
+  setTimeout(() => statsRun(kind), 0);
+  return `<div class="stack"><div class="chips" role="navigation" aria-label="Statistics">${chip("#stats-team", "Team statistics", kind === "team")}${chip("#stats-player", "Player statistics", kind === "player")}</div>
+    <h1>${kind === "team" ? "Team statistics" : "Player statistics"}</h1><div class="row">${view}${scopes}${clubSel}</div><p class="note" id="sprog"></p><div id="sbody"></div></div>`;
+}
+async function statsRun(kind) {
+  const run = ++STATS.run, $ = x => document.getElementById(x), U = STATS.ui;
+  const draw = () => {
+    if (run !== STATS.run || !$("sbody")) return;
+    const games = statGames(U.scope), rs = games.map(g => STATS.cache[g.id]).filter(Boolean);
+    $("sprog").textContent = rs.length ? `${rs.length} finished game${rs.length === 1 ? "" : "s"} counted${rs.length < games.length ? `, ${games.length - rs.length} more loading` : ""}.` : (games.length ? "Loading the games…" : "No game in this group has finished yet.");
+    if (!rs.length) { $("sbody").innerHTML = ""; return; }
+    if (kind === "team") {
+      const cols = TEAM_COLS[U.off].filter(c => STATS.v2 || (c[0] !== "pen" && c[0] !== "peny")), key = "t" + U.off, def = U.off === "off" ? { key: "ppg", dir: 1 } : { key: "papg", dir: -1 }, sort = U.sort[key] || def;
+      $("sbody").innerHTML = statTable(cols, teamRows(rs, U.off), sort, [`<th class="l">Club</th>`, r => `<td class="l">${clubLink(byId[r.id])}</td>`], 100);
+    } else {
+      const cols = PLAYER_COLS[U.cat], key = "p" + U.cat, sort = U.sort[key] || { key: PLAYER_DEFAULT[U.cat], dir: 1 };
+      $("sbody").innerHTML = statTable(cols, playerRows(rs, U.cat, U.club), sort, [`<th class="l">Player</th><th class="l">Club</th><th class="l">Pos</th>`, r => `<td class="l"><b>${e(r.name)}</b></td><td class="l">${clubLink(byId[r.club])}</td><td class="l">${e(r.pos)}</td>`], 100);
+    }
+  };
+  const ids = () => statGames(U.scope);
+  const redo = () => { render(false); };
+  const on = (sel, fn) => document.querySelectorAll(sel).forEach(el => el.addEventListener(el.tagName === "SELECT" ? "change" : "click", () => fn(el)));
+  on("[data-off]", el => { U.off = el.dataset.off; redo(); });
+  on("[data-cat]", el => { U.cat = el.dataset.cat; redo(); });
+  on("#ssc", el => { U.scope = el.value; redo(); });
+  on("#scl", el => { U.club = el.value; redo(); });
+  const body = $("sbody"); if (!body) return;
+  body.addEventListener("click", ev => {
+    const th = ev.target.closest("[data-sort]"); if (!th) return;
+    const key = kind === "team" ? "t" + U.off : "p" + U.cat, cur = U.sort[key] || (kind === "team" ? (U.off === "off" ? { key: "ppg", dir: 1 } : { key: "papg", dir: -1 }) : { key: PLAYER_DEFAULT[U.cat], dir: 1 }), k = th.dataset.sort;
+    const cols = kind === "team" ? TEAM_COLS[U.off] : PLAYER_COLS[U.cat], c = cols.find(x => x[0] === k), lowGood = c && c[5];
+    U.sort[key] = cur.key === k ? { key: k, dir: -cur.dir } : { key: k, dir: lowGood ? -1 : 1 }; draw();
+  });
+  draw();
+  try { await statsLoad(ids(), run, draw); } catch (err) { if (run === STATS.run && $("sprog")) $("sprog").textContent = "Some games could not be loaded: " + err; }
+  draw();
+}
+
 /* ---------- router, tabs, search ---------- */
-const TABS = (LIVE ? [["live", "Live"]] : []).concat([["standings", "Standings"], ["schedule", "Schedule"], ["guide", "How it works"], ["playoffs", "Playoffs"], ["clubs", "Clubs"], ["players", "Players"], ["founding", "Founding Day"], ["calendar", "Calendar"]]);
+const TABS = (LIVE ? [["live", "Live"]] : []).concat([["standings", "Standings"], ["schedule", "Schedule"], ["guide", "How it works"], ["playoffs", "Playoffs"], ["clubs", "Clubs"], ["players", "Players"], ["stats", "Statistics"], ["founding", "Founding Day"], ["calendar", "Calendar"]]);
 const curWeek = () => { const g = D.games.filter(x => !x.final).sort((a, b) => a.week - b.week)[0]; return g ? g.week : 19; };
 function render(scroll = true) {
   const parts = routeParts(), page = parts[0];
   if (LIVE && !FEED.results) { document.getElementById("app").innerHTML = `<div class="stack"><h1>Live</h1><p class="note">Connecting to the league…</p></div>`; return; }
   if (LIVE && !FEED.results.year && page !== "live" && ["standings", "schedule", "playoffs", "club"].includes(page)) { location.hash = "live"; return; }
   const html = page === "live" ? livePage() : page === "standings" ? standings() : page === "schedule" ? schedule(+parts[1] || (LIVE ? curWeek() : 1)) : page === "guide" ? guide() : page === "playoffs" ? playoffs() : page === "clubs" ? clubsPage() : page === "club" ? club(parts[1])
-    : page === "game" ? game(parts[1]) : page === "player" ? player(parts[1], +parts[2]) : page === "players" ? playersPage() : page === "founding" ? founding() : page === "calendar" ? calendarPage() : notFound();
+    : page === "game" ? game(parts[1]) : page === "player" ? player(parts[1], +parts[2]) : page === "players" ? playersPage() : page === "stats" ? statsPage(parts[1]) : page === "founding" ? founding() : page === "calendar" ? calendarPage() : notFound();
   if (REPLAY) { REPLAY.stop(); REPLAY = null; }
   document.getElementById("app").innerHTML = html;
   if (page === "game") startGame(parts[1]);
