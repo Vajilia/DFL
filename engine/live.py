@@ -52,6 +52,16 @@ PO_KICK = {"playoff_wc": ["13:00", "13:00", "16:30", "16:30", "20:00", "20:00"],
 PO_DATE = {"playoff_wc": "wild_card", "playoff_div": "divisional", "playoff_conf": "conference", "playoff_final": "coronation"}
 HOUR_MS = 3600 * 1000
 
+# "Blocks" pacing (the Commissioner, 2026-10-13): the league runs almost continually instead of spreading a year over the calendar. A league day's kickoff windows are the blocks
+# b1 Saturday night, b2 Sunday morning, b3 Sunday afternoon, b4 Sunday evening, b5 Monday evening, one after another in real time: a block starts when the longest game of the
+# one before it has ended plus a short gap. Playoff rounds run the same way. A league year is then as long as its games take (about 56 real hours at 30-minute games).
+BLOCK_REAL_PER_GAME = 0.48          # real seconds per game second: a game's 60 minutes play out in about 30 real minutes (halftime and the tail on top)
+BLOCK_GAP_MS = 2 * 60 * 1000        # between two blocks of the same week (or the same playoff round)
+WEEK_GAP_MS = 5 * 60 * 1000         # between the last block of a week (or round) and the first block of the next
+OFFSEASON_MS = 60 * 60 * 1000       # from the end of the Coronation to the next league year's first kickoff
+WRAP_UP_MS = 20 * 60 * 1000         # the page moves on to the next league year this long after the Coronation ends (the champion stays on show until then)
+PACINGS = ("blocks", "legacy")
+
 
 def year_start_ms(epoch_ms: int, n: int) -> float:
     return epoch_ms + (n - 1) * YEAR_HOURS * HOUR_MS
@@ -76,9 +86,12 @@ def year_at(epoch_ms: int, now_ms: float) -> int:
     return 0 if now_ms < epoch_ms else int((now_ms - epoch_ms) // (YEAR_HOURS * HOUR_MS)) + 1
 
 
-def play_offset_ms(pl) -> float:
-    """Real ms after kickoff at which a play (as logged: ... quarter, seconds left, overtime flag, drive, game seconds) has happened."""
-    return (pl[14] * REAL_PER_GAME + (HALFTIME_PAUSE if (pl[10] >= 3 or pl[12]) else 0.0)) * 1000.0
+def play_offset_ms(pl, rpg=None, half=None) -> float:
+    """Real ms after kickoff at which a play (as logged: ... quarter, seconds left, overtime flag, drive, game seconds) has happened.
+    rpg and half are the league's real seconds per game second and its halftime pause (the module's numbers when not given)."""
+    rpg = REAL_PER_GAME if rpg is None else rpg
+    half = HALFTIME_PAUSE if half is None else half
+    return (pl[14] * rpg + (half if (pl[10] >= 3 or pl[12]) else 0.0)) * 1000.0
 
 
 def opener_epoch(opener_at: dt.datetime) -> int:
@@ -91,8 +104,10 @@ def opener_epoch(opener_at: dt.datetime) -> int:
 class Season:
     """One league year, played in full and ready to be revealed."""
 
-    def __init__(self, world, n: int):
+    def __init__(self, world, n: int, start_ms=None, begin_ms=None, prev_when=None):
         self.n, self.epoch = n, world.epoch_ms
+        self.pacing, self.rpg, self.half = world.pacing, world.rpg, world.half
+        self.start_ms, self.begin_ms, self.prev_when = start_ms, begin_ms, prev_when    # blocks pacing: first kickoff, when the page moves to this year, the last Coronation's league date
         lg = world.lg
         res, names = SE.play_season(lg, world.rng, n)
         self.res = res
@@ -115,7 +130,10 @@ class Season:
             k = seen[g.kind] = seen.get(g.kind, -1) + 1
             when = dt.datetime.combine(po[PO_DATE[g.kind]], dt.time(*map(int, PO_KICK[g.kind][k].split(":"))))
             self.games.append(self._game(f"p{i}", "po", g, when, short))
-        self._space_windows()
+        if self.pacing == "blocks":
+            self._place_blocks(start_ms)
+        else:
+            self._space_windows()
         self.by_id = {g["id"]: g for g in self.games}
         self.reg_end = max(g["end"] for g in self.games if g["group"] == "reg")
         self.final_end = max(g["end"] for g in self.games if g["group"] == "po")
@@ -124,11 +142,11 @@ class Season:
     def _game(self, gid, group, g, when, short):
         b = SE._box(g.result, short)
         plays = b["p"]
-        offs = [play_offset_ms(p) for p in plays]
+        offs = [play_offset_ms(p, self.rpg, self.half) for p in plays]
         last_of = {}
         for i, p in enumerate(plays):
             last_of[p[13]] = i                            # index of the last play of each drive
-        start = real_ms(self.epoch, self.n, when)
+        start = 0.0 if self.pacing == "blocks" else real_ms(self.epoch, self.n, when)      # blocks pacing places every game afterwards, block by block
         return dict(id=gid, group=group, week=g.week, home=g.home, away=g.away, kind=g.kind, hp=g.home_pts, ap=g.away_pts, ot=g.result.ot_periods, box=b, offs=offs,
                     last_of=last_of, start=start, end=start + (offs[-1] if offs else 0) + TAIL * 1000, when=when.isoformat(timespec="minutes"), written=-1)
 
@@ -150,6 +168,30 @@ class Season:
             dur = g["end"] - g["start"]
             g["start"] = start[w]
             g["end"] = g["start"] + dur
+
+    def _place_blocks(self, start_ms):
+        """Blocks pacing. Every kickoff window (the games with one league date and kickoff time) is a block. The blocks keep the league's order and follow one another in real
+        time: a block starts when the longest game of the block before it has ended, plus BLOCK_GAP_MS (WEEK_GAP_MS when it opens a new week or playoff round). The Ambassador
+        games, which have a time of their own, play in the latest block at or before it. A year's blocks depend only on the schedule and the games' lengths, so a restart changes nothing."""
+        slots = sorted({g["when"] for g in self.games if g["group"] != "amb"})
+        blocks = {}
+        for g in self.games:
+            w = g["when"] if g["group"] != "amb" else max([x for x in slots if x <= g["when"]], default=slots[0])
+            blocks.setdefault(w, []).append(g)
+        t, prev, self.window_start = float(start_ms), None, {}
+        for w in slots:
+            gs = blocks[w]
+            plain = [g for g in gs if g["group"] != "amb"]
+            label = ("po", plain[0]["kind"]) if plain[0]["group"] == "po" else ("reg", min(g["week"] for g in plain))
+            if prev is not None:
+                t += WEEK_GAP_MS if label != prev else BLOCK_GAP_MS
+            dur = max(g["end"] - g["start"] for g in gs)             # every game was built starting at 0, so its end is its length
+            for g in gs:
+                length = g["end"] - g["start"]
+                g["start"], g["end"] = t, t + length
+            self.window_start[w] = t
+            t += dur
+            prev = label
 
     # -- what the clock allows -------------------------------------------------
     def revealed(self, g, now_ms):
@@ -174,7 +216,9 @@ class Season:
         ambs = [[g["id"], g["week"], g["home"], g["away"], g["start"], "ambassador", g["when"]] for g in self.games if g["group"] == "amb"]
         pos = [[g["id"], g["kind"], g["start"], g["when"]] for g in self.games if g["group"] == "po"]
         cal = K.calendar_year(self.n)
-        return dict(year=self.n, season=cal, calendar=SE.calendar_for(cal), games=regs, amb=ambs, po=pos, epoch=self.epoch, year_hours=YEAR_HOURS,
+        yh = YEAR_HOURS if self.pacing != "blocks" else round((self.final_end - self.opener_ms) / HOUR_MS, 1)      # blocks pacing: the length of this year's games, first kickoff to the Coronation's end
+        return dict(year=self.n, season=cal, calendar=SE.calendar_for(cal), games=regs, amb=ambs, po=pos, epoch=self.epoch, year_hours=yh, pacing=self.pacing,
+                    real_per_game=self.rpg, halftime=self.half,
                     exiled=sorted(t for t, v in self.res.start.items() if v[0] == "exiled"), tiers={str(t): v[1] for t, v in self.res.start.items() if v[1] is not None})
 
     def score_now(self, g, now_ms):
@@ -190,8 +234,16 @@ class Season:
     def sim_now(self, now_ms):
         """The league date shown on the page. In season it is the date and time of the latest kickoff window to have opened (the windows are spaced out in real time, so the straight-line
         clock would run ahead of them during a week); outside the season it is the straight-line clock, never behind the last game played."""
-        lin = sim_date(self.epoch, self.n, now_ms)
         opened = [w for w, st in self.window_start.items() if st <= now_ms]
+        if self.pacing == "blocks":
+            if opened:
+                return dt.datetime.fromisoformat(max(opened))        # the league date of the latest block to have opened (the Coronation's, once the year is over)
+            first = dt.datetime.fromisoformat(min(self.window_start))
+            if self.prev_when is None or self.begin_ms is None or self.start_ms <= self.begin_ms:
+                return first
+            f = min(1.0, max(0.0, (now_ms - self.begin_ms) / (self.start_ms - self.begin_ms)))
+            return self.prev_when + (first - self.prev_when) * f      # the offseason: the league date runs from the last Coronation to this year's opener
+        lin = sim_date(self.epoch, self.n, now_ms)
         if not opened:
             return lin
         last = dt.datetime.fromisoformat(max(opened))
@@ -219,8 +271,13 @@ class Season:
 
 
 class World:
-    def __init__(self, seed: int, epoch_ms: int):
-        self.seed, self.epoch_ms = seed, epoch_ms
+    def __init__(self, seed: int, epoch_ms: int, pacing: str = "legacy", rpg=None, half=None):
+        """pacing "legacy": the epoch is Founding Day and a league year is YEAR_HOURS real hours (the first live league). "blocks": the epoch is the first kickoff and
+        the league runs block after block (see BLOCK_REAL_PER_GAME); rpg and half are the league's real seconds per game second and halftime pause."""
+        assert pacing in PACINGS, pacing
+        self.seed, self.epoch_ms, self.pacing = seed, epoch_ms, pacing
+        self.rpg = (BLOCK_REAL_PER_GAME if pacing == "blocks" else REAL_PER_GAME) if rpg is None else float(rpg)
+        self.half = HALFTIME_PAUSE if half is None else float(half)
         self.lg, self.rng = F.open_league(seed)
         self.times = ID.slot_times(self.lg.teams)         # taken now, while the tiers are the founding seeds
         self.year = 0
@@ -228,13 +285,29 @@ class World:
         self.history = []                                 # [{year, champion}] for the years already played out
 
     def advance_to(self, n: int):
-        """Play every year up to n (a restart replays the years gone by: the seed decides them all)."""
+        """Legacy pacing: play every year up to n (a restart replays the years gone by: the seed decides them all)."""
         while self.year < n:
             if self.season is not None:
                 self.history.append(dict(year=K.calendar_year(self.year), champion=self.season.res.champion))
             self.year += 1
             self.season = Season(self, self.year)
         return self.season
+
+    def season_at(self, now_ms: float):
+        """Blocks pacing: the league year the page shows at now_ms (None before the first kickoff). The year after one begins WRAP_UP_MS after its Coronation ends and has its first
+        kickoff OFFSEASON_MS after it; every year is played in full as soon as the clock needs it, and a restart replays the years gone by (the seed decides them all)."""
+        while True:
+            begin = self.epoch_ms if self.season is None else self.season.final_end + WRAP_UP_MS
+            if now_ms < begin:
+                return self.season
+            if self.season is None:
+                start, prev_when = self.epoch_ms, None
+            else:
+                self.history.append(dict(year=K.calendar_year(self.year), champion=self.season.res.champion))
+                start = self.season.final_end + OFFSEASON_MS
+                prev_when = dt.datetime.fromisoformat(max(self.season.window_start))
+            self.year += 1
+            self.season = Season(self, self.year, start_ms=start, begin_ms=begin, prev_when=prev_when)
 
 
 def write_json(path: str, obj) -> None:
@@ -246,20 +319,65 @@ def write_json(path: str, obj) -> None:
     os.replace(tmp, path)
 
 
+def engine_commit() -> str:
+    """The short commit of the engine code that is running (for the league's meta.json), or "unknown"."""
+    try:
+        import subprocess
+        r = subprocess.run(["git", "-c", "safe.directory=*", "-C", os.path.dirname(os.path.abspath(__file__)), "rev-parse", "--short", "HEAD"], capture_output=True, text=True, timeout=5)
+        return r.stdout.strip() or "unknown"
+    except Exception:
+        return "unknown"
+
+
 class Runner:
-    def __init__(self, out: str, seed: int, epoch_ms: int):
-        self.out, self.world = out, World(seed, epoch_ms)
-        write_json(os.path.join(out, "meta.json"), dict(seed=seed, epoch_ms=epoch_ms, year_hours=YEAR_HOURS, real_per_game=REAL_PER_GAME, halftime=HALFTIME_PAUSE))
+    def __init__(self, out: str, seed: int, epoch_ms: int, meta=None):
+        """meta: the league's meta.json as it was fixed when the league was made (a restart passes it back unchanged); without it, the first live league's legacy meta."""
+        m = meta or dict(seed=seed, epoch_ms=epoch_ms, year_hours=YEAR_HOURS, real_per_game=REAL_PER_GAME, halftime=HALFTIME_PAUSE)
+        self.out, self.world = out, World(seed, epoch_ms, m.get("pacing", "legacy"), m.get("real_per_game"), m.get("halftime"))
+        self.meta = m
+        self.pauses = [list(p) for p in m.get("pauses", [])]    # [[real ms the league was paused, real ms it was resumed or None while it is paused]]: part of the league's history
+        write_json(os.path.join(out, "meta.json"), m)
         self.sched_year = None
 
-    def tick(self, now_ms: float) -> dict:
-        """Write the feed as it stands at `now_ms`. Returns the results written (None before the league begins)."""
+    # -- pausing: the league's own clock stops and carries on from the same moment (the person's league, paused after a late night and resumed after breakfast) -------
+    def paused(self) -> bool:
+        return bool(self.pauses) and self.pauses[-1][1] is None
+
+    def _control(self, real_ms: float) -> None:
+        """control.json in the feed folder says whether the league should be paused: {"paused": true}. Whatever writes it (a script, later a button) never touches the engine."""
+        want = False
+        try:
+            want = bool(json.load(open(os.path.join(self.out, "control.json"))).get("paused"))
+        except (OSError, ValueError, AttributeError):
+            pass
+        if want and not self.paused():
+            self.pauses.append([int(real_ms), None])
+        elif not want and self.paused():
+            self.pauses[-1][1] = int(real_ms)
+        else:
+            return
+        self.meta["pauses"] = self.pauses
+        write_json(os.path.join(self.out, "meta.json"), self.meta)       # saved at once, so a restart in the middle of a pause (or after one) keeps the same clock
+
+    def effective(self, real_ms: float):
+        """(the league's own clock, the real time lost to pauses so far). Every time in the feed is on the league's clock; the page adds the lost time to show real times."""
+        lost = sum((real_ms if b is None else b) - a for a, b in self.pauses)
+        return real_ms - lost, lost
+
+    def tick(self, real_now: float) -> dict:
+        """Write the feed as it stands at the real moment `real_now`. Returns the results written (None before the league begins)."""
+        self._control(real_now)
+        now_ms, shift = self.effective(real_now)
         w = self.world
-        n = year_at(w.epoch_ms, now_ms)
+        if w.pacing == "blocks":
+            s = w.season_at(now_ms)
+            n = w.year if s is not None else 0
+        else:
+            n = year_at(w.epoch_ms, now_ms)
+            s = w.advance_to(n) if n else None
         if n == 0:
-            write_json(os.path.join(self.out, "results.json"), dict(t=int(now_ms), year=0, final={}, live=[], po={}, history=[], epoch=w.epoch_ms))
+            write_json(os.path.join(self.out, "results.json"), dict(t=int(now_ms), year=0, final={}, live=[], po={}, history=[], epoch=w.epoch_ms, shift=int(shift), paused=self.paused()))
             return None
-        s = w.advance_to(n)
         if self.sched_year != n:
             write_json(os.path.join(self.out, "season.json"), s.schedule_file(now_ms))
             write_json(os.path.join(self.out, "history.json"), w.history)
@@ -274,6 +392,7 @@ class Runner:
                 write_json(os.path.join(self.out, "g", f"{n}_{g['id']}.json"), s.game_file(g, now_ms, k))
                 g["written"] = stamp
         out = s.results_file(now_ms, w.history)
+        out["shift"], out["paused"] = int(shift), self.paused()          # the real time lost to pauses (the page adds it to the league's clock to show real times), and whether the league is paused now
         write_json(os.path.join(self.out, "results.json"), out)
         return out
 
@@ -285,20 +404,31 @@ def main(argv=None):
     ap.add_argument("--opener-at", help="local time of the first kickoff, e.g. 2026-10-13T09:00 (only when the league is first started)")
     ap.add_argument("--every", type=float, default=3.0, help="seconds between writes")
     ap.add_argument("--init", action="store_true", help="only write meta.json (fixing the opener) and stop; the service then carries on from it")
+    ap.add_argument("--pacing", choices=PACINGS, default="blocks", help="how a NEW league runs: blocks (continuous, about 30-minute games) or legacy (a league year spread over a real week)")
     a = ap.parse_args(argv)
     meta = os.path.join(a.out, "meta.json")
     if os.path.exists(meta) and not a.opener_at:
         m = json.load(open(meta))
         seed, epoch = m["seed"], m["epoch_ms"]
+        now_code = engine_commit()
+        if m.get("engine_commit") and now_code != "unknown" and m["engine_commit"] != now_code:
+            print(f"WARNING: this league was made with engine code {m['engine_commit']} and the code now is {now_code}. Years already revealed are replayed from the seed, "
+                  f"so any change to how games are played can change what they were. Reset the league, or return to {m['engine_commit']}.", flush=True)
     elif a.opener_at:
-        seed, epoch = a.seed, opener_epoch(dt.datetime.fromisoformat(a.opener_at))
+        seed = a.seed
+        if a.pacing == "blocks":
+            epoch = int(dt.datetime.fromisoformat(a.opener_at).timestamp() * 1000)       # the first kickoff itself
+            m = dict(seed=seed, epoch_ms=epoch, pacing="blocks", real_per_game=BLOCK_REAL_PER_GAME, halftime=HALFTIME_PAUSE, engine_commit=engine_commit())
+        else:
+            epoch = opener_epoch(dt.datetime.fromisoformat(a.opener_at))
+            m = dict(seed=seed, epoch_ms=epoch, year_hours=YEAR_HOURS, real_per_game=REAL_PER_GAME, halftime=HALFTIME_PAUSE)
     else:
         sys.exit("First start: give --opener-at (local time of the first kickoff).")
     if a.init:
-        write_json(meta, dict(seed=seed, epoch_ms=epoch, year_hours=YEAR_HOURS, real_per_game=REAL_PER_GAME, halftime=HALFTIME_PAUSE))
-        print(f"league fixed: seed {seed}; first kickoff {a.opener_at}; Founding Day epoch {epoch}", flush=True)
+        write_json(meta, m)
+        print(f"league fixed: seed {seed}; first kickoff {a.opener_at}; pacing {m.get('pacing', 'legacy')}; epoch {epoch}", flush=True)
         return
-    r = Runner(a.out, seed, epoch)
+    r = Runner(a.out, seed, epoch, m)
     print(f"league seed {seed}; Founding Day (1 Jan 2000) is {dt.datetime.fromtimestamp(epoch / 1000):%Y-%m-%d %H:%M}; the feed is in {a.out}", flush=True)
     while True:
         r.tick(time.time() * 1000)

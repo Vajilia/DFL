@@ -30,8 +30,8 @@ main() {
     local WHEN=""
     read -r -p "First kickoff: " WHEN < /dev/tty
     WHEN="${WHEN/ /T}"
-    # The first kickoff is a real moment; the league's own opening (Founding Day) falls about three and a half real days before it.
-    su -s /bin/bash dfl -c "TZ=America/Los_Angeles python3 -I $APP/engine/live.py --out $LIVE --opener-at '$WHEN' --init"
+    # The first kickoff is a real moment (the league runs block after block from it; see deploy/INSTALL.md).
+    su -s /bin/bash dfl -c "TZ=America/Los_Angeles python3 -I $APP/engine/live.py --out $LIVE --opener-at '$WHEN' --pacing blocks --init"
   fi
 
   echo "== 3/4 Pages"

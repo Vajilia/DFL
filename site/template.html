@@ -344,8 +344,8 @@ const clock = (q, left, ot) => `${ot ? "OT" : "Q" + q} ${Math.floor(left / 60)}:
 const ordn = n => ["", "1st", "2nd", "3rd", "4th"][n] || n + "th";
 const mmss = s => `${Math.floor(s / 60)}:${String(Math.round(s % 60)).padStart(2, "0")}`;
 const KICKOFF_NOTE = "The page keeps no football rules: it replays the log the engine recorded, play by play, and adds up what the engine did.";
-const REAL_PER_GAME = 0.6;            // real seconds per game second at 1x: a game's 60 minutes play out in about 36
-const HALFTIME_PAUSE = 20;            // real seconds at 1x
+let REAL_PER_GAME = 0.6;              // real seconds per game second at 1x (0.6: a game's 60 minutes play out in about 36); a league sets its own in season.json
+let HALFTIME_PAUSE = 20;              // real seconds at 1x
 
 function freshState(b) {
   return { i: 0, score: [0, 0], tm: [0, 1].map(() => ({ plays: 0, yards: 0, pass_yds: 0, rush_yds: 0, first: 0, to: 0, sacks: 0, punts: 0, t3c: 0, t3a: 0, top: 0, cmp: 0, att: 0, rush: 0, fga: 0, fgm: 0 })),
@@ -471,9 +471,11 @@ function startGame(id) {
 const LIVE = !!D.live;
 const FEED = { season: null, results: null, year: 0, sig: "", err: null, skew: 0, tried: {} };
 const hasBox = g => !!g.id && (LIVE ? (g.final || g.live) : !!D.box[g.id]);
-const realTime = ms => new Date(ms).toLocaleString([], { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
-const serverNow = () => Date.now() - FEED.skew;
+const wallShift = () => (FEED.results && FEED.results.shift) || 0;      // the real time the league has lost to pauses: league-clock times plus this are wall-clock times
+const realTime = ms => new Date(ms + wallShift()).toLocaleString([], { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+const serverNow = () => (FEED.results && FEED.results.paused) ? FEED.results.t : Date.now() - FEED.skew;      // a paused league stands still
 const inText = ms => { const s = Math.round((ms - serverNow()) / 1000); if (s < 60) return s <= 0 ? "now" : "in " + s + " s"; const m = s / 60; if (m < 90) return "in " + Math.round(m) + " min"; const h = s / 3600; return h < 48 ? "in " + h.toFixed(1) + " h" : "in " + (h / 24).toFixed(1) + " days"; };
+const ymd = d => d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");      // the league date is a local time with no zone: read it back in the same way
 const simDate = () => FEED.results && FEED.results.sim ? new Date(FEED.results.sim) : null;
 function phaseText() {
   const R = FEED.results; if (!LIVE) return `Season ${D.season}`;
@@ -482,7 +484,7 @@ function phaseText() {
   const regs = D.games, started = regs.filter(g => g.final || g.live), done = regs.length && regs.every(g => g.final);
   const sd = simDate();
   if (!started.length) return `Offseason: the first kickoff is ${realTime(regs.length ? Math.min(...regs.map(g => g.start)) : 0)}`;
-  if (!done) { const wk = Math.max(...started.map(g => g.week)); return `Week ${wk} of 19${sd ? ` · league date ${fmtShort(sd.toISOString().slice(0, 10))}` : ""}`; }
+  if (!done) { const wk = Math.max(...started.map(g => g.week)); return `Week ${wk} of 19${sd ? ` · league date ${fmtShort(ymd(sd))}` : ""}`; }
   if (D.champion != null) return `${byId[D.champion].name} are the champions`;
   return "The playoffs";
 }
@@ -521,8 +523,8 @@ async function poll() {
   try {
     const R = await getJSON("results.json");
     FEED.skew = Date.now() - R.t; FEED.err = null;
-    if (R.year && FEED.year !== R.year) { FEED.season = await getJSON("season.json"); FEED.year = R.year; D.box = {}; FEED.tried = {}; }
-    const sig = JSON.stringify([R.year, R.final, R.now, R.po, R.seeds, R.champion, R.live]);
+    if (R.year && FEED.year !== R.year) { FEED.season = await getJSON("season.json"); FEED.year = R.year; if (FEED.season.real_per_game) REAL_PER_GAME = FEED.season.real_per_game; if (FEED.season.halftime != null) HALFTIME_PAUSE = FEED.season.halftime; D.box = {}; FEED.tried = {}; }
+    const sig = JSON.stringify([R.year, R.final, R.now, R.po, R.seeds, R.champion, R.live, R.paused, R.shift]);
     const first = !FEED.results, changed = sig !== FEED.sig;
     FEED.results = R; FEED.sig = sig;
     if (R.year) derive();
@@ -531,6 +533,11 @@ async function poll() {
     if (first || changed) render(false);
     else if (parts[0] === "live") render(false);
   } catch (err) { FEED.err = String(err); if (!FEED.results) { document.getElementById("app").innerHTML = `<div class="stack"><h1>Live</h1><p class="note">Cannot reach the league's feed (${e(FEED.err)}). Trying again.</p></div>`; } }
+}
+function paceText() {
+  const sc = FEED.season, rpg = REAL_PER_GAME, g = Math.round((3600 * rpg + HALFTIME_PAUSE) / 60);
+  if (sc && sc.pacing === "blocks") { const h = sc.year_hours || 0; return `A game takes about ${g} minutes and the league runs block after block${h ? "; this league year takes about " + Math.round(h) + " hours" : ""}. A league can be paused and picks up where it stopped.`; }
+  return `A game takes about ${g} minutes; a league year takes one real week.`;
 }
 function livePage() {
   const R = FEED.results;
@@ -542,12 +549,13 @@ function livePage() {
   const row = (g, mid) => `<a class="gamelink" href="#game-${g.id}"><div class="game" style="grid-template-columns:190px 1fr"><span class="t">${mid}<span class="tag">${e(stage(g))}</span></span><div class="teams">${[g.away, g.home].map(id => `<div><span class="club">${badge(byId[id], "sm")}<span class="nm">${e(byId[id].name)}</span></span>${g.final ? `<span class="sc ${winner(g) === id ? "won" : "lost"}">${id === g.home ? g.hp : g.ap}</span>` : g.live ? `<span class="sc">${R.now[g.id][id === g.home ? 0 : 1]}</span>` : ""}</div>`).join("")}</div></div></a>`;
   const clk = id => { const n = R.now[id]; return (n[4] ? "OT" : "Q" + n[2]) + " " + Math.floor(n[3] / 60) + ":" + String(n[3] % 60).padStart(2, "0"); };
   const sd = simDate();
-  let h = `<div class="stack"><h1>Live</h1><div class="champion" style="background:var(--soft);border-color:var(--line)"><div><div class="eyebrow">Season ${D.season}${sd ? " · league date " + fmtLong(sd.toISOString().slice(0, 10)) : ""}</div><h2>${e(phaseText())}</h2></div></div>`;
+  let h = `<div class="stack"><h1>Live</h1><div class="champion" style="background:var(--soft);border-color:var(--line)"><div><div class="eyebrow">Season ${D.season}${sd ? " · league date " + fmtLong(ymd(sd)) : ""}</div><h2>${e(phaseText())}</h2></div></div>`;
+  if (R.paused) h += `<p class="note"><b>The league is paused.</b> Everything stands still and picks up where it stopped when it is resumed.</p>`;
   h += `<h2>In progress</h2>` + (live.length ? `<div class="tablewrap">${live.map(g => row(g, `<b style="color:var(--accent)">LIVE</b> ${clk(g.id)}`)).join("")}</div>` : `<p class="note">No game is being played right now.</p>`);
   h += `<h2>Up next</h2>` + (next.length ? `<div class="tablewrap">${next.map(g => row(g, `${e(realTime(g.start))}<small style="color:var(--muted)">${inText(g.start)}</small>`)).join("")}</div>` : `<p class="note">No more games are scheduled this season.</p>`);
   if (done.length) h += `<h2>Just finished</h2><div class="tablewrap">${done.map(g => row(g, `Final${g.ot ? " / OT" : ""}`)).join("")}</div>`;
   if ((R.history || []).length) h += `<h2>Champions</h2><div class="tablewrap"><table><tbody>${R.history.slice().reverse().map(x => `<tr><td class="l">${x.year}</td><td class="l">${clubLink(byId[x.champion])}</td></tr>`).join("")}</tbody></table></div>`;
-  return h + `<p class="note">Times are in your time zone. A game takes about 36 minutes; a league year takes one real week. Games appear here when they kick off and their plays appear as they happen.</p></div>`;
+  return h + `<p class="note">Times are in your time zone. ${paceText()} Games appear here when they kick off and their plays appear as they happen.</p></div>`;
 }
 
 /* ---------- router, tabs, search ---------- */

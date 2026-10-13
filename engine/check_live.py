@@ -116,7 +116,7 @@ if D:
 os.unlink(pg)
 # --init writes the meta file and nothing else, and the service then carries on from it
 out3 = tempfile.mkdtemp()
-L.main(["--out", out3, "--opener-at", "2026-10-17T09:00", "--init"])
+L.main(["--out", out3, "--opener-at", "2026-10-17T09:00", "--init", "--pacing", "legacy"])
 m = read(out3, "meta.json")
 check("--init fixes the opener in meta.json and starts nothing", sorted(os.listdir(out3)) == ["meta.json"] and m["epoch_ms"] == L.opener_epoch(dt.datetime(2026, 10, 17, 9, 0)))
 print("\n" + ("ALL PASS" if not failures else f"{len(failures)} FAILED: {failures}"))
