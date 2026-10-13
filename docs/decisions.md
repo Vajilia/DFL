@@ -375,3 +375,11 @@ play log on (`site_export.play_season`), then reveals the year on the real clock
 * **Server.** `deploy/dfl-live.service` (systemd, its own `dfl` account, Pacific time), `deploy/start-live.sh` (asks for the first kickoff once), `deploy/update.sh`
   (rebuilds the live page and restarts the runner). The founding snapshot is not kept next to the live page because year 1 is the same season: it would show the results early.
 * **Not yet:** the Director, the Commissioner page, agents; the live league is the engine on autopilot, as the snapshot was.
+
+## Kickoff windows spaced out in real time (2026-10-13)
+
+On the straight-line clock a league day is about 27 real minutes, so a week's windows (Saturday night, Sunday 10:00, 13:00, 17:30, Monday night) started 19, 3, 5 and 27 minutes apart and the Sunday
+windows ran together as one block of 18 games. The Commissioner asked for the NFL's blocks. Now (`live.py`, `_space_windows`) the windows keep their league order but are at least 38 real minutes
+apart (a game is about 36), so each block is over before the next opens (an overtime game can spill up to five minutes into the next). A week still fits its three real hours, the Coronation
+still ends more than an hour before the year does (checked over twelve years), the Ambassador games play in the window at or before their time, and the league date shown follows the latest window
+opened rather than the straight-line clock. Also: the player page shows the position (name tag and a Position line).

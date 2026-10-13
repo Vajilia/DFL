@@ -45,6 +45,7 @@ SPAN_HOURS = YEAR_HOURS - WRAP_UP
 REAL_PER_GAME = 0.6                 # real seconds per game second (the page uses the same numbers)
 HALFTIME_PAUSE = 20.0               # real seconds
 TAIL = 15.0                         # real seconds after the last play before a game counts as final
+SLOT_GAP_MS = 38 * 60 * 1000        # kickoff windows are at least this far apart in real time: a game (about 36 minutes) is over before the next window opens
 ANNOUNCE = 20 * 60 * 1000           # a playoff game's matchup is announced this long (real ms) before its kickoff
 PO_KICK = {"playoff_wc": ["13:00", "13:00", "16:30", "16:30", "20:00", "20:00"], "playoff_div": ["13:00", "13:00", "16:30", "16:30"],
            "playoff_conf": ["15:00", "18:30"], "playoff_final": ["17:30"]}
@@ -114,6 +115,7 @@ class Season:
             k = seen[g.kind] = seen.get(g.kind, -1) + 1
             when = dt.datetime.combine(po[PO_DATE[g.kind]], dt.time(*map(int, PO_KICK[g.kind][k].split(":"))))
             self.games.append(self._game(f"p{i}", "po", g, when, short))
+        self._space_windows()
         self.by_id = {g["id"]: g for g in self.games}
         self.reg_end = max(g["end"] for g in self.games if g["group"] == "reg")
         self.final_end = max(g["end"] for g in self.games if g["group"] == "po")
@@ -129,6 +131,25 @@ class Season:
         start = real_ms(self.epoch, self.n, when)
         return dict(id=gid, group=group, week=g.week, home=g.home, away=g.away, kind=g.kind, hp=g.home_pts, ap=g.away_pts, ot=g.result.ot_periods, box=b, offs=offs,
                     last_of=last_of, start=start, end=start + (offs[-1] if offs else 0) + TAIL * 1000, when=when.isoformat(timespec="minutes"), written=-1)
+
+    def _space_windows(self):
+        """Kickoff windows (all the games with the same league date and kickoff time) keep the league's order, but at least SLOT_GAP_MS apart in real time. A league day is only
+        about 27 real minutes, so left on the straight-line clock the Sunday windows (10:00, 13:00, 17:30) would start 3 to 5 minutes apart and overlap into one block. The
+        Ambassador games, which have a time of their own, play in the latest window at or before it. The window starts are a pure function of the schedule (a restart changes nothing)."""
+        slots = sorted({g["when"] for g in self.games if g["group"] != "amb"})
+        lin = {}
+        for g in self.games:
+            lin.setdefault(g["when"], g["start"])
+        start, prev = {}, None
+        for w in slots:
+            start[w] = lin[w] if prev is None else max(lin[w], prev + SLOT_GAP_MS)
+            prev = start[w]
+        self.window_start = start
+        for g in self.games:
+            w = g["when"] if g["group"] != "amb" else (max([x for x in slots if x <= g["when"]], default=slots[0]))
+            dur = g["end"] - g["start"]
+            g["start"] = start[w]
+            g["end"] = g["start"] + dur
 
     # -- what the clock allows -------------------------------------------------
     def revealed(self, g, now_ms):
@@ -166,6 +187,16 @@ class Season:
         last = b["p"][k - 1] if k else None
         return [sc[0], sc[1], last[10] if last else 1, last[11] if last else 900, last[12] if last else 0]
 
+    def sim_now(self, now_ms):
+        """The league date shown on the page. In season it is the date and time of the latest kickoff window to have opened (the windows are spaced out in real time, so the straight-line
+        clock would run ahead of them during a week); outside the season it is the straight-line clock, never behind the last game played."""
+        lin = sim_date(self.epoch, self.n, now_ms)
+        opened = [w for w, st in self.window_start.items() if st <= now_ms]
+        if not opened:
+            return lin
+        last = dt.datetime.fromisoformat(max(opened))
+        return last if now_ms <= self.final_end else max(lin, last)
+
     def results_file(self, now_ms, history):
         res = self.res
         final, live, po_teams = {}, [], {}
@@ -176,7 +207,7 @@ class Season:
                 live.append(g["id"])
             if g["group"] == "po" and now_ms >= g["start"] - ANNOUNCE:
                 po_teams[g["id"]] = [g["home"], g["away"]]
-        out = dict(t=int(now_ms), year=self.n, sim=sim_date(self.epoch, self.n, now_ms).isoformat(timespec="minutes"), final=final, live=live, po=po_teams, history=history,
+        out = dict(t=int(now_ms), year=self.n, sim=self.sim_now(now_ms).isoformat(timespec="minutes"), final=final, live=live, po=po_teams, history=history,
                    now={i: self.score_now(self.by_id[i], now_ms) for i in live})
         if now_ms >= self.reg_end:                         # the regular season is over: the seeds and final division order are known
             out["seeds"] = {str(k): v for k, v in res.seeds.items()}

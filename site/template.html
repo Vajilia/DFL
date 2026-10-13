@@ -255,8 +255,8 @@ function club(abbr) {
 function player(abbr, idx) {
   const c = byAbbr[abbr], p = c && c.roster[idx]; if (!p) return notFound();
   const prev = idx > 0 ? `<a class="chip" href="#player-${abbr}-${idx - 1}">← ${e(c.roster[idx - 1].name)}</a>` : "", next = idx < c.roster.length - 1 ? `<a class="chip" href="#player-${abbr}-${idx + 1}">${e(c.roster[idx + 1].name)} →</a>` : "";
-  return `<div class="stack"><div class="row" style="align-items:flex-start">${badge(c, "lg")}<div style="min-width:0"><div class="eyebrow">${e(POSNAME[p.pos] || p.pos)} · <a href="#club-${abbr}" style="text-decoration:underline">${e(c.name)}</a></div><h1>${e(p.name)}</h1></div></div>
-  <div class="grid"><div class="card"><div class="row"><div><div class="eyebrow">Overall</div><div class="ovr">${p.ovr}</div></div><dl class="kv" style="flex:1 1 220px"><dt>Age</dt><dd>${p.age}</dd><dt>College</dt><dd>${e(p.college)}</dd><dt>Hometown</dt><dd>${e(p.hometown)}</dd><dt>Temperament</dt><dd>${e(p.trait)}</dd><dt>Contract</dt><dd>${money(p.salary)} a year, ${p.years} year${p.years === 1 ? "" : "s"} left</dd></dl></div></div>
+  return `<div class="stack"><div class="row" style="align-items:flex-start">${badge(c, "lg")}<div style="min-width:0"><div class="eyebrow">${e(POSNAME[p.pos] || p.pos)} · <a href="#club-${abbr}" style="text-decoration:underline">${e(c.name)}</a></div><h1>${e(p.name)} <span class="tag" style="font-size:14px;vertical-align:middle">${p.pos}</span></h1></div></div>
+  <div class="grid"><div class="card"><div class="row"><div><div class="eyebrow">Overall</div><div class="ovr">${p.ovr}</div></div><dl class="kv" style="flex:1 1 220px"><dt>Position</dt><dd><b>${e(POSNAME[p.pos] || p.pos)}</b> (${p.pos})</dd><dt>Age</dt><dd>${p.age}</dd><dt>College</dt><dd>${e(p.college)}</dd><dt>Hometown</dt><dd>${e(p.hometown)}</dd><dt>Temperament</dt><dd>${e(p.trait)}</dd><dt>Contract</dt><dd>${money(p.salary)} a year, ${p.years} year${p.years === 1 ? "" : "s"} left</dd></dl></div></div>
   <div class="card"><h3>Backstory</h3><p class="bio" style="margin-top:8px">${e(p.bio)}</p></div></div><div class="chips">${prev}${next}</div></div>`;
 }
 

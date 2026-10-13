@@ -36,8 +36,15 @@ check("a game's real start follows its league date and kickoff, in order", all(a
 check("the first kickoff is the workbook's opener (Saturday 1 July 2000, 5:30pm)", min(regs, key=lambda g: g["start"])["when"] == "2000-07-01T17:30")
 check("the Coronation ends before the next league year begins", s1.final_end < L.year_start_ms(EPOCH, 2) - 0.5 * HR, f"{(s1.final_end - L.year_start_ms(EPOCH, 2)) / HR:.2f} h")
 check("a game takes about 36 real minutes", all(30 <= (g["end"] - g["start"]) / 60000 <= 45 for g in regs))
+wins = sorted(s1.window_start.values())
+check("kickoff windows keep the league's order and are at least 38 real minutes apart (the Sunday windows no longer overlap)", all(b - a >= L.SLOT_GAP_MS for a, b in zip(wins, wins[1:])) and sorted(s1.window_start, key=s1.window_start.get) == sorted(s1.window_start))
+late = [g["id"] for g in s1.games if g["group"] != "amb" and any(w > g["start"] and w < g["end"] - 5 * 60000 for w in wins)]
+check("every game is over before the next window opens (an overtime game may spill up to five minutes into it)", not late, str(late[:5]))
+check("Ambassador games play inside a window", all(g["start"] in wins for g in s1.games if g["group"] == "amb"))
+margins = []
 for n in (2, 5, 6, 9):
-    r.world.advance_to(n)
+    margins.append((L.year_start_ms(EPOCH, n + 1) - r.world.advance_to(n).final_end) / HR)
+check("in every year tried the Coronation is over more than half an hour before the next year begins", min(margins) > 0.5, str(margins))
 check("years 2, 5, 6 and 9 (the first swap of conferences, and a full cycle) find a kickoff for every game", r.world.year == 9)
 check("the clock and the opener agree: the epoch chosen for an opener puts the first kickoff there", abs(L.real_ms(L.opener_epoch(dt.datetime(2026, 10, 13, 9, 0)), 1, dt.datetime(2000, 7, 1, 17, 30)) - dt.datetime(2026, 10, 13, 9, 0).timestamp() * 1000) < 1000)
 
