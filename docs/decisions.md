@@ -380,6 +380,9 @@ play log on (`site_export.play_season`), then reveals the year on the real clock
   basic_auth; a POST needs the header `X-DFL: 1` and a JSON content type (a page on another site cannot send that without a preflight the service never answers) and an Origin that matches the Host.
   It writes control.json, which the runner already reads. Only blocks leagues are pausable. Anyone with the site login can pause for everyone; per-viewer or per-instance control comes with multiple instances.
   `deploy/enable-controls.sh` installs it and refuses to leave it on if /api/state answers anything but 401 without the password.
+* **Play-by-play wording (2026-10-13).** Each play is a short statement of facts built only from the play record and, on a drive's last play, the drive's record (so a live feed and a replay read the same): the situation (down, distance, goal-to-go,
+  field position), who did what and for how many yards, first downs, short-of-the-line, 4th-down attempts, big gains (20+), turnovers on downs, safeties, scores with the running score, and period notes. It invents nothing the engine does not record
+  (no run direction, pass depth, pressure or penalties: the engine has none). A commentary voice (a biased duo) was discussed and deferred.
 * **Code version.** meta.json records the engine commit that made the league. Years already revealed are replayed from the seed with whatever code is on the server, so a change to
   how games are played would silently change them; the runner prints a warning at start when the commit differs. `deploy/reset-live.sh` archives the old feed and starts a new league.
 * **Feed** (`--out`, default `/var/www/dfl/live`): meta.json, season.json (schedule, no scores), results.json (revealed finals, games in progress with score and clock, announced

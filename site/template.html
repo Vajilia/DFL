@@ -373,19 +373,42 @@ function endDrive(S, b, di) {
   const d = b.dr[di]; if (!d) return;
   S.score[d[0]] += d[7]; S.score[1 - d[0]] += d[8]; S.tm[d[0]].top += d[5]; S.drivesDone = di + 1;
 }
-function playText(b, pl) {
-  const [off, down, toGo, pos, yds, to, kind, a, bb, c] = pl, n = i => (i >= 0 && b.pl[i] ? b.pl[i][0] : "?"), td = pos + yds >= 100 && to !== 1;
-  const where = `${ordn(down)} & ${toGo} at ${spot(pos)}`;
+/* One play as a short statement of facts. Everything comes from the play itself and, on the last play of a drive, the drive's record (which a live feed has as soon as that play is shown),
+   so a live feed and a replay read the same. x.drive: the drive record when this is the drive's last play; x.score: [home, away] after it; x.abbr: [home, away] club codes. */
+function playText(b, pl, x = {}) {
+  const [off, down, toGo, pos, yds, to, kind, a, bb, c] = pl, n = i => (i >= 0 && b.pl[i] ? b.pl[i][0] : "?");
+  const dr = x.drive, res = dr ? dr[6] : "";
+  const yd = k => `${Math.abs(k)} yard${Math.abs(k) === 1 ? "" : "s"}`;
+  const gain = k => k > 0 ? `for ${yd(k)}` : k === 0 ? "for no gain" : `for a loss of ${yd(k)}`;
+  const sit = `${ordn(down)} & ${pos + toGo >= 100 ? "goal" : toGo} at ${spot(pos)}`;
+  const fourth = down === 4 && ["RU", "PC", "PI", "SK", "IN"].includes(kind);
+  const scoredTD = res ? res === "TD" : pos + yds >= 100 && !to && (kind === "RU" || kind === "PC");
+  const first = !to && kind !== "SK" && (kind === "RU" || kind === "PC") && ((yds >= toGo && yds > 0) || scoredTD);
   let t;
-  if (kind === "PC") t = `${n(a)} complete to ${n(bb)}, ${yds >= 0 ? yds + " yards" : "loss of " + -yds}` + (c >= 0 ? ` (tackle ${n(c)})` : "") + (td ? ". TOUCHDOWN" : "");
-  else if (kind === "PI") t = `${n(a)} pass incomplete, intended for ${n(bb)}`;
-  else if (kind === "SK") t = `${n(a)} sacked by ${n(bb)} for ${-yds} yards`;
-  else if (kind === "IN") t = `${n(a)} pass intercepted by ${n(c)}`;
-  else if (kind === "RU") t = `${n(a)} runs for ${yds} yards` + (bb >= 0 ? ` (tackle ${n(bb)})` : "") + (td ? ". TOUCHDOWN" : "");
-  else if (kind === "FG") t = `${n(a)} ${c}-yard field goal ${bb === 1 ? "is GOOD" : "is NO GOOD"}`;
-  else t = `${n(a)} punts ${yds} yards`;
-  if (to === 2) t += ". FUMBLE, lost";
-  return [`${where}: ${t}`, td || (kind === "FG" && bb === 1) ? "big" : to ? "turn" : ""];
+  if (kind === "RU") t = `${n(a)} runs ${gain(yds)}` + (bb >= 0 ? `, tackled by ${n(bb)}` : "");
+  else if (kind === "PC") t = `${n(a)} completes a pass to ${n(bb)} ${gain(yds)}` + (c >= 0 ? `, tackled by ${n(c)}` : "");
+  else if (kind === "PI") t = `${n(a)}'s pass to ${n(bb)} is incomplete`;
+  else if (kind === "SK") t = `${n(a)} is sacked by ${n(bb)} ${gain(yds)}`;
+  else if (kind === "IN") t = `${n(a)}'s pass for ${n(bb)} is intercepted by ${n(c)}` + (res === "INT_TD" ? ", who returns it for a touchdown" : yds > 0 ? `, returned ${yd(yds)}` : "");
+  else if (kind === "FG") t = `${n(a)} kicks a ${c}-yard field goal: ${bb === 1 ? "GOOD" : "NO GOOD"}`;
+  else { const land = pos + yds; t = `${n(a)} punts ${yd(yds)}` + (land >= 100 ? ", touchback" : `, the ball is spotted at the receiving team's own ${100 - land}`); }
+  if (fourth) t = "Going for it. " + t;
+  if (scoredTD) t += `. TOUCHDOWN${dr && dr[7] === 7 ? ", extra point good" : dr && dr[7] === 6 ? ", extra point no good" : dr && dr[7] === 8 ? ", two-point try good" : ""}`;
+  else if (first) t += ". First down";
+  else if ((kind === "RU" || kind === "PC" || kind === "SK") && down >= 3 && !to && res !== "DOWNS" && res !== "SAFETY") t += ". Short of the line to gain";
+  if (!scoredTD && !to && (kind === "RU" || kind === "PC") && yds >= 20) t += ". A big gain";
+  if (to === 2) t += res === "FUMBLE_TD" ? ". FUMBLE, and the defense returns it for a touchdown" : ". FUMBLE, lost to the defense";
+  if (res === "DOWNS") t += ". Turnover on downs";
+  if (res === "SAFETY") t += ". SAFETY, 2 points for the defense";
+  const scored = ["TD", "FG", "FUMBLE_TD", "INT_TD", "SAFETY"].includes(res);
+  if (scored && x.score && x.abbr) t += `. Score: ${x.abbr[1]} ${x.score[1]}, ${x.abbr[0]} ${x.score[0]}`;
+  return [`${sit}: ${t}`, scored && res !== "INT_TD" && res !== "FUMBLE_TD" && res !== "SAFETY" ? "big" : (to || res === "SAFETY") ? "turn" : ""];
+}
+function periodNote(prev, pl, score, abbr) {
+  if (!prev || (prev[10] === pl[10] && !!prev[12] === !!pl[12])) return "";
+  const sc = `${abbr[1]} ${score[1]}, ${abbr[0]} ${score[0]}`;
+  const what = pl[12] ? "Overtime begins" : pl[10] === 3 && prev[10] === 2 ? "Second half begins" : `Start of the ${ordn(pl[10])} quarter`;
+  return `<div class="hd"><span class="c"></span><span>${what}. Score: ${sc}</span></div>`;
 }
 function leadersHtml(S, b, side) {
   const rows = b.pl.map((p, i) => [p, S.pl[i]]).filter(([p, st]) => p[2] === side && Object.keys(st).length);
@@ -448,8 +471,9 @@ function startGame(id) {
     $("la").innerHTML = leadersHtml(S, b, 1); $("lh").innerHTML = leadersHtml(S, b, 0);
     $("drv").innerHTML = b.dr.slice(0, S.drivesDone).map((d, k) => `<tr><td>${k + 1}</td><td class="l">${e(names[d[0]])}</td><td>${d[1]}</td><td>${spot(d[2])}</td><td>${d[3]}</td><td>${d[4]}</td><td>${mmss(d[5])}</td><td class="l">${e(d[6].replace(/_/g, " ").toLowerCase())}${d[7] || d[8] ? ` (${d[7] || d[8]} pts)` : ""}</td></tr>`).join("");
   }
-  const lineHtml = i => { const pl = plays[i], [txt, cls] = playText(b, pl), first = i === 0 || plays[i - 1][13] !== pl[13];
-    return `<div class="${cls}"><span class="c">${clock(pl[10], pl[11], pl[12])}</span><span>${e(txt)}</span></div>` + (first ? `<div class="hd"><span class="c"></span><span>Drive ${pl[13] + 1}: ${e(names[pl[0]])}, starting at ${spot(b.dr[pl[13]] ? b.dr[pl[13]][2] : pl[3])}</span></div>` : ""); };
+  const abbr = [H.abbr, A.abbr];
+  const lineHtml = i => { const pl = plays[i], [txt, cls] = playText(b, pl, { drive: lastOfDrive[i] ? b.dr[pl[13]] : null, score: S.score, abbr }), first = i === 0 || plays[i - 1][13] !== pl[13];
+    return `<div class="${cls}"><span class="c">${clock(pl[10], pl[11], pl[12])}</span><span>${e(txt)}</span></div>` + (first ? `<div class="hd"><span class="c"></span><span>Drive ${pl[13] + 1}: ${e(names[pl[0]])}, starting at ${spot(b.dr[pl[13]] ? b.dr[pl[13]][2] : pl[3])}</span></div>` : "") + periodNote(plays[i - 1], pl, S.score, abbr); };
   function step() { const pl = plays[S.i]; applyPlay(S, b, pl); if (lastOfDrive[S.i]) endDrive(S, b, pl[13]); $("feed").insertAdjacentHTML("afterbegin", lineHtml(S.i)); S.i++; }
   function reset() { S = freshState(b); $("feed").innerHTML = ""; vt = 0; paint(); }
   function finish() { stop(); while (S.i < plays.length) step(); b.dr.forEach((d, k) => { if (k >= S.drivesDone) endDrive(S, b, k); }); paint(true); }
