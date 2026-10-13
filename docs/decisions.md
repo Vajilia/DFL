@@ -365,6 +365,19 @@ play log on (`site_export.play_season`), then reveals the year on the real clock
 * **Time.** One league year is 168 real hours (a real week), the last 1.5 h kept clear so a late-December Coronation can finish. A league date maps linearly onto the
   rest, so a game kicks off at the real moment its league date and kickoff time correspond to. A game takes about 36 real minutes (0.6 real seconds per game second plus
   a 20 s halftime), the same numbers the replay uses. Playoff matchups are announced 20 real minutes before kickoff. The first kickoff is chosen once by the Commissioner.
+* **Blocks pacing (2026-10-13, the Commissioner's request; `--pacing blocks`, the default for a NEW league).** The 168-hour year above was an artifact of spreading a league year across the
+  calendar (about 83 h of it idle before the first kickoff, windows forced 38 minutes apart). A blocks league runs almost continually instead. Each kickoff window (one league date
+  and kickoff time: 103 in a year, 19 game-weeks of up to 5 windows plus 8 playoff) is a block, played in league order: Saturday night, Sunday morning, Sunday afternoon, Sunday evening,
+  Monday evening. The next block starts 2 real minutes after the longest game of the one before it, 5 minutes when a new week or playoff round begins. A game plays at 0.48 real
+  seconds per game second plus the 20 s halftime, about 29 to 30 minutes; the mean block is about 30 minutes and a league year (first kickoff to the end of the Coronation) about 56
+  hours (0.43 years a day). The first kickoff is the epoch itself. Year n+1 begins 20 minutes after the Coronation and has its first kickoff 1 hour after it. The Ambassador games
+  play inside the latest block at or before their date. The pace is stored in meta.json and season.json, which the page reads; a league without `pacing` in its meta.json is the
+  legacy league above and runs exactly as before (checked byte for byte against the previous code). The chosen pace is a dial: BLOCK_REAL_PER_GAME, BLOCK_GAP_MS, WEEK_GAP_MS, OFFSEASON_MS in live.py.
+* **Pause (blocks leagues).** The league's clock is the real clock minus the time spent paused. `control.json` in the feed folder ({"paused": true|false}, written by
+  `deploy/pause-live.sh`) is read on every tick; pauses are kept in meta.json (a list of [start, end] real times) so a restart rebuilds the same clock. While paused nothing
+  is revealed and the feed's `t` stands still; results.json carries `paused` and `shift` (real time lost), and the page adds `shift` to league-clock times to show real times.
+* **Code version.** meta.json records the engine commit that made the league. Years already revealed are replayed from the seed with whatever code is on the server, so a change to
+  how games are played would silently change them; the runner prints a warning at start when the commit differs. `deploy/reset-live.sh` archives the old feed and starts a new league.
 * **Feed** (`--out`, default `/var/www/dfl/live`): meta.json, season.json (schedule, no scores), results.json (revealed finals, games in progress with score and clock, announced
   playoff games, and only once decided the seeds, division ranks, exits and champion), history.json, g/<year>_<id>.json (the plays so far; everything once final). Nothing in it
   is ahead of the clock (`check_live.py`).

@@ -48,8 +48,11 @@ Setup gives you a snapshot of the founding season. To run the league live on the
    (a systemd service named `dfl-live`, so it keeps running when you close the Console and starts again if the server restarts).
 3. Open the website and look at the **Live** tab. Until the first kickoff it counts down; then games appear as they are played.
 
-A league year takes one real week (a game about 36 minutes). Typing the line again later just updates the code and restarts the runner; the league carries on from the clock,
+A new league runs block after block (a game about 30 minutes, 2 minutes between blocks, 5 between weeks; a league year about 56 hours). A league made before 2026-10-13 keeps its old pace (one league year per real week, a game about 36 minutes). Typing the line again later just updates the code and restarts the runner; the league carries on from the clock,
 nothing is lost. To see how it is doing: `systemctl status dfl-live`, or `journalctl -u dfl-live -n 20`.
+
+- **Pause / resume** (new leagues only): `bash /opt/dfl/deploy/pause-live.sh pause`, `... resume`, `... status`. A paused league stands still and picks up where it stopped.
+- **Start over** (erase the league and begin again; the old feed is kept in `/var/lib/dfl-archive`): `bash /opt/dfl/deploy/reset-live.sh`. It asks for the first kickoff and a seed.
 
 ## What this does and does not do
 

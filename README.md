@@ -97,6 +97,9 @@ A seeded league engine with 53-player rosters, character cards, a drive-by-drive
     bash deploy/start-live.sh              # on the server: start the live league (asks once for the first kickoff); see deploy/INSTALL.md
     python engine/live.py --out DIR [--opener-at 2026-10-17T09:00]   # the live runner: plays each league year on the real clock into a feed the page watches
     python engine/check_live.py            # the live runner: nothing ahead of the clock, finals equal the engine, restarts change nothing, the page build holds no result
+    python engine/check_blocks.py          # blocks pacing: 2/5-minute gaps, about 30-minute games, a 56-hour year, pause and resume, restarts change nothing
+    bash deploy/reset-live.sh              # on the server: erase the live league and start a new one (the old feed is archived)
+    bash deploy/pause-live.sh pause|resume|status   # on the server: pause the live league
     python engine/check_playlog.py         # the play log: recording changes nothing, and replaying it gives the box score back
     python engine/check_skeleton.py        # the Commissioner's schedule skeleton: his year 1, legal under every re-seeding
     python engine/check_relations.py       # the GM and head coach relationship meters
