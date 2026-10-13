@@ -63,6 +63,27 @@ else:
         br.close()
     check("the page's own replay of all 401 games gives the engine's team totals and final score", nbad == 0, f"{nbad} mismatches")
     check("a game page opens on the finished game with a scoreboard, play by play, leaders and drives, and no script errors", not errs and "play by play" in txt.lower() and "drives" in txt.lower() and "leaders" in txt.lower(), str(errs[:2]))
+if sync_playwright is not None:
+    # ---- rules version 2: penalties and timeouts are in the log, and the page's replay still gives the engine's totals back ----
+    import game_engine
+    out2 = os.path.join(tempfile.mkdtemp(), "g2.html"); build_site.build(out2, 7, rules=2)
+    JS2 = """() => { const bad = []; let pens = 0, tos = 0; for (const id of Object.keys(D.box)) { const b = D.box[id], g = gameById[id], S = freshState(b);
+      b.p.forEach((pl, i) => { if (pl[6] === "PN") pens++; if (pl[6] === "TO") tos++; applyPlay(S, b, pl); if (!b.p[i + 1] || b.p[i + 1][13] !== pl[13]) endDrive(S, b, pl[13]); }); b.dr.forEach((x, k) => { if (k >= S.drivesDone) endDrive(S, b, k); });
+      for (const s of [0, 1]) { const t = S.tm[s], e = b.tm[s]; const mine = [t.plays, t.yards, t.pass_yds, t.rush_yds, t.first, t.to, t.sacks, t.punts, t.t3c, t.t3a, t.cmp, t.att, t.rush, t.fga, t.fgm, t.pen, t.penyds];
+        const eng = [e[0], e[1], e[2], e[3], e[4], e[5], e[6], e[7], e[8], e[9], e[11], e[12], e[13], e[14], e[15], b.pen[s][0], b.pen[s][1]]; mine.forEach((v, k) => { if (v !== eng[k]) bad.push([id, s, k]); }); }
+      if (!b.tb && (S.score[0] !== g.hp || S.score[1] !== g.ap)) bad.push([id, "score"]); }
+      return { bad: bad.length, pens, tos, names: PEN.map(x => x[0]), afd: PEN_AFD, text: Object.keys(D.box).slice(0, 40).every(id => { const b = D.box[id]; return b.p.every(pl => { const r = playText(b, pl, { abbr: ["AAA", "BBB"] }); return r && typeof r[0] === "string" && !/undefined|NaN/.test(r[0]); }); }) }; }"""
+    with sync_playwright() as pw:
+        br = pw.chromium.launch(); pg = br.new_page(); errs2 = []
+        pg.on("pageerror", lambda e: errs2.append(str(e)))
+        pg.goto("file://" + out2)
+        r2 = pg.evaluate(JS2)
+        pg.evaluate("location.hash='game-r1_25'"); pg.wait_for_timeout(300)
+        txt2 = pg.evaluate("document.getElementById('app').innerText")
+        br.close()
+    check("rules 2: the page's replay of all 401 games gives the engine's totals, penalties and penalty yards included", r2["bad"] == 0 and r2["pens"] > 3000 and r2["tos"] > 500, str(r2["bad"]) + " " + str(r2["pens"]) + " " + str(r2["tos"]))
+    check("rules 2: the page's penalty names and automatic-first-down list are the engine's", r2["names"] == list(game_engine.PENALTY_NAMES) and r2["afd"] == [i for i, p in enumerate(game_engine.PENALTIES) if p[3]], str(r2["names"][:3]))
+    check("rules 2: every play of forty games reads as a sentence, and the game page opens without script errors", r2["text"] and not errs2 and "penalt" in txt2.lower(), str(errs2[:2]))
 out = os.path.join(tempfile.mkdtemp(), "i.html")
 n = build_site.build(out, 7)
 html = open(out, encoding="utf-8").read()
