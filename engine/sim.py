@@ -127,9 +127,10 @@ class GameRunner:
             score_from_expected(game, expected, self.rng, PR.RESIDUAL_SD, R.TIES_ALLOWED and game.counts_ties)
         else:
             from game_engine import simulate_game
+            hurt_in_game = self.injuries and injuries and getattr(self.params, "rules", 1) >= 4     # rules version 4: players are hurt during the game
             res = simulate_game(self.lineup(game.home), self.lineup(game.away), self.rng, self.params,
                                 neutral=neutral, record_plays=self.record_plays,
-                                allow_tie=R.TIES_ALLOWED and game.counts_ties)
+                                allow_tie=R.TIES_ALLOWED and game.counts_ties, injuries=hurt_in_game)
             game.home_pts, game.away_pts = res.score
             tds = [0, 0]
             for d in res.drives:
@@ -142,7 +143,10 @@ class GameRunner:
             self._accumulate(game, res)
         self.games_played += 1
         if self.injuries and injuries:
-            self._roll_injuries(game)
+            if self.engine == "drives" and getattr(self.params, "rules", 1) >= 4:
+                self._apply_injuries(game, res)
+            else:
+                self._roll_injuries(game)
         return game
 
     def _accumulate(self, game: Game, res):
@@ -160,6 +164,19 @@ class GameRunner:
                 if k in ("pos", "team"):
                     continue
                 tot[k] = tot.get(k, 0) + v
+
+    def _apply_injuries(self, game: Game, res):
+        """Rules version 4: the players the game itself hurt (game_engine records them as they happen) are out for their weeks."""
+        import injuries as IJ
+        for p, kind, n, side in res.injured:
+            tid = (game.home, game.away)[side]
+            p.weeks_out, p.injury = n, kind
+            self._new_hurt.add(p.id)
+            self.injury_log.append((game.week, tid, p.id, n, kind))
+            pts = IJ.roll_lasting(kind, n, self.rng)
+            if pts:
+                IJ.apply_lasting(p, kind, pts)
+                self.lasting_log.append((game.week, tid, p.id, kind, pts))
 
     def _roll_injuries(self, game: Game):
         from injuries import roll_injuries

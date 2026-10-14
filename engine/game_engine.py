@@ -15,6 +15,8 @@ from dataclasses import dataclass, field
 from typing import Dict, List, Optional
 
 import rules as R
+import injuries as IJ
+import lineup as LU
 from lineup import Lineup
 
 
@@ -87,6 +89,8 @@ class EngineParams:
     half_timeout_prob: float = 0.5     # the chance the team with the ball calls a timeout after a play that kept the clock running, at the end of the first half
     kneel_clock: float = 40.0          # a kneel-down lets about this much clock run (the play clock)
     kneel_left: float = 3.0            # a timeout called after a kneel saves all but this much of it
+    # rules version 4 (new leagues only): players are hurt during the game
+    inj_play: float = 0.034            # the chance that a player on the field is hurt on a scrimmage play (fitted so a club has about as many injuries a season, near 33, as the old after-the-game roll gave); she leaves and a healthy player from the bench takes her place
 
 
 Q_SECS = 900
@@ -128,7 +132,7 @@ FIELDS_OFF = ("pass_att", "pass_cmp", "pass_yds", "pass_td", "pass_int", "sacked
 
 class _Side:
     """Everything one team needs during a game, precomputed."""
-    __slots__ = ("lu", "feats", "p_sack", "p_comp", "p_int", "mean_cy", "mean_run", "name")
+    __slots__ = ("lu", "feats", "p_sack", "p_comp", "p_int", "mean_cy", "mean_run", "name", "bonus")
 
 
 class GameResult:
@@ -155,8 +159,16 @@ class GameResult:
 
 class _Game:
     def __init__(self, home: Lineup, away: Lineup, rng: random.Random, P: EngineParams, neutral: bool,
-                 record_plays: bool):
+                 record_plays: bool, injuries: bool = False):
         self.rng = rng
+        self.inj_on = injuries and P.rules >= 4          # players can be hurt during the game (rules version 4); the lineups are then copies that lose players
+        self.scrim = False                               # the last thing that happened was a scrimmage play: the next look at the game rolls for an injury
+        self.side_of = {}
+        if P.rules >= 4:
+            home, away = LU.clone(home), LU.clone(away)
+            for i, lu in enumerate((home, away)):
+                for pl in LU.on_field(lu) + [lu.k, lu.p]:
+                    self.side_of[pl.id] = i
         self.P = P
         self.res = GameResult()
         if record_plays:
@@ -177,6 +189,7 @@ class _Game:
         s = _Side()
         s.lu = lu
         s.feats = {f: getattr(lu, f) + bonus for f in lu.FEATURES}
+        s.bonus = bonus
         s.name = lu.team_id
         return s
 
@@ -224,6 +237,33 @@ class _Game:
         the three players, the quarter and seconds left once the play is over, whether it is overtime, and which drive of the game it belongs to."""
         rec = (off, self.quarter, down, to_go, pos, yards, turnover, kind, a, b, c, self.quarter, int(max(self.t, 0)), bool(self.in_ot), len(self.res.drives))
         self.res.plays.append(rec + ((self.to[0], self.to[1]) if self.P.rules >= 2 else ()))     # version 2 adds each side's timeouts left
+
+    # -- injuries during the game (rules version 4) -------------------------------------------------------------
+    def _injury_check(self, off: int, down: int, to_go: int, pos: int):
+        """Called as the next play is about to be chosen: if the last thing was a scrimmage play, a player on the field may have been hurt in it. She leaves, the best healthy player
+        at her position comes on (the unit ratings are worked out again), and the play log says so. With no one on the bench she plays on and nothing is recorded."""
+        if not self.scrim:
+            return
+        self.scrim = False
+        P, rng = self.P, self.rng
+        if rng.random() >= P.inj_play:
+            return
+        cands = [(i, p) for i in (0, 1) for p in LU.on_field(self.sides[i].lu) if p.weeks_out == 0]
+        i, hurt = rng.choices(cands, [IJ.POS_RISK.get(p.pos, 1.0) for _, p in cands])[0]
+        kind, games = IJ.draw_kind(rng)
+        sub = LU.substitute(self.sides[i].lu, hurt)
+        if sub is None:
+            return
+        self.res.injured.append((hurt, kind, games, i))
+        self._p(hurt)
+        self._p(sub)
+        self.side_of[sub.id] = i
+        s = self.sides[i]
+        s.feats = {f: getattr(s.lu, f) + s.bonus for f in s.lu.FEATURES}
+        self._matchup(0)
+        self._matchup(1)
+        if self.rec:
+            self._log(off, down, to_go, pos, 0, False, "IJ", hurt.id, sub.id, IJ.KIND_NAMES.index(kind))
 
     # -- clock ----------------------------------------------------------------
     def _tick(self, secs: float, off: int):
@@ -344,6 +384,9 @@ class _Game:
         stopped = True                                  # is the clock stopped? (rules version 3: a spike is only worth it when it is running)
 
         while True:
+            if self.inj_on:
+                self._injury_check(off, down, to_go, pos)
+                lu_o, lu_d = me.lu, you.lu                  # (the lineups are the same objects; kept for clarity)
             dist_goal = 100 - pos
             force_kick = False
             if P.rules >= 3 and not self.in_ot and self.quarter in (2, 4):
@@ -625,6 +668,7 @@ class _Game:
 
             plays += 1
             tm["plays"] += 1
+            self.scrim = True
             if turnover == "INT":
                 pass
             else:
@@ -719,11 +763,11 @@ class _Game:
 
 
 def simulate_game(home: Lineup, away: Lineup, rng: random.Random, params: EngineParams = None,
-                  neutral: bool = False, record_plays: bool = False, allow_tie: bool = False) -> GameResult:
+                  neutral: bool = False, record_plays: bool = False, allow_tie: bool = False, injuries: bool = False) -> GameResult:
     """Play a whole game. Index 0 is the home team, 1 the away team. allow_tie=True is a regular-season game, which can end level
     after overtime; the default plays on until someone wins (postseason)."""
     P = params or EngineParams()
-    g = _Game(home, away, rng, P, neutral, record_plays)
+    g = _Game(home, away, rng, P, neutral, record_plays, injuries)
     res = g.res
     off = rng.randrange(2)                  # who receives the opening kickoff
     receive_first = off
@@ -756,6 +800,7 @@ def simulate_game(home: Lineup, away: Lineup, rng: random.Random, params: Engine
         for grp in (lu.rbs, lu.wrs, [lu.te, lu.qb, lu.k, lu.p], lu.ol, lu.dl, lu.lb, lu.cb, lu.s):
             for p in grp:
                 side_of[p.id] = i
+    side_of.update(g.side_of)                       # (rules version 4) players who came on, and those who left
     for pid, d in res.players.items():
         d["team"] = side_of.get(pid, 0)
     return res

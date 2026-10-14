@@ -1,7 +1,7 @@
 """The website's data (site_export.py) agrees with the engine: every game has its date, the standings add up, the page builds."""
 import os, sys, tempfile
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-import site_export, build_site
+import site_export, build_site, injuries
 
 failures = []
 
@@ -140,6 +140,19 @@ if sync_playwright is not None:
         br.close()
     check("rules 3: the page's replay of all 401 games gives the engine's totals, spikes and kneels included", r4["bad"] == 0 and r4["sps"] > 100 and r4["kns"] > 300, f"{r4['bad']} bad, {r4['sps']} spikes, {r4['kns']} kneels")
     check("rules 3: spikes and kneels read as sentences, and the page runs without script errors", "spikes the ball" in txt4 and "takes a knee" in txt4 and r4["text"] and not errs4, str(errs4[:2]))
+    # ---- rules version 4: players are hurt during the game and a backup comes in; the page's replay still gives the engine's totals back ----
+    out5 = os.path.join(tempfile.mkdtemp(), "g4.html"); build_site.build(out5, 7, rules=4)
+    JS5 = JS4.replace("if (pl[6] === \"KN\") kns++;", "if (pl[6] === \"KN\") kns++; if (pl[6] === \"IJ\") ijs++;").replace("let pens = 0, tos = 0, sps = 0, kns = 0;", "let pens = 0, tos = 0, sps = 0, kns = 0, ijs = 0;").replace("return { bad: bad.length, pens, tos, sps, kns,", "return { bad: bad.length, pens, tos, sps, kns, ijs, inj: INJ,")
+    with sync_playwright() as pw:
+        br = pw.chromium.launch(); pg = br.new_page(); errs5 = []
+        pg.on("pageerror", lambda e: errs5.append(str(e)))
+        pg.goto("file://" + out5)
+        r5 = pg.evaluate(JS5)
+        txt5 = pg.evaluate("Object.keys(D.box).slice(0, 400).flatMap(id => D.box[id].p.filter(pl => pl[6] === 'IJ').slice(0, 1).map(pl => playText(D.box[id], pl, { abbr: ['AAA', 'BBB'] })[0])).slice(0, 6).join(' | ')")
+        br.close()
+    check("rules 4: the page's replay of all 401 games gives the engine's totals with players hurt in the log", r5["bad"] == 0 and r5["ijs"] > 800, f"{r5['bad']} bad, {r5['ijs']} injuries")
+    check("rules 4: the page's injury names are the engine's, in the same order", r5["inj"] == list(injuries.KIND_NAMES), str(r5["inj"][:3]))
+    check("rules 4: an injury reads as a sentence naming who is hurt and who comes in, and the page runs without script errors", "is hurt" in txt5 and "comes in" in txt5 and r5["text"] and not errs5 and "undefined" not in txt5, txt5[:200] + str(errs5[:2]))
 if sync_playwright is not None:
     # ---- the Statistics tab: team and player tables add up to the same totals from the same replays ----
     JS3 = """async () => { const run = ++STATS.run; await statsLoad(statGames("reg"), run, () => {});

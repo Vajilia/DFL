@@ -27,6 +27,7 @@ for (const [gid, b] of Object.entries(box)) {
     }
     if (kind === "PN" && Math.abs(e - Math.max(1, Math.min(99, pos + yds))) > .8) fail(gid, i, P, `flag moves the ball to ${e.toFixed(1)}, the log says ${pos + yds}`);
     if (kind === "TO" && Math.abs(e - pos) > .8) fail(gid, i, P, "a timeout moved the ball");
+    if (kind === "IJ" && Math.abs(e - pos) > .8) fail(gid, i, P, "an injury moved the ball");
     if (kind === "KN" && Math.abs(e - (pos - 1)) > .8) fail(gid, i, P, `a kneel ends at ${e.toFixed(1)}, the log says ${pos - 1}`);
     if (kind === "SP" && Math.abs(e - pos) > 4) fail(gid, i, P, `a spike ends at ${e.toFixed(1)}`);
     if (kind === "FG") { const eb = ST.endBall(S), through = e >= 110 && Math.abs(eb.y - ST.MID) < 3.1; if (through !== (P[8] === 1)) fail(gid, i, P, `field goal ends at ${e.toFixed(1)}, ${eb.y.toFixed(1)} across, the log says good: ${P[8]}`); }

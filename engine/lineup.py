@@ -66,6 +66,8 @@ class Lineup:
     tackle_cum: List[float] = None
     pickers: List[Player] = None
     pick_cum: List[float] = None
+    bench: Dict[str, List[Player]] = None          # healthy players behind the starters, by position
+    lift: tuple = None                             # the coaches' (offense, defense) lift this lineup was built with
 
     FEATURES = ("qb_acc", "qb_arm", "qb_aware", "rec", "pass_block", "run_block", "rb_run",
                 "pass_rush", "coverage", "ball_skills", "run_stop", "k_acc", "k_pow", "p_pow")
@@ -89,7 +91,26 @@ def build_lineup(team_id: int, roster: List[Player], coach=None, team=None) -> L
     rbs, wrs, te = ch["RB"][:2], ch["WR"][:3], ch["TE"][0]
     ol, dl, lb, cb, s = ch["OL"][:5], ch["DL"][:4], ch["LB"][:2], ch["CB"][:3], ch["S"][:2]
     L = Lineup(team_id, qb, rbs, wrs, te, ol, dl, lb, cb, s, k, p)
+    # who is on the bench: healthy players behind the starters, best first (a game that can hurt players, rules version 4, brings them on)
+    L.bench = {pos: [x for x in ch[pos][n:] if x.weeks_out == 0 and x.suspended == 0] for pos, n in (("QB", 1), ("RB", 2), ("WR", 3), ("TE", 1), ("OL", 5), ("DL", 4), ("LB", 2), ("CB", 3), ("S", 2), ("K", 1), ("P", 1))}
 
+    lift = None
+    if coach is not None or (team is not None and (getattr(team, "oc", None) is not None or getattr(team, "dc", None) is not None)):
+        # the coaches: a small capped lift to the offensive or defensive units. The head coach's own (cards.COACH_POINTS_AT_100) is blended with
+        # the coordinator who calls the plays, plus the fit of this season's scheme (coordinators.lifts)
+        if team is not None:
+            import coordinators
+            lift = coordinators.lifts(coach, team)
+        else:
+            lift = (coach.offense_points, coach.defense_points)
+    L.lift = lift
+    rate(L)
+    return L
+
+
+def rate(L: Lineup) -> None:
+    """The unit ratings and the lists that give credit, from the players now in the lineup (and the coaches' lift it was built with)."""
+    qb, rbs, wrs, te, ol, dl, lb, cb, s, k, p = L.qb, L.rbs, L.wrs, L.te, L.ol, L.dl, L.lb, L.cb, L.s, L.k, L.p
     L.qb_acc, L.qb_arm, L.qb_aware = qb.ratings["accuracy"], qb.ratings["arm"], qb.ratings["awareness"]
     # receivers: three WRs, the TE and the lead RB, weighted by how often they are targeted
     recs = [(wrs[0], 0.28), (wrs[1], 0.24), (wrs[2], 0.17), (te, 0.17), (rbs[0], 0.14)]
@@ -112,14 +133,8 @@ def build_lineup(team_id: int, roster: List[Player], coach=None, team=None) -> L
     L.k_acc, L.k_pow = k.ratings["accuracy"], k.ratings["power"]
     L.p_pow, L.p_acc = p.ratings["power"], p.ratings["accuracy"]
 
-    if coach is not None or (team is not None and (getattr(team, "oc", None) is not None or getattr(team, "dc", None) is not None)):
-        # the coaches: a small capped lift to the offensive or defensive units. The head coach's own (cards.COACH_POINTS_AT_100) is blended with
-        # the coordinator who calls the plays, plus the fit of this season's scheme (coordinators.lifts)
-        if team is not None:
-            import coordinators
-            o, d = coordinators.lifts(coach, team)
-        else:
-            o, d = coach.offense_points, coach.defense_points
+    if L.lift is not None:
+        o, d = L.lift
         for f in ("qb_acc", "qb_arm", "qb_aware", "rec", "pass_block", "run_block", "rb_run"):
             setattr(L, f, getattr(L, f) + o)
         for f in ("pass_rush", "coverage", "ball_skills", "run_stop"):
@@ -136,4 +151,46 @@ def build_lineup(team_id: int, roster: List[Player], coach=None, team=None) -> L
             + [(d, 0.8 * 60.0) for d in dl])
     L.tacklers = [x for x, _ in tack]
     L.tackle_cum = list(accumulate(w for _, w in tack))
-    return L
+
+
+# ---- a game that can hurt players (rules version 4): a hurt starter is replaced from the bench --------------------------------------------------------
+GROUPS = (("rbs", "RB"), ("wrs", "WR"), ("ol", "OL"), ("dl", "DL"), ("lb", "LB"), ("cb", "CB"), ("s", "S"))
+SINGLES = (("qb", "QB"), ("te", "TE"))
+
+
+def clone(L: Lineup) -> Lineup:
+    """A copy a game can change (players leave it) without touching the one the league keeps for the week."""
+    import copy
+    C = copy.copy(L)
+    for name, _ in GROUPS:
+        setattr(C, name, list(getattr(L, name)))
+    C.bench = {pos: list(v) for pos, v in L.bench.items()}
+    return C
+
+
+def on_field(L: Lineup) -> List[Player]:
+    """The players who take part in scrimmage plays: the offense's twelve slots and the defense's eleven (kickers and punters do not)."""
+    return [L.qb, L.te] + L.rbs + L.wrs + L.ol + L.dl + L.lb + L.cb + L.s
+
+
+def substitute(L: Lineup, hurt: Player):
+    """Take a hurt player out and bring the best healthy player at her position from the bench; returns that player, or None if no one is left (she then plays on)."""
+    bench = L.bench.get(hurt.pos) or []
+    if not bench:
+        return None
+    sub = bench.pop(0)
+    for name, pos in SINGLES:
+        if getattr(L, name) is hurt:
+            setattr(L, name, sub)
+            break
+    else:
+        for name, pos in GROUPS:
+            lst = getattr(L, name)
+            if hurt in lst:
+                lst[lst.index(hurt)] = sub
+                break
+        else:
+            bench.insert(0, sub)
+            return None
+    rate(L)
+    return sub

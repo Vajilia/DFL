@@ -62,6 +62,7 @@ def fp(r):
     return hashlib.sha256(json.dumps(box, sort_keys=True).encode()).hexdigest()[:16]
 check("rules 1 is unchanged", fp(1) == "8f192eab685ccf5a", fp(1))
 check("rules 2 is unchanged", fp(2) == "304532285addcee2", fp(2))
+check("rules 3 is unchanged", fp(3) == "ece72a2698c8a433", fp(3))
 
 print("\n%d failed" % len(failures) if failures else "\nall passed")
 sys.exit(1 if failures else 0)

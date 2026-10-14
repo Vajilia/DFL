@@ -73,7 +73,9 @@ def _box(res, names: dict) -> dict:
             prev_left = left
         gt = max(gt, last_gt)
         last_gt = gt
-        if kind in ("PN", "TO"):                                          # a penalty (number, side fouled, offender) or a timeout (team, timeouts left): numbers, not players
+        if kind == "IJ":                                                  # a player is hurt (rules version 4): who, who comes in, and which injury (its number in injuries.KIND_NAMES)
+            row = [off, down, to_go, pos, 0, 0, kind, idx.get(a, -1), idx.get(b, -1), c, q2, left, 1 if ot else 0, di, gt]
+        elif kind in ("PN", "TO"):                                          # a penalty (number, side fouled, offender) or a timeout (team, timeouts left): numbers, not players
             row = [off, down, to_go, pos, yds, 0, kind, a, b, idx.get(c, -1) if c is not None and c >= 0 else -1, q2, left, 1 if ot else 0, di, gt]
         else:
             row = [off, down, to_go, pos, yds, TURN[to], kind, idx.get(a, -1) if a is not None else -1, idx.get(b, -1) if (b is not None and kind != "FG") else (b if b is not None else -1),
@@ -83,6 +85,8 @@ def _box(res, names: dict) -> dict:
     if v2:
         out["v"] = 2                                                      # rules version 2: penalties and timeouts are in the log
         out["pen"] = [[t["pen"], t["pen_yds"]] for t in res.team]
+    if any(r[6] == "IJ" for r in plays):
+        out["inj"] = 1                                                    # rules version 4: players are hurt during the game
     return out
 
 
