@@ -134,7 +134,7 @@ class GameRunner:
             game.home_pts, game.away_pts = res.score
             tds = [0, 0]
             for d in res.drives:
-                if d["result"] == "TD":
+                if d["result"] in ("TD", "KICK_TD"):          # (KICK_TD: a kickoff returned for a touchdown, rules version 5; its side is the scoring club)
                     tds[d["side"]] += 1
                 elif d["result"] in ("INT_TD", "FUMBLE_TD"):
                     tds[1 - d["side"]] += 1

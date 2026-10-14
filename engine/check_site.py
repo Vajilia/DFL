@@ -153,6 +153,18 @@ if sync_playwright is not None:
     check("rules 4: the page's replay of all 401 games gives the engine's totals with players hurt in the log", r5["bad"] == 0 and r5["ijs"] > 800, f"{r5['bad']} bad, {r5['ijs']} injuries")
     check("rules 4: the page's injury names are the engine's, in the same order", r5["inj"] == list(injuries.KIND_NAMES), str(r5["inj"][:3]))
     check("rules 4: an injury reads as a sentence naming who is hurt and who comes in, and the page runs without script errors", "is hurt" in txt5 and "comes in" in txt5 and r5["text"] and not errs5 and "undefined" not in txt5, txt5[:200] + str(errs5[:2]))
+    # ---- rules version 5: kickoffs and conversions are plays; the page's replay still gives the engine's totals (the score included) back ----
+    out6 = os.path.join(tempfile.mkdtemp(), "g5.html"); build_site.build(out6, 7, rules=5)
+    JS6 = JS5.replace("if (pl[6] === \"IJ\") ijs++;", "if (pl[6] === \"IJ\") ijs++; if (pl[6] === \"KO\") kos++; if (pl[6] === \"XP\" || pl[6] === \"2P\") tries++;").replace("let pens = 0, tos = 0, sps = 0, kns = 0, ijs = 0;", "let pens = 0, tos = 0, sps = 0, kns = 0, ijs = 0, kos = 0, tries = 0;").replace("return { bad: bad.length, pens, tos, sps, kns, ijs,", "return { bad: bad.length, pens, tos, sps, kns, ijs, kos, tries,")
+    with sync_playwright() as pw:
+        br = pw.chromium.launch(); pg = br.new_page(); errs6 = []
+        pg.on("pageerror", lambda e: errs6.append(str(e)))
+        pg.goto("file://" + out6)
+        r6 = pg.evaluate(JS6)
+        txt6 = pg.evaluate("Object.keys(D.box).slice(0, 60).flatMap(id => { const b = D.box[id]; return ['KO', 'XP', '2P'].map(k => { const i = b.p.findIndex(pl => pl[6] === k); return i < 0 ? '' : playText(b, b.p[i], { abbr: ['AAA', 'BBB'], next: null })[0]; }); }).filter(Boolean).slice(0, 9).join(' | ')")
+        br.close()
+    check("rules 5: the page's replay of all 401 games gives the engine's totals, kickoffs and tries in the log", r6["bad"] == 0 and r6["kos"] > 3000 and r6["tries"] > 1500, f"{r6['bad']} bad, {r6['kos']} kickoffs, {r6['tries']} tries")
+    check("rules 5: a kickoff and a try read as sentences, and the page runs without script errors", "Kickoff" in txt6 and "Extra point" in txt6 and r6["text"] and not errs6 and "undefined" not in txt6 and "NaN" not in txt6, txt6[:300] + str(errs6[:2]))
 if sync_playwright is not None:
     # ---- the Statistics tab: team and player tables add up to the same totals from the same replays ----
     JS3 = """async () => { const run = ++STATS.run; await statsLoad(statGames("reg"), run, () => {});

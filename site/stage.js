@@ -35,6 +35,10 @@ function lineup(kind, retU) {
   if (kind === "FG") {
     o = [[-.7, MID], [-.7, 23.65], [-.7, 29.65], [-.7, 20.65], [-.7, 32.65], [-.8, 35.65], [-.7, 17.65], [-.7, 38.65], [-.7, 14.65], [-7.2, MID], [-8.9, 24.9]].map((p, i) => [p[0], p[1], i < 9 ? "stance" : i === 9 ? "kneel" : "stand"]);
     d = [[1.2, 24.8], [1.2, 28.5], [1.2, 20.9], [1.2, 32.4], [1.4, 16], [1.4, MID], [1.4, 37], [3, 13], [3, 40], [8, MID], [12, MID]].map((p, i) => [p[0], p[1], i < 7 ? "stance" : "stand"]);
+  } else if (kind === "KO") {                         // a kickoff (rules version 5): the kicking team in a line at the ball, the receivers spread down the field; retU is the distance from the ball to the receivers' goal line
+    const G = retU == null ? 65 : retU;
+    o = [[-5.5, MID], ...[3, 8.5, 14, 19.5, 24.5, 28.8, 33.8, 39.3, 44.8, 50.3].map(v => [-.9, v])].map((p, i) => [p[0], p[1], "stand"]);
+    d = [[G - 30, 6], [G - 30, 16], [G - 30, MID], [G - 30, 36.5], [G - 30, 46.5], [G - 22, 11], [G - 22, MID], [G - 22, 42], [G - 14, 20], [G - 9, 33], [G - 5, 28]].map(p => [p[0], p[1], "stand"]);
   } else if (kind === "PU") {
     o = [[-.7, MID], [-.7, 23.65], [-.7, 29.65], [-.7, 20.65], [-.7, 32.65], [-.8, 35.65], [-.7, 9], [-.7, 45], [-.7, 38.65], [-4.5, MID], [-14.5, MID]].map((p, i) => [p[0], p[1], i < 6 ? "stance" : "stand"]);
     const r = retU == null ? 40 : retU;
@@ -121,14 +125,26 @@ const TD_SUB = d => d ? (d[7] === 7 ? "Extra point good" : d[7] === 6 ? "Extra p
    ctx.dr       the drive record, when this is the last play of the drive
    ctx.abbr     [home, away] club codes;  ctx.pen  the penalty's name;  ctx.seed  any number: it only varies the choreography */
 function buildScene(P, ctx) {
-  const [off, down, toGo, pos, yds, to, kind, a, bb, c, , , , , gt] = P;
+  let [off, down, toGo, pos, yds, to, kind, a, bb, c, , , , , gt] = P;
   ctx = ctx || {};
+  const orig = kind;
+  let sKind = kind === "FG" || kind === "PU" ? kind : "N", sOff = off, sPos = pos, sRet = null;
+  if (kind === "XP") sKind = "FG";                                          // an extra point is kicked from the field-goal formation
+  if (kind === "KO") { sOff = to === 3 || to === 5 ? off : 1 - off; sPos = down === 2 ? 20 : 35; sKind = "KO"; sRet = 100 - sPos; }        // the kicking team's frame: the ball on its 35 (the 20 for a free kick)
+  const tryGood = kind === "2P" && c === 1;
+  if (kind === "2P") {                                                      // a two-point try is run as a pass or a run from the 2-yard line
+    const good = tryGood;
+    P = [off, 1, 2, 98, good ? 2 : 0, 0, bb >= 0 ? (good ? "PC" : "PI") : "RU", a, bb, -1, P[10], P[11], P[12], P[13], P[14]];
+    [off, down, toGo, pos, yds, to, kind, a, bb, c] = P; sKind = "N";
+  }
   const nmf = i => (ctx.nm && i >= 0 && ctx.nm(i)) || null, name = i => { const r = nmf(i); return r ? r[0] : ""; }, lab = i => { const r = nmf(i); return r ? r[1] : ""; };
   const R = rng(((pos + 1) * 131 + (yds + 60) * 17 + ((gt | 0) % 9973) * 7 + (a + 3) * 3 + (bb + 5) * 11 + (ctx.seed | 0)) >>> 0);
-  const goal = 100 - pos, res = ctx.dr ? ctx.dr[6] : "", hu = ctx.hint == null ? null : ctx.hint - pos;
-  const retU = kind === "PU" ? clamp(Math.min(yds, goal) + 3 + R() * 2, 12, goal + 6) : null;
-  const S = new Scene(off, pos, kind === "FG" || kind === "PU" ? kind : "N", retU);
-  S.kind = kind; S.retU = retU;
+  let res0 = ctx.dr ? ctx.dr[6] : "";
+  if (!res0 && ctx.next && (ctx.next[6] === "XP" || ctx.next[6] === "2P")) res0 = ctx.next[0] === off ? "TD" : kind === "IN" ? "INT_TD" : "FUMBLE_TD";       // (rules version 5) the try that follows a touchdown says what the play scored
+  const goal = 100 - pos, res = res0, hu = ctx.hint == null ? null : ctx.hint - pos;
+  const retU = kind === "PU" ? clamp(Math.min(yds, goal) + 3 + R() * 2, 12, goal + 6) : sRet;
+  const S = new Scene(sOff, sPos, sKind, retU);
+  S.kind = orig; S.retU = retU;
   const H = { P, ctx, R, S, tS: .55, goal, res, hu, name, lab, ab: ctx.abbr || ["HOME", "AWAY"], used: new Set() };
   H.defFor = (i, rest) => { let k = slotOf(DKEY, lab(i), i, -1); if (k < 0 || H.used.has(k)) k = rest.find(f => !H.used.has(f)); H.used.add(k); return k; };
   H.converge = (k, tStart, tArrive, u, v, pose) => {             // a figure goes from where he is to a spot, arriving at tArrive
@@ -149,9 +165,17 @@ function buildScene(P, ctx) {
   else if (kind === "PN") penaltyScene(H);
   else if (kind === "SP") spikeScene(H);
   else if (kind === "KN") kneelScene(H);
+  else if (orig === "KO") koScene(H);
+  else if (orig === "XP") kickScene(H);
   else if (kind === "TO") { S.banner(.1, 1.7, "TIMEOUT", H.ab[a] || "", "plain"); S.endSpot = { off, u: 0 }; S.dur = Math.max(S.dur, 1.9); }
   else if (kind === "IJ") { S.banner(.1, 2.6, "INJURY", name(a) ? `${name(a)} leaves the game${name(bb) ? ` · ${name(bb)} comes in` : ""}` : "", "plain"); S.endSpot = { off, u: 0 }; S.dur = Math.max(S.dur, 2.8); }      // rules version 4: a player is hurt and a backup takes her place
   else throw new Error("unknown play kind " + kind);
+  if (orig === "2P") {                                                      // the try is announced as a try, not as a touchdown or an incomplete pass
+    const t0 = S.ev.filter(e => e.k === "banner").reduce((m, e) => Math.min(m, e.t0), 1e9), tb = t0 < 1e8 ? t0 : Math.max(.5, S.dur - 1.5);
+    S.ev = S.ev.filter(e => e.k !== "banner");
+    S.banner(tb, tb + 1.9, "TWO-POINT TRY", tryGood ? "It is good" : "No good", tryGood ? "good" : "bad");
+    S.dur = Math.max(S.dur, tb + 2.0);
+  }
   S.dur += .3;
   S.balls.sort((x, y) => x.t0 - y.t0);
   return S;
@@ -162,7 +186,7 @@ function finishPlay(H, who, tk, tE, uEnd, vEnd, td) {
   const { S, P, ctx, R, goal, res, hu, name, ab } = H, [off, down, toGo, pos, yds, to, kind] = P;
   if (td) {
     S.hold(who, tE + 2.3, "cele"); S.endSpot = { off, u: uEnd };
-    S.banner(tE + .1, tE + 2.5, "TOUCHDOWN", TD_SUB(ctx.dr) || ab[off], "good");
+    S.banner(tE + .1, tE + 2.5, "TOUCHDOWN", TD_SUB(ctx.next ? null : ctx.dr) || ab[off], "good");
     S.dur = Math.max(S.dur, tE + 2.4); return;
   }
   if (to === 2) {                                                        // the ball pops loose and the defense falls on it
@@ -323,15 +347,88 @@ function kickScene(H) {
   if (good) {
     const v = MID + (R() - .5) * 1.6;
     S.bfly(tK, tK + fl, [hU, MID, .4], [endU + 1, v, 6], 3.2 + dist * .02).bfly(tK + fl, tK + fl + .5, [endU + 1, v, 6], [endU + 3.5, v, 0], .8).brest(tK + fl + .5, endU + 3.5, v, 0);
-    S.banner(tK + fl - .2, tK + fl + 2.2, "FIELD GOAL", `${c} yards · it is good`, "good"); S.endSpot = { off, u: endU + 3.5 };
+    S.banner(tK + fl - .2, tK + fl + 2.2, kind === "XP" ? "EXTRA POINT" : "FIELD GOAL", kind === "XP" ? "It is good" : `${c} yards · it is good`, "good"); S.endSpot = { off, u: endU + 3.5 };
   } else {
     const post = R() < .22, short = !post && R() < .3, side = R() < .5 ? -1 : 1, vW = MID + side * (4 + R() * 2);
     const uHit = short ? goal - 2 - R() * 6 : endU + .5, vHit = post ? MID + 3.1 : short ? MID + (R() - .5) * 3 : vW, zHit = short ? .6 : 4.8, t1 = tK + fl * (short ? .72 : 1);
     const uF = short ? uHit - .8 : post ? endU - 1.5 : endU + 1.8, vF = post ? MID + 4 : short ? vHit : vW + side * 1.8;
     S.bfly(tK, t1, [hU, MID, .4], [uHit, vHit, zHit], 3 + dist * .02).bfly(t1, t1 + .45, [uHit, vHit, zHit], [uF, vF, 0], .5).brest(t1 + .45, uF, vF, 0);
-    S.banner(t1 - .1, t1 + 2.1, "NO GOOD", `${c} yards · ${post ? "off the upright" : short ? "short" : side > 0 ? "wide right" : "wide left"}`, "bad"); S.endSpot = { off, u: 0 };
+    S.banner(t1 - .1, t1 + 2.1, kind === "XP" ? "EXTRA POINT" : "NO GOOD", `${kind === "XP" ? "No good · " : c + " yards · "}${post ? "off the upright" : short ? "short" : side > 0 ? "wide right" : "wide left"}`, "bad"); S.endSpot = { off, u: 0 };
   }
   S.dur = Math.max(S.dur, tK + fl + 1.8);
+}
+
+/* a kickoff or a free kick (rules version 5). The scene is in the kicking team's frame: u yards from the ball, which is on its 35 (its 20 for a free kick); the receivers' goal line is G yards away.
+   The log gives the outcome (P[5]): 0 touchback, 1 returned, 2 returned for a touchdown, 3 fumbled and recovered by the kickers, 4 returned with a foul, 5 onside kick the kickers recover, 6 onside kick the receivers recover. */
+function koScene(H) {
+  const { S, P, R, name } = H, [, down, , pos, landing, code, , a, bb, c] = P;
+  const kpos = down === 2 ? 20 : 35, G = 100 - kpos, onside = code >= 5, kicker = S.O(0), ret = S.D(10), tK = 1.0;
+  const uL = G - landing, vL = clamp(MID + (R() - .5) * (onside ? 14 : 12), 10, 43);              // where the ball comes down
+  const uDead = code === 3 || code === 5 ? pos - kpos : G - pos;                                    // where it is dead: the start of the next drive
+  const fl = onside ? .95 : 1.65 + G * .012, tL = tK + fl;
+  S.hold(kicker, .4).go(kicker, tK - .3, -1.6, MID, "run").go(kicker, tK, -.4, MID, "kick").hold(kicker, tK + .6, "stand");
+  S.bfly(tK, tL, [0, MID, .3], [uL, vL, onside ? 0 : 1.8], onside ? 1.8 : 11 + G * .08);
+  S.tag(kicker, tK - .5, tK + 1.4, name(a));
+  for (let k = 1; k < 11; k++) {                                                                   // the kicking team runs down the field behind the ball
+    const D = S.O(k), v0 = S.where(D)[1], uRun = onside ? clamp(uL - 2 - R() * 3, 4, 30) : clamp(uL - 6 - R() * 12, 14, G - 6);
+    S.hold(D, tK - .35, "stand").go(D, tL + .15, uRun, lerp(v0, vL, .3) + (R() - .5) * 3, "run");
+  }
+  for (let k = 0; k < 10; k++) {                                                                   // the receivers set up their blocks
+    const D = S.D(k), w = S.where(D);
+    if (onside && k < 5) { S.hold(D, tK + .15).go(D, tL + .1, uL + 1 + R() * 3, lerp(w[1], vL, .6), "run"); continue; }
+    S.hold(D, tK + .25).go(D, tL - .1, w[0] + 3 + R() * 5, w[1] + (R() - .5) * 4, "run");
+  }
+  if (!onside) {
+    S.hold(ret, tK + .1).go(ret, tL - .12, uL, vL, "run").hold(ret, tL + .12, "catch").bcarry(tL, ret, 1.35);
+    S.tag(ret, tL - .3, tL + 1.8, name(bb));
+    if (code === 0) {                                                                              // down in the end zone
+      S.hold(ret, tL + .9, "kneel").hold(ret, tL + 2.2, "kneel");
+      S.banner(tL + .1, tL + 2.0, "TOUCHBACK", "", "small"); S.endSpot = { off: S.off, u: uL }; S.dur = Math.max(S.dur, tL + 2.0);
+      for (let k = 1; k < 11; k++) S.hold(S.O(k), tL + 1.6, "stand");
+      return;
+    }
+    const vE = clamp(vL + (R() - .5) * 16, 5, 48), tail = (u0, v0, u1, v1) => Math.abs(u0 - u1) + Math.abs(v0 - v1) * .35;
+    if (code === 2) {                                                                              // all the way back
+      const uT = -kpos - 1.4, vT = clamp(vL + (R() - .5) * 8, 6, 47), vM = clamp(vL + (R() - .5) * 20, 6, 47), uM = (uL + uT) / 2, t1 = tL + .2 + tail(uL, vL, uM, vM) / RETSPEED, t2 = t1 + tail(uM, vM, uT, vT) / RETSPEED;
+      S.go(ret, t1, uM, vM, "run").go(ret, t2, uT, vT, "run").hold(ret, t2 + 2.0, "cele");
+      for (let k = 1; k < 11; k++) { const D = S.O(k), w = S.where(D); S.go(D, t2 + .6, clamp(w[0] - 2 - R() * 8, uT + 4, 60), lerp(w[1], vT, .35), "run").hold(D, t2 + 2.2, "stand"); }
+      for (let k = 0; k < 10; k++) { const D = S.D(k), w = S.where(D); S.go(D, t2 - .2, lerp(w[0], uM, .5) - R() * 6, lerp(w[1], vM, .4), "block").hold(D, t2 + 2, "stand"); }
+      S.banner(t2 - 1.2, t2 + 2.4, "KICKOFF RETURN", `${name(bb)} · touchdown`, "good"); S.endSpot = { off: S.off, u: uT }; S.dur = Math.max(S.dur, t2 + 2.4);
+      return;
+    }
+    if (code === 3) {                                                                              // the returner fumbles and the kicking team falls on it
+      const uF = uDead, vF = vE, tR = tL + .2 + tail(uL, vL, uF + 2, vF) / RETSPEED, rec = S.O(1 + Math.abs(c) % 10);
+      S.go(ret, tR, uF + 2, vF, "run").hold(ret, tR + 1.0, "down");
+      S.bfly(tR, tR + .5, [uF + 2, vF, 1.2], [uF, vF + 1.2, 0], 1.2).brest(tR + .5, uF, vF + 1.2, 0);
+      H.converge(rec, tR - .8, tR + .5, uF, vF + 1.2, "run"); S.hold(rec, tR + 1.4, "down");
+      S.tag(rec, tR - .4, tR + 1.6, name(c));
+      for (let k = 1; k < 11; k++) if (S.O(k) !== rec) H.converge(S.O(k), tR - .6, tR + .5 + R() * .3, uF - 2 + R() * 4, vF + (R() - .5) * 9, "run");
+      S.banner(tR + .1, tR + 2.4, "FUMBLE", "Recovered by the kicking team", "bad"); S.endSpot = { off: S.off, u: uF }; S.dur = Math.max(S.dur, tR + 2.2);
+      return;
+    }
+    const uE = uDead, tR = tL + .2 + tail(uL, vL, uE, vE) / RETSPEED, tk = S.O(1 + Math.abs(c) % 10);
+    S.go(ret, tR, uE, vE, "run").hold(ret, tR + .2, "tackle").hold(ret, tR + 2.2, "down");
+    H.converge(tk, tL, tR - .08, uE - .5, vE + .4, "run"); S.go(tk, tR + .2, uE - .35, vE + .2, "tackle").hold(tk, tR + 1.2, "tackle");
+    S.tag(tk, tR - .3, tR + 1.4, name(c));
+    for (let k = 1; k < 11; k++) if (S.O(k) !== tk) H.converge(S.O(k), tL, tR + R() * .4, uE - 3 + R() * 6, vE + (R() - .5) * 14, "run");
+    S.brest(tR + .3, uE - .3, vE + .4, 0);
+    if (code === 4) { S.flag(tR - .2, uE - 2, vE < MID ? 3 : 50); S.banner(tR + .2, tR + 2.4, "FLAG", "Foul on the return", "flag"); }
+    else if (Math.abs(uL - uE) > 30) S.banner(tR, tR + 1.6, "BIG RETURN", "", "small");
+    S.endSpot = { off: S.off, u: uE }; S.dur = Math.max(S.dur, tR + 1.6);
+    return;
+  }
+  // an onside kick: the ball comes down short, skips, and the two teams scramble for it
+  const uB = uDead, vB = vL + (R() < .5 ? -1 : 1) * (.8 + R() * 1.5);
+  S.bfly(tL, tL + .5, [uL, vL, 0], [uB, vB, 0], .9).brest(tL + .5, uB, vB, 0);
+  const winner = code === 5 ? S.O(1 + Math.abs(bb) % 10) : S.D(Math.abs(bb) % 5);
+  for (let k = 0; k < 11; k++) {
+    if (k > 0 && S.O(k) !== winner) H.converge(S.O(k), tL - .2, tL + .75 + R() * .3, uB + (R() - .5) * 4, vB + (R() - .5) * 8, "run");
+    if (k < 10 && S.D(k) !== winner) H.converge(S.D(k), tL + .1, tL + .85 + R() * .3, uB + 1 + R() * 4, vB + (R() - .5) * 8, "run");
+  }
+  H.converge(winner, tL - .1, tL + .6, uB, vB, "run"); S.hold(winner, tL + .7, "catch").hold(winner, tL + 2.0, "down"); S.bcarry(tL + .7, winner, .7);
+  S.tag(winner, tL, tL + 2, name(bb));
+  S.banner(tL + .5, tL + 2.6, "ONSIDE KICK", code === 5 ? "Recovered by the kicking team" : "Recovered by the receivers", code === 5 ? "good" : "bad");
+  S.endSpot = { off: S.off, u: uB }; S.dur = Math.max(S.dur, tL + 2.4);
 }
 
 function puntScene(H) {
@@ -447,9 +544,9 @@ Stage.prototype = {
     if (this.scene && !o.snap) { this.pend = [sit, o]; return; }
     this.pend = null;
     if (!sit) { this.tLos = this.tFd = null; if (o.snap) { this.lineLos = this.lineFd = null; } this.kick(); return; }
-    const kind = o.kind === "FG" || o.kind === "PU" ? o.kind : "N", los = wxOf(sit.off, sit.pos), toGoal = sit.pos + sit.toGo >= 100;
+    const kind = o.kind === "FG" || o.kind === "PU" || o.kind === "KO" ? o.kind : o.kind === "XP" ? "FG" : "N", los = wxOf(sit.off, sit.pos), toGoal = sit.pos + sit.toGo >= 100;
     this.sit = sit; this.tLos = o.dim ? null : los; this.tFd = toGoal || o.dim ? null : wxOf(sit.off, sit.pos + sit.toGo);
-    const to = formation(sit.off, sit.pos, kind, kind === "PU" ? clamp(o.retU == null ? 40 : o.retU, 12, 100 - sit.pos + 6) : null).map(p => ({ x: p[0], y: p[1], pose: p[2], face: p[3] }));
+    const to = formation(sit.off, sit.pos, kind, kind === "PU" ? clamp(o.retU == null ? 40 : o.retU, 12, 100 - sit.pos + 6) : kind === "KO" ? (o.retU == null ? 100 - sit.pos : o.retU) : null).map(p => ({ x: p[0], y: p[1], pose: p[2], face: p[3] }));
     const bx = wxOf(sit.off, sit.pos);
     if (o.snap || !this.rest || this.far(this.rest, to) > 32) {
       this.scene = null; this.tw = null; this.rest = to; this.ball = { x: bx, y: MID, z: 0, spin: 0, held: false };

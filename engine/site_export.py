@@ -72,19 +72,24 @@ def _box(res, names: dict) -> dict:
                 gt = last_gt + max(1, prev_left - left)
             prev_left = left
         gt = max(gt, last_gt)
+        if kind in ("XP", "2P", "KO") and plays:                          # rules version 5: a try and a kickoff are shown a few seconds apart, so each can be run on the field
+            gt = max(gt, last_gt + 4)
         last_gt = gt
         if kind == "IJ":                                                  # a player is hurt (rules version 4): who, who comes in, and which injury (its number in injuries.KIND_NAMES)
             row = [off, down, to_go, pos, 0, 0, kind, idx.get(a, -1), idx.get(b, -1), c, q2, left, 1 if ot else 0, di, gt]
         elif kind in ("PN", "TO"):                                          # a penalty (number, side fouled, offender) or a timeout (team, timeouts left): numbers, not players
             row = [off, down, to_go, pos, yds, 0, kind, a, b, idx.get(c, -1) if c is not None and c >= 0 else -1, q2, left, 1 if ot else 0, di, gt]
         else:
-            row = [off, down, to_go, pos, yds, TURN[to], kind, idx.get(a, -1) if a is not None else -1, idx.get(b, -1) if (b is not None and kind != "FG") else (b if b is not None else -1),
-                   idx.get(c, -1) if (c is not None and kind != "FG") else (c if c is not None else -1), q2, left, 1 if ot else 0, di, gt]
+            row = [off, down, to_go, pos, yds, to if kind == "KO" else TURN[to], kind, idx.get(a, -1) if a is not None else -1,       # (a kickoff carries its outcome code where a turnover goes)
+                   idx.get(b, -1) if (b is not None and kind not in ("FG", "XP")) else (b if b is not None else -1),
+                   idx.get(c, -1) if (c is not None and c >= 0 and kind not in ("FG", "XP", "2P")) else (c if c is not None else -1), q2, left, 1 if ot else 0, di, gt]
         plays.append(row + (list(rec[15:17]) if v2 else []))
     out = dict(n=res.ot_periods, tb=1 if res.coin_flip_tiebreak else 0, pl=pl, tm=tm, dr=dr, p=plays)
     if v2:
         out["v"] = 2                                                      # rules version 2: penalties and timeouts are in the log
         out["pen"] = [[t["pen"], t["pen_yds"]] for t in res.team]
+    if any(r[6] == "KO" for r in plays):
+        out["ko"] = 1                                                     # rules version 5: kickoffs and conversions are in the log
     if any(r[6] == "IJ" for r in plays):
         out["inj"] = 1                                                    # rules version 4: players are hurt during the game
     return out
