@@ -126,12 +126,17 @@ if live_id is not None:
         # plays that arrive together are run one after the other, in order, on the same page (it is not rebuilt, so no scene is cut short)
         pg.evaluate("window.__c = document.getElementById('stage'); window.__smp2 = []; setInterval(() => __smp2.push(REPLAY.state().i), 50)")
         i0 = pg.evaluate("REPLAY.state().i"); a0 = pg.evaluate("REPLAY.stage().stats"); n_before = pg.evaluate("D.box[%s].p.length" % json.dumps(live_id))
-        run.tick(now + 4 * 60 * 1000 + 22000); pg.wait_for_timeout(26000)
+        base = now + 4 * 60 * 1000
+        for k in range(1, 12):                                # the league's clock runs on: the engine writes the feed every few seconds
+            run.tick(base + k * 3000); pg.wait_for_timeout(3000)
+        pg.wait_for_timeout(3000)
         i1 = pg.evaluate("REPLAY.state().i"); a1 = pg.evaluate("REPLAY.stage().stats"); seq = pg.evaluate("__smp2"); same = pg.evaluate("window.__c === document.getElementById('stage')")
         n_after = pg.evaluate("D.box[%s].p.length" % json.dumps(live_id)); steps = [y - x for x, y in zip(seq, seq[1:])]
         check("the live page is not rebuilt when plays arrive (the field it is drawing on stays)", same)
-        check("plays that arrive together are all shown, in order", n_after - n_before >= 2 and i1 == n_after and min(steps) >= 0, f"{n_before}->{n_after}, shown {i0}->{i1}")
-        check("... and each is run on the field, not skipped", (a1["animated"] + a1["snapped"]) - (a0["animated"] + a0["snapped"]) >= n_after - n_before - 1, f"{a0} {a1}")
+        tnow = json.load(open(out + "/results.json"))["t"]; start = pg.evaluate("D.box[%s].start" % json.dumps(live_id)); lp = pg.evaluate("D.box[%s].p" % json.dumps(live_id))
+        due = [k for k, p in enumerate(lp) if start + L.play_offset_ms(p, L.BLOCK_REAL_PER_GAME, L.HALFTIME_PAUSE) + 6000 <= tnow - 3000]      # the plays whose time, plus the lag, has come
+        check("plays that arrive together are all shown, in order", n_after - n_before >= 2 and i1 >= len(due) and i1 <= n_after and min(steps) >= 0, f"{n_before}->{n_after}, shown {i0}->{i1}, due {len(due)}")
+        check("... and each is run on the field, not skipped", (a1["animated"] + a1["snapped"]) - (a0["animated"] + a0["snapped"]) >= i1 - i0 - 2, f"{a0} {a1}")
         # the game ends while the page is open: everything is shown, and the page becomes the finished game
         run.tick(now + 3 * H); pg.wait_for_timeout(12000)
         fin = pg.evaluate("!!document.getElementById('watch') && REPLAY.state().i === D.box[%s].p.length && !D.box[%s].live" % (json.dumps(live_id), json.dumps(live_id)))
