@@ -31,7 +31,8 @@ def build(out: str, seed: int = 7, live: bool = False, rules: int = 1) -> int:
     d = site_export.export(seed, rules)
     data = json.dumps(spoiler_free(d) if live else d, separators=(",", ":")).replace("</", "<\\/")      # safe inside a script tag
     stage = open(os.path.join(ROOT, "site", "stage.js"), encoding="utf-8").read()
-    html = open(os.path.join(ROOT, "site", "template.html"), encoding="utf-8").read().replace("__STAGE__", stage).replace("__DATA__", data)
+    stage3d = open(os.path.join(ROOT, "site", "stage3d.js"), encoding="utf-8").read()
+    html = open(os.path.join(ROOT, "site", "template.html"), encoding="utf-8").read().replace("__STAGE__", stage).replace("__STAGE3D__", stage3d).replace("__DATA__", data)
     with open(out, "w", encoding="utf-8") as f:
         f.write(html)
     return len(html)

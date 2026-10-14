@@ -133,6 +133,7 @@ select, .btn { font: inherit; padding: 7px 12px; border: 1px solid var(--line); 
 .stagewrap canvas { display: block; width: 100%; height: clamp(220px, 31vw, 380px); }
 .stagebar { display: flex; justify-content: flex-end; align-items: center; gap: 10px; margin-top: 6px; color: var(--muted); font-size: 14px; }
 .stagebar .btn { padding: 3px 12px; font-size: 15px; }
+.stagewrap canvas.gl { display: block; }
 @media (max-width: 700px) { .stagewrap canvas { height: clamp(190px, 58vw, 280px); } }
 .fld .ball { position: absolute; top: 38px; width: 28px; height: 16px; margin-left: -14px; border-radius: 50%; background: #9A5F2B; border: 2px solid #1A0F06; transition: left .35s; } .fld .ball::after { content: ""; position: absolute; left: 7px; right: 7px; top: 4px; border-top: 2px solid #fff; }
 .dch { margin-top: 12px; max-height: 232px; overflow: auto; } .dch .row { display: grid; grid-template-columns: 62px 1fr 92px; gap: 8px; align-items: center; height: 19px; font-family: var(--mono); font-weight: 500; font-size: 13px; color: var(--muted); }
@@ -159,6 +160,7 @@ footer { max-width: 1080px; margin: 40px auto 0; color: var(--muted); font-size:
 <footer id="foot"></footer>
 <script id="data" type="application/json">__DATA__</script>
 <script>__STAGE__</script>
+<script>__STAGE3D__</script>
 <script>
 "use strict";
 const D = JSON.parse(document.getElementById("data").textContent);
@@ -548,7 +550,7 @@ function game(id) {
   <div class="sitrow"><div id="poss"></div><div class="dd" id="dd"></div><div class="r" id="drv1"></div></div>
   <div class="fld" id="field" aria-hidden="true">${fieldMarks(A, H)}<span class="trail" id="trail"></span><span class="first" id="first"></span><span class="los" id="los"></span><span class="ball" id="ball"></span></div>
   <div class="stagewrap" id="stagewrap" hidden><canvas id="stage" role="img" aria-label="Animated field: the plays of the game as they are run. The play by play below tells the same story in words."></canvas></div>
-  <div class="stagebar"><span id="animnote"></span><button class="btn" id="anim" type="button" aria-pressed="false">Animation: off</button></div>
+  <div class="stagebar"><span id="animnote"></span><button class="btn" id="view3d" type="button" hidden>View: 2D</button><button class="btn" id="anim" type="button" aria-pressed="false">Animation: off</button></div>
   <p id="sit" style="margin-top:6px;color:var(--muted);font-size:14px;max-width:none"></p><div class="dch" id="dch"></div>
   ${live ? `<p class="note" style="margin-top:12px"><b style="color:var(--accent)">LIVE</b> This game is being played now. Each play appears here as it happens, and you can replay it once it is over.</p>` : `<div class="controls" style="margin-top:12px"><button class="btn primary" id="watch">Watch replay</button><button class="btn" id="pause" disabled>Pause</button><label style="color:var(--muted);font-size:14px">Speed <select id="speed"><option value="1">1x (about ${realLen} min)</option><option value="4">4x</option><option value="16">16x</option><option value="60">60x</option></select></label><button class="btn" id="final">Skip to final</button></div>`}</div>
   <div class="grid wide"><div class="stack" style="padding-top:0;gap:8px"><h3>Play by play</h3><div class="tablewrap feed" id="feed"></div></div>
@@ -601,8 +603,16 @@ function startGame(id) {
   const setAnim = on => {
     on = !!on && !!ST; $("anim").textContent = "Animation: " + (on ? "on" : "off"); $("anim").setAttribute("aria-pressed", on ? "true" : "false");
     $("stagewrap").hidden = !on; $("field").style.display = on ? "none" : "";
-    if (on && !stage) stage = new ST.Stage($("stage"), { H, A });
+    if (on && !stage) { stage = new ST.Stage($("stage"), { H, A }); applyView(); }
     if (!on && stage) { stage.destroy(); stage = null; }
+    $("view3d").hidden = !on || !window.DFLStage3D;
+  };
+  /* the field can be drawn flat (2D, always works) or in 3D (site/stage3d.js, which fetches three.js the first time and gives up quietly to the 2D field when it cannot) */
+  const VIEWS = ["2d", "side", "behind"], VLAB = { "2d": "View: 2D", side: "View: 3D sideline", behind: "View: 3D behind the offense" };
+  let view = (() => { try { const v = localStorage.getItem("dfl.view"); if (VIEWS.includes(v)) return v; } catch (err) {} return "2d"; })();
+  const applyView = () => {
+    $("view3d").textContent = VLAB[view];
+    if (stage) stage.set3d(view, st => { if (st === "fail") { view = "2d"; $("view3d").textContent = VLAB["2d"]; $("animnote").textContent = "The 3D view could not start in this browser, so the field stays flat."; } else if (st === "ok") $("animnote").textContent = ""; });
   };
   const sceneFor = i => {
     const pl = plays[i], nx = plays[i + 1];
@@ -680,6 +690,7 @@ function startGame(id) {
     $("speed").onchange = ev => { speed = +ev.target.value; };
     $("final").onclick = () => finish();
   }
+  $("view3d").onclick = () => { view = VIEWS[(VIEWS.indexOf(view) + 1) % VIEWS.length]; try { localStorage.setItem("dfl.view", view); } catch (err) {} applyView(); };
   $("anim").onclick = () => { const on = !stage; try { localStorage.setItem("dfl.anim", on ? "1" : "0"); } catch (err) {} setAnim(on); if (stage) paintField(false); };
   /* A live game: the page is not rebuilt when a poll brings new plays. They go into a queue and are played out on the field one at a time, each at the real time it happened plus a fixed lag
      (a play is on the feed within about six seconds of it happening; the lag takes that out, so the plays come at the pace of the game instead of in bunches). A play that is long overdue
