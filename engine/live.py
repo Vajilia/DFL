@@ -280,7 +280,7 @@ class World:
         self.seed, self.epoch_ms, self.pacing = seed, epoch_ms, pacing
         self.rpg = (BLOCK_REAL_PER_GAME if pacing == "blocks" else REAL_PER_GAME) if rpg is None else float(rpg)
         self.half = HALFTIME_PAUSE if half is None else float(half)
-        self.rules = int(rules)                              # rules version 1: as first played; 2: penalties and timeouts (new leagues only)
+        self.rules = int(rules)                              # rules version 1: as first played; 2: penalties and timeouts; 3: clock management, spikes and kneels (new leagues only)
         self.profile = parity.apply(profile)                 # the parity profile's dials are set before the league is opened
         self.lg, self.rng = F.open_league(seed)
         self.times = ID.slot_times(self.lg.teams)         # taken now, while the tiers are the founding seeds
@@ -427,7 +427,7 @@ def main(argv=None):
     ap.add_argument("--every", type=float, default=3.0, help="seconds between writes")
     ap.add_argument("--init", action="store_true", help="only write meta.json (fixing the opener) and stop; the service then carries on from it")
     ap.add_argument("--parity", choices=parity.NAMES, default="tight", help="how much the league regulates salaries and protects weak clubs (a NEW league only): tight (the rules as written) or none")
-    ap.add_argument("--rules", type=int, choices=(1, 2), default=2, help="game rules of a NEW league: 2 = penalties and timeouts (default); 1 = the first version, without them")
+    ap.add_argument("--rules", type=int, choices=(1, 2, 3), default=3, help="game rules of a NEW league: 3 = clock management on top of 2 (default); 2 = penalties and timeouts; 1 = the first version, without them")
     ap.add_argument("--pacing", choices=PACINGS, default="blocks", help="how a NEW league runs: blocks (continuous, about 30-minute games) or legacy (a league year spread over a real week)")
     a = ap.parse_args(argv)
     meta = os.path.join(a.out, "meta.json")

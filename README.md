@@ -103,6 +103,7 @@ A seeded league engine with 53-player rosters, character cards, a drive-by-drive
     bash deploy/pause-live.sh pause|resume|status   # on the server: pause the live league
     bash deploy/enable-controls.sh         # on the server, once: the website's Pause / Resume button (a small local service behind the site login)
     python engine/check_control.py         # the pause switch: refuses calls without the header, legacy leagues cannot be paused, the runner obeys it
+    python engine/check_clock.py           # clock management (rules 3): spikes, kneels, and rules 1 and 2 unchanged
     python engine/check_playlog.py         # the play log: recording changes nothing, and replaying it gives the box score back
     python engine/check_skeleton.py        # the Commissioner's schedule skeleton: his year 1, legal under every re-seeding
     python engine/check_relations.py       # the GM and head coach relationship meters

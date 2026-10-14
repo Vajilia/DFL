@@ -395,6 +395,8 @@ function applyPlay(S, b, pl) {
     if (kind === "PN") { const t = S.tm[bb === 0 ? off : 1 - off]; t.pen++; t.penyds += Math.abs(yds); }
     S.last = pl; return;
   }
+  if (kind === "SP") { add(a, "att"); T.att++; T.plays++; S.last = pl; return; }                                // a spike: a pass attempt and a play, no down or distance to count
+  if (kind === "KN") { add(a, "car"); add(a, "cyd", -1); T.rush++; T.rush_yds--; T.plays++; T.yards--; S.last = pl; return; }      // a kneel-down: a carry for a yard lost
   const td = pos + yds >= 100 && to !== 1;
   if (kind === "PC" || kind === "PI" || kind === "IN") { add(a, "att"); add(bb, "tgt"); T.att++; }
   if (kind === "PC") { add(a, "cmp"); add(a, "pyd", yds); add(bb, "rec"); add(bb, "ryd", yds); add(c, "tkl"); T.cmp++; T.pass_yds += yds; if (td) { add(a, "ptd"); add(bb, "rtd"); } }
@@ -443,6 +445,8 @@ function playText(b, pl, x = {}) {
   else if (kind === "PC") t = `${n(a)} completes a pass to ${n(bb)} ${gain(yds)}` + (c >= 0 ? `, tackled by ${n(c)}` : "");
   else if (kind === "PI") t = `${n(a)}'s pass to ${n(bb)} is incomplete`;
   else if (kind === "SK") t = `${n(a)} is sacked by ${n(bb)} ${gain(yds)}`;
+  else if (kind === "SP") t = `${n(a)} spikes the ball to stop the clock`;
+  else if (kind === "KN") t = `${n(a)} takes a knee`;
   else if (kind === "IN") t = `${n(a)}'s pass for ${n(bb)} is intercepted by ${n(c)}` + (res === "INT_TD" ? ", who returns it for a touchdown" : yds > 0 ? `, returned ${yd(yds)}` : "");
   else if (kind === "FG") t = `${n(a)} kicks a ${c}-yard field goal: ${bb === 1 ? "GOOD" : "NO GOOD"}`;
   else { const land = pos + yds; t = `${n(a)} punts ${yd(yds)}` + (land >= 100 ? ", touchback" : `, the ball is spotted at the receiving team's own ${100 - land}`); }
@@ -531,6 +535,8 @@ function startGame(id) {
     const [off, down, toGo, pos, yds, to, kind] = lp;
     if (kind === "TO") return { off, down, toGo, pos };
     if (kind === "PN") { const a = penAfter(lp); return { off, down: a.down, toGo: a.toGo, pos: a.pos }; }
+    if (kind === "SP") return { off, down: down + 1, toGo, pos };
+    if (kind === "KN") return down >= 4 ? null : { off, down: down + 1, toGo: toGo + 1, pos: pos - 1 };
     if (["RU", "PC", "SK"].includes(kind) && !to) {
       const np = Math.max(0, Math.min(100, pos + yds)); if (np >= 100) return null;
       if (yds >= toGo && yds > 0) return { off, down: 1, toGo: Math.min(10, 100 - np), pos: np };
@@ -563,8 +569,8 @@ function startGame(id) {
     }
     $("sit").textContent = done ? "Final." : live && !nx ? "Live: the next play appears when it is run." : "";
     let k0 = nx ? S.i : S.i - 1; const di = cur ? cur[13] : -1; while (k0 > 0 && plays[k0 - 1][13] === di) k0--;
-    const shown = cur ? plays.slice(Math.max(k0, 0), S.i).filter(q => ["RU", "PC", "SK", "PI", "IN"].includes(q[6])) : [];
-    const dyds = shown.reduce((t, q) => t + (["RU", "PC", "SK"].includes(q[6]) && !q[5] ? q[4] : 0), 0);
+    const shown = cur ? plays.slice(Math.max(k0, 0), S.i).filter(q => ["RU", "PC", "SK", "PI", "IN", "SP", "KN"].includes(q[6])) : [];
+    const dyds = shown.reduce((t, q) => t + (["RU", "PC", "SK", "KN"].includes(q[6]) && !q[5] ? q[4] : 0), 0);
     $("drv1").textContent = cur && shown.length ? `Drive ${di + 1} · ${shown.length} play${shown.length === 1 ? "" : "s"} · ${dyds} yds` : "";
     if (sit) {
       const goal = sit.pos + sit.toGo >= 100, st = plays[Math.max(k0, 0)][3];
@@ -579,7 +585,7 @@ function startGame(id) {
     if (b.v === 2 && S.to) { const pips = n => "<span>TO</span>" + [0, 1, 2].map(i => `<i class="${i < n ? "" : "o"}"></i>`).join(""); $("to0").innerHTML = pips(S.to[0]); $("to1").innerHTML = pips(S.to[1]); }
     $("dch").innerHTML = dchHtml(sit, cur ? k0 : 0);
     if (stage) {                                                       // the animated field shows the same situation: the lineup for the next play, or where the last one ended
-      const fs = sit || (lp ? { off: lp[0], down: 1, toGo: 99, pos: Math.max(1, Math.min(99, lp[3] + (["RU", "PC", "SK", "PN"].includes(lp[6]) ? lp[4] : 0))) } : null);
+      const fs = sit || (lp ? { off: lp[0], down: 1, toGo: 99, pos: Math.max(1, Math.min(99, lp[3] + (["RU", "PC", "SK", "PN", "KN"].includes(lp[6]) ? lp[4] : 0))) } : null);
       if (fs) { fs.pos = Math.max(1, Math.min(99, fs.pos)); const so = { kind: nx ? nx[6] : "N", retU: nx && nx[6] === "PU" ? Math.min(nx[4], 100 - nx[3]) + 4 : null, dim: !sit }; lastShown = [fs, so]; stage.show(fs, { ...so, snap: !anim }); }
     }
   }

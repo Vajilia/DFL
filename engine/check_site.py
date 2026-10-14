@@ -85,6 +85,19 @@ if sync_playwright is not None:
     check("rules 2: the page's penalty names and automatic-first-down list are the engine's", r2["names"] == list(game_engine.PENALTY_NAMES) and r2["afd"] == [i for i, p in enumerate(game_engine.PENALTIES) if p[3]], str(r2["names"][:3]))
     check("rules 2: every play of forty games reads as a sentence, and the game page opens without script errors", r2["text"] and not errs2 and "penalt" in txt2.lower(), str(errs2[:2]))
 if sync_playwright is not None:
+    # ---- rules version 3: spikes and kneels (clock management) are in the log, and the page's replay still gives the engine's totals back ----
+    out3 = os.path.join(tempfile.mkdtemp(), "g3.html"); build_site.build(out3, 7, rules=3)
+    JS4 = JS2.replace("if (pl[6] === \"PN\") pens++;", "if (pl[6] === \"PN\") pens++; if (pl[6] === \"SP\") sps++; if (pl[6] === \"KN\") kns++;").replace("let pens = 0, tos = 0;", "let pens = 0, tos = 0, sps = 0, kns = 0;").replace("return { bad: bad.length, pens, tos,", "return { bad: bad.length, pens, tos, sps, kns,")
+    with sync_playwright() as pw:
+        br = pw.chromium.launch(); pg = br.new_page(); errs4 = []
+        pg.on("pageerror", lambda e: errs4.append(str(e)))
+        pg.goto("file://" + out3)
+        r4 = pg.evaluate(JS4)
+        txt4 = pg.evaluate("Object.keys(D.box).slice(0, 400).flatMap(id => D.box[id].p.filter(pl => pl[6] === 'SP' || pl[6] === 'KN').slice(0, 1).map(pl => playText(D.box[id], pl, { abbr: ['AAA', 'BBB'] })[0])).join(' | ')")
+        br.close()
+    check("rules 3: the page's replay of all 401 games gives the engine's totals, spikes and kneels included", r4["bad"] == 0 and r4["sps"] > 100 and r4["kns"] > 300, f"{r4['bad']} bad, {r4['sps']} spikes, {r4['kns']} kneels")
+    check("rules 3: spikes and kneels read as sentences, and the page runs without script errors", "spikes the ball" in txt4 and "takes a knee" in txt4 and r4["text"] and not errs4, str(errs4[:2]))
+if sync_playwright is not None:
     # ---- the Statistics tab: team and player tables add up to the same totals from the same replays ----
     JS3 = """async () => { const run = ++STATS.run; await statsLoad(statGames("reg"), run, () => {});
       const rs = statGames("reg").map(g => STATS.cache[g.id]).filter(Boolean), tr = teamRows(rs, "off"), td = teamRows(rs, "def"), sum = (L, f) => Math.round(L.reduce((a, r) => a + f(r), 0));
