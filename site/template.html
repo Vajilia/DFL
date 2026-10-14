@@ -128,6 +128,11 @@ select, .btn { font: inherit; padding: 7px 12px; border: 1px solid var(--line); 
 .fld .trail.r::after, .fld .trail.l::before { position: absolute; top: -3px; font-size: 14px; line-height: 16px; color: rgba(255,255,255,.85); } .fld .trail.r::after { content: "\25B6"; right: -9px; } .fld .trail.l::before { content: "\25C0"; left: -9px; }
 .fld .los { position: absolute; top: 0; bottom: 0; width: 4px; margin-left: -2px; background: var(--los); box-shadow: 0 0 10px 1px var(--los); transition: left .35s; }
 .fld .first { position: absolute; top: 0; bottom: 0; width: 4px; margin-left: -2px; background: var(--accent); box-shadow: 0 0 10px 1px var(--accent); transition: left .35s; }
+.stagewrap { position: relative; margin-top: 10px; border: 2px solid #0A150F; box-shadow: 0 0 0 1px var(--line), inset 0 8px 18px rgba(0,0,0,.35); background: #05070B; overflow: hidden; }
+.stagewrap canvas { display: block; width: 100%; height: clamp(220px, 31vw, 380px); }
+.stagebar { display: flex; justify-content: flex-end; align-items: center; gap: 10px; margin-top: 6px; color: var(--muted); font-size: 14px; }
+.stagebar .btn { padding: 3px 12px; font-size: 15px; }
+@media (max-width: 700px) { .stagewrap canvas { height: clamp(190px, 58vw, 280px); } }
 .fld .ball { position: absolute; top: 38px; width: 28px; height: 16px; margin-left: -14px; border-radius: 50%; background: #9A5F2B; border: 2px solid #1A0F06; transition: left .35s; } .fld .ball::after { content: ""; position: absolute; left: 7px; right: 7px; top: 4px; border-top: 2px solid #fff; }
 .dch { margin-top: 12px; max-height: 232px; overflow: auto; } .dch .row { display: grid; grid-template-columns: 62px 1fr 92px; gap: 8px; align-items: center; height: 19px; font-family: var(--mono); font-weight: 500; font-size: 13px; color: var(--muted); }
 .dch .bar { position: relative; height: 12px; background: var(--turf); border: 1px solid #0A150F; } .dch .seg { position: absolute; top: 2px; height: 6px; border-radius: 3px; min-width: 3px; } .dch .seg.r::after, .dch .seg.l::before { position: absolute; top: -3px; font-size: 10px; line-height: 12px; } .dch .seg.r::after { content: "\25B6"; right: -7px; } .dch .seg.l::before { content: "\25C0"; left: -7px; }
@@ -152,6 +157,7 @@ footer { max-width: 1080px; margin: 40px auto 0; color: var(--muted); font-size:
 <main class="wrap" id="app"></main>
 <footer id="foot"></footer>
 <script id="data" type="application/json">__DATA__</script>
+<script>__STAGE__</script>
 <script>
 "use strict";
 const D = JSON.parse(document.getElementById("data").textContent);
@@ -478,6 +484,7 @@ function fieldMarks(A, H) {
   return h;
 }
 let REPLAY = null;
+const LIVE_SEEN = {};      // live games: how many plays of each the viewer has already been shown, so that only a play that arrives while the page is open is animated
 function game(id) {
   const g = gameById[id], b = D.box[id]; if (!g) return notFound();
   if (!b) return LIVE ? waitingGame(g) : notFound();
@@ -492,6 +499,8 @@ function game(id) {
     <div class="side r" style="--p:${H.colors[0]}">${badge(H, "lg")}<div><div class="nm">${e(H.name)}</div><small style="color:var(--muted)">${rec(H.record)} · home</small><div class="tos" id="to0"></div></div></div></div>
   <div class="sitrow"><div id="poss"></div><div class="dd" id="dd"></div><div class="r" id="drv1"></div></div>
   <div class="fld" id="field" aria-hidden="true">${fieldMarks(A, H)}<span class="trail" id="trail"></span><span class="first" id="first"></span><span class="los" id="los"></span><span class="ball" id="ball"></span></div>
+  <div class="stagewrap" id="stagewrap" hidden><canvas id="stage" role="img" aria-label="Animated field: the plays of the game as they are run. The play by play below tells the same story in words."></canvas></div>
+  <div class="stagebar"><span id="animnote"></span><button class="btn" id="anim" type="button" aria-pressed="false">Animation: off</button></div>
   <p id="sit" style="margin-top:6px;color:var(--muted);font-size:14px;max-width:none"></p><div class="dch" id="dch"></div>
   ${live ? `<p class="note" style="margin-top:12px"><b style="color:var(--accent)">LIVE</b> This game is being played now. Each play appears here as it happens, and you can replay it once it is over.</p>` : `<div class="controls" style="margin-top:12px"><button class="btn primary" id="watch">Watch replay</button><button class="btn" id="pause" disabled>Pause</button><label style="color:var(--muted);font-size:14px">Speed <select id="speed"><option value="1">1x (about ${realLen} min)</option><option value="4">4x</option><option value="16">16x</option><option value="60">60x</option></select></label><button class="btn" id="final">Skip to final</button></div>`}</div>
   <div class="grid wide"><div class="stack" style="padding-top:0;gap:8px"><h3>Play by play</h3><div class="tablewrap feed" id="feed"></div></div>
@@ -529,7 +538,22 @@ function startGame(id) {
     }
     return null;
   }
-  function paintField() {
+  /* the animated field (site/stage.js) is optional: the strip above it carries the same information, and the page is the same page without it */
+  const ST = window.DFLStage;
+  let stage = null, lastShown = null;
+  const animPref = () => { try { const v = localStorage.getItem("dfl.anim"); if (v === "1" || v === "0") return v === "1"; } catch (err) {} return !(window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches); };
+  const setAnim = on => {
+    on = !!on && !!ST; $("anim").textContent = "Animation: " + (on ? "on" : "off"); $("anim").setAttribute("aria-pressed", on ? "true" : "false");
+    $("stagewrap").hidden = !on; $("field").style.display = on ? "none" : "";
+    if (on && !stage) stage = new ST.Stage($("stage"), { H, A });
+    if (!on && stage) { stage.destroy(); stage = null; }
+  };
+  const sceneFor = i => {
+    const pl = plays[i], nx = plays[i + 1];
+    return ST.buildScene(pl, { nm: j => b.pl[j] || null, hint: nx && nx[13] !== pl[13] ? (nx[0] === pl[0] ? nx[3] : 100 - nx[3]) : null, dr: lastOfDrive[i] ? b.dr[pl[13]] : null, abbr: [H.abbr, A.abbr], pen: PEN[pl[7]] ? PEN[pl[7]][0] : "" });
+  };
+  const availFor = i => plays[i + 1] ? (real(plays[i + 1]) - real(plays[i])) / speed : 6;
+  function paintField(anim) {
     const lp = S.last, nx = plays[S.i], done = !live && S.i >= plays.length, cur = nx || lp;
     let sit = nx ? { off: nx[0], down: nx[1], toGo: nx[2], pos: nx[3] } : null, word = "";
     if (!nx) {
@@ -554,6 +578,10 @@ function startGame(id) {
     }
     if (b.v === 2 && S.to) { const pips = n => "<span>TO</span>" + [0, 1, 2].map(i => `<i class="${i < n ? "" : "o"}"></i>`).join(""); $("to0").innerHTML = pips(S.to[0]); $("to1").innerHTML = pips(S.to[1]); }
     $("dch").innerHTML = dchHtml(sit, cur ? k0 : 0);
+    if (stage) {                                                       // the animated field shows the same situation: the lineup for the next play, or where the last one ended
+      const fs = sit || (lp ? { off: lp[0], down: 1, toGo: 99, pos: Math.max(1, Math.min(99, lp[3] + (["RU", "PC", "SK", "PN"].includes(lp[6]) ? lp[4] : 0))) } : null);
+      if (fs) { fs.pos = Math.max(1, Math.min(99, fs.pos)); const so = { kind: nx ? nx[6] : "N", retU: nx && nx[6] === "PU" ? Math.min(nx[4], 100 - nx[3]) + 4 : null, dim: !sit }; lastShown = [fs, so]; stage.show(fs, { ...so, snap: !anim }); }
+    }
   }
   function dchHtml(sit, k0) {
     const row = (k, side, p0, p1, label, cls) => { const x0 = FX(side, p0), x1 = FX(side, p1), c = (side === 0 ? H : A).colors[0];
@@ -564,13 +592,13 @@ function startGame(id) {
     if (sit && lp && lp[13] >= S.drivesDone || (sit && plays[S.i] && plays[S.i][13] >= S.drivesDone)) { const di = sit ? (plays[S.i] || lp)[13] : -1; if (di >= S.drivesDone) rows.push(row(di, sit.off, plays[Math.max(k0, 0)][3], sit.pos, "in progress", "")); }
     return rows.length ? rows.reverse().join("") : `<div class="row"><span></span><span>The drives of the game appear here, newest first.</span><span></span></div>`;
   }
-  function paint(final) {
+  function paint(final, anim) {
     const lp = S.last, [sa, sh] = [S.score[1], S.score[0]];
     $("sa").textContent = sa; $("sh").textContent = sh;
     const done = !live && S.i >= plays.length;
     if (done) { $("sa").textContent = g.ap; $("sh").textContent = g.hp; }
     $("st").textContent = done ? (b.n ? `Final / OT${b.n > 1 ? b.n : ""}` : "Final") : lp ? (live ? "LIVE · " : "") + clock(lp[10], lp[11], lp[12]) : live ? "LIVE" : "Kickoff";
-    paintField();
+    paintField(anim);
     $("tstats").innerHTML = rowsFor().map(([lab, f]) => `<div class="statrow"><span>${f(S.tm[1])}</span><span>${lab}</span><span style="text-align:left">${f(S.tm[0])}</span></div>`).join("")
       .replace(/^/, `<div class="statrow" style="font-weight:700"><span>${e(A.abbr)}</span><span></span><span style="text-align:left">${e(H.abbr)}</span></div>`);
     $("la").innerHTML = leadersHtml(S, b, 1); $("lh").innerHTML = leadersHtml(S, b, 0);
@@ -581,18 +609,29 @@ function startGame(id) {
     return `<div class="${cls}"><span class="c">${clock(pl[10], pl[11], pl[12])}</span><span>${e(txt)}</span></div>` + (first ? `<div class="hd"><span class="c"></span><span>Drive ${pl[13] + 1}: ${e(names[pl[0]])}, starting at ${spot(b.dr[pl[13]] ? b.dr[pl[13]][2] : pl[3])}</span></div>` : "") + periodNote(plays[i - 1], pl, S.score, abbr); };
   function step() { const pl = plays[S.i]; applyPlay(S, b, pl); if (lastOfDrive[S.i]) endDrive(S, b, pl[13]); $("feed").insertAdjacentHTML("afterbegin", lineHtml(S.i)); S.i++; }
   function reset() { S = freshState(b); $("feed").innerHTML = ""; vt = 0; paint(); }
-  function finish() { stop(); while (S.i < plays.length) step(); b.dr.forEach((d, k) => { if (k >= S.drivesDone) endDrive(S, b, k); }); paint(true); }
+  function finish(soft) { stop(); while (S.i < plays.length) step(); b.dr.forEach((d, k) => { if (k >= S.drivesDone) endDrive(S, b, k); }); paint(true, soft); }      // soft: the replay has just run its last play, so let the animation of it finish
   function stop() { if (timer) clearInterval(timer); timer = null; running = false; if (live) return; $("pause").disabled = true; $("pause").textContent = "Pause"; }
   function run() { running = true; $("pause").disabled = false; $("pause").textContent = "Pause";
-    timer = setInterval(() => { vt += 0.1 * speed; let moved = false; while (S.i < plays.length && real(plays[S.i]) <= vt) { step(); moved = true; } if (moved) paint(); if (S.i >= plays.length) finish(); }, 100); }
+    timer = setInterval(() => { vt += 0.1 * speed; let moved = false; while (S.i < plays.length && real(plays[S.i]) <= vt) { step(); moved = true; } if (moved) { if (stage) stage.play(sceneFor(S.i - 1), availFor(S.i - 1)); paint(false, true); } if (S.i >= plays.length) finish(true); }, 100); }
   if (!live) {
     $("watch").onclick = () => { stop(); reset(); run(); };
     $("pause").onclick = () => { if (running) { clearInterval(timer); timer = null; running = false; $("pause").textContent = "Resume"; } else run(); };
     $("speed").onchange = ev => { speed = +ev.target.value; };
     $("final").onclick = () => finish();
   }
-  REPLAY = { stop, finish, state: () => S, reset, step, paint };
+  $("anim").onclick = () => { const on = !stage; try { localStorage.setItem("dfl.anim", on ? "1" : "0"); } catch (err) {} setAnim(on); if (stage) paintField(false); };
+  REPLAY = { stop, finish, state: () => S, reset, step, paint, stage: () => stage, sceneFor, destroy: () => { if (stage) { stage.destroy(); stage = null; } } };
+  setAnim(animPref());
   finish();                                  // open on the finished game; "Watch replay" starts it from kickoff
+  if (live) {                                // a play that arrives while the page is open is run on the field; the ones already shown are not
+    const seen = LIVE_SEEN[id]; LIVE_SEEN[id] = plays.length;
+    if (stage && seen != null && plays.length > seen && plays.length) {
+      const li = plays.length - 1, lp0 = plays[li], keep = lastShown;
+      stage.show({ off: lp0[0], down: lp0[1], toGo: lp0[2], pos: Math.max(1, Math.min(99, lp0[3])) }, { snap: true, kind: lp0[6] });
+      stage.play(sceneFor(li), null);
+      if (keep) stage.show(keep[0], keep[1]);
+    }
+  }
 }
 
 
@@ -890,7 +929,7 @@ function render(scroll = true) {
   if (LIVE && !FEED.results.year && page !== "live" && ["standings", "schedule", "playoffs", "club"].includes(page)) { location.hash = "live"; return; }
   const html = page === "live" ? livePage() : page === "standings" ? standings() : page === "schedule" ? schedule(+parts[1] || (LIVE ? curWeek() : 1)) : page === "guide" ? guide() : page === "playoffs" ? playoffs() : page === "clubs" ? clubsPage() : page === "club" ? club(parts[1])
     : page === "game" ? game(parts[1]) : page === "player" ? player(parts[1], +parts[2]) : page === "players" ? playersPage() : page === "stats" ? statsPage(parts[1]) : page === "seasons" ? seasonsPage(parts[1]) : page === "founding" ? founding() : page === "calendar" ? calendarPage() : notFound();
-  if (REPLAY) { REPLAY.stop(); REPLAY = null; }
+  if (REPLAY) { REPLAY.stop(); if (REPLAY.destroy) REPLAY.destroy(); REPLAY = null; }
   const banner = LIVE && FEED.view && page !== "seasons" ? `<div class="stack" style="padding-bottom:0"><p class="note" style="margin:0"><b>You are looking back at season ${e(D.season)}, a finished season.</b> <a href="#seasons">All seasons</a> · <a href="#live" data-live="1">Back to live</a></p></div>` : "";
   document.getElementById("app").innerHTML = banner + html;
   if (page === "game") startGame(parts[1]);
