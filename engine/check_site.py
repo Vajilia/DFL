@@ -128,6 +128,18 @@ if sync_playwright is not None:
         ok = ok and all(float(g[0]) == g[1] for g in m["gb"])
         if not ok: bad.append(m)
     check("standings: the leader's magic number reads Won, Clinched or M n exactly when the games left say so, at six points of the season, and GB is the half-game gap", not bad and sum(1 for m in rs["magic"] if m["cell"].startswith("M ")) > 10, str(bad[:2]))
+    # ---- rules version 3: spikes and kneels (clock management) are in the log, and the page's replay still gives the engine's totals back ----
+    out3 = os.path.join(tempfile.mkdtemp(), "g3.html"); build_site.build(out3, 7, rules=3)
+    JS4 = JS2.replace("if (pl[6] === \"PN\") pens++;", "if (pl[6] === \"PN\") pens++; if (pl[6] === \"SP\") sps++; if (pl[6] === \"KN\") kns++;").replace("let pens = 0, tos = 0;", "let pens = 0, tos = 0, sps = 0, kns = 0;").replace("return { bad: bad.length, pens, tos,", "return { bad: bad.length, pens, tos, sps, kns,")
+    with sync_playwright() as pw:
+        br = pw.chromium.launch(); pg = br.new_page(); errs4 = []
+        pg.on("pageerror", lambda e: errs4.append(str(e)))
+        pg.goto("file://" + out3)
+        r4 = pg.evaluate(JS4)
+        txt4 = pg.evaluate("Object.keys(D.box).slice(0, 400).flatMap(id => D.box[id].p.filter(pl => pl[6] === 'SP' || pl[6] === 'KN').slice(0, 1).map(pl => playText(D.box[id], pl, { abbr: ['AAA', 'BBB'] })[0])).join(' | ')")
+        br.close()
+    check("rules 3: the page's replay of all 401 games gives the engine's totals, spikes and kneels included", r4["bad"] == 0 and r4["sps"] > 100 and r4["kns"] > 300, f"{r4['bad']} bad, {r4['sps']} spikes, {r4['kns']} kneels")
+    check("rules 3: spikes and kneels read as sentences, and the page runs without script errors", "spikes the ball" in txt4 and "takes a knee" in txt4 and r4["text"] and not errs4, str(errs4[:2]))
 if sync_playwright is not None:
     # ---- the Statistics tab: team and player tables add up to the same totals from the same replays ----
     JS3 = """async () => { const run = ++STATS.run; await statsLoad(statGames("reg"), run, () => {});

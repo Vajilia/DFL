@@ -81,6 +81,12 @@ class EngineParams:
     pen_rate: float = 0.085            # chance a scrimmage down is wiped out by an accepted penalty (NFL: about 11 a game between the two teams)
     timeout_prob: float = 0.75         # a trailing team with a timeout left, late in a half, calls one after a play that kept the clock running
     timeout_refund: float = 12.0       # the most seconds of clock a timeout saves
+    # rules version 3 (new leagues only): the clock at the end of a half
+    late_secs: float = 22.0            # a team in field-goal range that needs the points kicks, or spikes the ball to stop the clock, when this little time is left in a half
+    spike_secs: float = 3.0
+    half_timeout_prob: float = 0.5     # the chance the team with the ball calls a timeout after a play that kept the clock running, at the end of the first half
+    kneel_clock: float = 40.0          # a kneel-down lets about this much clock run (the play clock)
+    kneel_left: float = 3.0            # a timeout called after a kneel saves all but this much of it
 
 
 Q_SECS = 900
@@ -241,6 +247,11 @@ class _Game:
         if self.in_ot:
             return True                         # overtime is played at the two-minute pace (NFL: no-huddle, clock managed for a last kick)
         behind = self.score[off] < self.score[1 - off]
+        if self.P.rules >= 3:
+            if self.quarter == 2 and self.t < 120:
+                return True                     # the end of the first half is played at the two-minute pace by any offense: the points are there to be had
+            if self.quarter == 4 and self.t < 120 and self.score[off] == self.score[1 - off]:
+                return True
         if not behind:
             return False
         return (self.quarter == 4 and self.t < 300) or (self.quarter == 2 and self.t < 120)
@@ -267,24 +278,29 @@ class _Game:
             self._p(who_)                                   # the offender is named in the box even with no other stat (a lookup, no random number)
         return i, side, yds, afd, who_.id if who_ is not None else -1
 
-    def _timeout_check(self, off: int, down: int, to_go: int, pos: int, spent: float):
-        """After a play that kept the clock running: late in a half, the trailing team (within two scores) with a timeout left may call one and save some of the clock."""
+    def _timeout_check(self, off: int, down: int, to_go: int, pos: int, spent: float) -> bool:
+        """After a play that kept the clock running: late in a half, the trailing team (within two scores) with a timeout left may call one and save some of the clock.
+        Rules version 3: at the end of the first half the team with the ball calls it, whatever the score. Returns True if a timeout was called."""
         P = self.P
         q = self.quarter
         if self.in_ot or self.period_over or not ((q == 2 and self.t <= 120) or (q == 4 and self.t <= 300)):
-            return
+            return False
         a, b = self.score[0], self.score[1]
-        if a == b or abs(a - b) > 16:
-            return
-        trail = 0 if a < b else 1
-        if self.to[trail] <= 0 or self.rng.random() >= P.timeout_prob:
-            return
+        if P.rules >= 3 and q == 2 and self.to[off] > 0:
+            trail = off
+        else:
+            if a == b or abs(a - b) > 16:
+                return False
+            trail = 0 if a < b else 1
+        if self.to[trail] <= 0 or self.rng.random() >= (P.half_timeout_prob if P.rules >= 3 and q == 2 and trail == off else P.timeout_prob):
+            return False
         self.to[trail] -= 1
         back = min(P.timeout_refund, max(0.0, spent))
         self.t += back
         self.res.team[off]["top_secs"] -= back
         if self.rec:
             self._log(off, down, to_go, pos, 0, False, "TO", trail, self.to[trail])
+        return True
 
     # -- kicks ----------------------------------------------------------------
     def _kick_start(self) -> int:
@@ -325,11 +341,78 @@ class _Game:
         next_off = 1 - off
         start_secs_total = tm["top_secs"]
         tm["drives"] += 1
+        stopped = True                                  # is the clock stopped? (rules version 3: a spike is only worth it when it is running)
 
         while True:
             dist_goal = 100 - pos
+            force_kick = False
+            if P.rules >= 3 and not self.in_ot and self.quarter in (2, 4):
+                # ---- the end of a half (rules version 3): run the clock out, kick for the points, or stop the clock to be able to
+                lead = self.score[off] - self.score[1 - off]
+                in_range = dist_goal + 17 <= 56 + (me.feats["k_pow"] - P.ref) * 0.12
+                if self.quarter == 4 and lead > 0 and pos >= 3 and self.t > 0:
+                    kneels, theirs = 5 - down, self.to[1 - off]
+                    if max(0, kneels - theirs) * P.kneel_clock + min(kneels, theirs) * P.kneel_left >= self.t + 2:
+                        qb = lu_o.qb
+                        qd = self._p(qb)
+                        tm["rush_att"] += 1
+                        tm["rush_yds"] -= 1
+                        tm["plays"] += 1
+                        tm["yards"] -= 1
+                        self._bump(qd, "rush_att")
+                        self._bump(qd, "rush_yds", -1)
+                        t_before = self.t
+                        self._tick(P.kneel_clock, off)
+                        if self.rec:
+                            self._log(off, down, to_go, pos, -1, False, "KN", qb.id)
+                        plays += 1
+                        yards -= 1
+                        pos, down, to_go = pos - 1, down + 1, to_go + 1
+                        if self.period_over:
+                            result = "END_PERIOD"
+                            break
+                        if down == 5:
+                            result = "DOWNS"
+                            next_start = int(min(99, max(1, 100 - pos)))
+                            break
+                        stopped = False
+                        if self.to[1 - off] > 0 and rng.random() < P.timeout_prob:      # the trailing team stops the clock after the kneel
+                            back = max(0.0, (t_before - self.t) - P.kneel_left)
+                            self.to[1 - off] -= 1
+                            self.t += back
+                            tm["top_secs"] -= back
+                            stopped = True
+                            if self.rec:
+                                self._log(off, down, to_go, pos, 0, False, "TO", 1 - off, self.to[1 - off])
+                        continue
+                need_pts = self.quarter == 2 or lead <= 0
+                want_fg = in_range and (self.quarter == 2 or -3 <= lead <= 0)
+                spike = False
+                if want_fg and self.t <= P.late_secs:
+                    if not stopped and self.t > 10 and down <= 3:
+                        spike = True
+                    else:
+                        force_kick = True
+                elif need_pts and not stopped and self.t <= 28 and down <= 2 and pos >= 45:
+                    spike = True
+                if spike:
+                    qb = lu_o.qb
+                    qd = self._p(qb)
+                    tm["pass_att"] += 1
+                    tm["plays"] += 1
+                    self._bump(qd, "pass_att")
+                    self._tick(P.spike_secs, off)
+                    if self.rec:
+                        self._log(off, down, to_go, pos, 0, False, "SP", qb.id)
+                    plays += 1
+                    down += 1
+                    stopped = True
+                    if self.period_over:
+                        result = "END_PERIOD"
+                        break
+                    continue
             # ---- fourth down decision
-            if down == 4:
+            if down == 4 or force_kick:
                 late_trail = (not self.in_ot and self.quarter == 4 and self.t < 420 and self.score[off] < self.score[1 - off])
                 ot_trail = self.in_ot and self.score[off] < self.score[1 - off]
                 fg_dist = dist_goal + 17
@@ -337,7 +420,9 @@ class _Game:
                 kick_ok = fg_dist <= fg_max
                 trailing_by = self.score[1 - off] - self.score[off]
                 go = False
-                if kick_ok:
+                if force_kick:
+                    pass
+                elif kick_ok:
                     if to_go <= 1 and dist_goal <= 8 and rng.random() < 0.35:
                         go = True
                     if late_trail and trailing_by > 3 and self.t < 240:
@@ -362,7 +447,7 @@ class _Game:
                         made = self._fg_make(off, fg_dist)
                         self._tick(5 + 0, off)
                         if self.rec:
-                            self._log(off, 4, to_go, pos, fg_dist, False, "FG", k.id, 1 if made else 0, int(fg_dist))
+                            self._log(off, down, to_go, pos, fg_dist, False, "FG", k.id, 1 if made else 0, int(fg_dist))
                         if made:
                             tm["fgm"] += 1
                             self._bump(kd, "fgm")
@@ -448,6 +533,7 @@ class _Game:
                     if self.rec:
                         self._log(off, down, to_go, pos, gain, False, "PN", pi, side, culprit)
                     pos, down, to_go = new_pos, new_down, new_togo
+                    stopped = True
                     if self.period_over:
                         result = "END_PERIOD"
                         break
@@ -619,8 +705,10 @@ class _Game:
             if self.period_over:
                 result = "END_PERIOD"
                 break
+            stopped = kind == "PI"
             if P.rules >= 2 and kind in ("RU", "PC", "SK") and self.quarter == q_before:
-                self._timeout_check(off, down, to_go, pos, t_before - self.t)
+                if self._timeout_check(off, down, to_go, pos, t_before - self.t):
+                    stopped = True
 
         rec = dict(team=me.name, side=off, quarter=q0, start=start, plays=plays, yards=yards,
                    secs=int(tm["top_secs"] - start_secs_total), result=result, pts=pts, def_pts=def_pts)
