@@ -150,6 +150,7 @@ function buildScene(P, ctx) {
   else if (kind === "SP") spikeScene(H);
   else if (kind === "KN") kneelScene(H);
   else if (kind === "TO") { S.banner(.1, 1.7, "TIMEOUT", H.ab[a] || "", "plain"); S.endSpot = { off, u: 0 }; S.dur = Math.max(S.dur, 1.9); }
+  else if (kind === "IJ") { S.banner(.1, 2.6, "INJURY", name(a) ? `${name(a)} leaves the game${name(bb) ? ` · ${name(bb)} comes in` : ""}` : "", "plain"); S.endSpot = { off, u: 0 }; S.dur = Math.max(S.dur, 2.8); }      // rules version 4: a player is hurt and a backup takes her place
   else throw new Error("unknown play kind " + kind);
   S.dur += .3;
   S.balls.sort((x, y) => x.t0 - y.t0);

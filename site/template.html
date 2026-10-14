@@ -143,7 +143,7 @@ button.chip { cursor: pointer; } .stat-th { cursor: pointer; user-select: none; 
 a.fork { display: block; color: var(--ink); } a.fork:hover { border-color: var(--accent); } a.fork h3 { margin-bottom: 6px; }
 .btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
 .feed { max-height: 460px; overflow: auto; font-size: 16px; } .feed > div { display: grid; grid-template-columns: 74px 1fr; gap: 10px; padding: 7px 14px; border-bottom: 1px solid var(--line); }
-.feed .c { font-family: var(--mono); font-weight: 600; font-size: 14px; color: var(--muted); padding-top: 2px; } .feed .big { background: var(--gold-bg); box-shadow: inset 4px 0 0 var(--accent); font-weight: 700; } .feed .turn { color: var(--loss); font-weight: 600; box-shadow: inset 4px 0 0 var(--loss); } .feed .pen { color: var(--gold); font-weight: 600; } .feed .tmo { color: var(--muted); font-style: italic; } .feed .hd { background: var(--soft); color: var(--muted); font-family: var(--mono); font-weight: 600; font-size: 14px; }
+.feed .c { font-family: var(--mono); font-weight: 600; font-size: 14px; color: var(--muted); padding-top: 2px; } .feed .big { background: var(--gold-bg); box-shadow: inset 4px 0 0 var(--accent); font-weight: 700; } .feed .turn { color: var(--loss); font-weight: 600; box-shadow: inset 4px 0 0 var(--loss); } .feed .pen { color: var(--gold); font-weight: 600; } .feed .tmo { color: var(--muted); font-style: italic; } .feed .inj { color: var(--loss); font-style: italic; } .feed .hd { background: var(--soft); color: var(--muted); font-family: var(--mono); font-weight: 600; font-size: 14px; }
 .statrow { display: grid; grid-template-columns: 1fr auto 1fr; gap: 10px; padding: 6px 0; border-bottom: 1px solid var(--line); font-variant-numeric: tabular-nums; } .statrow span:first-child { text-align: right; } .statrow span:nth-child(2) { color: var(--muted); font-family: var(--mono); font-weight: 500; font-size: 15px; text-align: center; min-width: 110px; } .statrow:last-child { border-bottom: 0; }
 .lead { font-size: 15px; line-height: 1.6; } .lead b { font-weight: 600; } .lead small { color: var(--muted); }
 footer { max-width: 1080px; margin: 40px auto 0; color: var(--muted); font-size: 14px; }
@@ -412,6 +412,7 @@ function applyPlay(S, b, pl) {
   const [off, down, toGo, pos, yds, to, kind, a, bb, c, q, left, ot, di] = pl, T = S.tm[off], D2 = S.tm[1 - off];
   const add = (i, k, n = 1) => { if (i >= 0) S.pl[i][k] = (S.pl[i][k] || 0) + n; };
   if (pl.length > 15) S.to = [pl[15], pl[16]];                                 // rules version 2: timeouts left, home and away, after this play
+  if (kind === "IJ") { S.last = pl; return; }                                  // a player is hurt and a backup comes in: not a play, and no stats change
   if (kind === "TO" || kind === "PN") {                                        // neither is a play: a timeout stops the clock, a penalty wipes the down out
     if (kind === "PN") { const t = S.tm[bb === 0 ? off : 1 - off]; t.pen++; t.penyds += Math.abs(yds); }
     S.last = pl; return;
@@ -444,11 +445,16 @@ function penAfter(pl) {
   const [, down, toGo, pos, yds, , , a, bb] = pl, np = pos + yds, first = bb === 1 && (!!(a >= 0 && PEN_AFD.includes(a)) || yds >= toGo);
   return first ? { pos: np, down: 1, toGo: Math.min(10, 100 - np), first: true } : { pos: np, down, toGo: toGo - yds, first: false };
 }
+const INJ = ["knee", "ankle", "hamstring", "shoulder", "concussion", "foot", "back", "groin", "ribs", "hand", "neck", "other"];      // the same list, in the same order, as injuries.KIND_NAMES (check_site proves it)
 const PEN_AFD = [3, 4, 7, 8, 14, 15, 17];      // the penalties that give the offense an automatic first down (game_engine.PENALTIES, 4th field)
 function playText(b, pl, x = {}) {
   const [off, down, toGo, pos, yds, to, kind, a, bb, c] = pl, n = i => (i >= 0 && b.pl[i] ? b.pl[i][0] : "?");
   const dr = x.drive, res = dr ? dr[6] : "";
   if (kind === "TO") return [`Timeout, ${x.abbr ? x.abbr[a] : "?"} (${bb} left)`, "tmo"];
+  if (kind === "IJ") {
+    const ph = b.pl[a], ik = INJ[c] || "other", team = ph ? (ph[2] === 0 ? 0 : 1) : off, ab = x.abbr ? x.abbr[team] : "?";
+    return [`Injury, ${ab}: ${ph ? ph[1] + " " : ""}${n(a)} is hurt (${ik}) and leaves the game${ik === "concussion" ? " for the concussion protocol" : ""}. ${n(bb)} comes in`, "inj"];
+  }
   if (kind === "PN") {
     const af = penAfter(pl), team = bb === 0 ? off : 1 - off, ab = x.abbr ? x.abbr[team] : "?", nm = PEN[a] ? PEN[a][0] : "Penalty";
     const ys = yds === 0 ? "no yardage" : `${Math.abs(yds)} yard${Math.abs(yds) === 1 ? "" : "s"}`;
@@ -554,7 +560,7 @@ function startGame(id) {
   const GOOD = ["TD", "FG"], BAD = ["INT", "INT_TD", "FUMBLE", "FUMBLE_TD", "DOWNS", "SAFETY", "MISSED_FG"];
   function after(lp) {        // the down, distance and spot after the last play shown, or null when the possession has ended
     const [off, down, toGo, pos, yds, to, kind] = lp;
-    if (kind === "TO") return { off, down, toGo, pos };
+    if (kind === "TO" || kind === "IJ") return { off, down, toGo, pos };
     if (kind === "PN") { const a = penAfter(lp); return { off, down: a.down, toGo: a.toGo, pos: a.pos }; }
     if (kind === "SP") return { off, down: down + 1, toGo, pos };
     if (kind === "KN") return down >= 4 ? null : { off, down: down + 1, toGo: toGo + 1, pos: pos - 1 };
