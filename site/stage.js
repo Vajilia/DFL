@@ -522,18 +522,44 @@ function Stage(cv, o) {
   this.cam = 60; this.sit = null; this.lineLos = null; this.lineFd = null; this.tLos = null; this.tFd = null;
   this.raf = 0; this.last = 0; this.clock = 0; this.layer = null; this.layerKey = ""; this.prevBall = null; this.ballAng = 0;
   this.dead = false; this.stats = { animated: 0, snapped: 0 };
+  this.r3 = null; this.mode = "2d"; this.want3 = null;                       // the 3D view (site/stage3d.js), when it is on
   this.onResize = () => { this.size(); this.draw(); };
   window.addEventListener("resize", this.onResize);
-  if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { this.layerKey = ""; if (!this.dead) this.draw(); });
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { this.layerKey = ""; if (this.r3) this.r3.buildField(); if (!this.dead) this.draw(); });
   this.size();
 }
 Stage.prototype = {
   size() {
     const cv = this.cv, w = Math.max(200, cv.clientWidth || 600), h = Math.max(100, cv.clientHeight || Math.round(w / 3.1)), dpr = Math.min(2, window.devicePixelRatio || 1);
     this.W = w; this.Hh = h; this.dpr = dpr; cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
+    if (this.r3) this.r3.resize(w, h, dpr);
     this.vis = w < 560 ? 30 : 44; this.PX = w / this.vis;
     this.yB = h * .19; this.yF0 = h * .265; this.yF1 = h * .92; this.hF = this.yF1 - this.yF0;
   },
+  /* set3d(mode, done): "2d", "side" or "behind". The 3D view is fetched the first time it is asked for (stage3d.js); done(state) is called with "ok", or with "fail" when it could not
+     be had (no WebGL, no network, a lost context) and the field has stayed or gone back to 2D. */
+  set3d(mode, done) {
+    const S3 = root.DFLStage3D; this.want3 = mode;
+    const fin = st => { if (done) done(st); if (this.onview) this.onview(st, this.mode); };
+    if (mode === "2d" || !mode) { this.drop3(); this.mode = "2d"; this.want3 = null; this.draw(); fin("off"); return; }
+    if (!S3 || !S3.webgl()) { this.drop3(); this.mode = "2d"; this.want3 = null; fin("fail"); return; }
+    if (this.r3) { this.r3.setView(mode); this.mode = mode; this.draw(); fin("ok"); return; }
+    S3.load().then(T => {
+      if (this.dead || this.want3 !== mode) return;
+      if (this.r3) { this.r3.setView(mode); this.mode = mode; this.draw(); fin("ok"); return; }
+      const o = { club: this.club, kit: this.kit, abbr: this.abbr, skins: SKIN, shade, inkOn, rng, font: FONT };
+      try { this.r3 = new S3.Renderer3D(T, o); } catch (e) { this.r3 = null; this.mode = "2d"; this.want3 = null; fin("fail"); return; }
+      this.r3.el.className = "gl"; this.r3.el.addEventListener("webglcontextlost", ev => { ev.preventDefault(); this.drop3(); this.mode = "2d"; this.want3 = null; this.draw(); fin("fail"); });
+      this.cv.parentNode.insertBefore(this.r3.el, this.cv); this.cv.style.position = "absolute"; this.cv.style.left = "0"; this.cv.style.top = "0"; this.cv.style.pointerEvents = "none";
+      this.r3.setView(mode); this.mode = mode; this.size(); this.draw(); fin("ok");
+    }, () => { if (this.want3 === mode) { this.mode = "2d"; this.want3 = null; fin("fail"); } });
+  },
+  drop3() {
+    if (this.r3) { this.r3.dispose(); this.r3 = null; }
+    this.cv.style.position = ""; this.cv.style.left = ""; this.cv.style.top = ""; this.cv.style.pointerEvents = "";
+    this.layerKey = ""; this.size();
+  },
+
   /* the screen position and scale of a world point */
   sx(x) { return (x - (this.cam - this.vis / 2)) * this.PX; },
   sy(v, z) { return this.yF0 + (v / FW) * this.hF - (z || 0) * this.PX * .62; },
@@ -612,13 +638,19 @@ Stage.prototype = {
     return { act: this.rest || [], ball: this.ball, ev: [], t: 0 };
   },
   /* draw one instant of a scene without running it (screenshots and checks) */
-  showAt(sc, t) { this.settle(); this.scene = sc; this.t = t; this.L = 0; this.from = sc.start.map(p => ({ x: p[0], y: p[1] })); const s = sampleScene(sc, t); this.cur = { ball: s.ball }; this.cam = clamp(s.ball.x + sc.dir * 2, this.vis / 2 - 3, 123 - this.vis / 2); this.tLos = sc.los; this.lineLos = sc.los; this.draw(); },
-  destroy() { this.dead = true; if (this.raf) cancelAnimationFrame(this.raf); this.raf = 0; window.removeEventListener("resize", this.onResize); },
+  showAt(sc, t) { this.settle(); this.scene = sc; this.t = t; this.L = 0; this.from = sc.start.map(p => ({ x: p[0], y: p[1] })); const s = sampleScene(sc, t); this.cur = { ball: s.ball }; if (this.r3) this.r3.fresh = true; this.cam = clamp(s.ball.x + sc.dir * 2, this.vis / 2 - 3, 123 - this.vis / 2); this.tLos = sc.los; this.lineLos = sc.los; this.draw(); },
+  destroy() { this.dead = true; this.want3 = null; if (this.r3) this.drop3(); if (this.raf) cancelAnimationFrame(this.raf); this.raf = 0; window.removeEventListener("resize", this.onResize); },
 
   draw() {
     if (this.dead) return;
     const g = this.g, cur = this.current(); this.cur = cur;
     g.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
+    if (this.r3) {                                                  // the 3D view draws the picture; the 2D canvas laid over it carries the banners and the name tags
+      g.clearRect(0, 0, this.W, this.Hh);
+      this.r3.render(cur, { cam: this.cam, dir: this.scene ? this.scene.dir : this.sit ? dirOf(this.sit.off) : 1, clock: this.clock, los: this.lineLos, fd: this.lineFd });
+      if (cur.ev) { this.drawTags(g, cur); this.drawBanners(g, cur); }
+      return;
+    }
     this.drawField(g);
     this.drawLines(g);
     // figures and the ball, far side first
@@ -771,7 +803,7 @@ Stage.prototype = {
     for (const e of cur.ev) {
       if (e.k !== "tag" || cur.t < e.t0 || cur.t > e.t1) continue;
       const a = cur.act[e.a]; if (!a) continue;
-      const team = Math.floor(e.a / 11), kit = this.kit[team], s = this.sc(a.y), sx = this.sx(a.x), sy = this.sy(a.y, 0) - 3.25 * s, fs = Math.max(11, Math.min(15, this.PX * .55));
+      const team = Math.floor(e.a / 11), kit = this.kit[team], s = this.sc(a.y), p3 = this.r3 ? this.r3.project(a.x, a.y, 2.6) : null, sx = p3 ? p3.x : this.sx(a.x), sy = p3 ? p3.y - 24 : this.sy(a.y, 0) - 3.25 * s, fs = Math.max(11, Math.min(15, this.PX * .55));
       g.font = `italic 800 ${fs}px ${FONT}`; const w = g.measureText(e.text.toUpperCase()).width + 24, x = clamp(sx - w / 2, 4, this.W - w - 4), y = clamp(sy, 4, this.Hh - 20);
       g.fillStyle = "rgba(8,12,16,.86)"; g.beginPath(); g.moveTo(x + 5, y); g.lineTo(x + w, y); g.lineTo(x + w - 5, y + fs + 6); g.lineTo(x, y + fs + 6); g.closePath(); g.fill();
       g.fillStyle = kit.jersey; g.fillRect(x + 1, y, 3, fs + 6);
