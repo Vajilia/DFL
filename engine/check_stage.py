@@ -19,7 +19,7 @@ def check(name, ok, detail=""):
 tmp = tempfile.mkdtemp()
 # 1 ------------------------------------------------------------------------------------------------------------------------------
 if shutil.which("node"):
-    d = site_export.export(7, 4)
+    d = site_export.export(7, 5)
     bj = os.path.join(tmp, "box.json"); json.dump({"box": d["box"]}, open(bj, "w"), separators=(",", ":"))
     r = subprocess.run(["node", os.path.join(os.path.dirname(os.path.abspath(__file__)), "check_stage.js"), bj], capture_output=True, text=True)
     try: o = json.loads(r.stdout.strip().splitlines()[-1])
@@ -42,7 +42,7 @@ PIXELS = """() => { const c = document.getElementById('stage'), g = c.getContext
   for (let i = 0; i < d.length; i += 4 * 97) seen.add((d[i] >> 5) * 64 + (d[i + 1] >> 5) * 8 + (d[i + 2] >> 5)); return seen.size; }"""
 
 # 2 ------------------------------------------------------------------------------------------------------------------------------
-root = tempfile.mkdtemp(); build_site.build(os.path.join(root, "index.html"), 7, rules=4)
+root = tempfile.mkdtemp(); build_site.build(os.path.join(root, "index.html"), 7, rules=5)
 srv, url = serve(root)
 with sync_playwright() as pw:
     br = pw.chromium.launch(); errs = []
@@ -93,9 +93,9 @@ srv.shutdown()
 
 # 3 ------------------------------------------------------------------------------------------------------------------------------
 H = 3600 * 1000
-root = tempfile.mkdtemp(); build_site.build(os.path.join(root, "index.html"), 7, live=True, rules=4)
+root = tempfile.mkdtemp(); build_site.build(os.path.join(root, "index.html"), 7, live=True, rules=5)
 now = int(time.time() * 1000)
-meta = dict(seed=7, epoch_ms=0, pacing="blocks", real_per_game=L.BLOCK_REAL_PER_GAME, halftime=L.HALFTIME_PAUSE, parity="tight", rules=4)
+meta = dict(seed=7, epoch_ms=0, pacing="blocks", real_per_game=L.BLOCK_REAL_PER_GAME, halftime=L.HALFTIME_PAUSE, parity="tight", rules=5)
 out = os.path.join(root, "live"); live_id = None; epoch = None
 for hrs in range(2, 60):                                     # find a moment when a game is being played
     meta["epoch_ms"] = now - hrs * H - 600 * 1000 * 3

@@ -91,6 +91,17 @@ class EngineParams:
     kneel_left: float = 3.0            # a timeout called after a kneel saves all but this much of it
     # rules version 4 (new leagues only): players are hurt during the game
     inj_play: float = 0.034            # the chance that a player on the field is hurt on a scrimmage play (fitted so a club has about as many injuries a season, near 33, as the old after-the-game roll gave); she leaves and a healthy player from the bench takes her place
+    # rules version 5 (new leagues only): kickoffs and conversions are plays of their own
+    ko_return_mean: float = 21.0       # yards a returned kickoff is run back from where it is caught
+    ko_return_sd: float = 8.0
+    ko_td: float = 0.007               # a returned kickoff goes all the way
+    ko_fumble: float = 0.006           # the returner fumbles and the kicking team falls on it
+    ko_penalty: float = 0.05           # a foul on the return: ten yards back for the receivers (70%), five forward for them if the kicking team is flagged
+    onside_rec: float = 0.13           # the kicking team gets an expected onside kick back
+    onside_surprise: float = 0.004     # a surprise onside kick tried at any other time
+    onside_surprise_rec: float = 0.35
+    two_make: float = 0.48             # a two-point try is good (NFL since 2015: about 48%); the units move it a little
+    two_rand: float = 0.01             # a coach goes for two with no reason in the chart
 
 
 Q_SECS = 900
@@ -163,6 +174,10 @@ class _Game:
         self.rng = rng
         self.inj_on = injuries and P.rules >= 4          # players can be hurt during the game (rules version 4); the lineups are then copies that lose players
         self.scrim = False                               # the last thing that happened was a scrimmage play: the next look at the game rolls for an injury
+        self.ko_next = False                             # (rules version 5) the drive ended in a score, so a kickoff comes next
+        self.free = False                                # ... and it is a free kick after a safety
+        self.over = False                                # a kickoff returned for a touchdown in overtime ends the game
+        self.ot_poss = 0                                 # overtime possessions played so far (a touchdown in sudden death needs no conversion)
         self.side_of = {}
         if P.rules >= 4:
             home, away = LU.clone(home), LU.clone(away)
@@ -349,6 +364,119 @@ class _Game:
             return int(P.touchback_start)
         return int(min(45, max(12, rng.gauss(P.kick_return_start, 5.0))))
 
+    # -- kickoffs and conversions (rules version 5) --------------------------------------------------------
+    def _kickoff(self, rcv: int, free: bool = False):
+        """The kickoff (or the free kick after a safety) to side rcv: a play of its own in the log (kind KO). Returns (side with the ball, its start spot).
+        Outcomes (the code in the log): 0 touchback, 1 returned, 2 returned for a touchdown, 3 fumbled on the return and recovered by the kicking team,
+        4 a foul on the return (the start spot moves), 5 an onside kick the kicking team recovers, 6 an onside kick the receivers recover."""
+        P, rng = self.P, self.rng
+        while True:
+            kick = 1 - rcv
+            klu, rlu = self.sides[kick].lu, self.sides[rcv].lu
+            kicker = klu.k
+            lead = self.score[kick] - self.score[rcv]
+            onside = surprise = False
+            if not free and not self.in_ot:
+                if self.quarter == 4 and -16 <= lead < 0:
+                    pr = 0.9 if self.t <= 180 else 0.35 if self.t <= 300 else 0.0
+                    onside = pr > 0 and rng.random() < pr
+                if not onside and rng.random() < P.onside_surprise:
+                    onside = surprise = True
+            tackler = None
+            rets = [rlu.wrs[-1], rlu.rbs[-1], rlu.cb[-1]]
+            who = rets[0 if rng.random() < 0.4 else 1 if rng.random() < 0.6 else 2]
+            off, start, landing, code = rcv, 0, 0, 1
+            if onside:
+                spot = int(min(55, max(40, rng.gauss(47, 3))))          # where the ball is picked up, in the kicking team's frame
+                if rng.random() < (P.onside_surprise_rec if surprise else P.onside_rec):
+                    off, start, code = kick, spot, 5
+                    who = rng.choice(klu.wrs + klu.cb)
+                else:
+                    start, code = 100 - spot, 6
+                    tackler = klu.tacklers[rng.randrange(len(klu.tacklers))]
+                landing = 100 - spot
+            elif rng.random() < P.p_touchback:
+                start, code = int(P.touchback_start), 0
+                landing = -min(9, int(abs(rng.gauss(3, 2))))
+            else:
+                start = int(min(45, max(12, rng.gauss(P.kick_return_start, 5.0))))
+                landing = max(1, start - int(max(0.0, rng.gauss(P.ko_return_mean, P.ko_return_sd))))
+                x = rng.random()
+                if x < P.ko_td:
+                    code, start = 2, 100
+                elif x < P.ko_td + P.ko_fumble:
+                    off, start, code = kick, 100 - start, 3
+                elif x < P.ko_td + P.ko_fumble + P.ko_penalty:
+                    code = 4
+                    start = max(1, start - 10) if rng.random() < 0.7 else min(60, start + 5)
+                if code in (1, 3, 4):
+                    tackler = klu.tacklers[rng.randrange(len(klu.tacklers))]      # (on a fumble, the kicking team's man who fell on the ball)
+            if self.rec:
+                self._p(kicker), self._p(who)
+                if tackler is not None:
+                    self._p(tackler)
+                self._log(off, 2 if free else 1, 10, min(start, 99) if code != 2 else min(landing, 99), landing, code, "KO", kicker.id, who.id, tackler.id if tackler is not None else -1)
+            if code != 2:
+                return off, start
+            # returned for a touchdown: the receivers score, a conversion is tried, and the kick comes back the other way
+            self.score[rcv] += 6
+            conv = self._try(rcv)
+            self.res.drives.append(dict(team=self.sides[rcv].name, side=rcv, quarter=self.quarter, start=max(1, landing), plays=0, yards=0, secs=0,
+                                        result="KICK_TD", pts=6 + conv, def_pts=0))
+            if self.in_ot:
+                self.over = True
+                return rcv, 25
+            rcv, free = kick, False
+
+    def _try(self, scorer: int) -> int:
+        """The conversion after a touchdown by side scorer, called with the six points already on the board; returns the points it adds (0, 1 or 2) and logs it
+        as an extra-point kick (XP) or a two-point try (2P). A late chart for the trailing team, plus the odd gambler, decides when to go for two."""
+        P, rng = self.P, self.rng
+        d = self.score[scorer] - self.score[1 - scorer]
+        if self.in_ot and self.ot_poss >= 2:
+            return 0                                                    # sudden death: the touchdown ends the game
+        if not self.in_ot and self.quarter == 4 and self.t <= 0 and (d >= 1 or d <= -3):
+            return 0                                                    # time has run out and no conversion could change who wins
+        lu = self.sides[scorer].lu
+        late = not self.in_ot and self.quarter == 4 and self.t <= 600
+        go = (late and d in (-2, -5, -9) and rng.random() < 0.9) or (not (late and d in (-2, -5, -9)) and rng.random() < P.two_rand)
+        if not go:
+            good = self._xp(scorer)
+            if self.rec:
+                self._p(lu.k)
+                self._log(scorer, 1, 10, 85, 33, False, "XP", lu.k.id, good, 33)
+            self.score[scorer] += good
+            return good
+        of, df = self.sides[scorer].feats, self.sides[1 - scorer].feats
+        edge = (of["rec"] + of["run_block"] + of["qb_acc"]) / 3.0 - (df["coverage"] + df["run_stop"] + df["pass_rush"]) / 3.0
+        good = 1 if rng.random() < min(0.7, max(0.25, P.two_make + 0.004 * edge)) else 0
+        if rng.random() < 0.6:
+            a, b = lu.qb, self._pick(lu.targets, lu.target_cum)
+        else:
+            a, b = self._pick(lu.carriers, lu.carry_cum), None
+        if self.rec:
+            self._p(a)
+            if b is not None:
+                self._p(b)
+            self._log(scorer, 1, 2, 98, 2, False, "2P", a.id, b.id if b is not None else -1, good)
+        self.score[scorer] += 2 * good
+        return 2 * good
+
+    def _after_score(self):
+        """The spot the next drive starts from after a score: drawn at once before rules version 5; from version 5 the kickoff is a play of its own, played when the drive is over."""
+        if self.P.rules < 5:
+            return self._kick_start()
+        self.ko_next = True
+        return None
+
+    def _conv(self, scorer: int) -> int:
+        """The conversion after a touchdown, added to the score; returns its points."""
+        if self.P.rules >= 5:
+            return self._try(scorer)
+        x = self._xp(scorer)
+        self.score[scorer] += x
+        return x
+
     def _fg_make(self, off: int, dist: float) -> bool:
         P = self.P
         f = self.sides[off].feats
@@ -380,6 +508,7 @@ class _Game:
         next_start = None
         next_off = 1 - off
         start_secs_total = tm["top_secs"]
+        self.ko_next = self.free = False
         tm["drives"] += 1
         stopped = True                                  # is the clock stopped? (rules version 3: a spike is only worth it when it is running)
 
@@ -498,7 +627,7 @@ class _Game:
                             pts = 3
                             self.score[off] += 3
                             result = "FG"
-                            next_start = self._kick_start()
+                            next_start = self._after_score()
                         else:
                             result = "MISSED_FG"
                             next_start = int(max(20, min(80, 107 - pos)))     # opponent takes over at the kick spot, at least their 20
@@ -682,7 +811,10 @@ class _Game:
                 self.score[1 - off] += 2
                 def_pts = 2
                 result = "SAFETY"
-                next_start = int(min(45, max(25, rng.gauss(35, 5))))
+                if P.rules >= 5:
+                    next_start, self.ko_next, self.free = None, True, True      # a free kick from the 20 follows
+                else:
+                    next_start = int(min(45, max(25, rng.gauss(35, 5))))
                 break
 
             # ---------------- what happened ----------------
@@ -696,9 +828,8 @@ class _Game:
                     if rng.random() < P.pick_six:
                         result = "INT_TD"
                         self.score[1 - off] += 6
-                        def_pts = 6 + self._xp(1 - off)
-                        self.score[1 - off] += def_pts - 6
-                        next_start = self._kick_start()
+                        def_pts = 6 + self._conv(1 - off)
+                        next_start = self._after_score()
                         next_off = off
                     else:
                         next_start = int(min(99, max(1, dstart)))
@@ -706,9 +837,8 @@ class _Game:
                     if rng.random() < P.fumble_td:
                         result = "FUMBLE_TD"
                         self.score[1 - off] += 6
-                        def_pts = 6 + self._xp(1 - off)
-                        self.score[1 - off] += def_pts - 6
-                        next_start = self._kick_start()
+                        def_pts = 6 + self._conv(1 - off)
+                        next_start = self._after_score()
                         next_off = off
                     else:
                         next_start = int(min(99, max(1, 100 - pos_after)))
@@ -723,11 +853,9 @@ class _Game:
                 result = "TD"
                 pts = 6
                 self.score[off] += 6
-                xp = self._xp(off)
-                self.score[off] += xp
-                pts += xp
+                pts += self._conv(off)
                 # credit the touchdown to the QB/receiver/runner already counted in play stats
-                next_start = self._kick_start()
+                next_start = self._after_score()
                 break
 
             if play_yards >= to_go and play_yards > 0:
@@ -771,12 +899,17 @@ def simulate_game(home: Lineup, away: Lineup, rng: random.Random, params: Engine
     res = g.res
     off = rng.randrange(2)                  # who receives the opening kickoff
     receive_first = off
-    start = g._kick_start()
+    if P.rules < 5:
+        start = g._kick_start()
+    else:
+        off, start = g._kickoff(off)
     half_done = False
     while True:
         g.period_over = False
         d = g.drive(off, start)
         off, start = g.next_off, g.next_start
+        if g.ko_next and not g.period_over:                 # (rules version 5) a score: the kickoff is a play
+            off, start = g._kickoff(off, g.free)
         if g.period_over:
             if g.quarter == 2 and not half_done:
                 half_done = True
@@ -785,7 +918,10 @@ def simulate_game(home: Lineup, away: Lineup, rng: random.Random, params: Engine
                 g.to = [3, 3]
                 g.period_over = False
                 off = 1 - receive_first
-                start = g._kick_start()
+                if P.rules >= 5:
+                    off, start = g._kickoff(off)
+                else:
+                    start = g._kick_start()
                 continue
             break
 
@@ -812,8 +948,9 @@ def _overtime(g: _Game, rng: random.Random, allow_tie: bool = False):
     15-minute periods until someone leads when a period ends (a seeded kick-off decides after MAX_OT periods, recorded as such)."""
     res = g.res
     g.in_ot = True
+    kicks = getattr(getattr(g, "P", None), "rules", 1) >= 5          # rules version 5: the kickoff is a play, played at the top of the loop below
     off = rng.randrange(2)
-    start = g._kick_start()
+    start = None if kicks else g._kick_start()            # (rules version 5: the kickoff is played at the top of the loop below)
     possessions = 0
     periods = 1 if allow_tie else MAX_OT
     secs = OT_SECS if allow_tie else OT_SECS_POST
@@ -822,9 +959,14 @@ def _overtime(g: _Game, rng: random.Random, allow_tie: bool = False):
         g.t = secs
         g.to = [2, 2]
         g.period_over = False
-        if start is None:
+        if start is None and not kicks:
             start = g._kick_start()
         while True:
+            g.ot_poss = possessions
+            if start is None:                                # (rules version 5) the kickoff, or the free kick after a safety
+                off, start = g._kickoff(off, g.free)
+                if g.over:
+                    return
             d = g.drive(off, start)
             possessions += 1
             off, start = g.next_off, g.next_start
