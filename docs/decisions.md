@@ -467,3 +467,14 @@ The game page can act each play out on a small sideline-view field: figures for 
 - **Off switch.** An "Animation" button on the game page, remembered in the browser. A visitor who asks for reduced motion starts with it off. Off, the page shows the old strip (kept updated underneath, so switching is instant).
 - **Checks** (`check_stage.py`): every play of every game (62,680 in the founding league) builds a scene that stays on the field and ends where the log says (good field goals go through the posts, misses do not; touchdowns are announced only when the log scored one); the page runs a replay at 4x and 60x with no script error; the canvas is drawn; the switch and the reduced-motion default work; a live game animates a play that arrives while open.
 - **Not done:** kickoffs and extra points are not acted out (the log does not record them), a play's tackle is shown as one tackler plus a pursuit. Players are drawn alike apart from kit colours and skin tone, since the log has no looks.
+
+## Standings columns: tiebreak measures, games behind, magic number
+
+The Commissioner asked for the first tiebreak statistics beside the record, and a games-behind column that shows the magic number for the leader.
+
+- **Columns:** Club, W, L, T, Pct, GB / Magic, Div, Conf, SOS, SOV, Diff. PF and PA were dropped from the table to make room (Diff stays; the Statistics tab has points for and against). Conf, SOS and SOV are hidden on phones. The tables are one division wide now instead of two side by side.
+- **Not columns:** head-to-head and common games depend on which clubs are tied, so there is no single number per club to show.
+- **GB:** half the sum of the leader's extra wins and the club's extra losses (a tie counts half), against the division leader as the engine ranks the division.
+- **Magic number (leader):** `18 + ½ − the leader's wins − the closest rival's losses`, rounded up, with ties counting half. Any mix of that many leader wins and rival losses clinches the division outright; a tie on record could still be settled by the tiebreakers, so the number is the clear-cut one. Shows `Clinched` once it reaches zero, and `Won` when every game in the division is played (the engine's own order then stands).
+- **Arithmetic on the page, checked against the engine:** Div, Conf, SOS and SOV are computed from the games on the page with the engine's definitions (strength of schedule and of victory count the opponents' whole records, each opponent once per game) and `check_site.py` compares them with `tiebreak.Ledger` for all 40 active clubs; it also checks the magic number and GB at six points through a season.
+- **Not changed:** the order of the clubs. It is still the engine's order (the page's win percentage then points difference during a live season). Making the live order follow the full tiebreak procedure is a separate change.

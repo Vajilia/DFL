@@ -46,6 +46,7 @@ a:not(.club):not(.gamelink):not(.fork):not(.brand):not(.badge) { text-decoration
 .card { background: var(--surface); border: 1px solid var(--line); clip-path: polygon(0 0, calc(100% - var(--cut)) 0, 100% var(--cut), 100% 100%, 0 100%); padding: 16px; min-width: 0; }
 .grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); }
 .grid.wide { grid-template-columns: repeat(auto-fit, minmax(min(100%, 500px), 1fr)); }
+.grid.stand { grid-template-columns: repeat(auto-fit, minmax(min(100%, 700px), 1fr)); }
 .grid.tight { grid-template-columns: repeat(auto-fill, minmax(min(100%, 230px), 1fr)); gap: 10px; }
 .badge { display: inline-flex; align-items: center; justify-content: center; flex: none; width: 2.6em; height: 2.6em; font-size: 14px; border-radius: 7px; font-family: var(--display); font-weight: 800; font-style: italic; letter-spacing: .03em; background: var(--p); box-shadow: inset 0 0 0 2.5px var(--t), inset 0 -4px 0 rgba(0,0,0,.28), 0 2px 0 rgba(0,0,0,.45); }
 .badge.lg { font-size: 30px; border-radius: 12px; box-shadow: inset 0 0 0 5px var(--t), inset 0 -8px 0 rgba(0,0,0,.28), 0 3px 0 rgba(0,0,0,.45); } .badge.sm { font-size: 12px; }
@@ -191,6 +192,21 @@ const allPts = clubs.filter(c => !c.exiled0).map(ptsOf);
 const rangeLo = Math.min(...allPts), rangeHi = Math.max(...allPts);
 
 /* ---------- pages ---------- */
+/* The standings columns beyond the record. Each is arithmetic on the games played so far, the same as the engine's tiebreak measures (strength of schedule and of victory count
+   every game against an opponent once, an opponent's whole record counted, a tie as half a win); check_site.py compares them with the engine's own. */
+function standExtras() {
+  const X = {}; clubs.forEach(c => X[c.id] = { sched: 0, played: [] });
+  D.games.forEach(g => { X[g.home].sched++; X[g.away].sched++; if (g.hp != null) { const w = g.hp > g.ap ? 1 : g.hp < g.ap ? 0 : .5; X[g.home].played.push([g.away, w]); X[g.away].played.push([g.home, 1 - w]); } });
+  const sum = L => L.reduce((a, b) => a + b, 0), cr = id => sum(X[id].played.map(x => x[1])), nn = id => X[id].played.length;
+  const R = (L, f) => { const w = L.filter(x => x[1] === 1).length, l = L.filter(x => x[1] === 0).length; return `${w}-${l}${L.length - w - l ? "-" + (L.length - w - l) : ""}`; };
+  const P = (a, b) => b ? (a / b).toFixed(3).replace(/^0/, "") : "";
+  clubs.forEach(c => { const x = X[c.id], pl = x.played, did = c.did, cf = Math.floor(did / 4);
+    x.div = R(pl.filter(q => byId[q[0]].did === did)); x.conf = R(pl.filter(q => Math.floor(byId[q[0]].did / 4) === cf));
+    x.sos = P(sum(pl.map(q => cr(q[0]))), sum(pl.map(q => nn(q[0]))));
+    const beat = pl.filter(q => q[1] === 1); x.sov = pl.length ? (beat.length ? P(sum(beat.map(q => cr(q[0]))), sum(beat.map(q => nn(q[0])))) : ".000") : "";
+    x.credit = cr(c.id); x.lossCredit = pl.length - x.credit; x.left = x.sched - pl.length; });
+  return X;
+}
 function standings() {
   let h;
   if (D.champion == null) {
@@ -202,20 +218,24 @@ function standings() {
     <p>Season ${D.season} champions, ${rec(ch.record)} in the regular season. Final: ${e(byId[D.champion].abbr)} ${D.champion === final.home ? final.hp : final.ap}, ${e(byId[D.champion === final.home ? final.away : final.home].abbr)} ${D.champion === final.home ? final.ap : final.hp}.</p></div></div>
     <p class="note">A read-only window on the league. ${LIVE ? "" : "This is the first season of the founding class, played by the engine on the autopilot with no agents yet. "}Numbers shown are the engine's own.</p>`;
   }
+  const X = standExtras();
   D.conferences.forEach((cn, ci) => {
-    h += `<section class="stack" style="padding-top:0"><h1 style="font-size:36px">${e(cn)} Conference</h1><div class="grid wide">`;
+    h += `<section class="stack" style="padding-top:0"><h1 style="font-size:36px">${e(cn)} Conference</h1><div class="grid stand">`;
     for (let di = 0; di < 4; di++) {
       const did = ci * 4 + di, members = clubs.filter(c => c.did === did), order = D.division_ranks[did] || [];
       const active = order.map(id => byId[id]), exiled = members.filter(c => c.exiled);
-      h += `<div class="stack" style="padding-top:0;gap:8px"><h3>${e(members[0].division)}</h3><div class="tablewrap"><table><thead><tr><th>Club</th><th>W</th><th>L</th><th>T</th><th>Pct</th><th class="hide-sm">PF</th><th class="hide-sm">PA</th><th>Diff</th></tr></thead><tbody>`;
-      active.forEach(c => { const r = c.record, d = r.pf - r.pa, sd = seedOf[c.id];
-        h += `<tr><td>${clubLink(c, c.id === D.champion ? `<span class="seed gold" title="Champion">◆</span>` : sd ? `<span class="seed" title="Playoff seed ${sd}">${sd}</span>` : "")}</td><td>${r.w}</td><td>${r.l}</td><td>${r.t}</td><td>${pct(r)}</td><td class="hide-sm">${r.pf}</td><td class="hide-sm">${r.pa}</td><td>${d > 0 ? "+" : ""}${d}</td></tr>`; });
-      exiled.forEach(c => { const a = c.ambassador; h += `<tr class="exile"><td>${clubLink(c)}</td><td colspan="7" style="text-align:left;white-space:normal">In exile this season · Ambassador Season ${a.w}-${a.l}${a.t ? "-" + a.t : ""}</td></tr>`; });
+      h += `<div class="stack" style="padding-top:0;gap:8px"><h3>${e(members[0].division)}</h3><div class="tablewrap"><table><thead><tr><th>Club</th><th>W</th><th>L</th><th>T</th><th>Pct</th><th title="Games behind the division leader; the leader shows its magic number (M), the wins by the leader plus losses by the closest rival that clinch the division outright, ties counting half">GB / Magic</th><th title="Record in division games">Div</th><th class="hide-sm" title="Record in conference games">Conf</th><th class="hide-sm" title="Strength of schedule: the combined winning percentage of every opponent played">SOS</th><th class="hide-sm" title="Strength of victory: the combined winning percentage of the opponents beaten">SOV</th><th>Diff</th></tr></thead><tbody>`;
+      const lead = active[0], others = active.slice(1), XL = lead && X[lead.id], done = active.every(c => X[c.id].left === 0);
+      const magic = !lead ? "" : done ? `<b title="The division is decided">Won</b>` : (() => { const m = Math.ceil(XL.sched + .5 - XL.credit - Math.min(...others.map(c => X[c.id].lossCredit))); return m <= 0 ? `<b title="Clinched the division outright">Clinched</b>` : `<b title="Magic number: ${m} more wins by ${e(lead.name)} or losses by the closest rival clinch the division outright">M ${m}</b>`; })();
+      active.forEach(c => { const r = c.record, d = r.pf - r.pa, sd = seedOf[c.id], x = X[c.id];
+        const gb = c === lead ? magic : ((XL.credit - x.credit) + (x.lossCredit - XL.lossCredit)) / 2, gbs = typeof gb === "number" ? String(gb) : gb;
+        h += `<tr><td>${clubLink(c, c.id === D.champion ? `<span class="seed gold" title="Champion">◆</span>` : sd ? `<span class="seed" title="Playoff seed ${sd}">${sd}</span>` : "")}</td><td>${r.w}</td><td>${r.l}</td><td>${r.t}</td><td>${pct(r)}</td><td>${gbs}</td><td>${x.div}</td><td class="hide-sm">${x.conf}</td><td class="hide-sm">${x.sos}</td><td class="hide-sm">${x.sov}</td><td>${d > 0 ? "+" : ""}${d}</td></tr>`; });
+      exiled.forEach(c => { const a = c.ambassador; h += `<tr class="exile"><td>${clubLink(c)}</td><td colspan="10" style="text-align:left;white-space:normal">In exile this season · Ambassador Season ${a.w}-${a.l}${a.t ? "-" + a.t : ""}</td></tr>`; });
       h += `</tbody></table></div></div>`;
     }
     h += `</div></section>`;
   });
-  return h + `</div>`;
+  return h + `<p class="note" style="margin-top:8px">GB is games behind the division leader. The leader shows its magic number, M: any mix of that many wins by the leader and losses by its closest rival clinches the division outright (a tie counts half). Div and Conf are records in division and conference games. SOS is the winning percentage of all opponents played, SOV of the opponents beaten; these are the league's tiebreakers after head-to-head, division record and common games, and they settle a tie only when the earlier ones do not.</p></div>`;
 }
 
 function playoffs() {
