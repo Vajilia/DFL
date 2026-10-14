@@ -452,15 +452,17 @@ Stage.prototype = {
     const bx = wxOf(sit.off, sit.pos);
     if (o.snap || !this.rest || this.far(this.rest, to) > 32) {
       this.scene = null; this.tw = null; this.rest = to; this.ball = { x: bx, y: MID, z: 0, spin: 0, held: false };
-      this.cam = los; this.lineLos = this.tLos; this.lineFd = this.tFd; this.draw();
+      this.cam = los; this.lineLos = this.tLos; this.lineFd = this.tFd; this.draw(); this.fire();
     } else {
       this.tw = { from: this.rest, to, t: 0, L: clamp(this.far(this.rest, to) / 7, .5, 2.2), bx };
       this.kick();
     }
   },
+  /* onsettle: one function the page sets to be called when the play on the field is over (or shown as its result); used to move the page's own panels on after the play */
+  fire() { const f = this.onsettle; this.onsettle = null; if (f) f(); },
   far(a, b) { let m = 0; for (let i = 0; i < 22; i++) m = Math.max(m, Math.hypot(a[i].x - b[i].x, a[i].y - b[i].y)); return m; },
   settle() {
-    if (this.scene) { const e = sampleScene(this.scene, this.scene.dur + 1); this.rest = e.act; this.ball = e.ball; this.scene = null; }
+    if (this.scene) { const e = sampleScene(this.scene, this.scene.dur + 1); this.rest = e.act; this.ball = e.ball; this.scene = null; this.fire(); }
     if (this.tw) { this.rest = this.tw.to; this.ball = { x: this.tw.bx, y: MID, z: 0, spin: 0, held: false }; this.tw = null; }
   },
   /* play(scene, avail): animate a scene; avail is the real time in seconds before the next play is due (null: take the time it needs). Returns false when it was shown as the result only. */

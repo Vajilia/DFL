@@ -52,9 +52,18 @@ with sync_playwright() as pw:
     gid = pg.evaluate("D.games.find(g=>g.id).id"); pg.evaluate("location.hash=%s" % json.dumps("game-" + gid)); pg.wait_for_timeout(800)
     check("the game page opens with the animated field on and the strip hidden", pg.evaluate("!document.getElementById('stagewrap').hidden && document.getElementById('field').style.display === 'none' && !!REPLAY.stage()") and "on" in pg.inner_text("#anim").lower())
     check("the canvas is drawn: turf, lines, players and ball, not a blank field", pg.evaluate(PIXELS) > 12, str(pg.evaluate(PIXELS)))
+    pg.evaluate("window.__smp = []; setInterval(() => { const st = REPLAY.stage(); __smp.push([!!(st && st.scene), document.getElementById('dd').innerText.replace(/\\s+/g, ' '), REPLAY.state().i]); }, 50)")
     pg.select_option("#speed", "4"); pg.click("#watch"); pg.wait_for_timeout(9000)
     st = pg.evaluate("REPLAY.stage().stats"); shown = pg.evaluate("REPLAY.state().i")
     check("a replay at 4x runs plays on the field", st["animated"] >= 1 and shown >= 2, f"{st} {shown}")
+    # the down-and-distance panel moves on when the play on the field is over, not when it starts
+    smp = pg.evaluate("__smp"); plays = pg.evaluate("D.box[%s].p" % json.dumps(gid))
+    ORD = {1: "1st", 2: "2nd", 3: "3rd", 4: "4th"}
+    sitx = lambda q: f"{ORD.get(q[1], str(q[1]) + 'th')} & {'goal' if q[3] + q[2] >= 100 else q[2]}"
+    during = [s for s in smp if s[0] and s[2] >= 1]; early = [s for s in during if not s[1].startswith(sitx(plays[s[2] - 1]))]
+    after = [s for s in smp if not s[0] and 1 <= s[2] < len(plays) and plays[s[2]][13] == plays[s[2] - 1][13] and s[1].startswith(sitx(plays[s[2]]))]
+    check("while a play is run on the field the panel still shows the situation it began from", len(during) >= 8 and not early, f"{len(during)} samples, {len(early)} early e.g. {early[:1]}")
+    check("when the play is over the panel shows the next situation", len(after) >= 3, str(len(after)))
     pg.select_option("#speed", "60"); pg.wait_for_timeout(6000)
     st2 = pg.evaluate("REPLAY.stage().stats")
     check("at 60x the plays are too quick to act out and are shown as results, with no error", st2["snapped"] >= 1 and not errs, f"{st2} {errs[:2]}")
@@ -105,9 +114,33 @@ if live_id is not None:
         n0 = pg.evaluate("D.box[%s] ? D.box[%s].p.length : -1" % (json.dumps(live_id), json.dumps(live_id)))
         st0 = pg.evaluate("REPLAY && REPLAY.stage() ? REPLAY.stage().stats : null")
         check("a live game opens with its plays shown as they stand, none acted out", n0 > 0 and st0 is not None and st0["animated"] == 0, f"{n0} {st0}")
-        run.tick(now + 4 * 60 * 1000); pg.wait_for_timeout(7000)
+        pg.evaluate("window.__smp = []; setInterval(() => { const st = REPLAY.stage(); __smp.push([!!(st && st.scene), document.getElementById('dd').innerText.replace(/\\s+/g, ' '), REPLAY.state().i]); }, 50)")
+        run.tick(now + 4 * 60 * 1000); pg.wait_for_timeout(16000)
         n1 = pg.evaluate("D.box[%s].p.length" % json.dumps(live_id)); st1 = pg.evaluate("REPLAY && REPLAY.stage() ? REPLAY.stage().stats : null")
+        lplays = pg.evaluate("D.box[%s].p" % json.dumps(live_id)); smp = pg.evaluate("__smp")
+        ORD = {1: "1st", 2: "2nd", 3: "3rd", 4: "4th"}
+        sitx = lambda q: f"{ORD.get(q[1], str(q[1]) + 'th')} & {'goal' if q[3] + q[2] >= 100 else q[2]}"
+        during = [s for s in smp if s[0] and s[2] > n0]; early = [s for s in during if not s[1].startswith(sitx(lplays[s[2] - 1]))]
+        check("in a live game the panel shows the situation the new play began from while it is run, then moves on", len(during) >= 5 and not early, f"{len(during)} samples, {len(early)} early e.g. {early[:1]}")
         check("a play that arrives while the page is open is run on the field", n1 > n0 and st1 is not None and (st1["animated"] + st1["snapped"]) >= 1, f"{n0}->{n1} {st1}")
+        # plays that arrive together are run one after the other, in order, on the same page (it is not rebuilt, so no scene is cut short)
+        pg.evaluate("window.__c = document.getElementById('stage'); window.__smp2 = []; setInterval(() => __smp2.push(REPLAY.state().i), 50)")
+        i0 = pg.evaluate("REPLAY.state().i"); a0 = pg.evaluate("REPLAY.stage().stats"); n_before = pg.evaluate("D.box[%s].p.length" % json.dumps(live_id))
+        base = now + 4 * 60 * 1000
+        for k in range(1, 12):                                # the league's clock runs on: the engine writes the feed every few seconds
+            run.tick(base + k * 3000); pg.wait_for_timeout(3000)
+        pg.wait_for_timeout(3000)
+        i1 = pg.evaluate("REPLAY.state().i"); a1 = pg.evaluate("REPLAY.stage().stats"); seq = pg.evaluate("__smp2"); same = pg.evaluate("window.__c === document.getElementById('stage')")
+        n_after = pg.evaluate("D.box[%s].p.length" % json.dumps(live_id)); steps = [y - x for x, y in zip(seq, seq[1:])]
+        check("the live page is not rebuilt when plays arrive (the field it is drawing on stays)", same)
+        tnow = json.load(open(out + "/results.json"))["t"]; start = pg.evaluate("D.box[%s].start" % json.dumps(live_id)); lp = pg.evaluate("D.box[%s].p" % json.dumps(live_id))
+        due = [k for k, p in enumerate(lp) if start + L.play_offset_ms(p, L.BLOCK_REAL_PER_GAME, L.HALFTIME_PAUSE) + 6000 <= tnow - 3000]      # the plays whose time, plus the lag, has come
+        check("plays that arrive together are all shown, in order", n_after - n_before >= 2 and i1 >= len(due) and i1 <= n_after and min(steps) >= 0, f"{n_before}->{n_after}, shown {i0}->{i1}, due {len(due)}")
+        check("... and each is run on the field, not skipped", (a1["animated"] + a1["snapped"]) - (a0["animated"] + a0["snapped"]) >= i1 - i0 - 2, f"{a0} {a1}")
+        # the game ends while the page is open: everything is shown, and the page becomes the finished game
+        run.tick(now + 3 * H); pg.wait_for_timeout(12000)
+        fin = pg.evaluate("!!document.getElementById('watch') && REPLAY.state().i === D.box[%s].p.length && !D.box[%s].live" % (json.dumps(live_id), json.dumps(live_id)))
+        check("when the game ends with the page open, every play is shown and the page becomes the finished game (with its replay)", fin)
         check("no script errors while the game is live", not errs, str(errs[:3]))
         br.close()
     srv.shutdown()

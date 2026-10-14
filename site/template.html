@@ -509,7 +509,6 @@ function fieldMarks(A, H) {
   return h;
 }
 let REPLAY = null;
-const LIVE_SEEN = {};      // live games: how many plays of each the viewer has already been shown, so that only a play that arrives while the page is open is animated
 function game(id) {
   const g = gameById[id], b = D.box[id]; if (!g) return notFound();
   if (!b) return LIVE ? waitingGame(g) : notFound();
@@ -540,10 +539,11 @@ function waitingGame(g) {
   return `<div class="stack"><div class="eyebrow"><a href="#live" style="text-decoration:underline">Live</a></div><h1>${e(A.name)} at ${e(H.name)}</h1><p class="note">${g.start > serverNow() ? `Kickoff is ${e(realTime(g.start))} (${e(inText(g.start))}). The page fills in by itself.` : "Waiting for the first plays…"}</p></div>`;
 }
 function startGame(id) {
-  const g = gameById[id], b = D.box[id]; if (!g || !b) return;
-  const H = byId[g.home], A = byId[g.away], plays = b.p, $ = x => document.getElementById(x), live = LIVE && b.live;
+  const g = gameById[id]; let b = D.box[id]; if (!g || !b) return;
+  const H = byId[g.home], A = byId[g.away], $ = x => document.getElementById(x), live = LIVE && b.live; let plays = b.p;
   const names = [H.name, A.name];            // side 0 is home
-  const lastOfDrive = plays.map((p, i) => !plays[i + 1] || plays[i + 1][13] !== p[13]);
+  const driveEnds = ps => ps.map((p, i) => !ps[i + 1] || ps[i + 1][13] !== p[13]);
+  let lastOfDrive = driveEnds(plays);
   const real = pl => pl[14] * REAL_PER_GAME + ((pl[10] >= 3 || pl[12]) ? HALFTIME_PAUSE : 0);
   let S = freshState(b), timer = null, vt = 0, speed = 1, running = false;
   const rowsFor = () => [["Plays", t => t.plays], ["Total yards", t => t.yards], ["Passing", t => `${t.cmp}/${t.att}, ${t.pass_yds} yds`], ["Rushing", t => `${t.rush} car, ${t.rush_yds} yds`], ["First downs", t => t.first], ["3rd down", t => `${t.t3c}/${t.t3a}`],
@@ -580,6 +580,10 @@ function startGame(id) {
     return ST.buildScene(pl, { nm: j => b.pl[j] || null, hint: nx && nx[13] !== pl[13] ? (nx[0] === pl[0] ? nx[3] : 100 - nx[3]) : null, dr: lastOfDrive[i] ? b.dr[pl[13]] : null, abbr: [H.abbr, A.abbr], pen: PEN[pl[7]] ? PEN[pl[7]][0] : "" });
   };
   const availFor = i => plays[i + 1] ? (real(plays[i + 1]) - real(plays[i])) / speed : 6;
+  /* the down-and-distance panel and the line saying who has the ball: with the animation on, they change when the play on the field is over, not when it starts */
+  const sitHtml = (sit, word) => sit ? [`${ordn(sit.down)} &amp; ${sit.pos + sit.toGo >= 100 ? "goal" : sit.toGo}<small>ball on ${yl(sit.off, sit.pos)}</small>`, `<span class="poss"></span><b style="color:var(--ink)">${e(names[sit.off])}</b> ball · attacking ${sit.off === 0 ? "left" : "right"}`] : [e(word), ""];
+  const putSit = h => { $("dd").innerHTML = h[0]; $("poss").innerHTML = h[1]; };
+  const putSitAfterPlay = h => { if (stage && stage.scene) stage.onsettle = () => putSit(h); else { if (stage) stage.onsettle = null; putSit(h); } };
   function paintField(anim) {
     const lp = S.last, nx = plays[S.i], done = !live && S.i >= plays.length, cur = nx || lp;
     let sit = nx ? { off: nx[0], down: nx[1], toGo: nx[2], pos: nx[3] } : null, word = "";
@@ -594,14 +598,13 @@ function startGame(id) {
     const dyds = shown.reduce((t, q) => t + (["RU", "PC", "SK", "KN"].includes(q[6]) && !q[5] ? q[4] : 0), 0);
     $("drv1").textContent = cur && shown.length ? `Drive ${di + 1} · ${shown.length} play${shown.length === 1 ? "" : "s"} · ${dyds} yds` : "";
     if (sit) {
-      const goal = sit.pos + sit.toGo >= 100, st = plays[Math.max(k0, 0)][3];
-      $("dd").innerHTML = `${ordn(sit.down)} &amp; ${goal ? "goal" : sit.toGo}<small>ball on ${yl(sit.off, sit.pos)}</small>`;
-      $("poss").innerHTML = `<span class="poss"></span><b style="color:var(--ink)">${e(names[sit.off])}</b> ball · attacking ${sit.off === 0 ? "left" : "right"}`;
+      const st = plays[Math.max(k0, 0)][3];
+      putSitAfterPlay(sitHtml(sit));
       const xb = FX(sit.off, sit.pos), xs = FX(sit.off, st);
       $("ball").style.display = $("los").style.display = $("first").style.display = ""; $("ball").style.left = $("los").style.left = xb + "%"; $("first").style.left = FX(sit.off, Math.min(100, sit.pos + sit.toGo)) + "%";
       $("trail").style.display = ""; $("trail").style.left = Math.min(xb, xs) + "%"; $("trail").style.width = Math.abs(xb - xs) + "%"; $("trail").className = "trail " + (sit.off === 0 ? "l" : "r");
     } else {
-      $("dd").innerHTML = e(word); $("poss").innerHTML = ""; $("ball").style.display = $("los").style.display = $("first").style.display = $("trail").style.display = "none";
+      putSitAfterPlay(sitHtml(null, word)); $("ball").style.display = $("los").style.display = $("first").style.display = $("trail").style.display = "none";
     }
     if (b.v === 2 && S.to) { const pips = n => "<span>TO</span>" + [0, 1, 2].map(i => `<i class="${i < n ? "" : "o"}"></i>`).join(""); $("to0").innerHTML = pips(S.to[0]); $("to1").innerHTML = pips(S.to[1]); }
     $("dch").innerHTML = dchHtml(sit, cur ? k0 : 0);
@@ -647,18 +650,33 @@ function startGame(id) {
     $("final").onclick = () => finish();
   }
   $("anim").onclick = () => { const on = !stage; try { localStorage.setItem("dfl.anim", on ? "1" : "0"); } catch (err) {} setAnim(on); if (stage) paintField(false); };
-  REPLAY = { stop, finish, state: () => S, reset, step, paint, stage: () => stage, sceneFor, destroy: () => { if (stage) { stage.destroy(); stage = null; } } };
-  setAnim(animPref());
-  finish();                                  // open on the finished game; "Watch replay" starts it from kickoff
-  if (live) {                                // a play that arrives while the page is open is run on the field; the ones already shown are not
-    const seen = LIVE_SEEN[id]; LIVE_SEEN[id] = plays.length;
-    if (stage && seen != null && plays.length > seen && plays.length) {
-      const li = plays.length - 1, lp0 = plays[li], keep = lastShown;
-      stage.show({ off: lp0[0], down: lp0[1], toGo: lp0[2], pos: Math.max(1, Math.min(99, lp0[3])) }, { snap: true, kind: lp0[6] });
-      stage.play(sceneFor(li), null);
-      if (keep) stage.show(keep[0], keep[1]);
+  /* A live game: the page is not rebuilt when a poll brings new plays. They go into a queue and are played out on the field one at a time, each at the real time it happened plus a fixed lag
+     (a play is on the feed within about six seconds of it happening; the lag takes that out, so the plays come at the pace of the game instead of in bunches). A play that is long overdue
+     (the tab was in the background, say) is shown as its result, so that the page catches up quickly. */
+  const LAG = 6000, LATE = 15000; let liveT = null, lnow = 0, finalPending = false;
+  const sNow = () => (lnow = Math.max(lnow, serverNow()));
+  const dueOf = pl => (b.start || 0) + real(pl) * 1000 + LAG;
+  function liveTick() {
+    let skipped = false;
+    if (stage && stage.scene) return;
+    while (S.i < plays.length) {
+      const pl = plays[S.i], late = sNow() - dueOf(pl);
+      if (late < 0) break;
+      if (late > LATE && S.i < plays.length - 1) { step(); skipped = true; continue; }
+      if (skipped) { paint(false, false); skipped = false; }
+      step();
+      const nx = plays[S.i];
+      if (stage) { stage.play(sceneFor(S.i - 1), nx ? Math.max(2, (dueOf(nx) - lnow) / 1000) : null); paint(false, true); return; }
+      paint(false, true);
     }
+    if (skipped) paint(false, false);
+    if (finalPending && S.i >= plays.length && !(stage && stage.scene)) { clearInterval(liveT); liveT = null; render(false); }      // the game is over and every play has been shown: the page becomes the finished game
   }
+  function liveFeed(nb) { b = nb; plays = nb.p; lastOfDrive = driveEnds(plays); if (!nb.live) finalPending = true; }
+  if (live) liveT = setInterval(liveTick, 100);
+  REPLAY = { stop, finish, state: () => S, reset, step, paint, stage: () => stage, sceneFor, feed: liveFeed, liveId: live ? id : null, destroy: () => { if (liveT) { clearInterval(liveT); liveT = null; } if (stage) { stage.destroy(); stage = null; } } };
+  setAnim(animPref());
+  finish();                                  // open on the finished game, or on the live game as it stands; "Watch replay" starts a finished game from kickoff
 }
 
 
@@ -736,7 +754,7 @@ async function poll() {
     FEED.results = R; FEED.sig = sig;
     if (R.year) derive();
     const parts = routeParts();
-    if (parts[0] === "game" && gameById[parts[1]]) { const b = D.box[parts[1]]; if (!b || b.live || !FEED.tried[parts[1]]) { FEED.tried[parts[1]] = true; const before = b ? b.p.length : -1, after = await loadBox(parts[1]); if (first || changed || (after ? after.p.length : -1) !== before || (b && b.live && after && !after.live)) render(false); return; } }
+    if (parts[0] === "game" && gameById[parts[1]]) { const b = D.box[parts[1]]; if (!b || b.live || !FEED.tried[parts[1]]) { FEED.tried[parts[1]] = true; const before = b ? b.p.length : -1, after = await loadBox(parts[1]); if (REPLAY && REPLAY.liveId === parts[1] && b && b.live && after) { REPLAY.feed(after); return; } if (first || changed || (after ? after.p.length : -1) !== before || (b && b.live && after && !after.live)) render(false); return; } }
     if (first || changed) render(false);
     else if (parts[0] === "live") render(false);
   } catch (err) { FEED.err = String(err); if (!FEED.results) { document.getElementById("app").innerHTML = `<div class="stack"><h1>Live</h1><p class="note">Cannot reach the league's feed (${e(FEED.err)}). Trying again.</p></div>`; } }
