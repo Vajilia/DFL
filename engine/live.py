@@ -112,6 +112,7 @@ class Season:
         self.pacing, self.rpg, self.half = world.pacing, world.rpg, world.half
         self.start_ms, self.begin_ms, self.prev_when = start_ms, begin_ms, prev_when    # blocks pacing: first kickoff, when the page moves to this year, the last Coronation's league date
         lg = world.lg
+        self.snap = SE.snapshot(lg, world.founding_pids)    # the clubs' people and rosters as the year begins: the page shows the year's club pages from it
         res, names = SE.play_season(lg, world.rng, n, world.rules)
         self.res = res
         self.world_lg = lg
@@ -143,6 +144,23 @@ class Season:
         self.reg_end = max(g["end"] for g in self.games if g["group"] == "reg")
         self.final_end = max(g["end"] for g in self.games if g["group"] == "po")
         self.opener_ms = min(g["start"] for g in self.games if g["group"] == "reg")
+
+    def summary(self):
+        """How each club's year went, for the club pages' history: {club id: [wins, losses, ties, points for, points against, division finish, playoff seed (0: none), how the
+        playoffs ended ("" champion or missed, else the round), head coach, offensive coordinator, defensive coordinator, general manager]}. A club in exile has the Ambassador
+        Season's record there, division finish 0 and "exile" in place of the playoffs."""
+        res = self.res
+        seed = {t: k + 1 for ids in res.seeds.values() for k, t in enumerate(ids)}
+        rank = {t: k + 1 for ids in res.division_ranks.values() for k, t in enumerate(ids)}
+        out = {}
+        for tid, st in res.stats.items():
+            out[str(tid)] = [st.wins, st.losses, st.ties, st.pf, st.pa, rank.get(tid, 0), seed.get(tid, 0), res.exits.get(tid, "")]
+        for tid, st in res.ambassador_stats.items():
+            out[str(tid)] = [st.wins, st.losses, st.ties, st.pf, st.pa, 0, 0, "exile"]
+        for tid, row in out.items():
+            p = self.snap[tid]["p"]
+            row += [(p[i] or [""])[0] for i in (2, 3, 4, 1)]
+        return out
 
     def _game(self, gid, group, g, when, short):
         b = SE._box(g.result, short)
@@ -224,7 +242,7 @@ class Season:
         yh = YEAR_HOURS if self.pacing != "blocks" else round((self.final_end - self.opener_ms) / HOUR_MS, 1)      # blocks pacing: the length of this year's games, first kickoff to the Coronation's end
         return dict(year=self.n, season=cal, calendar=SE.calendar_for(cal), games=regs, amb=ambs, po=pos, epoch=self.epoch, year_hours=yh, pacing=self.pacing,
                     real_per_game=self.rpg, halftime=self.half,
-                    exiled=sorted(t for t, v in self.res.start.items() if v[0] == "exiled"), tiers={str(t): v[1] for t, v in self.res.start.items() if v[1] is not None})
+                    teams=self.snap, exiled=sorted(t for t, v in self.res.start.items() if v[0] == "exiled"), tiers={str(t): v[1] for t, v in self.res.start.items() if v[1] is not None})
 
     def score_now(self, g, now_ms):
         """[home, away, quarter, seconds left, overtime] for a game in progress: the points of the drives the clock has finished, and the clock of the last play."""
@@ -311,6 +329,7 @@ class World:
         self.rules = int(rules)                              # rules version 1: as first played; 2: penalties and timeouts; 3: clock management, spikes and kneels; 4: players are hurt during the game; 5: kickoffs and conversions are plays (new leagues only)
         self.profile = parity.apply(profile)                 # the parity profile's dials are set before the league is opened
         self.lg, self.rng = F.open_league(seed)
+        self.founding_pids = {p.id for t in self.lg.teams for p in t.roster}      # who is on a Founding Day roster (the page has their backstories already)
         self.times = ID.slot_times(self.lg.teams)         # taken now, while the tiers are the founding seeds
         self.year = 0
         self.season = None
@@ -320,7 +339,7 @@ class World:
         """Legacy pacing: play every year up to n (a restart replays the years gone by: the seed decides them all)."""
         while self.year < n:
             if self.season is not None:
-                self.history.append(dict(year=K.calendar_year(self.year), champion=self.season.res.champion))
+                self.history.append(dict(year=K.calendar_year(self.year), champion=self.season.res.champion, clubs=self.season.summary()))
             self.year += 1
             self.season = Season(self, self.year)
         return self.season
@@ -335,7 +354,7 @@ class World:
             if self.season is None:
                 start, prev_when = self.epoch_ms, None
             else:
-                self.history.append(dict(year=K.calendar_year(self.year), champion=self.season.res.champion))
+                self.history.append(dict(year=K.calendar_year(self.year), champion=self.season.res.champion, clubs=self.season.summary()))
                 start = self.season.final_end + OFFSEASON_MS
                 prev_when = dt.datetime.fromisoformat(max(self.season.window_start))
             self.year += 1
