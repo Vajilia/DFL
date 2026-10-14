@@ -16,7 +16,8 @@ kicks off at the real moment that corresponds to its league date and kickoff tim
 Feed (all under --out, written atomically; nothing in it is ahead of the clock):
     meta.json      {seed, epoch_ms, year_hours}        fixed for the life of the league
     season.json    the current year's schedule: no scores, no matchups for playoff games not yet announced
-    results.json   revealed finals, games in progress, announced playoff games, and, once they are decided, seeds, division ranks, exits, champion; plus the clock
+    results.json   revealed finals, games in progress, announced playoff games, the division order and seeds as they would stand now (now_ranks, now_seeds) during the regular
+                   season, and, once they are decided, seeds, division ranks, exits, champion; plus the clock
     season_<year>.json, results_<year>.json    each year's schedule and results, kept after the year ends
     g/<year>_<id>.json    a game's players, completed drives and the plays so far (all of them once final)
     history.json   the champions of the years already over
@@ -113,12 +114,14 @@ class Season:
         lg = world.lg
         res, names = SE.play_season(lg, world.rng, n, world.rules)
         self.res = res
+        self.world_lg = lg
         cal = K.calendar_year(n)
         flip, shift = rotation(n)
         D = R.DIVISIONS_PER_CONFERENCE
         slot = {t.id: (t.conf ^ flip, (t.div + shift) % D, res.start[t.id][1]) for t in lg.teams if res.start[t.id][0] == "active"}
         times = world.times
         short = {pid: SE._short(nm) for pid, nm in names.items()}
+        self._reg_ids = {f"r{g.week}_{g.home}" for g in res.games}
         self.games = []                                   # every game, in id order within its group
         for g in sorted(res.games, key=lambda g: (g.week, g.home)):
             num, day, kick = times[(g.week, slot[g.home], slot[g.away])]
@@ -251,6 +254,27 @@ class Season:
         last = dt.datetime.fromisoformat(max(opened))
         return last if now_ms <= self.final_end else max(lin, last)
 
+    def table_now(self, final_ids):
+        """(division ranks, seeds) as they would stand if the regular season ended with the games that are final now, by the league's own tiebreak procedures; None until a game is
+        final. A tie that only a coin toss can settle is tossed with a fixed seed, so the page shows the same order until another game ends."""
+        if not final_ids:
+            return None
+        key = len(final_ids)
+        if getattr(self, "_now_key", None) == key:
+            return self._now_val
+        import random as _r
+        import playoffs as PL
+        import standings as ST
+        done = set(final_ids)
+        games = [g for g in self.res.games if f"r{g.week}_{g.home}" in done]
+        ids = [t for d in self.res.division_ranks.values() for t in d]
+        stats = ST.compute_stats(self.world_lg, games, ids)
+        rng = _r.Random(self.n * 100003 + key)
+        ranks = {d: ST.rank_by_style("division", list(members), stats, rng, [], "division") for d, members in self.res.division_ranks.items()}
+        seeds = {c: PL.seed_conference(c, self.world_lg, ranks, stats, rng, []) for c in range(len(R.CONFERENCES))}
+        self._now_key, self._now_val = key, ({str(k): v for k, v in ranks.items()}, {str(k): v for k, v in seeds.items()})
+        return self._now_val
+
     def results_file(self, now_ms, history):
         res = self.res
         final, live, po_teams = {}, [], {}
@@ -263,6 +287,10 @@ class Season:
                 po_teams[g["id"]] = [g["home"], g["away"]]
         out = dict(t=int(now_ms), year=self.n, sim=self.sim_now(now_ms).isoformat(timespec="minutes"), final=final, live=live, po=po_teams, history=history,
                    now={i: self.score_now(self.by_id[i], now_ms) for i in live})
+        if now_ms < self.reg_end:                          # during the regular season: the division order and the playoff seeds if it ended now, from the finals so far
+            now = self.table_now([i for i in final if i in self._reg_ids])
+            if now:
+                out["now_ranks"], out["now_seeds"] = now
         if now_ms >= self.reg_end:                         # the regular season is over: the seeds and final division order are known
             out["seeds"] = {str(k): v for k, v in res.seeds.items()}
             out["division_ranks"] = {str(k): v for k, v in res.division_ranks.items()}
@@ -342,6 +370,7 @@ class Runner:
         self.pauses = [list(p) for p in m.get("pauses", [])]    # [[real ms the league was paused, real ms it was resumed or None while it is paused]]: part of the league's history
         write_json(os.path.join(out, "meta.json"), m)
         self.sched_year = None
+        self.last_season = None
 
     # -- pausing: the league's own clock stops and carries on from the same moment (the person's league, paused after a late night and resumed after breakfast) -------
     def paused(self) -> bool:
@@ -368,6 +397,24 @@ class Runner:
         lost = sum((real_ms if b is None else b) - a for a, b in self.pauses)
         return real_ms - lost, lost
 
+    def write_games(self, s, now_ms: float) -> None:
+        """Each started game's file, rewritten only when it has grown (the final write holds every play)."""
+        for g in s.games:
+            if now_ms < g["start"]:
+                continue
+            k = s.revealed(g, now_ms)
+            final = now_ms >= g["end"]
+            stamp = len(g["offs"]) + 1 if final else k
+            if g["written"] != stamp:
+                write_json(os.path.join(self.out, "g", f"{s.n}_{g['id']}.json"), s.game_file(g, now_ms, k))
+                g["written"] = stamp
+
+    def finalize(self, s, history) -> None:
+        """A year that has just ended: every game file and the year's results are written as they stood when its Coronation ended, so a finished season is complete on disk even if no tick fell in its last moments."""
+        end = s.final_end
+        self.write_games(s, end)
+        write_json(os.path.join(self.out, f"results_{s.n}.json"), s.results_file(end, history))
+
     def tick(self, real_now: float) -> dict:
         """Write the feed as it stands at the real moment `real_now`. Returns the results written (None before the league begins)."""
         self._control(real_now)
@@ -388,15 +435,11 @@ class Runner:
             write_json(os.path.join(self.out, f"season_{n}.json"), sf)      # kept for good: a finished season's schedule, so its games can be listed later
             write_json(os.path.join(self.out, "history.json"), w.history)
             self.sched_year = n
-        for g in s.games:
-            if now_ms < g["start"]:
-                continue
-            k = s.revealed(g, now_ms)
-            final = now_ms >= g["end"]
-            stamp = len(g["offs"]) + 1 if final else k
-            if g["written"] != stamp:
-                write_json(os.path.join(self.out, "g", f"{n}_{g['id']}.json"), s.game_file(g, now_ms, k))
-                g["written"] = stamp
+        prev = self.last_season
+        if prev is not None and prev is not s:              # the year has turned over: close the books on the one that ended, whatever the ticks did near its end
+            self.finalize(prev, w.history[:prev.n - 1])
+        self.last_season = s
+        self.write_games(s, now_ms)
         out = s.results_file(now_ms, w.history)
         out["shift"], out["paused"] = int(shift), self.paused()          # the real time lost to pauses (the page adds it to the league's clock to show real times), and whether the league is paused now
         write_json(os.path.join(self.out, "results.json"), out)

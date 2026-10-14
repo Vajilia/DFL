@@ -2,136 +2,152 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Diamond Football League</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800&family=IBM+Plex+Mono:wght@400;500&family=Source+Sans+3:wght@400;600;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,500;0,600;0,700;1,700;1,800&family=Barlow:wght@400;500;600;700&display=swap">
 <style>
-/* Layout: a sports almanac you can browse. Cool ink-and-paper neutrals, one facet-teal accent and a gold kept for the Coronation; each club brings its own colours through its badge and stripe. */
+/* Look: a night game. Turf-black panels under floodlights, and the two lines every broadcast draws on the field as the only bright colours: the first-down line (yellow) and the line of scrimmage (blue). Headings, menu and scores are slanted condensed type, like a game's own interface; each club brings its colours through its badge and the score bar. The whole page is one dark theme. */
 :root {
-  --bg: #ECEFF3; --surface: #FFFFFF; --ink: #141A21; --muted: #586372; --line: #D3DAE2; --soft: #F4F6F9;
-  --accent: #0A6B76; --accent-ink: #FFFFFF; --gold: #8A5F00; --gold-bg: #F7EBC4; --win: #141A21;
-  --display: "Big Shoulders Display", "Arial Narrow", "Helvetica Neue", sans-serif;
-  --body: "Source Sans 3", system-ui, -apple-system, "Segoe UI", sans-serif;
-  --mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  --bg: #08110C; --surface: #12211A; --soft: #19302A; --ink: #EAF4EE; --muted: #93AFA0; --line: #28443A;
+  --accent: #FFD21F; --accent-ink: #14190A; --los: #3D8BFF; --win: #FFFFFF; --loss: #FF6B6B;
+  --gold: #F5C84B; --gold-bg: #2E2710; --turf: #1B6B3C; --turf2: #207745;
+  --display: "Barlow Condensed", "Arial Narrow", "Helvetica Neue", sans-serif;
+  --body: "Barlow", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "Barlow Condensed", "Arial Narrow", sans-serif;
+  --cut: 12px; color-scheme: dark;
 }
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
-  --bg: #0F141A; --surface: #172029; --ink: #E8EDF2; --muted: #9AA6B3; --line: #2A3643; --soft: #1C2630;
-  --accent: #54C5D0; --accent-ink: #0B1217; --gold: #E6BA4C; --gold-bg: #3A3014; --win: #FFFFFF; color-scheme: dark; } }
-:root[data-theme="dark"] {
-  --bg: #0F141A; --surface: #172029; --ink: #E8EDF2; --muted: #9AA6B3; --line: #2A3643; --soft: #1C2630;
-  --accent: #54C5D0; --accent-ink: #0B1217; --gold: #E6BA4C; --gold-bg: #3A3014; --win: #FFFFFF; color-scheme: dark; }
 * { box-sizing: border-box; }
-body { background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 16px; line-height: 1.5; padding-inline: 16px; padding-block: 0 48px; }
+body { background: var(--bg) radial-gradient(120% 60% at 50% -10%, #17372A 0%, rgba(8,17,12,0) 60%) no-repeat; color: var(--ink); font-family: var(--body); font-size: 16px; line-height: 1.5; padding-inline: 16px; padding-block: 0 48px; min-height: 100vh; }
 a { color: inherit; text-decoration: none; }
-a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 3px; }
+a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .wrap { max-width: 1080px; margin-inline: auto; }
 header.top { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 20px; padding-block: 16px 10px; max-width: 1080px; margin-inline: auto; }
-.brand { font-family: var(--display); font-weight: 800; font-size: 28px; letter-spacing: .02em; text-transform: uppercase; line-height: 1; display: flex; align-items: center; gap: 10px; }
-.brand i { width: 22px; height: 22px; background: var(--accent); transform: rotate(45deg) scale(.82); display: inline-block; }
+.brand { font-family: var(--display); font-weight: 800; font-style: italic; font-size: 30px; letter-spacing: .02em; text-transform: uppercase; line-height: 1; display: flex; align-items: center; gap: 12px; }
+.brand i { width: 24px; height: 24px; background: linear-gradient(135deg, #7CF0E6 0%, #19B8B0 48%, #0B7F86 100%); transform: rotate(45deg) scale(.82); display: inline-block; box-shadow: 0 0 14px rgba(25,184,176,.55); }
 .search { position: relative; flex: 1 1 220px; max-width: 360px; margin-left: auto; min-width: 0; }
-.search input { width: 100%; font: inherit; padding: 8px 12px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); color: var(--ink); }
-.results { position: absolute; z-index: 5; left: 0; right: 0; top: calc(100% + 4px); background: var(--surface); border: 1px solid var(--line); border-radius: 8px; box-shadow: 0 8px 24px rgba(0,0,0,.18); max-height: 60vh; overflow: auto; }
+.search input { width: 100%; font: inherit; padding: 8px 14px; border: 1px solid var(--line); border-radius: 0; clip-path: polygon(0 0, 100% 0, 100% calc(100% - 9px), calc(100% - 9px) 100%, 0 100%); background: var(--surface); color: var(--ink); }
+.search input::placeholder { color: var(--muted); }
+.results { position: absolute; z-index: 5; left: 0; right: 0; top: calc(100% + 4px); background: var(--surface); border: 1px solid var(--line); box-shadow: 0 12px 28px rgba(0,0,0,.55); max-height: 60vh; overflow: auto; }
 .results a { display: flex; align-items: center; gap: 10px; padding: 8px 12px; }
 .results a:hover, .results a:focus-visible { background: var(--soft); }
-.results small { color: var(--muted); margin-left: auto; font-family: var(--mono); font-size: 12px; }
-nav.tabs { flex-basis: 100%; display: flex; flex-wrap: wrap; gap: 4px 4px; border-bottom: 1px solid var(--line); padding-bottom: 8px; }
-nav.tabs a { font-family: var(--display); font-weight: 700; font-size: 18px; letter-spacing: .04em; text-transform: uppercase; padding: 4px 12px; border-radius: 4px; color: var(--muted); }
-nav.tabs a:hover { color: var(--ink); }
-nav.tabs a[aria-current="page"] { background: var(--ink); color: var(--bg); }
-h1, h2, h3 { font-family: var(--display); font-weight: 800; letter-spacing: .02em; text-transform: uppercase; line-height: 1.05; margin: 0; text-wrap: balance; }
-h1 { font-size: clamp(34px, 6vw, 56px); } h2 { font-size: 28px; } h3 { font-size: 20px; }
+.results small { color: var(--muted); margin-left: auto; font-family: var(--mono); font-size: 13px; }
+nav.tabs { flex-basis: 100%; display: flex; flex-wrap: wrap; gap: 4px 6px; border-bottom: 2px solid var(--line); padding-bottom: 0; }
+nav.tabs a { position: relative; z-index: 0; font-family: var(--display); font-weight: 700; font-style: italic; font-size: 19px; letter-spacing: .04em; text-transform: uppercase; padding: 6px 16px 5px; color: var(--muted); }
+nav.tabs a::before { content: ""; position: absolute; inset: 0; transform: skewX(-14deg); background: transparent; z-index: -1; }
+nav.tabs a:hover { color: var(--ink); } nav.tabs a:hover::before { background: var(--soft); }
+nav.tabs a[aria-current="page"] { color: var(--accent-ink); } nav.tabs a[aria-current="page"]::before { background: var(--accent); }
+h1, h2, h3 { font-family: var(--display); font-weight: 800; font-style: italic; letter-spacing: .02em; text-transform: uppercase; line-height: 1.05; margin: 0; text-wrap: balance; }
+h1 { font-size: clamp(38px, 6.4vw, 64px); } h2 { font-size: 30px; } h3 { font-size: 22px; }
+h2::after { content: ""; display: block; width: 44px; height: 4px; margin-top: 6px; background: var(--accent); transform: skewX(-24deg); }
 p { margin: 0; max-width: 68ch; }
-.note { background: var(--soft); border: 1px solid var(--line); border-radius: 8px; padding: 10px 14px; color: var(--muted); font-size: 14px; max-width: none; }
+a:not(.club):not(.gamelink):not(.fork):not(.brand):not(.badge) { text-decoration-color: color-mix(in srgb, var(--los) 70%, transparent); }
+.note { background: var(--surface); border: 1px solid var(--line); border-left: 4px solid var(--los); padding: 10px 14px; color: var(--muted); font-size: 15px; max-width: none; }
 .stack { display: flex; flex-direction: column; gap: 24px; padding-top: 20px; }
 .row { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; }
-.eyebrow { font-family: var(--mono); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
-.card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px; min-width: 0; }
+.eyebrow { font-family: var(--mono); font-weight: 600; font-size: 15px; letter-spacing: .03em; color: var(--muted); }
+.card { background: var(--surface); border: 1px solid var(--line); clip-path: polygon(0 0, calc(100% - var(--cut)) 0, 100% var(--cut), 100% 100%, 0 100%); padding: 16px; min-width: 0; }
 .grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); }
 .grid.wide { grid-template-columns: repeat(auto-fit, minmax(min(100%, 500px), 1fr)); }
+.grid.stand { grid-template-columns: repeat(auto-fit, minmax(min(100%, 700px), 1fr)); }
 .grid.tight { grid-template-columns: repeat(auto-fill, minmax(min(100%, 230px), 1fr)); gap: 10px; }
-.badge { display: inline-flex; align-items: center; justify-content: center; flex: none; width: 2.6em; height: 2.6em; font-size: 14px; border-radius: 9px; font-family: var(--display); font-weight: 800; letter-spacing: .03em; background: var(--p); box-shadow: inset 0 0 0 2.5px var(--t); }
-.badge.lg { font-size: 30px; border-radius: 16px; box-shadow: inset 0 0 0 5px var(--t); } .badge.sm { font-size: 11px; }
-.stripe { height: 10px; border-radius: 5px; }
-.champion { display: flex; flex-wrap: wrap; align-items: center; gap: 14px 20px; background: var(--gold-bg); border: 1px solid var(--gold); border-radius: 12px; padding: 16px 20px; }
+.badge { display: inline-flex; align-items: center; justify-content: center; flex: none; width: 2.6em; height: 2.6em; font-size: 14px; border-radius: 7px; font-family: var(--display); font-weight: 800; font-style: italic; letter-spacing: .03em; background: var(--p); box-shadow: inset 0 0 0 2.5px var(--t), inset 0 -4px 0 rgba(0,0,0,.28), 0 2px 0 rgba(0,0,0,.45); }
+.badge.lg { font-size: 30px; border-radius: 12px; box-shadow: inset 0 0 0 5px var(--t), inset 0 -8px 0 rgba(0,0,0,.28), 0 3px 0 rgba(0,0,0,.45); } .badge.sm { font-size: 12px; }
+.stripe { height: 8px; transform: skewX(-24deg); }
+.champion { display: flex; flex-wrap: wrap; align-items: center; gap: 14px 20px; background: linear-gradient(100deg, #3A3010 0%, var(--gold-bg) 60%, #1B1808 100%); border: 1px solid var(--gold); clip-path: polygon(0 0, calc(100% - 18px) 0, 100% 18px, 100% 100%, 0 100%); padding: 16px 22px; }
 .champion .eyebrow { color: var(--gold); }
-.champion h2 { font-size: 34px; }
-.tablewrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
-table { border-collapse: collapse; width: 100%; font-size: 15px; }
-th, td { padding: 8px 7px; text-align: right; white-space: nowrap; border-bottom: 1px solid var(--line); font-variant-numeric: tabular-nums; }
-th { font-family: var(--mono); font-weight: 500; font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); background: var(--soft); }
+.champion h2 { font-size: 38px; } .champion h2::after { background: var(--gold); }
+.tablewrap { overflow-x: auto; border: 1px solid var(--line); background: var(--surface); clip-path: polygon(0 0, calc(100% - var(--cut)) 0, 100% var(--cut), 100% 100%, 0 100%); }
+table { border-collapse: collapse; width: 100%; font-size: 16px; }
+th, td { padding: 8px 8px; text-align: right; white-space: nowrap; border-bottom: 1px solid var(--line); font-variant-numeric: tabular-nums; }
+th { font-family: var(--mono); font-weight: 600; font-size: 14px; letter-spacing: .03em; color: var(--muted); background: var(--soft); }
 th:first-child, td:first-child { text-align: left; } td.l, th.l { text-align: left; }
+tbody tr:hover td { background: color-mix(in srgb, var(--soft) 55%, transparent); }
 tr:last-child td { border-bottom: 0; }
 .club { display: inline-flex; align-items: center; gap: 10px; font-weight: 600; }
 .club:hover span.nm { text-decoration: underline; text-decoration-color: var(--accent); text-underline-offset: 3px; }
-.seed { display: inline-block; min-width: 20px; padding: 0 5px; margin-left: 8px; border-radius: 10px; background: var(--accent); color: var(--accent-ink); font-family: var(--mono); font-size: 11px; text-align: center; }
-.seed.gold { background: var(--gold); color: var(--surface); }
+.seed { display: inline-block; min-width: 22px; padding: 0 6px; margin-left: 8px; background: var(--los); color: #fff; font-family: var(--mono); font-weight: 700; font-size: 13px; text-align: center; transform: skewX(-12deg); }
+.seed.gold { background: var(--gold); color: var(--accent-ink); }
 .exile td { color: var(--muted); background: var(--soft); font-style: italic; }
 .chips { display: flex; flex-wrap: wrap; gap: 6px; }
-.chip { font-family: var(--mono); font-size: 13px; padding: 5px 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); color: var(--ink); }
-.chip[aria-current="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
-.chip.bye { border-style: dashed; color: var(--muted); font-size: 11px; display: flex; align-items: center; }
+.chip { font-family: var(--mono); font-weight: 600; font-size: 15px; padding: 4px 12px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); }
+.chip:hover { border-color: var(--muted); }
+.chip[aria-current="true"] { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.chip.bye { border-style: dashed; color: var(--muted); font-size: 12px; display: flex; align-items: center; }
 .game { display: grid; grid-template-columns: 84px 1fr; gap: 4px 12px; align-items: start; padding: 10px 14px; border-bottom: 1px solid var(--line); }
 .game:last-child { border-bottom: 0; }
-.game .t { font-family: var(--mono); font-size: 13px; color: var(--muted); white-space: nowrap; display: flex; flex-direction: column; align-items: flex-start; gap: 4px; }
+.game .t { font-family: var(--mono); font-weight: 600; font-size: 15px; color: var(--muted); white-space: nowrap; display: flex; flex-direction: column; align-items: flex-start; gap: 4px; }
 .game .teams { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
 .game .teams > div { display: flex; align-items: center; gap: 8px; justify-content: space-between; }
-.game .sc { font-family: var(--mono); font-variant-numeric: tabular-nums; min-width: 2.4ch; text-align: right; }
-.won { font-weight: 700; color: var(--win); }
+.game .sc { font-family: var(--display); font-weight: 800; font-style: italic; font-size: 22px; line-height: 1.1; font-variant-numeric: tabular-nums; min-width: 2.4ch; text-align: right; }
+.won { color: var(--win); }
+.game .sc.won { text-shadow: 0 0 12px rgba(255,255,255,.28); }
 .lost { color: var(--muted); }
-.tag { font-family: var(--mono); font-size: 11px; border: 1px solid var(--line); border-radius: 4px; padding: 1px 6px; color: var(--muted); }
-.day { padding: 8px 14px; background: var(--soft); border-bottom: 1px solid var(--line); font-family: var(--display); font-weight: 700; letter-spacing: .05em; text-transform: uppercase; display: flex; gap: 12px; align-items: baseline; flex-wrap: wrap; }
-.day span { font-family: var(--mono); font-size: 12px; color: var(--muted); letter-spacing: 0; text-transform: none; font-weight: 400; }
+.tag { font-family: var(--mono); font-weight: 600; font-size: 12px; border: 1px solid var(--line); padding: 0 6px; color: var(--muted); }
+.day { padding: 8px 14px; background: var(--soft); border-bottom: 1px solid var(--line); font-family: var(--display); font-weight: 700; font-style: italic; font-size: 19px; letter-spacing: .04em; text-transform: uppercase; display: flex; gap: 12px; align-items: baseline; flex-wrap: wrap; }
+.day span { font-family: var(--mono); font-size: 14px; color: var(--muted); letter-spacing: 0; text-transform: none; font-weight: 500; font-style: normal; }
 .kv { margin: 0; display: grid; grid-template-columns: minmax(110px, 160px) 1fr; gap: 8px 16px; }
-.kv dt { color: var(--muted); font-size: 14px; } .kv dd { margin: 0; min-width: 0; }
+.kv dt { color: var(--muted); font-size: 15px; } .kv dd { margin: 0; min-width: 0; }
 .people { display: grid; gap: 12px 24px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); }
 .people b { display: block; } .people small { color: var(--muted); }
-.sw { display: inline-block; width: 14px; height: 14px; border-radius: 3px; vertical-align: -2px; margin-right: 6px; border: 1px solid var(--line); }
+.sw { display: inline-block; width: 14px; height: 14px; vertical-align: -2px; margin-right: 6px; border: 1px solid var(--line); }
 .bio { max-width: 68ch; }
-.ovr { font-family: var(--display); font-weight: 800; font-size: 44px; line-height: 1; }
+.ovr { font-family: var(--display); font-weight: 800; font-style: italic; font-size: 52px; line-height: 1; color: var(--accent); }
 .timeline { width: 100%; height: auto; display: block; }
-.timeline text { fill: var(--ink); font-family: var(--mono); font-size: 12px; } .timeline .mut { fill: var(--muted); }
-.timeline .off { fill: var(--line); } .timeline .wk { fill: var(--accent); } .timeline .po { fill: var(--ink); } .timeline .co { fill: var(--gold); } .timeline line { stroke: var(--muted); stroke-width: 1; }
-select, .btn { font: inherit; padding: 7px 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); color: var(--ink); max-width: 100%; }
-.btn { cursor: pointer; }
+.timeline text { fill: var(--ink); font-family: var(--mono); font-size: 13px; } .timeline .mut { fill: var(--muted); }
+.timeline .off { fill: var(--line); } .timeline .wk { fill: var(--los); } .timeline .po { fill: var(--ink); } .timeline .co { fill: var(--gold); } .timeline line { stroke: var(--muted); stroke-width: 1; }
+select, .btn { font: inherit; padding: 7px 12px; border: 1px solid var(--line); border-radius: 0; background: var(--surface); color: var(--ink); max-width: 100%; }
+.btn { cursor: pointer; font-family: var(--display); font-weight: 700; font-style: italic; font-size: 17px; letter-spacing: .04em; text-transform: uppercase; clip-path: polygon(0 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%); }
+.btn:hover:not(:disabled) { border-color: var(--muted); } .btn:disabled { opacity: .5; cursor: default; }
 .hide-sm { display: table-cell; }
 @media (max-width: 640px) { .hide-sm { display: none; } .kv { grid-template-columns: 1fr; gap: 2px; } .kv dd { margin-bottom: 8px; } .game { grid-template-columns: 78px 1fr; } }
-@media (prefers-reduced-motion: no-preference) { .card, .chip, nav.tabs a { transition: border-color .15s, background-color .15s; } }
+@media (prefers-reduced-motion: no-preference) { .card, .chip, nav.tabs a, .btn { transition: border-color .15s, background-color .15s, color .15s; } }
 .gamelink { display: block; color: inherit; } .gamelink:hover { background: var(--soft); }
-.gamelink .more { font-family: var(--mono); font-size: 11px; color: var(--accent); }
-.board { display: grid; grid-template-columns: 1fr auto 1fr; gap: 8px 18px; align-items: center; }
-.board .side { display: flex; align-items: center; gap: 14px; min-width: 0; } .board .side.r { flex-direction: row-reverse; text-align: right; }
-.board .nm { font-family: var(--display); font-weight: 800; font-size: clamp(20px, 3.4vw, 30px); text-transform: uppercase; line-height: 1.05; }
-.board .pts { font-family: var(--display); font-weight: 800; font-size: clamp(44px, 9vw, 76px); line-height: 1; font-variant-numeric: tabular-nums; }
-.board .mid { text-align: center; font-family: var(--mono); font-size: 13px; color: var(--muted); min-width: 96px; }
-.board .mid b { display: block; font-size: 20px; color: var(--ink); }
-.board .poss, .sitrow .poss { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--accent); margin-right: 6px; }
-@media (max-width: 640px) { .board { grid-template-columns: 1fr; } .board .side.r { flex-direction: row; text-align: left; } .board .badge.lg { font-size: 22px; } }
-.sitrow { display: grid; grid-template-columns: 1fr auto 1fr; gap: 12px; align-items: center; margin-top: 14px; font-family: var(--mono); font-size: 13px; color: var(--muted); }
-.sitrow .r { text-align: right; } .sitrow .dd { font-family: var(--display); font-weight: 800; font-size: clamp(26px, 5vw, 40px); color: var(--ink); text-align: center; line-height: 1; white-space: nowrap; }
-.sitrow .dd small { display: block; font-family: var(--mono); font-size: 12px; font-weight: 400; color: var(--muted); margin-top: 5px; }
-@media (max-width: 640px) { .sitrow { grid-template-columns: 1fr; text-align: center; } .sitrow .r { text-align: center; } }
-.tos { display: flex; align-items: center; gap: 4px; margin-top: 6px; font-family: var(--mono); font-size: 11px; color: var(--muted); } .board .side.r .tos { justify-content: flex-end; }
-.tos i { width: 18px; height: 6px; border-radius: 2px; background: var(--ink); } .tos i.o { background: var(--line); }
-.fld { position: relative; height: 92px; margin-top: 8px; border-radius: 8px; overflow: hidden; border: 1px solid var(--line); background: var(--soft); }
-.fld .ez { position: absolute; top: 0; bottom: 0; width: 7%; display: flex; align-items: center; justify-content: center; font-family: var(--display); font-weight: 800; font-size: 15px; letter-spacing: .25em; writing-mode: vertical-rl; color: #fff; text-shadow: 0 0 3px rgba(0,0,0,.55); } .fld .ez.l { left: 0; transform: rotate(180deg); } .fld .ez.r { right: 0; }
-.fld .yl { position: absolute; top: 0; bottom: 0; width: 1px; background: var(--line); } .fld .yl.m { background: color-mix(in srgb, var(--muted) 45%, transparent); }
-.fld .yn { position: absolute; transform: translateX(-50%); font-family: var(--mono); font-size: 11px; color: var(--muted); } .fld .yn.t { top: 3px; } .fld .yn.b { bottom: 3px; }
-.fld .hash { position: absolute; left: 7%; right: 7%; border-top: 2px dotted color-mix(in srgb, var(--muted) 30%, transparent); } .fld .hash.a { top: 34%; } .fld .hash.b { top: 66%; }
-.fld .trail { position: absolute; top: 41px; height: 10px; border-radius: 5px; background: var(--accent); opacity: .5; transition: left .35s, width .35s; }
-.fld .trail.r::after, .fld .trail.l::before { position: absolute; top: -3px; font-size: 14px; line-height: 16px; color: var(--accent); } .fld .trail.r::after { content: "\25B6"; right: -9px; } .fld .trail.l::before { content: "\25C0"; left: -9px; }
-.fld .los { position: absolute; top: 0; bottom: 0; width: 3px; margin-left: -1px; background: var(--accent); transition: left .35s; }
-.fld .first { position: absolute; top: 0; bottom: 0; width: 3px; margin-left: -1px; background: var(--gold); transition: left .35s; }
-.fld .ball { position: absolute; top: 38px; width: 28px; height: 16px; margin-left: -14px; border-radius: 50%; background: #8B5A2B; border: 2px solid var(--surface); transition: left .35s; } .fld .ball::after { content: ""; position: absolute; left: 7px; right: 7px; top: 5px; border-top: 2px solid var(--surface); }
-.dch { margin-top: 12px; max-height: 232px; overflow: auto; } .dch .row { display: grid; grid-template-columns: 62px 1fr 92px; gap: 8px; align-items: center; height: 19px; font-family: var(--mono); font-size: 11px; color: var(--muted); }
-.dch .bar { position: relative; height: 12px; border-radius: 3px; background: var(--soft); border: 1px solid var(--line); } .dch .seg { position: absolute; top: 2px; height: 6px; border-radius: 3px; min-width: 3px; } .dch .seg.r::after, .dch .seg.l::before { position: absolute; top: -3px; font-size: 10px; line-height: 12px; } .dch .seg.r::after { content: "\25B6"; right: -7px; } .dch .seg.l::before { content: "\25C0"; left: -7px; }
-.dch .ez0 { position: absolute; top: 0; bottom: 0; width: 7%; background: color-mix(in srgb, var(--muted) 20%, transparent); } .dch .res { color: var(--ink); } .dch .res.sc { color: var(--accent); font-weight: 700; } .dch .res.tn { color: #B3261E; font-weight: 600; }
+.gamelink .more { font-family: var(--mono); font-weight: 600; font-size: 13px; color: var(--accent); }
+/* the score bar: each club's side is washed in its own colour, the score in big slanted numerals, the clock on a plate between */
+.board { display: grid; grid-template-columns: 1fr auto 1fr; gap: 8px 14px; align-items: stretch; }
+.board .side { display: flex; align-items: center; gap: 14px; min-width: 0; padding: 10px 14px; background: linear-gradient(90deg, color-mix(in srgb, var(--p, #28443A) 62%, #08110C) 0%, color-mix(in srgb, var(--p, #28443A) 14%, #08110C) 100%); border-left: 5px solid var(--p, var(--line)); }
+.board .side.r { flex-direction: row-reverse; text-align: right; background: linear-gradient(270deg, color-mix(in srgb, var(--p, #28443A) 62%, #08110C) 0%, color-mix(in srgb, var(--p, #28443A) 14%, #08110C) 100%); border-left: 0; border-right: 5px solid var(--p, var(--line)); }
+.board .nm { font-family: var(--display); font-weight: 800; font-style: italic; font-size: clamp(22px, 3.6vw, 34px); text-transform: uppercase; line-height: 1.05; }
+.board .pts { color: var(--ink); font-family: var(--display); font-weight: 800; font-style: italic; font-size: clamp(54px, 10vw, 92px); line-height: .95; font-variant-numeric: tabular-nums; text-shadow: 0 3px 0 rgba(0,0,0,.5); }
+.board .mid { text-align: center; font-family: var(--mono); font-size: 14px; color: var(--muted); min-width: 96px; display: flex; align-items: center; justify-content: center; }
+.board .mid b { display: block; font-size: 22px; font-style: italic; color: var(--accent); }
+.board .poss, .sitrow .poss { display: inline-block; width: 9px; height: 9px; background: var(--accent); transform: rotate(45deg); margin-right: 8px; }
+@media (max-width: 640px) { .board { grid-template-columns: 1fr; } .board .side.r { flex-direction: row; text-align: left; background: linear-gradient(90deg, color-mix(in srgb, var(--p, #28443A) 62%, #08110C) 0%, color-mix(in srgb, var(--p, #28443A) 14%, #08110C) 100%); border-right: 0; border-left: 5px solid var(--p, var(--line)); } .board .badge.lg { font-size: 22px; } }
+.sitrow { display: grid; grid-template-columns: 1fr auto 1fr; gap: 12px; align-items: center; margin-top: 14px; font-family: var(--mono); font-weight: 500; font-size: 15px; color: var(--muted); }
+.sitrow .r { text-align: right; }
+.sitrow .dd { font-family: var(--display); font-weight: 800; font-style: italic; font-size: clamp(24px, 4.4vw, 34px); color: var(--accent-ink); text-align: center; line-height: 1; white-space: nowrap; background: var(--accent); padding: 6px 22px; clip-path: polygon(14px 0, 100% 0, calc(100% - 14px) 100%, 0 100%); }
+.sitrow .dd:empty { display: none; }
+.sitrow .dd small { display: block; font-family: var(--mono); font-style: normal; font-size: 13px; font-weight: 600; color: var(--accent-ink); opacity: .78; margin-top: 3px; }
+@media (max-width: 640px) { .sitrow { grid-template-columns: 1fr; text-align: center; justify-items: center; } .sitrow .r { text-align: center; } }
+.tos { display: flex; align-items: center; gap: 4px; margin-top: 6px; font-family: var(--mono); font-size: 13px; color: var(--muted); } .board .side.r .tos { justify-content: flex-end; }
+.tos i { width: 20px; height: 7px; background: var(--ink); transform: skewX(-24deg); } .tos i.o { background: rgba(255,255,255,.14); }
+/* the field: turf mown in 10-yard bands, white yard lines, and the two broadcast lines */
+.fld { position: relative; height: 92px; margin-top: 10px; overflow: hidden; border: 2px solid #0A150F; box-shadow: 0 0 0 1px var(--line), inset 0 8px 18px rgba(0,0,0,.35); background-color: var(--turf); background-image: linear-gradient(90deg, var(--turf2) 50%, var(--turf) 50%); background-size: 17.2% 100%; background-position: 7% 0; }
+.fld .ez { position: absolute; top: 0; bottom: 0; width: 7%; display: flex; align-items: center; justify-content: center; font-family: var(--display); font-weight: 800; font-style: italic; font-size: 17px; letter-spacing: .22em; writing-mode: vertical-rl; color: #fff; text-shadow: 0 0 3px rgba(0,0,0,.55); } .fld .ez.l { left: 0; transform: rotate(180deg); } .fld .ez.r { right: 0; }
+.fld .yl { position: absolute; top: 0; bottom: 0; width: 2px; margin-left: -1px; background: rgba(255,255,255,.55); } .fld .yl.m { background: rgba(255,255,255,.85); }
+.fld .yn { position: absolute; transform: translateX(-50%); font-family: var(--display); font-weight: 700; font-size: 14px; color: rgba(255,255,255,.62); } .fld .yn.t { top: 2px; } .fld .yn.b { bottom: 2px; }
+.fld .hash { position: absolute; left: 7%; right: 7%; border-top: 2px dotted rgba(255,255,255,.4); } .fld .hash.a { top: 34%; } .fld .hash.b { top: 66%; }
+.fld .trail { position: absolute; top: 41px; height: 10px; border-radius: 5px; background: rgba(255,255,255,.55); transition: left .35s, width .35s; }
+.fld .trail.r::after, .fld .trail.l::before { position: absolute; top: -3px; font-size: 14px; line-height: 16px; color: rgba(255,255,255,.85); } .fld .trail.r::after { content: "\25B6"; right: -9px; } .fld .trail.l::before { content: "\25C0"; left: -9px; }
+.fld .los { position: absolute; top: 0; bottom: 0; width: 4px; margin-left: -2px; background: var(--los); box-shadow: 0 0 10px 1px var(--los); transition: left .35s; }
+.fld .first { position: absolute; top: 0; bottom: 0; width: 4px; margin-left: -2px; background: var(--accent); box-shadow: 0 0 10px 1px var(--accent); transition: left .35s; }
+.stagewrap { position: relative; margin-top: 10px; border: 2px solid #0A150F; box-shadow: 0 0 0 1px var(--line), inset 0 8px 18px rgba(0,0,0,.35); background: #05070B; overflow: hidden; }
+.stagewrap canvas { display: block; width: 100%; height: clamp(220px, 31vw, 380px); }
+.stagebar { display: flex; justify-content: flex-end; align-items: center; gap: 10px; margin-top: 6px; color: var(--muted); font-size: 14px; }
+.stagebar .btn { padding: 3px 12px; font-size: 15px; }
+@media (max-width: 700px) { .stagewrap canvas { height: clamp(190px, 58vw, 280px); } }
+.fld .ball { position: absolute; top: 38px; width: 28px; height: 16px; margin-left: -14px; border-radius: 50%; background: #9A5F2B; border: 2px solid #1A0F06; transition: left .35s; } .fld .ball::after { content: ""; position: absolute; left: 7px; right: 7px; top: 4px; border-top: 2px solid #fff; }
+.dch { margin-top: 12px; max-height: 232px; overflow: auto; } .dch .row { display: grid; grid-template-columns: 62px 1fr 92px; gap: 8px; align-items: center; height: 19px; font-family: var(--mono); font-weight: 500; font-size: 13px; color: var(--muted); }
+.dch .bar { position: relative; height: 12px; background: var(--turf); border: 1px solid #0A150F; } .dch .seg { position: absolute; top: 2px; height: 6px; border-radius: 3px; min-width: 3px; } .dch .seg.r::after, .dch .seg.l::before { position: absolute; top: -3px; font-size: 10px; line-height: 12px; } .dch .seg.r::after { content: "\25B6"; right: -7px; } .dch .seg.l::before { content: "\25C0"; left: -7px; }
+.dch .ez0 { position: absolute; top: 0; bottom: 0; width: 7%; background: rgba(0,0,0,.28); } .dch .res { color: var(--ink); } .dch .res.sc { color: var(--accent); font-weight: 700; } .dch .res.tn { color: var(--loss); font-weight: 700; }
 .controls { display: flex; flex-wrap: wrap; gap: 8px 10px; align-items: center; }
-button.chip { cursor: pointer; } .stat-th { cursor: pointer; user-select: none; } .stat-th:hover { color: var(--ink); } .stat-th.on { color: var(--ink); }
-a.fork { display: block; color: var(--ink); } a.fork:hover { border-color: var(--ink); } a.fork h3 { margin-bottom: 6px; }
-.btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 700; }
-.feed { max-height: 460px; overflow: auto; font-size: 15px; } .feed > div { display: grid; grid-template-columns: 74px 1fr; gap: 10px; padding: 7px 14px; border-bottom: 1px solid var(--line); }
-.feed .c { font-family: var(--mono); font-size: 12px; color: var(--muted); padding-top: 3px; } .feed .big { background: var(--gold-bg); font-weight: 700; } .feed .turn { color: #B3261E; font-weight: 600; } .feed .pen { color: var(--gold); font-weight: 600; } .feed .tmo { color: var(--muted); font-style: italic; } .feed .hd { background: var(--soft); color: var(--muted); font-family: var(--mono); font-size: 12px; }
-.statrow { display: grid; grid-template-columns: 1fr auto 1fr; gap: 10px; padding: 6px 0; border-bottom: 1px solid var(--line); font-variant-numeric: tabular-nums; } .statrow span:first-child { text-align: right; } .statrow span:nth-child(2) { color: var(--muted); font-size: 13px; text-align: center; min-width: 110px; } .statrow:last-child { border-bottom: 0; }
-.lead { font-size: 14px; line-height: 1.6; } .lead b { font-weight: 600; } .lead small { color: var(--muted); }
-footer { max-width: 1080px; margin: 40px auto 0; color: var(--muted); font-size: 13px; }
+button.chip { cursor: pointer; } .stat-th { cursor: pointer; user-select: none; } .stat-th:hover { color: var(--ink); } .stat-th.on { color: var(--accent); }
+a.fork { display: block; color: var(--ink); } a.fork:hover { border-color: var(--accent); } a.fork h3 { margin-bottom: 6px; }
+.btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.feed { max-height: 460px; overflow: auto; font-size: 16px; } .feed > div { display: grid; grid-template-columns: 74px 1fr; gap: 10px; padding: 7px 14px; border-bottom: 1px solid var(--line); }
+.feed .c { font-family: var(--mono); font-weight: 600; font-size: 14px; color: var(--muted); padding-top: 2px; } .feed .big { background: var(--gold-bg); box-shadow: inset 4px 0 0 var(--accent); font-weight: 700; } .feed .turn { color: var(--loss); font-weight: 600; box-shadow: inset 4px 0 0 var(--loss); } .feed .pen { color: var(--gold); font-weight: 600; } .feed .tmo { color: var(--muted); font-style: italic; } .feed .hd { background: var(--soft); color: var(--muted); font-family: var(--mono); font-weight: 600; font-size: 14px; }
+.statrow { display: grid; grid-template-columns: 1fr auto 1fr; gap: 10px; padding: 6px 0; border-bottom: 1px solid var(--line); font-variant-numeric: tabular-nums; } .statrow span:first-child { text-align: right; } .statrow span:nth-child(2) { color: var(--muted); font-family: var(--mono); font-weight: 500; font-size: 15px; text-align: center; min-width: 110px; } .statrow:last-child { border-bottom: 0; }
+.lead { font-size: 15px; line-height: 1.6; } .lead b { font-weight: 600; } .lead small { color: var(--muted); }
+footer { max-width: 1080px; margin: 40px auto 0; color: var(--muted); font-size: 14px; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
 </style>
 
 <header class="top">
@@ -142,6 +158,7 @@ footer { max-width: 1080px; margin: 40px auto 0; color: var(--muted); font-size:
 <main class="wrap" id="app"></main>
 <footer id="foot"></footer>
 <script id="data" type="application/json">__DATA__</script>
+<script>__STAGE__</script>
 <script>
 "use strict";
 const D = JSON.parse(document.getElementById("data").textContent);
@@ -164,7 +181,8 @@ const clubLink = (c, extra = "") => `<a class="club" href="#club-${c.abbr}">${ba
 const stripe = c => `<div class="stripe" style="background:linear-gradient(90deg,${c.colors[0]} 0 52%,${c.colors[1]} 52% 82%,${c.colors[2]} 82% 100%)"></div>`;
 const slotOf = g => { const wd = dateOf(g.date).getDay(); if (wd === 6) return ["Saturday night", 4]; if (wd === 1) return ["Monday night", 5]; const h = +g.time.split(":")[0]; return h < 12 ? ["Sunday morning", 1] : h < 15 ? ["Sunday afternoon", 2] : ["Sunday evening", 3]; };
 const conf = i => D.conferences[i];
-let seedOf = {}; const reseed = () => { seedOf = {}; Object.entries(D.seeds).forEach(([cf, ids]) => ids.forEach((id, k) => seedOf[id] = k + 1)); }; reseed();
+let seedOf = {}, seedNow = false;                          // seedNow: the seeds shown are those of "if the regular season ended now", worked out by the engine from the finals so far
+const reseed = () => { seedOf = {}; seedNow = !Object.keys(D.seeds).length && !!D.seedsNow; Object.entries(seedNow ? D.seedsNow : D.seeds).forEach(([cf, ids]) => ids.forEach((id, k) => seedOf[id] = k + 1)); }; reseed();
 clubs.forEach(c => { c.exiled0 = c.exiled; });             // who began in exile on Founding Day (a club's status changes year to year in a live league)
 const players = []; clubs.forEach(c => c.roster.forEach((p, i) => { p.club = c; p.idx = i; players.push(p); }));
 const winner = g => g.hp > g.ap ? g.home : g.ap > g.hp ? g.away : null;
@@ -175,10 +193,25 @@ const allPts = clubs.filter(c => !c.exiled0).map(ptsOf);
 const rangeLo = Math.min(...allPts), rangeHi = Math.max(...allPts);
 
 /* ---------- pages ---------- */
+/* The standings columns beyond the record. Each is arithmetic on the games played so far, the same as the engine's tiebreak measures (strength of schedule and of victory count
+   every game against an opponent once, an opponent's whole record counted, a tie as half a win); check_site.py compares them with the engine's own. */
+function standExtras() {
+  const X = {}; clubs.forEach(c => X[c.id] = { sched: 0, played: [] });
+  D.games.forEach(g => { X[g.home].sched++; X[g.away].sched++; if (g.hp != null) { const w = g.hp > g.ap ? 1 : g.hp < g.ap ? 0 : .5; X[g.home].played.push([g.away, w]); X[g.away].played.push([g.home, 1 - w]); } });
+  const sum = L => L.reduce((a, b) => a + b, 0), cr = id => sum(X[id].played.map(x => x[1])), nn = id => X[id].played.length;
+  const R = (L, f) => { const w = L.filter(x => x[1] === 1).length, l = L.filter(x => x[1] === 0).length; return `${w}-${l}${L.length - w - l ? "-" + (L.length - w - l) : ""}`; };
+  const P = (a, b) => b ? (a / b).toFixed(3).replace(/^0/, "") : "";
+  clubs.forEach(c => { const x = X[c.id], pl = x.played, did = c.did, cf = Math.floor(did / 4);
+    x.div = R(pl.filter(q => byId[q[0]].did === did)); x.conf = R(pl.filter(q => Math.floor(byId[q[0]].did / 4) === cf));
+    x.sos = P(sum(pl.map(q => cr(q[0]))), sum(pl.map(q => nn(q[0]))));
+    const beat = pl.filter(q => q[1] === 1); x.sov = pl.length ? (beat.length ? P(sum(beat.map(q => cr(q[0]))), sum(beat.map(q => nn(q[0])))) : ".000") : "";
+    x.credit = cr(c.id); x.lossCredit = pl.length - x.credit; x.left = x.sched - pl.length; });
+  return X;
+}
 function standings() {
   let h;
   if (D.champion == null) {
-    h = `<div class="stack"><div class="champion" style="background:var(--soft);border-color:var(--line)"><div><div class="eyebrow">Season ${D.season}</div><h2>${e(phaseText())}</h2><p style="color:var(--muted)">${e(LIVE ? "Standings are what the games played so far add up to. Clubs are ordered by winning percentage, then points difference; the league's own tiebreakers are applied when the regular season ends." : "")}</p></div></div>
+    h = `<div class="stack"><div class="champion" style="background:var(--soft);border-color:var(--line)"><div><div class="eyebrow">Season ${D.season}</div><h2>${e(phaseText())}</h2><p style="color:var(--muted)">${e(LIVE ? "Standings are what the games played so far add up to. Clubs are ordered by the league's own tiebreakers, and the numbered badges are the playoff seeds as they would stand if the regular season ended now; both change as games end." : "")}</p></div></div>
     <p class="note">A read-only window on the league. Everything here is the engine's own record; nothing on this page changes the league.</p>`;
   } else {
     const ch = byId[D.champion], final = D.playoffs[D.playoffs.length - 1];
@@ -186,20 +219,24 @@ function standings() {
     <p>Season ${D.season} champions, ${rec(ch.record)} in the regular season. Final: ${e(byId[D.champion].abbr)} ${D.champion === final.home ? final.hp : final.ap}, ${e(byId[D.champion === final.home ? final.away : final.home].abbr)} ${D.champion === final.home ? final.ap : final.hp}.</p></div></div>
     <p class="note">A read-only window on the league. ${LIVE ? "" : "This is the first season of the founding class, played by the engine on the autopilot with no agents yet. "}Numbers shown are the engine's own.</p>`;
   }
+  const X = standExtras();
   D.conferences.forEach((cn, ci) => {
-    h += `<section class="stack" style="padding-top:0"><h1 style="font-size:36px">${e(cn)} Conference</h1><div class="grid wide">`;
+    h += `<section class="stack" style="padding-top:0"><h1 style="font-size:36px">${e(cn)} Conference</h1><div class="grid stand">`;
     for (let di = 0; di < 4; di++) {
       const did = ci * 4 + di, members = clubs.filter(c => c.did === did), order = D.division_ranks[did] || [];
       const active = order.map(id => byId[id]), exiled = members.filter(c => c.exiled);
-      h += `<div class="stack" style="padding-top:0;gap:8px"><h3>${e(members[0].division)}</h3><div class="tablewrap"><table><thead><tr><th>Club</th><th>W</th><th>L</th><th>T</th><th>Pct</th><th class="hide-sm">PF</th><th class="hide-sm">PA</th><th>Diff</th></tr></thead><tbody>`;
-      active.forEach(c => { const r = c.record, d = r.pf - r.pa, sd = seedOf[c.id];
-        h += `<tr><td>${clubLink(c, c.id === D.champion ? `<span class="seed gold" title="Champion">◆</span>` : sd ? `<span class="seed" title="Playoff seed ${sd}">${sd}</span>` : "")}</td><td>${r.w}</td><td>${r.l}</td><td>${r.t}</td><td>${pct(r)}</td><td class="hide-sm">${r.pf}</td><td class="hide-sm">${r.pa}</td><td>${d > 0 ? "+" : ""}${d}</td></tr>`; });
-      exiled.forEach(c => { const a = c.ambassador; h += `<tr class="exile"><td>${clubLink(c)}</td><td colspan="7" style="text-align:left;white-space:normal">In exile this season · Ambassador Season ${a.w}-${a.l}${a.t ? "-" + a.t : ""}</td></tr>`; });
+      h += `<div class="stack" style="padding-top:0;gap:8px"><h3>${e(members[0].division)}</h3><div class="tablewrap"><table><thead><tr><th>Club</th><th>W</th><th>L</th><th>T</th><th>Pct</th><th title="Games behind the division leader; the leader shows its magic number (M), the wins by the leader plus losses by the closest rival that clinch the division outright, ties counting half">GB / Magic</th><th title="Record in division games">Div</th><th class="hide-sm" title="Record in conference games">Conf</th><th class="hide-sm" title="Strength of schedule: the combined winning percentage of every opponent played">SOS</th><th class="hide-sm" title="Strength of victory: the combined winning percentage of the opponents beaten">SOV</th><th>Diff</th></tr></thead><tbody>`;
+      const lead = active[0], others = active.slice(1), XL = lead && X[lead.id], done = active.every(c => X[c.id].left === 0);
+      const magic = !lead ? "" : done ? `<b title="The division is decided">Won</b>` : (() => { const m = Math.ceil(XL.sched + .5 - XL.credit - Math.min(...others.map(c => X[c.id].lossCredit))); return m <= 0 ? `<b title="Clinched the division outright">Clinched</b>` : `<b title="Magic number: ${m} more wins by ${e(lead.name)} or losses by the closest rival clinch the division outright">M ${m}</b>`; })();
+      active.forEach(c => { const r = c.record, d = r.pf - r.pa, sd = seedOf[c.id], x = X[c.id];
+        const gb = c === lead ? magic : ((XL.credit - x.credit) + (x.lossCredit - XL.lossCredit)) / 2, gbs = typeof gb === "number" ? String(gb) : gb;
+        h += `<tr><td>${clubLink(c, c.id === D.champion ? `<span class="seed gold" title="Champion">◆</span>` : sd ? `<span class="seed" title="${seedNow ? `Playoff seed ${sd} if the regular season ended now` : `Playoff seed ${sd}`}">${sd}</span>` : "")}</td><td>${r.w}</td><td>${r.l}</td><td>${r.t}</td><td>${pct(r)}</td><td>${gbs}</td><td>${x.div}</td><td class="hide-sm">${x.conf}</td><td class="hide-sm">${x.sos}</td><td class="hide-sm">${x.sov}</td><td>${d > 0 ? "+" : ""}${d}</td></tr>`; });
+      exiled.forEach(c => { const a = c.ambassador; h += `<tr class="exile"><td>${clubLink(c)}</td><td colspan="10" style="text-align:left;white-space:normal">In exile this season · Ambassador Season ${a.w}-${a.l}${a.t ? "-" + a.t : ""}</td></tr>`; });
       h += `</tbody></table></div></div>`;
     }
     h += `</div></section>`;
   });
-  return h + `</div>`;
+  return h + `<p class="note" style="margin-top:8px">The numbered badges are playoff seeds (seven clubs a conference qualify): during the season they are the seeds as they would stand if it ended now. GB is games behind the division leader. The leader shows its magic number, M: any mix of that many wins by the leader and losses by its closest rival clinches the division outright (a tie counts half). Div and Conf are records in division and conference games. SOS is the winning percentage of all opponents played, SOV of the opponents beaten; these are the league's tiebreakers after head-to-head, division record and common games, and they settle a tie only when the earlier ones do not.</p></div>`;
 }
 
 function playoffs() {
@@ -468,6 +505,7 @@ function fieldMarks(A, H) {
   return h;
 }
 let REPLAY = null;
+const LIVE_SEEN = {};      // live games: how many plays of each the viewer has already been shown, so that only a play that arrives while the page is open is animated
 function game(id) {
   const g = gameById[id], b = D.box[id]; if (!g) return notFound();
   if (!b) return LIVE ? waitingGame(g) : notFound();
@@ -477,11 +515,13 @@ function game(id) {
   const when = g.date ? `${fmtDate(g.date)}, ${fmtTime(g.time)}` : "";
   const realLen = Math.round((plays.length ? plays[plays.length - 1][14] : 3600) * REAL_PER_GAME / 60 + HALFTIME_PAUSE / 60);
   return `<div class="stack"><div class="eyebrow"><a href="#schedule-${g.week || 1}" style="text-decoration:underline">Schedule</a> · ${stage} ${when ? "· " + when : ""} · ${e(H.venue)}</div>
-  <div class="card"><div class="board"><div class="side">${badge(A, "lg")}<div><div class="nm">${e(A.name)}</div><small style="color:var(--muted)">${rec(A.record)} · away</small><div class="tos" id="to1"></div></div></div>
+  <div class="card"><div class="board"><div class="side" style="--p:${A.colors[0]}">${badge(A, "lg")}<div><div class="nm">${e(A.name)}</div><small style="color:var(--muted)">${rec(A.record)} · away</small><div class="tos" id="to1"></div></div></div>
     <div class="mid"><div style="display:flex;justify-content:center;align-items:center;gap:20px"><span class="pts" id="sa">0</span><b id="st" style="font-size:16px;min-width:76px">Final</b><span class="pts" id="sh">0</span></div></div>
-    <div class="side r">${badge(H, "lg")}<div><div class="nm">${e(H.name)}</div><small style="color:var(--muted)">${rec(H.record)} · home</small><div class="tos" id="to0"></div></div></div></div>
+    <div class="side r" style="--p:${H.colors[0]}">${badge(H, "lg")}<div><div class="nm">${e(H.name)}</div><small style="color:var(--muted)">${rec(H.record)} · home</small><div class="tos" id="to0"></div></div></div></div>
   <div class="sitrow"><div id="poss"></div><div class="dd" id="dd"></div><div class="r" id="drv1"></div></div>
   <div class="fld" id="field" aria-hidden="true">${fieldMarks(A, H)}<span class="trail" id="trail"></span><span class="first" id="first"></span><span class="los" id="los"></span><span class="ball" id="ball"></span></div>
+  <div class="stagewrap" id="stagewrap" hidden><canvas id="stage" role="img" aria-label="Animated field: the plays of the game as they are run. The play by play below tells the same story in words."></canvas></div>
+  <div class="stagebar"><span id="animnote"></span><button class="btn" id="anim" type="button" aria-pressed="false">Animation: off</button></div>
   <p id="sit" style="margin-top:6px;color:var(--muted);font-size:14px;max-width:none"></p><div class="dch" id="dch"></div>
   ${live ? `<p class="note" style="margin-top:12px"><b style="color:var(--accent)">LIVE</b> This game is being played now. Each play appears here as it happens, and you can replay it once it is over.</p>` : `<div class="controls" style="margin-top:12px"><button class="btn primary" id="watch">Watch replay</button><button class="btn" id="pause" disabled>Pause</button><label style="color:var(--muted);font-size:14px">Speed <select id="speed"><option value="1">1x (about ${realLen} min)</option><option value="4">4x</option><option value="16">16x</option><option value="60">60x</option></select></label><button class="btn" id="final">Skip to final</button></div>`}</div>
   <div class="grid wide"><div class="stack" style="padding-top:0;gap:8px"><h3>Play by play</h3><div class="tablewrap feed" id="feed"></div></div>
@@ -519,7 +559,22 @@ function startGame(id) {
     }
     return null;
   }
-  function paintField() {
+  /* the animated field (site/stage.js) is optional: the strip above it carries the same information, and the page is the same page without it */
+  const ST = window.DFLStage;
+  let stage = null, lastShown = null;
+  const animPref = () => { try { const v = localStorage.getItem("dfl.anim"); if (v === "1" || v === "0") return v === "1"; } catch (err) {} return !(window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches); };
+  const setAnim = on => {
+    on = !!on && !!ST; $("anim").textContent = "Animation: " + (on ? "on" : "off"); $("anim").setAttribute("aria-pressed", on ? "true" : "false");
+    $("stagewrap").hidden = !on; $("field").style.display = on ? "none" : "";
+    if (on && !stage) stage = new ST.Stage($("stage"), { H, A });
+    if (!on && stage) { stage.destroy(); stage = null; }
+  };
+  const sceneFor = i => {
+    const pl = plays[i], nx = plays[i + 1];
+    return ST.buildScene(pl, { nm: j => b.pl[j] || null, hint: nx && nx[13] !== pl[13] ? (nx[0] === pl[0] ? nx[3] : 100 - nx[3]) : null, dr: lastOfDrive[i] ? b.dr[pl[13]] : null, abbr: [H.abbr, A.abbr], pen: PEN[pl[7]] ? PEN[pl[7]][0] : "" });
+  };
+  const availFor = i => plays[i + 1] ? (real(plays[i + 1]) - real(plays[i])) / speed : 6;
+  function paintField(anim) {
     const lp = S.last, nx = plays[S.i], done = !live && S.i >= plays.length, cur = nx || lp;
     let sit = nx ? { off: nx[0], down: nx[1], toGo: nx[2], pos: nx[3] } : null, word = "";
     if (!nx) {
@@ -544,6 +599,10 @@ function startGame(id) {
     }
     if (b.v === 2 && S.to) { const pips = n => "<span>TO</span>" + [0, 1, 2].map(i => `<i class="${i < n ? "" : "o"}"></i>`).join(""); $("to0").innerHTML = pips(S.to[0]); $("to1").innerHTML = pips(S.to[1]); }
     $("dch").innerHTML = dchHtml(sit, cur ? k0 : 0);
+    if (stage) {                                                       // the animated field shows the same situation: the lineup for the next play, or where the last one ended
+      const fs = sit || (lp ? { off: lp[0], down: 1, toGo: 99, pos: Math.max(1, Math.min(99, lp[3] + (["RU", "PC", "SK", "PN"].includes(lp[6]) ? lp[4] : 0))) } : null);
+      if (fs) { fs.pos = Math.max(1, Math.min(99, fs.pos)); const so = { kind: nx ? nx[6] : "N", retU: nx && nx[6] === "PU" ? Math.min(nx[4], 100 - nx[3]) + 4 : null, dim: !sit }; lastShown = [fs, so]; stage.show(fs, { ...so, snap: !anim }); }
+    }
   }
   function dchHtml(sit, k0) {
     const row = (k, side, p0, p1, label, cls) => { const x0 = FX(side, p0), x1 = FX(side, p1), c = (side === 0 ? H : A).colors[0];
@@ -554,13 +613,13 @@ function startGame(id) {
     if (sit && lp && lp[13] >= S.drivesDone || (sit && plays[S.i] && plays[S.i][13] >= S.drivesDone)) { const di = sit ? (plays[S.i] || lp)[13] : -1; if (di >= S.drivesDone) rows.push(row(di, sit.off, plays[Math.max(k0, 0)][3], sit.pos, "in progress", "")); }
     return rows.length ? rows.reverse().join("") : `<div class="row"><span></span><span>The drives of the game appear here, newest first.</span><span></span></div>`;
   }
-  function paint(final) {
+  function paint(final, anim) {
     const lp = S.last, [sa, sh] = [S.score[1], S.score[0]];
     $("sa").textContent = sa; $("sh").textContent = sh;
     const done = !live && S.i >= plays.length;
     if (done) { $("sa").textContent = g.ap; $("sh").textContent = g.hp; }
     $("st").textContent = done ? (b.n ? `Final / OT${b.n > 1 ? b.n : ""}` : "Final") : lp ? (live ? "LIVE · " : "") + clock(lp[10], lp[11], lp[12]) : live ? "LIVE" : "Kickoff";
-    paintField();
+    paintField(anim);
     $("tstats").innerHTML = rowsFor().map(([lab, f]) => `<div class="statrow"><span>${f(S.tm[1])}</span><span>${lab}</span><span style="text-align:left">${f(S.tm[0])}</span></div>`).join("")
       .replace(/^/, `<div class="statrow" style="font-weight:700"><span>${e(A.abbr)}</span><span></span><span style="text-align:left">${e(H.abbr)}</span></div>`);
     $("la").innerHTML = leadersHtml(S, b, 1); $("lh").innerHTML = leadersHtml(S, b, 0);
@@ -571,24 +630,35 @@ function startGame(id) {
     return `<div class="${cls}"><span class="c">${clock(pl[10], pl[11], pl[12])}</span><span>${e(txt)}</span></div>` + (first ? `<div class="hd"><span class="c"></span><span>Drive ${pl[13] + 1}: ${e(names[pl[0]])}, starting at ${spot(b.dr[pl[13]] ? b.dr[pl[13]][2] : pl[3])}</span></div>` : "") + periodNote(plays[i - 1], pl, S.score, abbr); };
   function step() { const pl = plays[S.i]; applyPlay(S, b, pl); if (lastOfDrive[S.i]) endDrive(S, b, pl[13]); $("feed").insertAdjacentHTML("afterbegin", lineHtml(S.i)); S.i++; }
   function reset() { S = freshState(b); $("feed").innerHTML = ""; vt = 0; paint(); }
-  function finish() { stop(); while (S.i < plays.length) step(); b.dr.forEach((d, k) => { if (k >= S.drivesDone) endDrive(S, b, k); }); paint(true); }
+  function finish(soft) { stop(); while (S.i < plays.length) step(); b.dr.forEach((d, k) => { if (k >= S.drivesDone) endDrive(S, b, k); }); paint(true, soft); }      // soft: the replay has just run its last play, so let the animation of it finish
   function stop() { if (timer) clearInterval(timer); timer = null; running = false; if (live) return; $("pause").disabled = true; $("pause").textContent = "Pause"; }
   function run() { running = true; $("pause").disabled = false; $("pause").textContent = "Pause";
-    timer = setInterval(() => { vt += 0.1 * speed; let moved = false; while (S.i < plays.length && real(plays[S.i]) <= vt) { step(); moved = true; } if (moved) paint(); if (S.i >= plays.length) finish(); }, 100); }
+    timer = setInterval(() => { vt += 0.1 * speed; let moved = false; while (S.i < plays.length && real(plays[S.i]) <= vt) { step(); moved = true; } if (moved) { if (stage) stage.play(sceneFor(S.i - 1), availFor(S.i - 1)); paint(false, true); } if (S.i >= plays.length) finish(true); }, 100); }
   if (!live) {
     $("watch").onclick = () => { stop(); reset(); run(); };
     $("pause").onclick = () => { if (running) { clearInterval(timer); timer = null; running = false; $("pause").textContent = "Resume"; } else run(); };
     $("speed").onchange = ev => { speed = +ev.target.value; };
     $("final").onclick = () => finish();
   }
-  REPLAY = { stop, finish, state: () => S, reset, step, paint };
+  $("anim").onclick = () => { const on = !stage; try { localStorage.setItem("dfl.anim", on ? "1" : "0"); } catch (err) {} setAnim(on); if (stage) paintField(false); };
+  REPLAY = { stop, finish, state: () => S, reset, step, paint, stage: () => stage, sceneFor, destroy: () => { if (stage) { stage.destroy(); stage = null; } } };
+  setAnim(animPref());
   finish();                                  // open on the finished game; "Watch replay" starts it from kickoff
+  if (live) {                                // a play that arrives while the page is open is run on the field; the ones already shown are not
+    const seen = LIVE_SEEN[id]; LIVE_SEEN[id] = plays.length;
+    if (stage && seen != null && plays.length > seen && plays.length) {
+      const li = plays.length - 1, lp0 = plays[li], keep = lastShown;
+      stage.show({ off: lp0[0], down: lp0[1], toGo: lp0[2], pos: Math.max(1, Math.min(99, lp0[3])) }, { snap: true, kind: lp0[6] });
+      stage.play(sceneFor(li), null);
+      if (keep) stage.show(keep[0], keep[1]);
+    }
+  }
 }
 
 
 /* ---------- live mode: the engine plays elsewhere; this page watches its feed ---------- */
 const LIVE = !!D.live;
-const FEED = { season: null, results: null, year: 0, sig: "", err: null, skew: 0, tried: {} };
+const FEED = { season: null, results: null, year: 0, sig: "", err: null, skew: 0, tried: {}, cur: { R: null, S: null, year: 0 }, view: null };      // season/results/year are the season being shown; cur is always the league's current season; view is the year number of a finished season being looked at (null when live)
 const hasBox = g => !!g.id && (LIVE ? (g.final || g.live) : !!D.box[g.id]);
 const wallShift = () => (FEED.results && FEED.results.shift) || 0;      // the real time the league has lost to pauses: league-clock times plus this are wall-clock times
 const realTime = ms => new Date(ms + wallShift()).toLocaleString([], { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
@@ -620,10 +690,10 @@ function derive() {
   const add = (r, pf, pa) => { r.pf += pf; r.pa += pa; if (pf > pa) r.w++; else if (pf < pa) r.l++; else r.t++; };
   D.games.forEach(g => { if (g.final) { add(byId[g.home].record, g.hp, g.ap); add(byId[g.away].record, g.ap, g.hp); } });
   D.ambassador.forEach(g => { if (g.final) { add(byId[g.home].ambassador, g.hp, g.ap); add(byId[g.away].ambassador, g.ap, g.hp); } });
-  D.seeds = R.seeds || {}; D.division_ranks = {};
+  D.seeds = R.seeds || {}; D.seedsNow = R.seeds ? null : R.now_seeds || null; D.division_ranks = {};
   for (let did = 0; did < 8; did++) {
     const act = clubs.filter(c => c.did === did && !c.exiled);
-    const order = R.division_ranks && R.division_ranks[did] ? R.division_ranks[did] : act.sort((a, b) => wp(b.record) - wp(a.record) || (b.record.pf - b.record.pa) - (a.record.pf - a.record.pa) || b.record.pf - a.record.pf).map(c => c.id);
+    const order = R.division_ranks && R.division_ranks[did] ? R.division_ranks[did] : R.now_ranks && R.now_ranks[did] ? R.now_ranks[did] : act.sort((a, b) => wp(b.record) - wp(a.record) || (b.record.pf - b.record.pa) - (a.record.pf - a.record.pa) || b.record.pf - a.record.pf).map(c => c.id);
     D.division_ranks[did] = order; order.forEach((id, k) => { byId[id].record.div_rank = k + 1; });
   }
   D.champion = R.champion != null ? R.champion : null;
@@ -643,7 +713,18 @@ async function poll() {
     const R = await getJSON("results.json");
     FEED.skew = Date.now() - R.t; FEED.err = null;
     if (!CTL.asked) await ctlLoad();
-    if (R.year && FEED.year !== R.year) { FEED.season = await getJSON("season.json"); FEED.year = R.year; if (FEED.season.real_per_game) REAL_PER_GAME = FEED.season.real_per_game; if (FEED.season.halftime != null) HALFTIME_PAUSE = FEED.season.halftime; D.box = {}; FEED.tried = {}; }
+    if (R.year && FEED.cur.year !== R.year) {
+      FEED.cur.S = await getJSON("season.json"); FEED.cur.year = R.year;
+      if (FEED.cur.S.real_per_game) REAL_PER_GAME = FEED.cur.S.real_per_game; if (FEED.cur.S.halftime != null) HALFTIME_PAUSE = FEED.cur.S.halftime;
+      if (!FEED.view) { FEED.season = FEED.cur.S; FEED.year = R.year; D.box = {}; FEED.tried = {}; }
+    }
+    FEED.cur.R = R;
+    if (FEED.view) {                                    // a finished season is on show: nothing live touches it; only its game files are fetched when asked for
+      const pv = routeParts();
+      if (pv[0] === "game" && gameById[pv[1]] && !D.box[pv[1]] && !FEED.tried[pv[1]]) { FEED.tried[pv[1]] = true; await loadBox(pv[1]); render(false); }
+      else if (pv[0] === "seasons") render(false);
+      return;
+    }
     const sig = JSON.stringify([R.year, R.final, R.now, R.po, R.seeds, R.champion, R.live, R.paused, R.shift]);
     const first = !FEED.results, changed = sig !== FEED.sig;
     FEED.results = R; FEED.sig = sig;
@@ -654,6 +735,34 @@ async function poll() {
     else if (parts[0] === "live") render(false);
   } catch (err) { FEED.err = String(err); if (!FEED.results) { document.getElementById("app").innerHTML = `<div class="stack"><h1>Live</h1><p class="note">Cannot reach the league's feed (${e(FEED.err)}). Trying again.</p></div>`; } }
 }
+/* Past seasons: the server keeps season_<n>.json and results_<n>.json for every year, so a finished season is shown by the same code as the live one, from those two files. */
+async function startView(k) {
+  try {
+    const [S, R] = await Promise.all([getJSON(`season_${k}.json`), getJSON(`results_${k}.json`)]);
+    FEED.view = k; FEED.season = S; FEED.results = R; FEED.year = k; FEED.sig = ""; D.box = {}; FEED.tried = {};
+    derive();
+    if (location.hash === "#standings") render(true); else location.hash = "standings";
+  } catch (err) { FEED.seasonErr = "Season " + k + " could not be loaded (" + err.message + ")."; if (location.hash === "#seasons") render(false); else location.hash = "seasons"; }
+}
+function endView() {
+  if (!FEED.view) return;
+  FEED.view = null; FEED.season = FEED.cur.S; FEED.results = FEED.cur.R; FEED.year = FEED.cur.year; FEED.sig = ""; D.box = {}; FEED.tried = {};
+  if (FEED.results && FEED.results.year) derive();
+}
+function seasonsPage(k) {
+  const R = FEED.cur.R;
+  if (k) { FEED.seasonErr = null; startView(+k); return `<div class="stack"><h1>Seasons</h1><p class="note">Loading season…</p></div>`; }
+  if (!R || !R.year) return `<div class="stack"><h1>Seasons</h1><p class="note">The league has not begun.</p></div>`;
+  const hist = R.history || [], cy = FEED.cur.S ? FEED.cur.S.season : "";
+  let h = `<div class="stack"><h1>Seasons</h1><p class="note">Every season keeps its standings, schedule, box scores and statistics. Pick one to look back at it exactly as it finished.</p>${FEED.seasonErr ? `<p class="note"><b>${e(FEED.seasonErr)}</b></p>` : ""}<div class="tablewrap"><table><thead><tr><th class="l">Season</th><th class="l">Champion</th><th></th></tr></thead><tbody>`;
+  h += `<tr><td class="l">${e(cy)} ${FEED.view ? "" : '<span class="tag">viewing</span>'}</td><td class="l" style="color:var(--muted)">in progress</td><td class="l"><a href="#live">Live</a></td></tr>`;
+  for (let i = hist.length - 1; i >= 0; i--) {
+    const x = hist[i];
+    h += `<tr><td class="l">${x.year}${FEED.view === i + 1 ? ' <span class="tag">viewing</span>' : ""}</td><td class="l">${x.champion != null && byId[x.champion] ? clubLink(byId[x.champion]) : "–"}</td><td class="l"><a href="#seasons-${i + 1}">View season</a></td></tr>`;
+  }
+  return h + `</tbody></table></div>${hist.length ? "" : `<p class="note">No season has finished yet; the first one is listed here once its Diamond Coronation has been played.</p>`}</div>`;
+}
+document.addEventListener("click", ev => { if (ev.target.closest("[data-live]")) { ev.preventDefault(); endView(); if (location.hash === "#live") render(true); else location.hash = "live"; } });
 /* The league's Pause / Resume button. It exists only when the server has the pause switch (api/state answers) and the league is a blocks league. */
 const CTL = { state: null, busy: false, err: null, asked: false };
 async function ctlLoad() {
@@ -832,16 +941,18 @@ async function statsRun(kind) {
 }
 
 /* ---------- router, tabs, search ---------- */
-const TABS = (LIVE ? [["live", "Live"]] : []).concat([["standings", "Standings"], ["schedule", "Schedule"], ["guide", "How it works"], ["playoffs", "Playoffs"], ["clubs", "Clubs"], ["players", "Players"], ["stats", "Statistics"], ["founding", "Founding Day"], ["calendar", "Calendar"]]);
+const TABS = (LIVE ? [["live", "Live"]] : []).concat([["standings", "Standings"], ["schedule", "Schedule"], ["guide", "How it works"], ["playoffs", "Playoffs"], ["clubs", "Clubs"], ["players", "Players"], ["stats", "Statistics"]].concat(LIVE ? [["seasons", "Seasons"]] : []).concat([["founding", "Founding Day"], ["calendar", "Calendar"]]));
 const curWeek = () => { const g = D.games.filter(x => !x.final).sort((a, b) => a.week - b.week)[0]; return g ? g.week : 19; };
 function render(scroll = true) {
   const parts = routeParts(), page = parts[0];
   if (LIVE && !FEED.results) { document.getElementById("app").innerHTML = `<div class="stack"><h1>Live</h1><p class="note">Connecting to the league…</p></div>`; return; }
+  if (LIVE && FEED.view && page === "live") { endView(); }
   if (LIVE && !FEED.results.year && page !== "live" && ["standings", "schedule", "playoffs", "club"].includes(page)) { location.hash = "live"; return; }
   const html = page === "live" ? livePage() : page === "standings" ? standings() : page === "schedule" ? schedule(+parts[1] || (LIVE ? curWeek() : 1)) : page === "guide" ? guide() : page === "playoffs" ? playoffs() : page === "clubs" ? clubsPage() : page === "club" ? club(parts[1])
-    : page === "game" ? game(parts[1]) : page === "player" ? player(parts[1], +parts[2]) : page === "players" ? playersPage() : page === "stats" ? statsPage(parts[1]) : page === "founding" ? founding() : page === "calendar" ? calendarPage() : notFound();
-  if (REPLAY) { REPLAY.stop(); REPLAY = null; }
-  document.getElementById("app").innerHTML = html;
+    : page === "game" ? game(parts[1]) : page === "player" ? player(parts[1], +parts[2]) : page === "players" ? playersPage() : page === "stats" ? statsPage(parts[1]) : page === "seasons" ? seasonsPage(parts[1]) : page === "founding" ? founding() : page === "calendar" ? calendarPage() : notFound();
+  if (REPLAY) { REPLAY.stop(); if (REPLAY.destroy) REPLAY.destroy(); REPLAY = null; }
+  const banner = LIVE && FEED.view && page !== "seasons" ? `<div class="stack" style="padding-bottom:0"><p class="note" style="margin:0"><b>You are looking back at season ${e(D.season)}, a finished season.</b> <a href="#seasons">All seasons</a> · <a href="#live" data-live="1">Back to live</a></p></div>` : "";
+  document.getElementById("app").innerHTML = banner + html;
   if (page === "game") startGame(parts[1]);
   const section = page === "club" ? "clubs" : page === "player" ? "players" : page === "game" ? "schedule" : page;
   document.getElementById("tabs").innerHTML = TABS.map(([k, n]) => `<a href="#${k}" ${k === section ? 'aria-current="page"' : ""}>${n}</a>`).join("");

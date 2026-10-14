@@ -125,7 +125,7 @@ check("--init makes a blocks league whose first kickoff is the opener", sorted(o
 
 # ---- the page reads its pace from season.json -----------------------------------------------------------------------------------
 tpl = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "site", "template.html"), encoding="utf-8").read()
-check("the page takes the pace from season.json, and shows pauses", "FEED.season.real_per_game" in tpl and "wallShift" in tpl and "paused" in tpl)
+check("the page takes the pace from season.json, and shows pauses", "FEED.cur.S.real_per_game" in tpl and "wallShift" in tpl and "paused" in tpl)
 
 print("\n" + ("ALL PASS" if not failures else f"{len(failures)} FAILED: {failures}"))
 sys.exit(1 if failures else 0)
