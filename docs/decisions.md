@@ -440,3 +440,14 @@ downloads the finished games and fills the tables in). Games are chosen by group
 Players are told apart by the engine's player id, now the fourth entry of a box's player list (older boxes fall back to club, name and position). Not tracked, so not shown: fumbles, punting, kick and
 punt returns, long plays, extra points. "G" is the number of games a player took part in a counted play.
 Live, the tab downloads each finished game's file once (six at a time) and keeps the replay for the rest of the league year; about 360 small files, then nothing more except the games that finish later.
+
+## Tiebreak order change (2026-10-14)
+
+The Commissioner changed two things in the NFL-style tiebreak lists (`engine/tiebreak.py`):
+
+- **Strength of schedule now comes before strength of victory** in the division list and in the conference list. Reason: clubs tied in a later season's ranking can have faced very different opposition (a former 1st seed against a former 5th seed in the same division, say), and what a club was up against says more than whom it happened to beat.
+- **The division list no longer has a conference record step.** The conference list keeps it.
+
+Division list now: head-to-head, division record, common games, strength of schedule, strength of victory, combined ranking (conference, then all), net points in common games, net points in all games, net touchdowns, coin toss. Conference list now: head-to-head (sweep for three or more), conference record, common games (at least four), strength of schedule, strength of victory, combined ranking (conference, all), net points in conference games, net points in all games, net touchdowns, coin toss. The draft-order and Ambassador lists are unchanged.
+
+Effect: in a 25-season check, strength of schedule decided 110 division ties and strength of victory 2, so the order barely changes results; it only matters when everything above is level. A tie already decided in the running league is not re-ranked in anything stored, but any standing computed afresh after the update uses the new order.
