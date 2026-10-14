@@ -89,6 +89,9 @@ tr:last-child td { border-bottom: 0; }
 .people b { display: block; } .people small { color: var(--muted); }
 .sw { display: inline-block; width: 14px; height: 14px; vertical-align: -2px; margin-right: 6px; border: 1px solid var(--line); }
 .bio { max-width: 68ch; }
+.confs { display: grid; gap: 16px; grid-template-columns: 1fr 1fr; align-items: start; } @media (max-width: 760px) { .confs { grid-template-columns: 1fr; } }
+.crumbs { font-family: var(--mono); font-weight: 500; font-size: 14px; color: var(--muted); } .crumbs a { color: var(--muted); text-decoration: underline; text-decoration-color: color-mix(in srgb, var(--los) 70%, transparent); } .crumbs a:hover { color: var(--ink); } .crumbs [aria-current] { color: var(--ink); }
+h2 a, h3 a { color: inherit; } h2 a:hover, h3 a:hover { text-decoration: underline; text-decoration-color: var(--accent); text-underline-offset: 4px; }
 .ovr { font-family: var(--display); font-weight: 800; font-style: italic; font-size: 52px; line-height: 1; color: var(--accent); }
 .timeline { width: 100%; height: auto; display: block; }
 .timeline text { fill: var(--ink); font-family: var(--mono); font-size: 13px; } .timeline .mut { fill: var(--muted); }
@@ -152,7 +155,7 @@ footer { max-width: 1080px; margin: 40px auto 0; color: var(--muted); font-size:
 </style>
 
 <header class="top">
-  <a class="brand" href="#standings" aria-label="Diamond Football League, home"><i></i>Diamond Football League</a>
+  <a class="brand" href="#home" aria-label="Diamond Football League, home"><i></i>Diamond Football League</a>
   <div class="search"><input id="q" type="search" placeholder="Find a player or club" autocomplete="off" aria-label="Find a player or club"><div class="results" id="res" hidden></div></div>
   <nav class="tabs" id="tabs" aria-label="Sections"></nav>
 </header>
@@ -223,22 +226,24 @@ function standings() {
   }
   const X = standExtras();
   D.conferences.forEach((cn, ci) => {
-    h += `<section class="stack" style="padding-top:0"><h1 style="font-size:36px">${e(cn)} Conference</h1><div class="grid stand">`;
-    for (let di = 0; di < 4; di++) {
-      const did = ci * 4 + di, members = clubs.filter(c => c.did === did), order = D.division_ranks[did] || [];
-      const active = order.map(id => byId[id]), exiled = members.filter(c => c.exiled);
-      h += `<div class="stack" style="padding-top:0;gap:8px"><h3>${e(members[0].division)}</h3><div class="tablewrap"><table><thead><tr><th>Club</th><th>W</th><th>L</th><th>T</th><th>Pct</th><th title="Games behind the division leader; the leader shows its magic number (M), the wins by the leader plus losses by the closest rival that clinch the division outright, ties counting half">GB / Magic</th><th title="Record in division games">Div</th><th class="hide-sm" title="Record in conference games">Conf</th><th class="hide-sm" title="Strength of schedule: the combined winning percentage of every opponent played">SOS</th><th class="hide-sm" title="Strength of victory: the combined winning percentage of the opponents beaten">SOV</th><th>Diff</th></tr></thead><tbody>`;
-      const lead = active[0], others = active.slice(1), XL = lead && X[lead.id], done = active.every(c => X[c.id].left === 0);
-      const magic = !lead ? "" : done ? `<b title="The division is decided">Won</b>` : (() => { const m = Math.ceil(XL.sched + .5 - XL.credit - Math.min(...others.map(c => X[c.id].lossCredit))); return m <= 0 ? `<b title="Clinched the division outright">Clinched</b>` : `<b title="Magic number: ${m} more wins by ${e(lead.name)} or losses by the closest rival clinch the division outright">M ${m}</b>`; })();
-      active.forEach(c => { const r = c.record, d = r.pf - r.pa, sd = seedOf[c.id], x = X[c.id];
-        const gb = c === lead ? magic : ((XL.credit - x.credit) + (x.lossCredit - XL.lossCredit)) / 2, gbs = typeof gb === "number" ? String(gb) : gb;
-        h += `<tr><td>${clubLink(c, c.id === D.champion ? `<span class="seed gold" title="Champion">◆</span>` : sd ? `<span class="seed" title="${seedNow ? `Playoff seed ${sd} if the regular season ended now` : `Playoff seed ${sd}`}">${sd}</span>` : "")}</td><td>${r.w}</td><td>${r.l}</td><td>${r.t}</td><td>${pct(r)}</td><td>${gbs}</td><td>${x.div}</td><td class="hide-sm">${x.conf}</td><td class="hide-sm">${x.sos}</td><td class="hide-sm">${x.sov}</td><td>${d > 0 ? "+" : ""}${d}</td></tr>`; });
-      exiled.forEach(c => { const a = c.ambassador; h += `<tr class="exile"><td>${clubLink(c)}</td><td colspan="10" style="text-align:left;white-space:normal">In exile this season · Ambassador Season ${a.w}-${a.l}${a.t ? "-" + a.t : ""}</td></tr>`; });
-      h += `</tbody></table></div></div>`;
-    }
+    h += `<section class="stack" style="padding-top:0"><h1 style="font-size:36px"><a href="#conference-${ci}">${e(cn)} Conference</a></h1><div class="grid stand">`;
+    for (let di = 0; di < 4; di++) h += divBlock(ci * 4 + di, X);
     h += `</div></section>`;
   });
-  return h + `<p class="note" style="margin-top:8px">The numbered badges are playoff seeds (seven clubs a conference qualify): during the season they are the seeds as they would stand if it ended now. GB is games behind the division leader. The leader shows its magic number, M: any mix of that many wins by the leader and losses by its closest rival clinches the division outright (a tie counts half). Div and Conf are records in division and conference games. SOS is the winning percentage of all opponents played, SOV of the opponents beaten; these are the league's tiebreakers after head-to-head, division record and common games, and they settle a tie only when the earlier ones do not.</p></div>`;
+  return h + STAND_NOTE;
+}
+/* one division's table: the same columns wherever it is shown (the standings, a conference page, a division page) */
+const STAND_NOTE = `<p class="note" style="margin-top:8px">The numbered badges are playoff seeds (seven clubs a conference qualify): during the season they are the seeds as they would stand if it ended now. GB is games behind the division leader. The leader shows its magic number, M: any mix of that many wins by the leader and losses by its closest rival clinches the division outright (a tie counts half). Div and Conf are records in division and conference games. SOS is the winning percentage of all opponents played, SOV of the opponents beaten; these are the league's tiebreakers after head-to-head, division record and common games, and they settle a tie only when the earlier ones do not.</p>`;
+function divBlock(did, X, title = true) {
+  const members = clubs.filter(c => c.did === did), order = D.division_ranks[did] || [], active = order.map(id => byId[id]), exiled = members.filter(c => c.exiled);
+  let h = `<div class="stack" style="padding-top:0;gap:8px">${title ? `<h3><a href="#division-${did}">${e(members[0].division)}</a></h3>` : ""}<div class="tablewrap"><table><thead><tr><th>Club</th><th>W</th><th>L</th><th>T</th><th>Pct</th><th title="Games behind the division leader; the leader shows its magic number (M), the wins by the leader plus losses by the closest rival that clinch the division outright, ties counting half">GB / Magic</th><th title="Record in division games">Div</th><th class="hide-sm" title="Record in conference games">Conf</th><th class="hide-sm" title="Strength of schedule: the combined winning percentage of every opponent played">SOS</th><th class="hide-sm" title="Strength of victory: the combined winning percentage of the opponents beaten">SOV</th><th>Diff</th></tr></thead><tbody>`;
+  const lead = active[0], others = active.slice(1), XL = lead && X[lead.id], done = active.every(c => X[c.id].left === 0);
+  const magic = !lead ? "" : done ? `<b title="The division is decided">Won</b>` : (() => { const m = Math.ceil(XL.sched + .5 - XL.credit - Math.min(...others.map(c => X[c.id].lossCredit))); return m <= 0 ? `<b title="Clinched the division outright">Clinched</b>` : `<b title="Magic number: ${m} more wins by ${e(lead.name)} or losses by the closest rival clinch the division outright">M ${m}</b>`; })();
+  active.forEach(c => { const r = c.record, d = r.pf - r.pa, sd = seedOf[c.id], x = X[c.id];
+    const gb = c === lead ? magic : ((XL.credit - x.credit) + (x.lossCredit - XL.lossCredit)) / 2, gbs = typeof gb === "number" ? String(gb) : gb;
+    h += `<tr><td>${clubLink(c, c.id === D.champion ? `<span class="seed gold" title="Champion">◆</span>` : sd ? `<span class="seed" title="${seedNow ? `Playoff seed ${sd} if the regular season ended now` : `Playoff seed ${sd}`}">${sd}</span>` : "")}</td><td>${r.w}</td><td>${r.l}</td><td>${r.t}</td><td>${pct(r)}</td><td>${gbs}</td><td>${x.div}</td><td class="hide-sm">${x.conf}</td><td class="hide-sm">${x.sos}</td><td class="hide-sm">${x.sov}</td><td>${d > 0 ? "+" : ""}${d}</td></tr>`; });
+  exiled.forEach(c => { const a = c.ambassador; h += `<tr class="exile"><td>${clubLink(c)}</td><td colspan="10" style="text-align:left;white-space:normal">In exile this season · Ambassador Season ${a.w}-${a.l}${a.t ? "-" + a.t : ""}</td></tr>`; });
+  return h + `</tbody></table></div></div>`;
 }
 
 function playoffs() {
@@ -279,13 +284,119 @@ function schedule(week) {
   return h + `</div>`;
 }
 
-function clubsPage() {
-  let h = `<div class="stack"><h1>Clubs</h1><p class="note">Forty-eight clubs in eight divisions. One club in each division is in exile each season, and the eight that start in exile are marked.</p>`;
-  D.conferences.forEach((cn, ci) => { h += `<h2>${e(cn)} Conference</h2><div class="grid">`;
-    for (let di = 0; di < 4; di++) { const members = clubs.filter(c => c.did === ci * 4 + di);
-      h += `<div class="card"><h3>${e(members[0].division)}</h3><div class="stack" style="gap:6px;padding-top:12px">${members.map(c => `<a class="club" href="#club-${c.abbr}" style="justify-content:space-between;width:100%"><span class="club">${badge(c, "sm")}<span class="nm">${e(c.name)}</span></span><span class="tag">${c.exiled ? "exile" : rec(c.record)}</span></a>`).join("")}</div></div>`; }
-    h += `</div>`; });
+/* ---------- the hierarchy: home, the DFL (conferences, divisions, clubs), search, history and information ---------- */
+const confOf = c => Math.floor(c.did / 4);
+const divName = did => clubs.find(c => c.did === did).division;
+const crumbs = L => `<nav class="crumbs" aria-label="You are here">${L.map(([href, t], i) => i < L.length - 1 ? `<a href="${href}">${e(t)}</a>` : `<span aria-current="page">${e(t)}</span>`).join('<span aria-hidden="true"> › </span>')}</nav>`;
+const clubCrumbs = c => [["#dfl", "DFL"], ["#conference-" + confOf(c), conf(confOf(c)) + " Conference"], ["#division-" + c.did, c.division], [null, c.name]];
+const standingOrder = did => (D.division_ranks[did] || []).map(id => byId[id]).concat(clubs.filter(c => c.did === did && c.exiled));
+
+/* the DFL: the two conferences side by side, each division a block of its clubs in the order they stand; a division's name, a conference's name and every club are links */
+function dflPage() {
+  let h = `<div class="stack"><h1>The DFL</h1><p class="note">${e(phaseText())}. Pick a division to see its table, or a club to see its page.</p><div class="confs">`;
+  D.conferences.forEach((cn, ci) => {
+    h += `<section class="stack" style="padding-top:0;gap:14px"><h2><a href="#conference-${ci}">${e(cn)} Conference</a></h2>`;
+    for (let di = 0; di < 4; di++) { const did = ci * 4 + di;
+      h += `<div class="card"><h3><a href="#division-${did}">${e(divName(did))}</a></h3><div class="stack" style="gap:6px;padding-top:12px">${standingOrder(did).map((c, k) => `<a class="club" href="#club-${c.abbr}" style="justify-content:space-between;width:100%"><span class="club"><span class="eyebrow" style="width:1.4em;text-align:right">${c.exiled ? "" : k + 1}</span>${badge(c, "sm")}<span class="nm">${e(c.name)}</span>${!c.exiled && c.id === D.champion ? `<span class="seed gold" title="Champion">◆</span>` : !c.exiled && seedOf[c.id] ? `<span class="seed" title="Playoff seed ${seedOf[c.id]}">${seedOf[c.id]}</span>` : ""}</span><span class="tag">${c.exiled ? "exile" : rec(c.record)}</span></a>`).join("")}</div></div>`; }
+    h += `</section>`; });
+  return h + `</div><p class="note">Forty-eight clubs in eight divisions; one club in each division is in exile each season. <a href="#standings">All the standings on one page</a> · <a href="#playoffs">Playoffs</a>.</p></div>`;
+}
+function conferencePage(ci) {
+  if (!D.conferences[ci]) return notFound();
+  const X = standExtras();
+  let h = `<div class="stack">${crumbs([["#dfl", "DFL"], [null, conf(ci) + " Conference"]])}<h1>${e(conf(ci))} Conference</h1><div class="grid stand">`;
+  for (let di = 0; di < 4; di++) h += divBlock(ci * 4 + di, X);
+  return h + `</div>${STAND_NOTE}</div>`;
+}
+function divisionPage(did) {
+  if (!(did >= 0 && did < 8)) return notFound();
+  const ci = Math.floor(did / 4), X = standExtras();
+  return `<div class="stack">${crumbs([["#dfl", "DFL"], ["#conference-" + ci, conf(ci) + " Conference"], [null, divName(did)]])}<h1>${e(divName(did))}</h1><p style="color:var(--muted)">${e(conf(ci))} Conference · ${e(phaseText())}</p>${divBlock(did, X, false)}${STAND_NOTE}</div>`;
+}
+
+/* home: where the page opens. Plain on purpose: the state of the league, what is on, who leads each division, and the way to everything else */
+function homePage() {
+  const R = LIVE ? FEED.results : null, sd = LIVE ? simDate() : null;
+  const all = [...D.games, ...D.ambassador, ...D.playoffs.filter(g => g.home != null)].filter(g => g.id);
+  const fin = all.filter(g => g.final || (!LIVE && g.hp != null)), live = LIVE ? all.filter(g => g.live) : [], next = LIVE ? all.filter(g => !g.final && !g.live).sort((a, b) => a.start - b.start).slice(0, 3) : [];
+  const latest = LIVE ? fin.sort((a, b) => b.start - a.start).slice(0, 5) : D.playoffs.filter(g => g.hp != null).reverse().concat(D.games.filter(g => g.hp != null).sort((a, b) => (b.date + b.time).localeCompare(a.date + a.time))).slice(0, 5);
+  const line = (g, mid) => `<a class="gamelink" href="#game-${g.id}"><div class="game" style="grid-template-columns:150px 1fr"><span class="t">${mid}<span class="tag">${e(g.kind && g.kind.startsWith("playoff") ? stageName(g) : g.kind === "ambassador" ? "Ambassador" : "Week " + g.week)}</span></span><div class="teams">${[g.away, g.home].map(id => `<div><span class="club">${badge(byId[id], "sm")}<span class="nm">${e(byId[id].name)}</span></span>${g.hp != null || g.live ? `<span class="sc ${g.final && winner(g) === id ? "won" : g.final ? "lost" : ""}">${g.live ? R.now[g.id][id === g.home ? 0 : 1] : id === g.home ? g.hp : g.ap}</span>` : ""}</div>`).join("")}</div></div></a>`;
+  const ch = D.champion != null ? byId[D.champion] : null;
+  let h = `<div class="stack"><div><h1>Diamond Football League</h1><p style="color:var(--muted);margin-top:8px">Forty-eight clubs, two conferences, eight divisions: a league played out by an engine, with every play kept.</p></div>
+  <div class="champion" ${ch ? "" : 'style="background:var(--soft);border-color:var(--line)"'}>${ch ? badge(ch, "lg") : ""}<div><div class="eyebrow">Season ${e(D.season)}${sd ? " · league date " + fmtLong(ymd(sd)) : ""}</div><h2>${e(!LIVE && ch ? ch.name + " are the champions" : phaseText())}</h2>${LIVE && R && R.paused ? `<p style="color:var(--muted)">The league is paused.</p>` : ""}</div></div>`;
+  if (live.length) h += `<h2>On now</h2><div class="tablewrap">${live.map(g => liveRow(g, `<b style="color:var(--accent)">LIVE</b> ${liveClock(g.id)}`)).join("")}</div>`;
+  if (next.length) h += `<h2>Up next</h2><div class="tablewrap">${next.map(g => liveRow(g, `${e(realTime(g.start))}<small style="color:var(--muted)">${inText(g.start)}</small>`)).join("")}</div>`;
+  if (latest.length) h += `<h2>${LIVE ? "Latest results" : "Final games"}</h2><div class="tablewrap">${latest.map(g => line(g, `Final${g.ot ? " / OT" : ""}`)).join("")}</div>`;
+  h += `<h2>Division leaders</h2><div class="confs">`;
+  D.conferences.forEach((cn, ci) => { h += `<div class="tablewrap"><table><thead><tr><th class="l">${e(cn)}</th><th class="l">Leader</th><th>Record</th></tr></thead><tbody>${[0, 1, 2, 3].map(di => { const did = ci * 4 + di, c = standingOrder(did)[0];
+    return `<tr><td class="l"><a href="#division-${did}">${e(divName(did))}</a></td><td class="l">${c && !c.exiled ? clubLink(c) : "–"}</td><td>${c && !c.exiled ? rec(c.record) : ""}</td></tr>`; }).join("")}</tbody></table></div>`; });
+  h += `</div><h2>Look around</h2><div class="grid">
+    <a class="card fork" href="#dfl"><h3>The DFL</h3><p>Both conferences, every division, every club, and each club's page.</p></a>
+    <a class="card fork" href="#schedule"><h3>Schedule</h3><p>Every game by week, with box scores and replays.</p></a>
+    <a class="card fork" href="#stats"><h3>Statistics</h3><p>Team and player numbers, grouped and sortable.</p></a>
+    <a class="card fork" href="#search"><h3>Search</h3><p>Clubs, players, coaches and games, with filters.</p></a>
+    <a class="card fork" href="#info"><h3>History and information</h3><p>How the league works, past seasons, Founding Day and the calendar.</p></a>
+    ${LIVE ? `<a class="card fork" href="#live"><h3>Live</h3><p>Games in progress, what is next, and the league clock.</p></a>` : `<a class="card fork" href="#playoffs"><h3>Playoffs</h3><p>The bracket and how it was decided.</p></a>`}</div></div>`;
+  return h;
+}
+
+/* history and information: the pages that explain the league or look back at it */
+function infoPage() {
+  const R = LIVE && FEED.cur && FEED.cur.R, hist = (R && R.history) || [];
+  let h = `<div class="stack"><h1>History and information</h1><div class="grid">
+    <a class="card fork" href="#guide"><h3>How it works</h3><p>The shape of a season, seeds, the rotation, time slots and the rules.</p></a>
+    ${LIVE ? `<a class="card fork" href="#seasons"><h3>Seasons</h3><p>Every finished season, standings and box scores exactly as it ended.</p></a>` : ""}
+    <a class="card fork" href="#founding"><h3>Founding Day</h3><p>How the forty-eight clubs were completed, and the first offseason.</p></a>
+    <a class="card fork" href="#calendar"><h3>Calendar</h3><p>The league's year: the offseason, the season and the dates that matter.</p></a></div>`;
+  if (hist.length) h += `<h2>Champions</h2><div class="tablewrap"><table><tbody>${hist.slice().reverse().map(x => `<tr><td class="l">${x.year}</td><td class="l">${x.champion != null && byId[x.champion] ? clubLink(byId[x.champion]) : "–"}</td></tr>`).join("")}</tbody></table></div>`;
   return h + `</div>`;
+}
+
+/* search: clubs, players, staff and games, with filters; the state is kept while the page is open */
+const SRCH = { q: "", type: "all", pos: "", club: "", minOvr: "", minAge: "", maxAge: "", sort: "rel", more: 1 };
+const STAFF = [["ceo", "CEO"], ["gm", "General manager"], ["head_coach", "Head coach"], ["offensive_coordinator", "Offensive coordinator"], ["defensive_coordinator", "Defensive coordinator"]];
+const norm = s => String(s == null ? "" : s).toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+function searchPage() {
+  const S = SRCH, opt = (v, t, cur) => `<option value="${e(v)}" ${String(cur) === String(v) ? "selected" : ""}>${e(t)}</option>`;
+  const clubOpts = D.conferences.map((cn, ci) => [0, 1, 2, 3].map(di => `<optgroup label="${e(cn)} · ${e(divName(ci * 4 + di))}">${clubs.filter(c => c.did === ci * 4 + di).map(c => opt(c.abbr, c.name, S.club)).join("")}</optgroup>`).join("")).join("");
+  setTimeout(() => { const $ = x => document.getElementById(x), run = () => { S.q = $("sq").value; S.type = $("st").value; S.pos = $("sp").value; S.club = $("sc").value; S.minOvr = $("so").value; S.minAge = $("sa").value; S.maxAge = $("sb").value; S.sort = $("ss").value; S.more = 1; searchDraw(); };
+    ["sq", "sa", "sb", "so"].forEach(i => $(i).addEventListener("input", run)); ["st", "sp", "sc", "ss"].forEach(i => $(i).addEventListener("change", run));
+    $("sreset").addEventListener("click", () => { Object.assign(S, { q: "", type: "all", pos: "", club: "", minOvr: "", minAge: "", maxAge: "", sort: "rel", more: 1 }); render(false); });
+    $("sbody").addEventListener("click", ev => { if (ev.target.closest("[data-more]")) { S.more++; searchDraw(); } });
+    searchDraw(); if (!S.q) $("sq").focus(); }, 0);
+  return `<div class="stack"><h1>Search</h1><p class="note">Type any part of a name, a college, a hometown, a position or a temperament; several words must all match. The filters narrow players, and a club filter narrows staff and games as well.</p>
+  <div class="row"><input id="sq" type="search" class="btn" placeholder="Search the league" aria-label="Search the league" value="${e(S.q)}" style="min-width:min(100%,320px);flex:1 1 320px;text-transform:none;font-style:normal;font-family:inherit;font-size:16px;letter-spacing:0" autocomplete="off">
+    <select id="st" aria-label="What to look for">${[["all", "Everything"], ["club", "Clubs"], ["player", "Players"], ["staff", "Coaches and staff"], ["game", "Games"]].map(([k, n]) => opt(k, n, S.type)).join("")}</select></div>
+  <div class="row"><select id="sp" aria-label="Position"><option value="">Any position</option>${Object.keys(POSNAME).map(k => opt(k, POSNAME[k], S.pos)).join("")}</select>
+    <select id="sc" aria-label="Club"><option value="">Any club</option>${clubOpts}</select>
+    <label class="eyebrow">Overall at least <input id="so" type="number" min="0" max="99" class="btn" style="width:5em;padding:5px 8px" value="${e(S.minOvr)}"></label>
+    <label class="eyebrow">Age <input id="sa" type="number" min="18" max="60" class="btn" style="width:5em;padding:5px 8px" value="${e(S.minAge)}" aria-label="Youngest age"> to <input id="sb" type="number" min="18" max="60" class="btn" style="width:5em;padding:5px 8px" value="${e(S.maxAge)}" aria-label="Oldest age"></label>
+    <select id="ss" aria-label="Order players by">${[["rel", "Best match"], ["ovr", "Overall, highest first"], ["age", "Age, youngest first"], ["name", "Name"]].map(([k, n]) => opt(k, n, S.sort)).join("")}</select>
+    <button class="btn" id="sreset" type="button">Clear</button></div>
+  <div id="sbody"></div></div>`;
+}
+function searchDraw() {
+  const S = SRCH, body = document.getElementById("sbody"); if (!body) return;
+  const toks = norm(S.q).split(/\s+/).filter(Boolean), has = !!(toks.length || S.pos || S.club || S.minOvr || S.minAge || S.maxAge);
+  if (!has) { body.innerHTML = `<p class="note">Start typing, or choose a filter. For example: <i>defensive line Ohio</i>, <i>kicker</i>, <i>head coach</i>, <i>week 5</i>, or a club's name.</p>`; return; }
+  // a score for how well a text matches: every word must be found; a word that starts the text or a word of it counts more
+  const score = (name, rest) => { const n = norm(name), hay = n + " " + norm(rest); let sc = 0; for (const t of toks) { if (!hay.includes(t)) return -1; sc += n.startsWith(t) ? 6 : n.split(/\s+/).some(w => w.startsWith(t)) ? 4 : n.includes(t) ? 3 : 1; } return sc; };
+  const want = k => S.type === "all" || S.type === k, filt = S.pos || S.minOvr || S.minAge || S.maxAge, cap = 25 * S.more;
+  const club = S.club ? byAbbr[S.club] : null;
+  const out = []; let h = "";
+  if (want("club") && !filt) { const r = clubs.filter(c => (!club || c === club)).map(c => [score(c.name, [c.city, c.nickname, c.abbr, c.venue, c.location, c.conference, c.division].join(" ")), c]).filter(x => x[0] >= 0 && (toks.length || club)).sort((a, b) => b[0] - a[0]);
+    if (r.length) out.push(["Clubs", r.length, `<div class="tablewrap"><table><tbody>${r.slice(0, cap).map(([, c]) => `<tr><td class="l">${clubLink(c)}</td><td class="l hide-sm">${e(c.conference)} · ${e(c.division)}</td><td class="l hide-sm">${e(c.location)}</td><td>${c.exiled ? "exile" : rec(c.record)}</td></tr>`).join("")}</tbody></table></div>`]); }
+  if (want("player")) { let r = players.filter(p => (!club || p.club === club) && (!S.pos || p.pos === S.pos) && (!S.minOvr || p.ovr >= +S.minOvr) && (!S.minAge || p.age >= +S.minAge) && (!S.maxAge || p.age <= +S.maxAge)).map(p => [toks.length ? score(p.name, [p.pos, POSNAME[p.pos], p.college, p.hometown, p.trait, p.club.name, p.club.abbr].join(" ")) : 0, p]).filter(x => x[0] >= 0);
+    r.sort(S.sort === "ovr" ? (a, b) => b[1].ovr - a[1].ovr : S.sort === "age" ? (a, b) => a[1].age - b[1].age || b[1].ovr - a[1].ovr : S.sort === "name" ? (a, b) => a[1].name.localeCompare(b[1].name) : (a, b) => b[0] - a[0] || b[1].ovr - a[1].ovr);
+    if (r.length) out.push(["Players", r.length, `<div class="tablewrap"><table><thead><tr><th>Player</th><th class="l">Club</th><th>Pos</th><th>Age</th><th>Ovr</th><th class="hide-sm l">College</th><th class="hide-sm l">Hometown</th></tr></thead><tbody>${r.slice(0, cap).map(([, p]) => `<tr><td><a href="#player-${p.club.abbr}-${p.idx}"><b>${e(p.name)}</b></a></td><td class="l">${clubLink(p.club)}</td><td>${p.pos}</td><td>${p.age}</td><td>${p.ovr}</td><td class="hide-sm l">${e(p.college)}</td><td class="hide-sm l">${e(p.hometown)}</td></tr>`).join("")}</tbody></table></div>`]); }
+  if (want("staff") && !filt) { const r = []; clubs.forEach(c => { if (club && c !== club) return; STAFF.forEach(([k, role]) => { const q = c.people[k]; if (!q) return; const sc = toks.length ? score(q.name, [role, q.trait, q.hometown, c.name, c.abbr].join(" ")) : 0; if (sc >= 0) r.push([sc, c, role, q]); }); }); r.sort((a, b) => b[0] - a[0]);
+    if (r.length) out.push(["Coaches and staff", r.length, `<div class="tablewrap"><table><tbody>${r.slice(0, cap).map(([, c, role, q]) => `<tr><td class="l"><b>${e(q.name)}</b></td><td class="l">${e(role)}</td><td class="l">${clubLink(c)}</td><td class="l hide-sm">${e(q.trait)} · ${e(q.hometown)}</td></tr>`).join("")}</tbody></table></div>`]); }
+  if (want("game") && !filt) { const wk = toks.join(" ").match(/^(?:week\s*)?(\d{1,2})$/);
+    const r = D.games.filter(g => g.id && (!club || g.home === club.id || g.away === club.id)).map(g => { const a = byId[g.home], b = byId[g.away]; let sc = toks.length ? score("", [a.name, a.abbr, b.name, b.abbr, "week " + g.week, g.date].join(" ")) : 0; if (wk) sc = g.week === +wk[1] ? 5 : -1; return [sc, g]; }).filter(x => x[0] >= 0).sort((a, b) => b[0] - a[0] || a[1].week - b[1].week);
+    if (r.length) out.push(["Games", r.length, `<div class="tablewrap"><table><tbody>${r.slice(0, cap).map(([, g]) => { const a = byId[g.away], b = byId[g.home]; return `<tr><td class="l">Week ${g.week}</td><td class="l">${clubLink(a)}</td><td>${g.ap == null ? "" : g.ap}</td><td class="l">at ${clubLink(b)}</td><td>${g.hp == null ? "" : g.hp}</td><td class="l">${g.hp != null && g.id ? `<a href="#game-${g.id}">Box score</a>` : e(fmtDate(g.date))}</td></tr>`; }).join("")}</tbody></table></div>`]); }
+  if (!out.length) { body.innerHTML = `<p class="note">Nothing matches. Try fewer words, or clear a filter.</p>`; return; }
+  h = out.map(([t, n, tb]) => `<h2>${t} <span class="eyebrow">${n}</span></h2>${tb}${n > cap ? `<p><button class="btn" data-more="1">Show more</button></p>` : ""}`).join("");
+  body.innerHTML = h;
 }
 
 function club(abbr) {
@@ -293,7 +404,7 @@ function club(abbr) {
   const games = D.games.filter(g => g.home === c.id || g.away === c.id).sort((a, b) => a.week - b.week);
   const r = c.record, P = c.people;
   const person = (role, p) => p ? `<div><small class="eyebrow">${role}</small><b>${e(p.name)}</b><small>${e(p.trait)} · ${e(p.hometown)}</small></div>` : "";
-  let h = `<div class="stack"><div class="row" style="align-items:flex-start">${badge(c, "lg")}<div style="min-width:0"><div class="eyebrow">${e(c.conference)} · ${e(c.division)}</div><h1>${e(c.name)}</h1><p style="color:var(--muted)">${e(c.venue)}, ${e(c.location)}</p></div></div>${stripe(c)}
+  let h = `<div class="stack">${crumbs(clubCrumbs(c))}<div class="row" style="align-items:flex-start">${badge(c, "lg")}<div style="min-width:0"><div class="eyebrow">${e(c.conference)} · ${e(c.division)}</div><h1>${e(c.name)}</h1><p style="color:var(--muted)">${e(c.venue)}, ${e(c.location)}</p></div></div>${stripe(c)}
   <div class="grid"><div class="card"><h3>${D.season}</h3><dl class="kv" style="margin-top:12px">`;
   if (c.exiled) h += `<dt>Status</dt><dd>In exile; played the Ambassador Season ${c.ambassador.w}-${c.ambassador.l}</dd>`;
   else h += `<dt>Record</dt><dd><b>${rec(r)}</b> · ${r.pf} points for, ${r.pa} against</dd><dt>Division finish</dt><dd>${r.div_rank} of 5${c.id === D.champion ? " · <b>Diamond Coronation champions</b>" : r.playoffs ? ` · playoff seed ${seedOf[c.id]}${r.exit ? ", out in the " + e(r.exit.replace("_", " ")) : ""}` : ""}</dd>`;
@@ -311,20 +422,9 @@ function club(abbr) {
 function player(abbr, idx) {
   const c = byAbbr[abbr], p = c && c.roster[idx]; if (!p) return notFound();
   const prev = idx > 0 ? `<a class="chip" href="#player-${abbr}-${idx - 1}">← ${e(c.roster[idx - 1].name)}</a>` : "", next = idx < c.roster.length - 1 ? `<a class="chip" href="#player-${abbr}-${idx + 1}">${e(c.roster[idx + 1].name)} →</a>` : "";
-  return `<div class="stack"><div class="row" style="align-items:flex-start">${badge(c, "lg")}<div style="min-width:0"><div class="eyebrow">${e(POSNAME[p.pos] || p.pos)} · <a href="#club-${abbr}" style="text-decoration:underline">${e(c.name)}</a></div><h1>${e(p.name)} <span class="tag" style="font-size:14px;vertical-align:middle">${p.pos}</span></h1></div></div>
+ return `<div class="stack">${crumbs([["#dfl", "DFL"], ["#conference-" + confOf(c), conf(confOf(c)) + " Conference"], ["#division-" + c.did, c.division], ["#club-" + abbr, c.name], [null, p.name]])}<div class="row" style="align-items:flex-start">${badge(c, "lg")}<div style="min-width:0"><div class="eyebrow">${e(POSNAME[p.pos] || p.pos)} · <a href="#club-${abbr}" style="text-decoration:underline">${e(c.name)}</a></div><h1>${e(p.name)} <span class="tag" style="font-size:14px;vertical-align:middle">${p.pos}</span></h1></div></div>
   <div class="grid"><div class="card"><div class="row"><div><div class="eyebrow">Overall</div><div class="ovr">${p.ovr}</div></div><dl class="kv" style="flex:1 1 220px"><dt>Position</dt><dd><b>${e(POSNAME[p.pos] || p.pos)}</b> (${p.pos})</dd><dt>Age</dt><dd>${p.age}</dd><dt>College</dt><dd>${e(p.college)}</dd><dt>Hometown</dt><dd>${e(p.hometown)}</dd><dt>Temperament</dt><dd>${e(p.trait)}</dd><dt>Contract</dt><dd>${money(p.salary)} a year, ${p.years} year${p.years === 1 ? "" : "s"} left</dd></dl></div></div>
   <div class="card"><h3>Backstory</h3><p class="bio" style="margin-top:8px">${e(p.bio)}</p></div></div><div class="chips">${prev}${next}</div></div>`;
-}
-
-function playersPage() {
-  const html = `<div class="stack"><h1>Players</h1><div class="row"><input id="pq" type="search" class="btn" placeholder="Name or college" aria-label="Filter players" style="min-width:220px"><select id="pp" aria-label="Position"><option value="">All positions</option>${Object.keys(POSNAME).map(k => `<option value="${k}">${POSNAME[k]}</option>`).join("")}</select><span class="eyebrow" id="pc"></span></div><div class="tablewrap"><table><thead><tr><th>Player</th><th class="l">Club</th><th>Pos</th><th>Age</th><th>Ovr</th><th class="hide-sm l">College</th></tr></thead><tbody id="pt"></tbody></table></div></div>`;
-  setTimeout(() => { const q = document.getElementById("pq"), pp = document.getElementById("pp"), t = document.getElementById("pt"), pc = document.getElementById("pc");
-    const draw = () => { const s = q.value.trim().toLowerCase(), pos = pp.value;
-      const hit = players.filter(p => (!pos || p.pos === pos) && (!s || p.name.toLowerCase().includes(s) || p.college.toLowerCase().includes(s))).sort((a, b) => b.ovr - a.ovr);
-      pc.textContent = `${hit.length} players${hit.length > 100 ? ", best 100 shown" : ""}`;
-      t.innerHTML = hit.slice(0, 100).map(p => `<tr><td><a href="#player-${p.club.abbr}-${p.idx}"><b>${e(p.name)}</b></a></td><td class="l">${clubLink(p.club)}</td><td>${p.pos}</td><td>${p.age}</td><td>${p.ovr}</td><td class="hide-sm l">${e(p.college)}</td></tr>`).join(""); };
-    q.addEventListener("input", draw); pp.addEventListener("change", draw); draw(); }, 0);
-  return html;
 }
 
 let showAll = false;
@@ -773,7 +873,7 @@ async function loadBox(id) {
   try { D.box[id] = await getJSON(`g/${FEED.results.year}_${id}.json`); } catch (err) { D.box[id] = null; }
   return D.box[id];
 }
-function routeParts() { return (location.hash.slice(1) || (LIVE ? "live" : "standings")).split("-"); }
+function routeParts() { return (location.hash.slice(1) || "home").split("-"); }
 async function poll() {
   try {
     const R = await getJSON("results.json");
@@ -859,29 +959,36 @@ function paceText() {
 }
 const LIVE_SHOW = { n: 8 };
 document.addEventListener("click", ev => { const b = ev.target.closest("[data-more]"); if (b) { LIVE_SHOW.n += 20; render(false); } });
+const stageName = g => g.kind && g.kind.startsWith("playoff") ? ({ playoff_wc: "Wild card", playoff_div: "Divisional", playoff_conf: "Conference championship", playoff_final: "Diamond Coronation" }[g.kind]) : g.kind === "ambassador" ? "Ambassador Season" : `Week ${g.week}`;
+const liveRow = (g, mid) => `<a class="gamelink" href="#game-${g.id}"><div class="game" style="grid-template-columns:190px 1fr"><span class="t">${mid}<span class="tag">${e(stageName(g))}</span></span><div class="teams">${[g.away, g.home].map(id => `<div><span class="club">${badge(byId[id], "sm")}<span class="nm">${e(byId[id].name)}</span></span>${g.final ? `<span class="sc ${winner(g) === id ? "won" : "lost"}">${id === g.home ? g.hp : g.ap}</span>` : g.live ? `<span class="sc">${FEED.results.now[g.id][id === g.home ? 0 : 1]}</span>` : ""}</div>`).join("")}</div></div></a>`;
+const liveClock = id => { const n = FEED.results.now[id]; return (n[4] ? "OT" : "Q" + n[2]) + " " + Math.floor(n[3] / 60) + ":" + String(n[3] % 60).padStart(2, "0"); };
 function livePage() {
   const R = FEED.results;
   if (!R) return `<div class="stack"><h1>Live</h1><p class="note">Connecting to the league…</p></div>`;
   if (!R.year) return `<div class="stack"><h1>Live</h1><div class="champion" style="background:var(--soft);border-color:var(--line)"><div><div class="eyebrow">Founding Day</div><h2>The league has not begun</h2><p>It starts ${e(realTime(R.epoch))} (${e(inText(R.epoch))}).</p></div></div></div>`;
   const all = [...D.games, ...D.ambassador, ...D.playoffs.filter(g => g.home != null)];
   const live = all.filter(g => g.live), finals = all.filter(g => g.final).sort((a, b) => b.start - a.start), done = finals.slice(0, LIVE_SHOW.n), next = all.filter(g => !g.final && !g.live).sort((a, b) => a.start - b.start).slice(0, 10);
-  const stage = g => g.kind && g.kind.startsWith("playoff") ? ({ playoff_wc: "Wild card", playoff_div: "Divisional", playoff_conf: "Conference championship", playoff_final: "Diamond Coronation" }[g.kind]) : g.kind === "ambassador" ? "Ambassador Season" : `Week ${g.week}`;
-  const row = (g, mid) => `<a class="gamelink" href="#game-${g.id}"><div class="game" style="grid-template-columns:190px 1fr"><span class="t">${mid}<span class="tag">${e(stage(g))}</span></span><div class="teams">${[g.away, g.home].map(id => `<div><span class="club">${badge(byId[id], "sm")}<span class="nm">${e(byId[id].name)}</span></span>${g.final ? `<span class="sc ${winner(g) === id ? "won" : "lost"}">${id === g.home ? g.hp : g.ap}</span>` : g.live ? `<span class="sc">${R.now[g.id][id === g.home ? 0 : 1]}</span>` : ""}</div>`).join("")}</div></div></a>`;
-  const clk = id => { const n = R.now[id]; return (n[4] ? "OT" : "Q" + n[2]) + " " + Math.floor(n[3] / 60) + ":" + String(n[3] % 60).padStart(2, "0"); };
   const sd = simDate();
   let h = `<div class="stack"><h1>Live</h1><div class="champion" style="background:var(--soft);border-color:var(--line)"><div><div class="eyebrow">Season ${D.season}${sd ? " · league date " + fmtLong(ymd(sd)) : ""}</div><h2>${e(phaseText())}</h2></div></div>`;
   if (R.paused) h += `<p class="note"><b>The league is paused.</b> Everything stands still and picks up where it stopped when it is resumed.</p>`;
   h += ctlHtml(R);
-  h += `<h2>In progress</h2>` + (live.length ? `<div class="tablewrap">${live.map(g => row(g, `<b style="color:var(--accent)">LIVE</b> ${clk(g.id)}`)).join("")}</div>` : `<p class="note">No game is being played right now.</p>`);
-  h += `<h2>Up next</h2>` + (next.length ? `<div class="tablewrap">${next.map(g => row(g, `${e(realTime(g.start))}<small style="color:var(--muted)">${inText(g.start)}</small>`)).join("")}</div>` : `<p class="note">No more games are scheduled this season.</p>`);
-  if (done.length) h += `<h2>Just finished</h2><div class="tablewrap">${done.map(g => row(g, `Final${g.ot ? " / OT" : ""}`)).join("")}</div>` + (finals.length > done.length ? `<p><button class="btn" data-more="1">Show 20 more (${finals.length - done.length} earlier this season)</button> <small style="color:var(--muted)">Every finished game keeps its box score; the <a href="#schedule">Schedule</a> lists them all by week.</small></p>` : `<p class="note">Every finished game keeps its box score; the <a href="#schedule">Schedule</a> lists them all by week.</p>`);
+  h += `<h2>In progress</h2>` + (live.length ? `<div class="tablewrap">${live.map(g => liveRow(g, `<b style="color:var(--accent)">LIVE</b> ${liveClock(g.id)}`)).join("")}</div>` : `<p class="note">No game is being played right now.</p>`);
+  h += `<h2>Up next</h2>` + (next.length ? `<div class="tablewrap">${next.map(g => liveRow(g, `${e(realTime(g.start))}<small style="color:var(--muted)">${inText(g.start)}</small>`)).join("")}</div>` : `<p class="note">No more games are scheduled this season.</p>`);
+  if (done.length) h += `<h2>Just finished</h2><div class="tablewrap">${done.map(g => liveRow(g, `Final${g.ot ? " / OT" : ""}`)).join("")}</div>` + (finals.length > done.length ? `<p><button class="btn" data-more="1">Show 20 more (${finals.length - done.length} earlier this season)</button> <small style="color:var(--muted)">Every finished game keeps its box score; the <a href="#schedule">Schedule</a> lists them all by week.</small></p>` : `<p class="note">Every finished game keeps its box score; the <a href="#schedule">Schedule</a> lists them all by week.</p>`);
   if ((R.history || []).length) h += `<h2>Champions</h2><div class="tablewrap"><table><tbody>${R.history.slice().reverse().map(x => `<tr><td class="l">${x.year}</td><td class="l">${clubLink(byId[x.champion])}</td></tr>`).join("")}</tbody></table></div>`;
   return h + `<p class="note">Times are in your time zone. ${paceText()} Games appear here when they kick off and their plays appear as they happen.</p></div>`;
 }
 
 
 /* ---------- statistics: every finished game of the season, replayed with the same applyPlay the game page uses ---------- */
-const STATS = { year: null, cache: {}, failed: {}, pending: {}, run: 0, v2: false, ui: { scope: "reg", off: "off", cat: "pass", club: "", sort: {} } };
+const STATS = { year: null, cache: {}, failed: {}, pending: {}, run: 0, v2: false, ui: { scope: "reg", off: "off", cat: "pass", club: "", where: "", grp: {}, sort: {} } };
+/* where the clubs counted come from: the whole league, a conference ("c0"), a division ("d3") or one club ("k<id>") */
+const whereTest = w => !w ? (() => true) : w[0] === "c" ? (id => confOf(byId[id]) === +w.slice(1)) : w[0] === "d" ? (id => byId[id].did === +w.slice(1)) : (id => String(id) === w.slice(1));
+const whereOpts = (cur, withClubs) => `<option value="">The whole league</option>` + D.conferences.map((cn, ci) => `<option value="c${ci}" ${cur === "c" + ci ? "selected" : ""}>${e(cn)} Conference</option>`).join("") + [0, 1, 2, 3, 4, 5, 6, 7].map(d => `<option value="d${d}" ${cur === "d" + d ? "selected" : ""}>${e(conf(Math.floor(d / 4)))} · ${e(divName(d))}</option>`).join("")
+  + (withClubs ? `<optgroup label="One club">${clubs.slice().sort((a, b) => a.name.localeCompare(b.name)).map(c => `<option value="k${c.id}" ${cur === "k" + c.id ? "selected" : ""}>${e(c.name)}</option>`).join("")}</optgroup>` : "");
+/* the team columns, in the groups the page offers (the first group is the one shown first) */
+const TEAM_GROUPS = { off: [["Scoring and yards", ["gp", "ppg", "ypg", "ypp", "fdpg"]], ["Passing and rushing", ["gp", "pypg", "rypg", "cmp", "skt"]], ["Situations", ["gp", "t3", "tog", "top"]], ["Discipline", ["gp", "pen", "peny"]]],
+  def: [["Points and yards", ["gp", "papg", "ypg", "ypp", "fdpg"]], ["Passing and rushing", ["gp", "pypg", "rypg", "sks"]], ["Situations", ["gp", "t3", "take"]]] };
 const SCOPES = [["reg", "Regular season"], ["po", "Playoffs"], ["amb", "Ambassador Season"], ["all", "All games"]];
 const statGames = scope => (scope === "reg" ? D.games : scope === "po" ? D.playoffs : scope === "amb" ? D.ambassador : [...D.games, ...D.ambassador, ...D.playoffs]).filter(g => g.id && g.home != null && g.hp != null);
 function replayStats(g, b) {
@@ -926,10 +1033,10 @@ const TEAM_COLS = {
     ["fdpg", "1st/G", 1, "First downs allowed a game", 1, 1], ["t3", "3rd %", 1, "Third downs allowed to convert (lower is better)", 1, 1], ["take", "Takeaways/G", 2, "Turnovers forced a game"], ["sks", "Sacks/G", 2, "Sacks a game"]]
 };
 const PLAYER_CATS = [["pass", "Passing"], ["rush", "Rushing"], ["recv", "Receiving"], ["def", "Defense"], ["kick", "Kicking"]];
-function playerRows(rs, cat, club) {
-  const P = {};
+function playerRows(rs, cat, ok) {
+  const P = {}, test = typeof ok === "function" ? ok : ok ? (id => String(id) === ok) : (() => true);
   rs.forEach(r => r.pl.forEach(q => {
-    if (club !== "" && String(q.club) !== club) return;
+    if (!test(q.club)) return;
     const s = q.st; if (!s || !Object.keys(s).length) return;
     const t = P[q.key] = P[q.key] || { key: q.key, name: q.name, pos: q.pos, club: q.club, gp: 0, st: {} };
     t.gp++; t.club = q.club; Object.keys(s).forEach(k => { t.st[k] = (t.st[k] || 0) + s[k]; });
@@ -956,71 +1063,84 @@ function statTable(cols, rows, sort, first, limit) {
   const col = cols.find(c => c[0] === sort.key) || cols[0], dir = sort.dir || 1;
   rows = rows.slice().sort((a, b) => dir * ((b[col[0]] || 0) - (a[col[0]] || 0)) || (b.gp || 0) - (a.gp || 0));
   const shown = rows.slice(0, limit), fmt = (c, r) => { const v = r[c[0]]; return c[2] === 0 ? (c[0] === "top" ? Math.floor(v / 60) + ":" + String(Math.round(v % 60)).padStart(2, "0") : String(Math.round(v * 10) / 10)) : v.toFixed(c[2]); };
-  return `<div class="tablewrap"><table><thead><tr>${first[0]}${cols.map(c => `<th class="stat-th${c[0] === col[0] ? " on" : ""}${c[4] ? " hide-sm" : ""}" data-sort="${c[0]}" title="${e(c[3])}" aria-sort="${c[0] === col[0] ? (dir > 0 ? "descending" : "ascending") : "none"}">${c[1]}${c[0] === col[0] ? (dir > 0 ? " ▾" : " ▴") : ""}</th>`).join("")}</tr></thead><tbody>`
-    + shown.map(r => `<tr>${first[1](r)}${cols.map(c => `<td${c[4] ? ' class="hide-sm"' : ""}>${fmt(c, r)}</td>`).join("")}</tr>`).join("") + `</tbody></table></div>` + (rows.length > limit ? `<p class="note">Showing the top ${limit} of ${rows.length}.</p>` : "");
+  return `<div class="tablewrap"><table><thead><tr><th title="Rank in this order">#</th>${first[0]}${cols.map(c => `<th class="stat-th${c[0] === col[0] ? " on" : ""}${c[4] ? " hide-sm" : ""}" data-sort="${c[0]}" title="${e(c[3])}" aria-sort="${c[0] === col[0] ? (dir > 0 ? "descending" : "ascending") : "none"}">${c[1]}${c[0] === col[0] ? (dir > 0 ? " ▾" : " ▴") : ""}</th>`).join("")}</tr></thead><tbody>`
+    + shown.map((r, i) => `<tr><td style="color:var(--muted)">${i + 1}</td>${first[1](r)}${cols.map(c => `<td${c[4] ? ' class="hide-sm"' : ""}>${fmt(c, r)}</td>`).join("")}</tr>`).join("") + `</tbody></table></div>` + (rows.length > limit ? `<p class="note">Showing the top ${limit} of ${rows.length}.</p>` : "");
 }
+/* the columns on show: every column of the view, or the ones of the group chosen */
+function statCols(kind) {
+  const U = STATS.ui;
+  if (kind === "player") return PLAYER_COLS[U.cat];
+  const all = TEAM_COLS[U.off].filter(c => STATS.v2 || (c[0] !== "pen" && c[0] !== "peny")), groups = TEAM_GROUPS[U.off].filter(g => g[1].some(k => all.find(c => c[0] === k && k !== "gp"))), gi = U.grp[U.off];
+  const g = gi === "all" ? null : groups.find(x => x[0] === gi) || groups[0];
+  return g ? all.filter(c => g[1].includes(c[0])) : all;
+}
+const defaultSort = (kind, U) => kind === "team" ? (U.off === "off" ? { key: "ppg", dir: 1 } : { key: "papg", dir: -1 }) : { key: PLAYER_DEFAULT[U.cat], dir: 1 };
 function statsPage(kind) {
-  if (kind !== "team" && kind !== "player") return `<div class="stack"><h1>Statistics</h1><p class="note">Every finished game of the season, added up as the games are played.</p><div class="grid">
-    <a class="card fork" href="#stats-team"><h3>Team statistics</h3><p>Offense and defense for every club: points, yards, first downs, third downs, turnovers, sacks${LIVE || STATS.v2 ? ", penalties" : ""}.</p></a>
-    <a class="card fork" href="#stats-player"><h3>Player statistics</h3><p>Passing, rushing, receiving, defense and kicking leaders, sortable, for the whole league or one club.</p></a></div></div>`;
+  if (kind !== "team" && kind !== "player") return `<div class="stack"><h1>Statistics</h1><p class="note">Every finished game of the season, added up as the games are played. Click a column heading, or use "Sort by", to put the clubs or players in a different order.</p><div class="grid">
+    <a class="card fork" href="#stats-team"><h3>Team statistics</h3><p>Offense and defense for every club, in groups (scoring, passing and rushing, situations${LIVE || STATS.v2 ? ", discipline" : ""}), for the league, a conference or a division.</p></a>
+    <a class="card fork" href="#stats-player"><h3>Player statistics</h3><p>Passing, rushing, receiving, defense and kicking leaders, sortable, for the league, a conference, a division or one club.</p></a></div></div>`;
   const U = STATS.ui, chip = (href, label, on) => `<a class="chip" href="${href}" ${on ? 'aria-current="true"' : ""}>${label}</a>`;
+  const groups = kind === "team" ? [...TEAM_GROUPS[U.off].map(g => g[0]), "All"] : [], gcur = kind === "team" ? (U.grp[U.off] === "all" ? "All" : (TEAM_GROUPS[U.off].find(g => g[0] === U.grp[U.off]) || TEAM_GROUPS[U.off][0])[0]) : "";
   const view = kind === "team" ? `<div class="chips" role="group" aria-label="View"><button class="chip" data-off="off" ${U.off === "off" ? 'aria-current="true"' : ""}>Offense</button><button class="chip" data-off="def" ${U.off === "def" ? 'aria-current="true"' : ""}>Defense</button></div>`
     : `<div class="chips" role="group" aria-label="Category">${PLAYER_CATS.map(([k, n]) => `<button class="chip" data-cat="${k}" ${U.cat === k ? 'aria-current="true"' : ""}>${n}</button>`).join("")}</div>`;
+  const grp = kind === "team" ? `<div class="chips" role="group" aria-label="Group of statistics">${groups.map(g => `<button class="chip" data-grp="${e(g)}" ${g === gcur ? 'aria-current="true"' : ""}>${e(g)}</button>`).join("")}</div>` : "";
   const scopes = `<select id="ssc" aria-label="Games">${SCOPES.map(([k, n]) => `<option value="${k}" ${U.scope === k ? "selected" : ""}>${n}</option>`).join("")}</select>`;
-  const clubSel = kind === "player" ? `<select id="scl" aria-label="Club"><option value="">All clubs</option>${clubs.slice().sort((a, b) => a.name.localeCompare(b.name)).map(c => `<option value="${c.id}" ${String(c.id) === U.club ? "selected" : ""}>${e(c.name)}</option>`).join("")}</select>` : "";
+  const where = `<select id="swh" aria-label="Which clubs">${whereOpts(U.where, kind === "player")}</select>`;
   setTimeout(() => statsRun(kind), 0);
   return `<div class="stack"><div class="chips" role="navigation" aria-label="Statistics">${chip("#stats-team", "Team statistics", kind === "team")}${chip("#stats-player", "Player statistics", kind === "player")}</div>
-    <h1>${kind === "team" ? "Team statistics" : "Player statistics"}</h1><div class="row">${view}${scopes}${clubSel}</div><p class="note" id="sprog"></p><div id="sbody"></div></div>`;
+    <h1>${kind === "team" ? "Team statistics" : "Player statistics"}</h1><div class="row">${view}${scopes}${where}</div>${grp ? `<div class="row">${grp}</div>` : ""}<div class="row" id="sctl"></div><p class="note" id="sprog"></p><div id="sbody"></div></div>`;
 }
 async function statsRun(kind) {
   const run = ++STATS.run, $ = x => document.getElementById(x), U = STATS.ui;
+  const curSort = () => { const key = kind === "team" ? "t" + U.off : "p" + U.cat, cols = statCols(kind), cur = U.sort[key] || defaultSort(kind, U); return { key, cols, cur: cols.some(c => c[0] === cur.key) ? cur : { key: cols[0][0] === "gp" && cols[1] ? cols[1][0] : cols[0][0], dir: 1 } }; };
+  const setSort = (k, dir) => { const { key, cols } = curSort(), c = cols.find(x => x[0] === k); U.sort[key] = { key: k, dir: dir || (c && c[5] ? -1 : 1) }; };
   const draw = () => {
     if (run !== STATS.run || !$("sbody")) return;
-    const games = statGames(U.scope), rs = games.map(g => STATS.cache[g.id]).filter(Boolean);
+    const games = statGames(U.scope), rs = games.map(g => STATS.cache[g.id]).filter(Boolean), ok = whereTest(U.where);
     $("sprog").textContent = rs.length ? `${rs.length} finished game${rs.length === 1 ? "" : "s"} counted${rs.length < games.length ? `, ${games.length - rs.length} more loading` : ""}.` : (games.length ? "Loading the games…" : "No game in this group has finished yet.");
-    if (!rs.length) { $("sbody").innerHTML = ""; return; }
-    if (kind === "team") {
-      const cols = TEAM_COLS[U.off].filter(c => STATS.v2 || (c[0] !== "pen" && c[0] !== "peny")), key = "t" + U.off, def = U.off === "off" ? { key: "ppg", dir: 1 } : { key: "papg", dir: -1 }, sort = U.sort[key] || def;
-      $("sbody").innerHTML = statTable(cols, teamRows(rs, U.off), sort, [`<th class="l">Club</th>`, r => `<td class="l">${clubLink(byId[r.id])}</td>`], 100);
-    } else {
-      const cols = PLAYER_COLS[U.cat], key = "p" + U.cat, sort = U.sort[key] || { key: PLAYER_DEFAULT[U.cat], dir: 1 };
-      $("sbody").innerHTML = statTable(cols, playerRows(rs, U.cat, U.club), sort, [`<th class="l">Player</th><th class="l">Club</th><th class="l">Pos</th>`, r => `<td class="l"><b>${e(r.name)}</b></td><td class="l">${clubLink(byId[r.club])}</td><td class="l">${e(r.pos)}</td>`], 100);
-    }
+    if (!rs.length) { $("sbody").innerHTML = ""; $("sctl").innerHTML = ""; return; }
+    const { cols, cur } = curSort(), sorts = cols.filter(c => c[0] !== "gp");
+    // "Sort by": the same ordering as clicking a heading, said in words
+    $("sctl").innerHTML = `<label class="eyebrow">Sort by <select id="ssort">${sorts.map(c => `<option value="${c[0]}" ${c[0] === cur.key ? "selected" : ""}>${e(c[1])} · ${e(c[3])}</option>`).join("")}</select></label><button class="btn" id="sdir" type="button" title="Reverse the order">${cur.dir > 0 ? "Highest first" : "Lowest first"}</button>`;
+    $("ssort").onchange = ev => { setSort(ev.target.value); draw(); }; $("sdir").onclick = () => { U.sort[curSort().key] = { key: cur.key, dir: -cur.dir }; draw(); };
+    if (kind === "team") $("sbody").innerHTML = statTable(cols, teamRows(rs, U.off).filter(r => ok(r.id)), cur, [`<th class="l">Club</th>`, r => `<td class="l">${clubLink(byId[r.id])}</td>`], 100);
+    else $("sbody").innerHTML = statTable(cols, playerRows(rs, U.cat, ok), cur, [`<th class="l">Player</th><th class="l">Club</th><th class="l">Pos</th>`, r => `<td class="l"><b>${e(r.name)}</b></td><td class="l">${clubLink(byId[r.club])}</td><td class="l">${e(r.pos)}</td>`], 100);
   };
-  const ids = () => statGames(U.scope);
   const redo = () => { render(false); };
   const on = (sel, fn) => document.querySelectorAll(sel).forEach(el => el.addEventListener(el.tagName === "SELECT" ? "change" : "click", () => fn(el)));
   on("[data-off]", el => { U.off = el.dataset.off; redo(); });
   on("[data-cat]", el => { U.cat = el.dataset.cat; redo(); });
+  on("[data-grp]", el => { U.grp[U.off] = el.dataset.grp === "All" ? "all" : el.dataset.grp; redo(); });
   on("#ssc", el => { U.scope = el.value; redo(); });
-  on("#scl", el => { U.club = el.value; redo(); });
+  on("#swh", el => { U.where = el.value; redo(); });
   const body = $("sbody"); if (!body) return;
   body.addEventListener("click", ev => {
     const th = ev.target.closest("[data-sort]"); if (!th) return;
-    const key = kind === "team" ? "t" + U.off : "p" + U.cat, cur = U.sort[key] || (kind === "team" ? (U.off === "off" ? { key: "ppg", dir: 1 } : { key: "papg", dir: -1 }) : { key: PLAYER_DEFAULT[U.cat], dir: 1 }), k = th.dataset.sort;
-    const cols = kind === "team" ? TEAM_COLS[U.off] : PLAYER_COLS[U.cat], c = cols.find(x => x[0] === k), lowGood = c && c[5];
-    U.sort[key] = cur.key === k ? { key: k, dir: -cur.dir } : { key: k, dir: lowGood ? -1 : 1 }; draw();
+    const { cur } = curSort(), k = th.dataset.sort; if (k === "gp") return;
+    if (cur.key === k) U.sort[curSort().key] = { key: k, dir: -cur.dir }; else setSort(k); draw();
   });
   draw();
-  try { await statsLoad(ids(), run, draw); } catch (err) { if (run === STATS.run && $("sprog")) $("sprog").textContent = "Some games could not be loaded: " + err; }
+  try { await statsLoad(statGames(U.scope), run, draw); } catch (err) { if (run === STATS.run && $("sprog")) $("sprog").textContent = "Some games could not be loaded: " + err; }
   draw();
 }
 
 /* ---------- router, tabs, search ---------- */
-const TABS = (LIVE ? [["live", "Live"]] : []).concat([["standings", "Standings"], ["schedule", "Schedule"], ["guide", "How it works"], ["playoffs", "Playoffs"], ["clubs", "Clubs"], ["players", "Players"], ["stats", "Statistics"]].concat(LIVE ? [["seasons", "Seasons"]] : []).concat([["founding", "Founding Day"], ["calendar", "Calendar"]]));
+const TABS = [["dfl", "DFL"]].concat(LIVE ? [["live", "Live"]] : []).concat([["schedule", "Schedule"], ["playoffs", "Playoffs"], ["stats", "Statistics"], ["search", "Search"], ["info", "History and Information"]]);
+const SECTION = { club: "dfl", clubs: "dfl", player: "dfl", players: "search", standings: "dfl", conference: "dfl", division: "dfl", game: "schedule", guide: "info", seasons: "info", founding: "info", calendar: "info", home: "" };
 const curWeek = () => { const g = D.games.filter(x => !x.final).sort((a, b) => a.week - b.week)[0]; return g ? g.week : 19; };
 function render(scroll = true) {
   const parts = routeParts(), page = parts[0];
   if (LIVE && !FEED.results) { document.getElementById("app").innerHTML = `<div class="stack"><h1>Live</h1><p class="note">Connecting to the league…</p></div>`; return; }
   if (LIVE && FEED.view && page === "live") { endView(); }
-  if (LIVE && !FEED.results.year && page !== "live" && ["standings", "schedule", "playoffs", "club"].includes(page)) { location.hash = "live"; return; }
-  const html = page === "live" ? livePage() : page === "standings" ? standings() : page === "schedule" ? schedule(+parts[1] || (LIVE ? curWeek() : 1)) : page === "guide" ? guide() : page === "playoffs" ? playoffs() : page === "clubs" ? clubsPage() : page === "club" ? club(parts[1])
-    : page === "game" ? game(parts[1]) : page === "player" ? player(parts[1], +parts[2]) : page === "players" ? playersPage() : page === "stats" ? statsPage(parts[1]) : page === "seasons" ? seasonsPage(parts[1]) : page === "founding" ? founding() : page === "calendar" ? calendarPage() : notFound();
+  if (LIVE && !FEED.results.year && page !== "live" && ["standings", "schedule", "playoffs", "club", "dfl", "conference", "division"].includes(page)) { location.hash = "live"; return; }
+  const html = page === "home" ? homePage() : page === "dfl" || page === "clubs" ? dflPage() : page === "conference" ? conferencePage(+parts[1]) : page === "division" ? divisionPage(+parts[1]) : page === "search" || page === "players" ? (page === "players" && (SRCH.type = "player"), searchPage()) : page === "info" ? infoPage()
+    : page === "live" ? livePage() : page === "standings" ? standings() : page === "schedule" ? schedule(+parts[1] || (LIVE ? curWeek() : 1)) : page === "guide" ? guide() : page === "playoffs" ? playoffs() : page === "club" ? club(parts[1])
+    : page === "game" ? game(parts[1]) : page === "player" ? player(parts[1], +parts[2]) : page === "stats" ? statsPage(parts[1]) : page === "seasons" ? seasonsPage(parts[1]) : page === "founding" ? founding() : page === "calendar" ? calendarPage() : notFound();
   if (REPLAY) { REPLAY.stop(); if (REPLAY.destroy) REPLAY.destroy(); REPLAY = null; }
   const banner = LIVE && FEED.view && page !== "seasons" ? `<div class="stack" style="padding-bottom:0"><p class="note" style="margin:0"><b>You are looking back at season ${e(D.season)}, a finished season.</b> <a href="#seasons">All seasons</a> · <a href="#live" data-live="1">Back to live</a></p></div>` : "";
   document.getElementById("app").innerHTML = banner + html;
   if (page === "game") startGame(parts[1]);
-  const section = page === "club" ? "clubs" : page === "player" ? "players" : page === "game" ? "schedule" : page;
+  const section = page in SECTION ? SECTION[page] : page;
   document.getElementById("tabs").innerHTML = TABS.map(([k, n]) => `<a href="#${k}" ${k === section ? 'aria-current="page"' : ""}>${n}</a>`).join("");
   if (scroll) window.scrollTo(0, 0);
 }
@@ -1030,8 +1150,8 @@ document.getElementById("foot").innerHTML = `Diamond Football League · season $
 const q = document.getElementById("q"), res = document.getElementById("res");
 q.addEventListener("input", () => { const s = q.value.trim().toLowerCase(); if (s.length < 2) { res.hidden = true; return; }
   const cs = clubs.filter(c => c.name.toLowerCase().includes(s) || c.abbr.toLowerCase() === s).slice(0, 4), ps = players.filter(p => p.name.toLowerCase().includes(s)).slice(0, 8);
-  res.innerHTML = cs.map(c => `<a href="#club-${c.abbr}">${badge(c, "sm")}<span>${e(c.name)}</span><small>club</small></a>`).join("") + ps.map(p => `<a href="#player-${p.club.abbr}-${p.idx}">${badge(p.club, "sm")}<span>${e(p.name)}</span><small>${p.pos} · ${e(p.club.abbr)}</small></a>`).join("") || `<a href="#players"><span>No match</span></a>`; res.hidden = false; });
-res.addEventListener("click", () => { res.hidden = true; q.value = ""; });
+  res.innerHTML = cs.map(c => `<a href="#club-${c.abbr}">${badge(c, "sm")}<span>${e(c.name)}</span><small>club</small></a>`).join("") + ps.map(p => `<a href="#player-${p.club.abbr}-${p.idx}">${badge(p.club, "sm")}<span>${e(p.name)}</span><small>${p.pos} · ${e(p.club.abbr)}</small></a>`).join("") + `<a href="#search" data-all="1"><span>All results for “${e(q.value.trim())}”</span><small>search</small></a>`; res.hidden = false; });
+res.addEventListener("click", ev => { if (ev.target.closest("[data-all]")) { SRCH.q = q.value.trim(); SRCH.type = "all"; SRCH.more = 1; if (location.hash === "#search") render(false); } res.hidden = true; q.value = ""; });
 document.addEventListener("click", ev => { if (!ev.target.closest(".search")) res.hidden = true; });
 q.addEventListener("keydown", ev => { if (ev.key === "Enter") { const a = res.querySelector("a"); if (a) { location.hash = a.getAttribute("href"); res.hidden = true; q.value = ""; } } if (ev.key === "Escape") res.hidden = true; });
 if (LIVE) { route(); poll(); setInterval(poll, 3000); } else route();
