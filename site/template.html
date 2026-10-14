@@ -574,6 +574,10 @@ function startGame(id) {
     return ST.buildScene(pl, { nm: j => b.pl[j] || null, hint: nx && nx[13] !== pl[13] ? (nx[0] === pl[0] ? nx[3] : 100 - nx[3]) : null, dr: lastOfDrive[i] ? b.dr[pl[13]] : null, abbr: [H.abbr, A.abbr], pen: PEN[pl[7]] ? PEN[pl[7]][0] : "" });
   };
   const availFor = i => plays[i + 1] ? (real(plays[i + 1]) - real(plays[i])) / speed : 6;
+  /* the down-and-distance panel and the line saying who has the ball: with the animation on, they change when the play on the field is over, not when it starts */
+  const sitHtml = (sit, word) => sit ? [`${ordn(sit.down)} &amp; ${sit.pos + sit.toGo >= 100 ? "goal" : sit.toGo}<small>ball on ${yl(sit.off, sit.pos)}</small>`, `<span class="poss"></span><b style="color:var(--ink)">${e(names[sit.off])}</b> ball · attacking ${sit.off === 0 ? "left" : "right"}`] : [e(word), ""];
+  const putSit = h => { $("dd").innerHTML = h[0]; $("poss").innerHTML = h[1]; };
+  const putSitAfterPlay = h => { if (stage && stage.scene) stage.onsettle = () => putSit(h); else { if (stage) stage.onsettle = null; putSit(h); } };
   function paintField(anim) {
     const lp = S.last, nx = plays[S.i], done = !live && S.i >= plays.length, cur = nx || lp;
     let sit = nx ? { off: nx[0], down: nx[1], toGo: nx[2], pos: nx[3] } : null, word = "";
@@ -588,14 +592,13 @@ function startGame(id) {
     const dyds = shown.reduce((t, q) => t + (["RU", "PC", "SK"].includes(q[6]) && !q[5] ? q[4] : 0), 0);
     $("drv1").textContent = cur && shown.length ? `Drive ${di + 1} · ${shown.length} play${shown.length === 1 ? "" : "s"} · ${dyds} yds` : "";
     if (sit) {
-      const goal = sit.pos + sit.toGo >= 100, st = plays[Math.max(k0, 0)][3];
-      $("dd").innerHTML = `${ordn(sit.down)} &amp; ${goal ? "goal" : sit.toGo}<small>ball on ${yl(sit.off, sit.pos)}</small>`;
-      $("poss").innerHTML = `<span class="poss"></span><b style="color:var(--ink)">${e(names[sit.off])}</b> ball · attacking ${sit.off === 0 ? "left" : "right"}`;
+      const st = plays[Math.max(k0, 0)][3];
+      putSitAfterPlay(sitHtml(sit));
       const xb = FX(sit.off, sit.pos), xs = FX(sit.off, st);
       $("ball").style.display = $("los").style.display = $("first").style.display = ""; $("ball").style.left = $("los").style.left = xb + "%"; $("first").style.left = FX(sit.off, Math.min(100, sit.pos + sit.toGo)) + "%";
       $("trail").style.display = ""; $("trail").style.left = Math.min(xb, xs) + "%"; $("trail").style.width = Math.abs(xb - xs) + "%"; $("trail").className = "trail " + (sit.off === 0 ? "l" : "r");
     } else {
-      $("dd").innerHTML = e(word); $("poss").innerHTML = ""; $("ball").style.display = $("los").style.display = $("first").style.display = $("trail").style.display = "none";
+      putSitAfterPlay(sitHtml(null, word)); $("ball").style.display = $("los").style.display = $("first").style.display = $("trail").style.display = "none";
     }
     if (b.v === 2 && S.to) { const pips = n => "<span>TO</span>" + [0, 1, 2].map(i => `<i class="${i < n ? "" : "o"}"></i>`).join(""); $("to0").innerHTML = pips(S.to[0]); $("to1").innerHTML = pips(S.to[1]); }
     $("dch").innerHTML = dchHtml(sit, cur ? k0 : 0);
@@ -648,8 +651,11 @@ function startGame(id) {
     const seen = LIVE_SEEN[id]; LIVE_SEEN[id] = plays.length;
     if (stage && seen != null && plays.length > seen && plays.length) {
       const li = plays.length - 1, lp0 = plays[li], keep = lastShown;
-      stage.show({ off: lp0[0], down: lp0[1], toGo: lp0[2], pos: Math.max(1, Math.min(99, lp0[3])) }, { snap: true, kind: lp0[6] });
+      const fin = [$("dd").innerHTML, $("poss").innerHTML], sit0 = { off: lp0[0], down: lp0[1], toGo: lp0[2], pos: Math.max(1, Math.min(99, lp0[3])) };
+      stage.show(sit0, { snap: true, kind: lp0[6] });
+      putSit(sitHtml(sit0));                                          // the panel shows the play about to be run, and moves on when it is over
       stage.play(sceneFor(li), null);
+      putSitAfterPlay(fin);
       if (keep) stage.show(keep[0], keep[1]);
     }
   }
