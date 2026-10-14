@@ -147,6 +147,8 @@ function buildScene(P, ctx) {
   else if (kind === "FG") kickScene(H);
   else if (kind === "PU") puntScene(H);
   else if (kind === "PN") penaltyScene(H);
+  else if (kind === "SP") spikeScene(H);
+  else if (kind === "KN") kneelScene(H);
   else if (kind === "TO") { S.banner(.1, 1.7, "TIMEOUT", H.ab[a] || "", "plain"); S.endSpot = { off, u: 0 }; S.dur = Math.max(S.dur, 1.9); }
   else throw new Error("unknown play kind " + kind);
   S.dur += .3;
@@ -363,6 +365,28 @@ function puntScene(H) {
   S.tag(punter, tK - .5, tK + 1.4, name(a));
   for (let k = 4; k < 9; k++) { const f = line.d[k]; H.converge(S.D(k), tS, tK + fl + .4, f[0] + 2 + R() * 4, f[1] + (R() - .5) * 8, "run"); }
   H.converge(wing, tK + .3, tK + fl, retU - 9, 20, "stand");
+}
+
+/* the clock plays (rules version 3): the quarterback takes the snap and throws the ball into the turf; or he takes it and kneels */
+function spikeScene(H) {
+  const { S, P, R, tS, name } = H, [off, , , pos, , , , a] = P, qb = S.O(9), v = clamp(MID + (R() - .5) * 2, 22, 31), tT = tS + .55;
+  S.bfly(tS, tS + .26, [-.7, MID, .8], [-4.9, MID, 1.2], .5).bcarry(tS + .26, qb);
+  for (let k = 0; k < 11; k++) { S.hold(S.O(k), tS + .3); S.hold(S.D(k), tS + .3); }
+  S.hold(qb, tT, "stand").hold(qb, tT + .35, "throw").hold(qb, tT + 1.6, "stand");
+  S.bfly(tT + .12, tT + .42, [-5, v, 2.4], [-3.4, v, 0], .3).bfly(tT + .42, tT + .8, [-3.4, v, 0], [-2.4, v, 0], 1.1).brest(tT + .8, -2.4, v, 0);
+  S.tag(qb, tS + .2, tT + 1.4, name(a));
+  S.banner(tT + .35, tT + 1.9, "SPIKE", "", "small");
+  S.endSpot = { off, u: -2.4 }; S.dur = Math.max(S.dur, tT + 1.8);
+}
+function kneelScene(H) {
+  const { S, P, tS, name } = H, [off, , , pos, , , , a] = P, qb = S.O(9);
+  S.bfly(tS, tS + .26, [-.7, MID, .8], [-4.9, MID, 1.2], .5).bcarry(tS + .26, qb);
+  for (let k = 0; k < 11; k++) { if (k !== 9) S.hold(S.O(k), tS + .3); S.hold(S.D(k), tS + .3); }
+  S.hold(qb, tS + .26).go(qb, tS + .85, -1.3, MID, "run", 1).hold(qb, tS + 2.3, "kneel");
+  S.brest(tS + 1.3, -1, MID, 0);
+  S.tag(qb, tS + .2, tS + 2.1, name(a));
+  S.banner(tS + 1.0, tS + 2.3, "KNEEL", "", "small");
+  S.endSpot = { off, u: -1 }; S.dur = Math.max(S.dur, tS + 2.2);
 }
 
 function penaltyScene(H) {
