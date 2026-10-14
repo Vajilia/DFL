@@ -16,7 +16,8 @@ kicks off at the real moment that corresponds to its league date and kickoff tim
 Feed (all under --out, written atomically; nothing in it is ahead of the clock):
     meta.json      {seed, epoch_ms, year_hours}        fixed for the life of the league
     season.json    the current year's schedule: no scores, no matchups for playoff games not yet announced
-    results.json   revealed finals, games in progress, announced playoff games, and, once they are decided, seeds, division ranks, exits, champion; plus the clock
+    results.json   revealed finals, games in progress, announced playoff games, the division order and seeds as they would stand now (now_ranks, now_seeds) during the regular
+                   season, and, once they are decided, seeds, division ranks, exits, champion; plus the clock
     season_<year>.json, results_<year>.json    each year's schedule and results, kept after the year ends
     g/<year>_<id>.json    a game's players, completed drives and the plays so far (all of them once final)
     history.json   the champions of the years already over
@@ -113,12 +114,14 @@ class Season:
         lg = world.lg
         res, names = SE.play_season(lg, world.rng, n, world.rules)
         self.res = res
+        self.world_lg = lg
         cal = K.calendar_year(n)
         flip, shift = rotation(n)
         D = R.DIVISIONS_PER_CONFERENCE
         slot = {t.id: (t.conf ^ flip, (t.div + shift) % D, res.start[t.id][1]) for t in lg.teams if res.start[t.id][0] == "active"}
         times = world.times
         short = {pid: SE._short(nm) for pid, nm in names.items()}
+        self._reg_ids = {f"r{g.week}_{g.home}" for g in res.games}
         self.games = []                                   # every game, in id order within its group
         for g in sorted(res.games, key=lambda g: (g.week, g.home)):
             num, day, kick = times[(g.week, slot[g.home], slot[g.away])]
@@ -251,6 +254,27 @@ class Season:
         last = dt.datetime.fromisoformat(max(opened))
         return last if now_ms <= self.final_end else max(lin, last)
 
+    def table_now(self, final_ids):
+        """(division ranks, seeds) as they would stand if the regular season ended with the games that are final now, by the league's own tiebreak procedures; None until a game is
+        final. A tie that only a coin toss can settle is tossed with a fixed seed, so the page shows the same order until another game ends."""
+        if not final_ids:
+            return None
+        key = len(final_ids)
+        if getattr(self, "_now_key", None) == key:
+            return self._now_val
+        import random as _r
+        import playoffs as PL
+        import standings as ST
+        done = set(final_ids)
+        games = [g for g in self.res.games if f"r{g.week}_{g.home}" in done]
+        ids = [t for d in self.res.division_ranks.values() for t in d]
+        stats = ST.compute_stats(self.world_lg, games, ids)
+        rng = _r.Random(self.n * 100003 + key)
+        ranks = {d: ST.rank_by_style("division", list(members), stats, rng, [], "division") for d, members in self.res.division_ranks.items()}
+        seeds = {c: PL.seed_conference(c, self.world_lg, ranks, stats, rng, []) for c in range(len(R.CONFERENCES))}
+        self._now_key, self._now_val = key, ({str(k): v for k, v in ranks.items()}, {str(k): v for k, v in seeds.items()})
+        return self._now_val
+
     def results_file(self, now_ms, history):
         res = self.res
         final, live, po_teams = {}, [], {}
@@ -263,6 +287,10 @@ class Season:
                 po_teams[g["id"]] = [g["home"], g["away"]]
         out = dict(t=int(now_ms), year=self.n, sim=self.sim_now(now_ms).isoformat(timespec="minutes"), final=final, live=live, po=po_teams, history=history,
                    now={i: self.score_now(self.by_id[i], now_ms) for i in live})
+        if now_ms < self.reg_end:                          # during the regular season: the division order and the playoff seeds if it ended now, from the finals so far
+            now = self.table_now([i for i in final if i in self._reg_ids])
+            if now:
+                out["now_ranks"], out["now_seeds"] = now
         if now_ms >= self.reg_end:                         # the regular season is over: the seeds and final division order are known
             out["seeds"] = {str(k): v for k, v in res.seeds.items()}
             out["division_ranks"] = {str(k): v for k, v in res.division_ranks.items()}

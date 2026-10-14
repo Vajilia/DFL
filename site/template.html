@@ -181,7 +181,8 @@ const clubLink = (c, extra = "") => `<a class="club" href="#club-${c.abbr}">${ba
 const stripe = c => `<div class="stripe" style="background:linear-gradient(90deg,${c.colors[0]} 0 52%,${c.colors[1]} 52% 82%,${c.colors[2]} 82% 100%)"></div>`;
 const slotOf = g => { const wd = dateOf(g.date).getDay(); if (wd === 6) return ["Saturday night", 4]; if (wd === 1) return ["Monday night", 5]; const h = +g.time.split(":")[0]; return h < 12 ? ["Sunday morning", 1] : h < 15 ? ["Sunday afternoon", 2] : ["Sunday evening", 3]; };
 const conf = i => D.conferences[i];
-let seedOf = {}; const reseed = () => { seedOf = {}; Object.entries(D.seeds).forEach(([cf, ids]) => ids.forEach((id, k) => seedOf[id] = k + 1)); }; reseed();
+let seedOf = {}, seedNow = false;                          // seedNow: the seeds shown are those of "if the regular season ended now", worked out by the engine from the finals so far
+const reseed = () => { seedOf = {}; seedNow = !Object.keys(D.seeds).length && !!D.seedsNow; Object.entries(seedNow ? D.seedsNow : D.seeds).forEach(([cf, ids]) => ids.forEach((id, k) => seedOf[id] = k + 1)); }; reseed();
 clubs.forEach(c => { c.exiled0 = c.exiled; });             // who began in exile on Founding Day (a club's status changes year to year in a live league)
 const players = []; clubs.forEach(c => c.roster.forEach((p, i) => { p.club = c; p.idx = i; players.push(p); }));
 const winner = g => g.hp > g.ap ? g.home : g.ap > g.hp ? g.away : null;
@@ -210,7 +211,7 @@ function standExtras() {
 function standings() {
   let h;
   if (D.champion == null) {
-    h = `<div class="stack"><div class="champion" style="background:var(--soft);border-color:var(--line)"><div><div class="eyebrow">Season ${D.season}</div><h2>${e(phaseText())}</h2><p style="color:var(--muted)">${e(LIVE ? "Standings are what the games played so far add up to. Clubs are ordered by winning percentage, then points difference; the league's own tiebreakers are applied when the regular season ends." : "")}</p></div></div>
+    h = `<div class="stack"><div class="champion" style="background:var(--soft);border-color:var(--line)"><div><div class="eyebrow">Season ${D.season}</div><h2>${e(phaseText())}</h2><p style="color:var(--muted)">${e(LIVE ? "Standings are what the games played so far add up to. Clubs are ordered by the league's own tiebreakers, and the numbered badges are the playoff seeds as they would stand if the regular season ended now; both change as games end." : "")}</p></div></div>
     <p class="note">A read-only window on the league. Everything here is the engine's own record; nothing on this page changes the league.</p>`;
   } else {
     const ch = byId[D.champion], final = D.playoffs[D.playoffs.length - 1];
@@ -229,13 +230,13 @@ function standings() {
       const magic = !lead ? "" : done ? `<b title="The division is decided">Won</b>` : (() => { const m = Math.ceil(XL.sched + .5 - XL.credit - Math.min(...others.map(c => X[c.id].lossCredit))); return m <= 0 ? `<b title="Clinched the division outright">Clinched</b>` : `<b title="Magic number: ${m} more wins by ${e(lead.name)} or losses by the closest rival clinch the division outright">M ${m}</b>`; })();
       active.forEach(c => { const r = c.record, d = r.pf - r.pa, sd = seedOf[c.id], x = X[c.id];
         const gb = c === lead ? magic : ((XL.credit - x.credit) + (x.lossCredit - XL.lossCredit)) / 2, gbs = typeof gb === "number" ? String(gb) : gb;
-        h += `<tr><td>${clubLink(c, c.id === D.champion ? `<span class="seed gold" title="Champion">◆</span>` : sd ? `<span class="seed" title="Playoff seed ${sd}">${sd}</span>` : "")}</td><td>${r.w}</td><td>${r.l}</td><td>${r.t}</td><td>${pct(r)}</td><td>${gbs}</td><td>${x.div}</td><td class="hide-sm">${x.conf}</td><td class="hide-sm">${x.sos}</td><td class="hide-sm">${x.sov}</td><td>${d > 0 ? "+" : ""}${d}</td></tr>`; });
+        h += `<tr><td>${clubLink(c, c.id === D.champion ? `<span class="seed gold" title="Champion">◆</span>` : sd ? `<span class="seed" title="${seedNow ? `Playoff seed ${sd} if the regular season ended now` : `Playoff seed ${sd}`}">${sd}</span>` : "")}</td><td>${r.w}</td><td>${r.l}</td><td>${r.t}</td><td>${pct(r)}</td><td>${gbs}</td><td>${x.div}</td><td class="hide-sm">${x.conf}</td><td class="hide-sm">${x.sos}</td><td class="hide-sm">${x.sov}</td><td>${d > 0 ? "+" : ""}${d}</td></tr>`; });
       exiled.forEach(c => { const a = c.ambassador; h += `<tr class="exile"><td>${clubLink(c)}</td><td colspan="10" style="text-align:left;white-space:normal">In exile this season · Ambassador Season ${a.w}-${a.l}${a.t ? "-" + a.t : ""}</td></tr>`; });
       h += `</tbody></table></div></div>`;
     }
     h += `</div></section>`;
   });
-  return h + `<p class="note" style="margin-top:8px">GB is games behind the division leader. The leader shows its magic number, M: any mix of that many wins by the leader and losses by its closest rival clinches the division outright (a tie counts half). Div and Conf are records in division and conference games. SOS is the winning percentage of all opponents played, SOV of the opponents beaten; these are the league's tiebreakers after head-to-head, division record and common games, and they settle a tie only when the earlier ones do not.</p></div>`;
+  return h + `<p class="note" style="margin-top:8px">The numbered badges are playoff seeds (seven clubs a conference qualify): during the season they are the seeds as they would stand if it ended now. GB is games behind the division leader. The leader shows its magic number, M: any mix of that many wins by the leader and losses by its closest rival clinches the division outright (a tie counts half). Div and Conf are records in division and conference games. SOS is the winning percentage of all opponents played, SOV of the opponents beaten; these are the league's tiebreakers after head-to-head, division record and common games, and they settle a tie only when the earlier ones do not.</p></div>`;
 }
 
 function playoffs() {
@@ -689,10 +690,10 @@ function derive() {
   const add = (r, pf, pa) => { r.pf += pf; r.pa += pa; if (pf > pa) r.w++; else if (pf < pa) r.l++; else r.t++; };
   D.games.forEach(g => { if (g.final) { add(byId[g.home].record, g.hp, g.ap); add(byId[g.away].record, g.ap, g.hp); } });
   D.ambassador.forEach(g => { if (g.final) { add(byId[g.home].ambassador, g.hp, g.ap); add(byId[g.away].ambassador, g.ap, g.hp); } });
-  D.seeds = R.seeds || {}; D.division_ranks = {};
+  D.seeds = R.seeds || {}; D.seedsNow = R.seeds ? null : R.now_seeds || null; D.division_ranks = {};
   for (let did = 0; did < 8; did++) {
     const act = clubs.filter(c => c.did === did && !c.exiled);
-    const order = R.division_ranks && R.division_ranks[did] ? R.division_ranks[did] : act.sort((a, b) => wp(b.record) - wp(a.record) || (b.record.pf - b.record.pa) - (a.record.pf - a.record.pa) || b.record.pf - a.record.pf).map(c => c.id);
+    const order = R.division_ranks && R.division_ranks[did] ? R.division_ranks[did] : R.now_ranks && R.now_ranks[did] ? R.now_ranks[did] : act.sort((a, b) => wp(b.record) - wp(a.record) || (b.record.pf - b.record.pa) - (a.record.pf - a.record.pa) || b.record.pf - a.record.pf).map(c => c.id);
     D.division_ranks[did] = order; order.forEach((id, k) => { byId[id].record.div_rank = k + 1; });
   }
   D.champion = R.champion != null ? R.champion : null;
