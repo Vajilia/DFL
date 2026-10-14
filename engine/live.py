@@ -342,6 +342,7 @@ class Runner:
         self.pauses = [list(p) for p in m.get("pauses", [])]    # [[real ms the league was paused, real ms it was resumed or None while it is paused]]: part of the league's history
         write_json(os.path.join(out, "meta.json"), m)
         self.sched_year = None
+        self.last_season = None
 
     # -- pausing: the league's own clock stops and carries on from the same moment (the person's league, paused after a late night and resumed after breakfast) -------
     def paused(self) -> bool:
@@ -368,6 +369,24 @@ class Runner:
         lost = sum((real_ms if b is None else b) - a for a, b in self.pauses)
         return real_ms - lost, lost
 
+    def write_games(self, s, now_ms: float) -> None:
+        """Each started game's file, rewritten only when it has grown (the final write holds every play)."""
+        for g in s.games:
+            if now_ms < g["start"]:
+                continue
+            k = s.revealed(g, now_ms)
+            final = now_ms >= g["end"]
+            stamp = len(g["offs"]) + 1 if final else k
+            if g["written"] != stamp:
+                write_json(os.path.join(self.out, "g", f"{s.n}_{g['id']}.json"), s.game_file(g, now_ms, k))
+                g["written"] = stamp
+
+    def finalize(self, s, history) -> None:
+        """A year that has just ended: every game file and the year's results are written as they stood when its Coronation ended, so a finished season is complete on disk even if no tick fell in its last moments."""
+        end = s.final_end
+        self.write_games(s, end)
+        write_json(os.path.join(self.out, f"results_{s.n}.json"), s.results_file(end, history))
+
     def tick(self, real_now: float) -> dict:
         """Write the feed as it stands at the real moment `real_now`. Returns the results written (None before the league begins)."""
         self._control(real_now)
@@ -388,15 +407,11 @@ class Runner:
             write_json(os.path.join(self.out, f"season_{n}.json"), sf)      # kept for good: a finished season's schedule, so its games can be listed later
             write_json(os.path.join(self.out, "history.json"), w.history)
             self.sched_year = n
-        for g in s.games:
-            if now_ms < g["start"]:
-                continue
-            k = s.revealed(g, now_ms)
-            final = now_ms >= g["end"]
-            stamp = len(g["offs"]) + 1 if final else k
-            if g["written"] != stamp:
-                write_json(os.path.join(self.out, "g", f"{n}_{g['id']}.json"), s.game_file(g, now_ms, k))
-                g["written"] = stamp
+        prev = self.last_season
+        if prev is not None and prev is not s:              # the year has turned over: close the books on the one that ended, whatever the ticks did near its end
+            self.finalize(prev, w.history[:prev.n - 1])
+        self.last_season = s
+        self.write_games(s, now_ms)
         out = s.results_file(now_ms, w.history)
         out["shift"], out["paused"] = int(shift), self.paused()          # the real time lost to pauses (the page adds it to the league's clock to show real times), and whether the league is paused now
         write_json(os.path.join(self.out, "results.json"), out)
