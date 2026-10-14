@@ -39,7 +39,7 @@ with sync_playwright() as pw:
     pg.goto(url + "#seasons"); pg.wait_for_timeout(2500)
     tab = pg.inner_text("#tabs")
     rows = pg.eval_on_selector_all("#app tbody tr", "e=>e.length")
-    check("the Seasons tab lists the season in progress and each finished one", "SEASONS" in tab.upper() and rows == 1 + len(hist) and pg.locator("a[href='#seasons-1']").count() == 1, f"{rows} {len(hist)}")
+    check("the Seasons page (under History and Information) lists the season in progress and each finished one", "HISTORY AND INFORMATION" in tab.upper() and pg.evaluate("document.querySelector('#tabs [aria-current]').textContent.trim().toUpperCase()") == "HISTORY AND INFORMATION" and rows == 1 + len(hist) and pg.locator("a[href='#seasons-1']").count() == 1, f"{rows} {len(hist)}")
     cur_season = pg.evaluate("D.season"); cur_club = pg.evaluate("clubs.filter(c=>c.record.w+c.record.l+c.record.t>0).length")
     pg.click("a[href='#seasons-1']"); pg.wait_for_timeout(2500)
     s1 = pg.evaluate("D.season"); view = pg.evaluate("FEED.view"); h = pg.inner_text("#app")
