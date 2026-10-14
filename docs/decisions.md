@@ -446,3 +446,13 @@ Live, the tab downloads each finished game's file once (six at a time) and keeps
 The Commissioner asked that finished games stay viewable (box score, not replay). They always were (every game's file is kept, per year, and the Schedule and club pages link them), but the Live page listed only the latest 8, so games seemed to vanish. The Live page now has a "Show 20 more" button, and a new **Seasons** tab (live leagues) lists the season in progress and every finished season with its champion. Opening a past season shows it with the same pages as the live season (Standings, Schedule, Playoffs, box scores, Statistics), under a banner with "Back to live".
 
 How it works: the server writes `season_<n>.json` and `results_<n>.json` for every year, and when a year turns over it closes the books on the old one (`Runner.finalize`: every game file and the results as they stood at the Coronation's end, whatever the ticks did near the end). The page needs nothing else: `derive()` already builds everything from one season file and one results file, so a past season is those two files swapped in. Not covered: a league restarted across a year boundary does not rewrite the year that ended while it was down; club and player pages still show the build's rosters, not the rosters of that year. Tested by `check_past_seasons.py` (a league run through three seasons).
+
+## New look: night game (styling only)
+
+The Commissioner asked for a video-game look in the spirit of football games, without anyone's trademarks, then a 2D animated game on top (the animation is the next change, in its own pull request). This change is styling only: no rule, number, route or feature changed.
+
+- **Palette:** turf-black panels under a floodlight glow, white ink, and two bright colours borrowed from the lines a broadcast draws on the field: yellow for the first-down line (menu highlight, buttons, down and distance plate) and blue for the line of scrimmage (links, notes, seeds). Red is for turnovers only; gold stays for the Coronation.
+- **Type:** Barlow Condensed in slanted bold for headings, menu, scores and table heads; Barlow for text. Replaces Big Shoulders, Source Sans and IBM Plex Mono (one Google Fonts request instead of three).
+- **Shapes:** slanted menu tabs, panels with one cut corner, a score bar whose two sides are washed in each club's own colour, and the field strip as mown turf with white yard lines and glowing first-down and scrimmage lines.
+- **One theme:** the page is dark whatever the visitor's system setting says (the old page followed it). A light variant can be added if wanted.
+- **Not copied:** no logo, wordmark, colour scheme or layout of any existing game; the club badges and the league diamond are the league's own.
