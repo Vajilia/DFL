@@ -35,8 +35,31 @@ def _person(c):
 def _player(p):
     o = p.origin or {}
     c = p.card
-    return dict(name=p.display_name or f"{c.first} {c.last}", pos=p.pos, age=p.age, ovr=round(p.ovr), college=o.get("college", ""), hometown=o.get("hometown", c.hometown),
-                salary=round(p.salary, 2), years=p.years_left, trait=c.trait, bio=c.bio or "")
+    return dict(pid=p.id, name=p.display_name or (f"{c.first} {c.last}" if c else f"P{p.id:05d}"), pos=p.pos, age=p.age, ovr=round(p.ovr), college=o.get("college", ""),
+                hometown=o.get("hometown", c.hometown if c else ""), salary=round(p.salary, 2), years=p.years_left, trait=c.trait if c else "", bio=(c.bio if c else "") or "")
+
+
+def _staff(c):
+    return None if c is None else [f"{c.first} {c.last}", c.trait, c.hometown, c.age]
+
+
+def snapshot(lg, founding=None) -> dict:
+    """Every club's people and roster as they stand now (the live league takes one at the start of each year, before it is played): the page shows a year's club pages from it.
+    {club id: {p: [owner, general manager, head coach, offensive coordinator, defensive coordinator] as [name, temperament, hometown, age], r: one row per rostered player:
+    [id, name, position, age, overall, college, hometown, salary, years left, temperament] and, for a player who was not on a Founding Day roster, her backstory}.
+    The founding players' backstories are in the page already (matched by id), so they are left out."""
+    out = {}
+    for t in lg.teams:
+        roster = sorted(t.roster, key=lambda p: (POS_ORDER.index(p.pos) if p.pos in POS_ORDER else 99, -p.ovr))
+        rows = []
+        for p in roster:
+            q = _player(p)
+            row = [q["pid"], q["name"], q["pos"], q["age"], q["ovr"], q["college"], q["hometown"], q["salary"], q["years"], q["trait"]]
+            if founding is not None and p.id not in founding and q["bio"]:
+                row.append(q["bio"])
+            rows.append(row)
+        out[str(t.id)] = dict(p=[_staff(t.owner), _staff(t.gm), _staff(t.coach), _staff(t.oc), _staff(t.dc)], r=rows)
+    return out
 
 
 def _short(name: str) -> str:

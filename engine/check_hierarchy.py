@@ -74,7 +74,7 @@ with sync_playwright() as pw:
     cl = pg.evaluate("clubs[10].name"); find(cl.split()[-1].upper())
     check("a club is found by the last word of its name, in any case", ["Clubs", 1] in sect() and pg.evaluate("document.querySelector('#sbody a.club').getAttribute('href')") == "#club-" + pg.evaluate("clubs[10].abbr"), str(sect()))
     pn = pg.evaluate("players[200].name").split(); find(pn[-1] + " " + pn[0], "player")
-    check("a player is found by first and last name in either order", pg.evaluate("document.querySelector('#sbody tbody a').getAttribute('href')") == "#player-%s-%d" % (pg.evaluate("players[200].club.abbr"), pg.evaluate("players[200].idx")), str(sect()))
+    check("a player is found by first and last name in either order", pg.evaluate("document.querySelector('#sbody tbody a').getAttribute('href')") == "#player-%d" % pg.evaluate("players[200].pid"), str(sect()))
     exp = pg.evaluate("players.filter(p => p.pos === 'K' && p.college.toLowerCase().includes('ohio')).length")
     find("kicker ohio", "player"); got = dict(sect()).get("Players", 0)
     check("words from the position and the college must all match (kicker, ohio)", got == pg.evaluate("players.filter(p => (p.pos === 'K') && (p.college + ' ' + p.hometown + ' ' + p.name).toLowerCase().includes('ohio') || false).length") or got >= 1 and got == exp or got >= 1, f"{got} {exp}")

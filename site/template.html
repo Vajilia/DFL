@@ -189,7 +189,22 @@ const conf = i => D.conferences[i];
 let seedOf = {}, seedNow = false;                          // seedNow: the seeds shown are those of "if the regular season ended now", worked out by the engine from the finals so far
 const reseed = () => { seedOf = {}; seedNow = !Object.keys(D.seeds).length && !!D.seedsNow; Object.entries(seedNow ? D.seedsNow : D.seeds).forEach(([cf, ids]) => ids.forEach((id, k) => seedOf[id] = k + 1)); }; reseed();
 clubs.forEach(c => { c.exiled0 = c.exiled; });             // who began in exile on Founding Day (a club's status changes year to year in a live league)
-const players = []; clubs.forEach(c => c.roster.forEach((p, i) => { p.club = c; p.idx = i; players.push(p); }));
+const players = [], playerById = {}, FOUND_BIO = {};
+clubs.forEach(c => c.roster.forEach(p => { if (p.pid != null && p.bio) FOUND_BIO[p.pid] = p.bio; }));
+const indexPlayers = () => { players.length = 0; for (const k in playerById) delete playerById[k]; clubs.forEach(c => c.roster.forEach((p, i) => { p.club = c; p.idx = i; players.push(p); if (p.pid != null) playerById[p.pid] = p; })); };
+indexPlayers();
+const playerHref = p => p.pid != null ? `#player-${p.pid}` : `#player-${p.club.abbr}-${p.idx}`;
+/* The live league changes its people and rosters every year (the draft, free agency, retirements, hirings and firings): each year's schedule file carries the clubs as the year began (engine/site_export.snapshot),
+   and the page shows the year being looked at from it. A page with no such snapshot (the founding season, an older feed) keeps the rosters it was built with. */
+let TEAMS_FOR = null;
+function applyTeams(S) {
+  if (!S || !S.teams || S === TEAMS_FOR) return; TEAMS_FOR = S;
+  const KEYS = ["ceo", "gm", "head_coach", "offensive_coordinator", "defensive_coordinator"];
+  clubs.forEach(c => { const t = S.teams[c.id]; if (!t) return;
+    c.people = {}; KEYS.forEach((k, i) => { const q = t.p[i]; c.people[k] = q ? { name: q[0], trait: q[1], hometown: q[2], age: q[3] } : null; });
+    c.roster = t.r.map(r => ({ pid: r[0], name: r[1], pos: r[2], age: r[3], ovr: r[4], college: r[5], hometown: r[6], salary: r[7], years: r[8], trait: r[9], bio: r[10] || FOUND_BIO[r[0]] || "" })); });
+  indexPlayers();
+}
 const winner = g => g.hp > g.ap ? g.home : g.ap > g.hp ? g.away : null;
 const money = m => "$" + m.toFixed(2) + "M";
 const G0 = D.games2000 || D.games;                         // the 2000 schedule, for the guide's time-slot table
@@ -388,7 +403,7 @@ function searchDraw() {
     if (r.length) out.push(["Clubs", r.length, `<div class="tablewrap"><table><tbody>${r.slice(0, cap).map(([, c]) => `<tr><td class="l">${clubLink(c)}</td><td class="l hide-sm">${e(c.conference)} · ${e(c.division)}</td><td class="l hide-sm">${e(c.location)}</td><td>${c.exiled ? "exile" : rec(c.record)}</td></tr>`).join("")}</tbody></table></div>`]); }
   if (want("player")) { let r = players.filter(p => (!club || p.club === club) && (!S.pos || p.pos === S.pos) && (!S.minOvr || p.ovr >= +S.minOvr) && (!S.minAge || p.age >= +S.minAge) && (!S.maxAge || p.age <= +S.maxAge)).map(p => [toks.length ? score(p.name, [p.pos, POSNAME[p.pos], p.college, p.hometown, p.trait, p.club.name, p.club.abbr].join(" ")) : 0, p]).filter(x => x[0] >= 0);
     r.sort(S.sort === "ovr" ? (a, b) => b[1].ovr - a[1].ovr : S.sort === "age" ? (a, b) => a[1].age - b[1].age || b[1].ovr - a[1].ovr : S.sort === "name" ? (a, b) => a[1].name.localeCompare(b[1].name) : (a, b) => b[0] - a[0] || b[1].ovr - a[1].ovr);
-    if (r.length) out.push(["Players", r.length, `<div class="tablewrap"><table><thead><tr><th>Player</th><th class="l">Club</th><th>Pos</th><th>Age</th><th>Ovr</th><th class="hide-sm l">College</th><th class="hide-sm l">Hometown</th></tr></thead><tbody>${r.slice(0, cap).map(([, p]) => `<tr><td><a href="#player-${p.club.abbr}-${p.idx}"><b>${e(p.name)}</b></a></td><td class="l">${clubLink(p.club)}</td><td>${p.pos}</td><td>${p.age}</td><td>${p.ovr}</td><td class="hide-sm l">${e(p.college)}</td><td class="hide-sm l">${e(p.hometown)}</td></tr>`).join("")}</tbody></table></div>`]); }
+    if (r.length) out.push(["Players", r.length, `<div class="tablewrap"><table><thead><tr><th>Player</th><th class="l">Club</th><th>Pos</th><th>Age</th><th>Ovr</th><th class="hide-sm l">College</th><th class="hide-sm l">Hometown</th></tr></thead><tbody>${r.slice(0, cap).map(([, p]) => `<tr><td><a href="${playerHref(p)}"><b>${e(p.name)}</b></a></td><td class="l">${clubLink(p.club)}</td><td>${p.pos}</td><td>${p.age}</td><td>${p.ovr}</td><td class="hide-sm l">${e(p.college)}</td><td class="hide-sm l">${e(p.hometown)}</td></tr>`).join("")}</tbody></table></div>`]); }
   if (want("staff") && !filt) { const r = []; clubs.forEach(c => { if (club && c !== club) return; STAFF.forEach(([k, role]) => { const q = c.people[k]; if (!q) return; const sc = toks.length ? score(q.name, [role, q.trait, q.hometown, c.name, c.abbr].join(" ")) : 0; if (sc >= 0) r.push([sc, c, role, q]); }); }); r.sort((a, b) => b[0] - a[0]);
     if (r.length) out.push(["Coaches and staff", r.length, `<div class="tablewrap"><table><tbody>${r.slice(0, cap).map(([, c, role, q]) => `<tr><td class="l"><b>${e(q.name)}</b></td><td class="l">${e(role)}</td><td class="l">${clubLink(c)}</td><td class="l hide-sm">${e(q.trait)} · ${e(q.hometown)}</td></tr>`).join("")}</tbody></table></div>`]); }
   if (want("game") && !filt) { const wk = toks.join(" ").match(/^(?:week\s*)?(\d{1,2})$/);
@@ -399,6 +414,55 @@ function searchDraw() {
   body.innerHTML = h;
 }
 
+/* ---------- a club's page: its season, the people who run it and how they are doing, its history, its numbers and its players ---------- */
+const nth = n => { const m = n % 100; return n + (m >= 11 && m <= 13 ? "th" : ["th", "st", "nd", "rd"][n % 10] || "th"); };
+const HIST = () => (LIVE && FEED.cur && FEED.cur.R && FEED.cur.R.history) || [];       // the years already over: {year, champion, clubs: {club id: [w, l, t, pf, pa, division finish, seed, how the playoffs ended, hc, oc, dc, gm]}}
+const COACH_AT = { head_coach: 8, offensive_coordinator: 9, defensive_coordinator: 10 };
+const gamesOf = r => r ? r.w + r.l + r.t : 0;
+/* every season a person has held a role (anywhere in the league), from the history and, if it is not in it yet, the season on show */
+function coachSeasons(role, name, c) {
+  const out = []; let seen = false;
+  HIST().forEach(x => { if (x.year === D.season) seen = true; Object.entries(x.clubs || {}).forEach(([id, r]) => { if (r[COACH_AT[role]] === name && r[7] !== "exile") out.push({ year: x.year, club: +id, w: r[0], l: r[1], t: r[2], pf: r[3], pa: r[4], div: r[5], seed: r[6], champ: x.champion === +id }); }); });
+  if (!seen && !c.exiled && gamesOf(c.record) && c.people[role] && c.people[role].name === name) { const r = c.record; out.push({ year: D.season, club: c.id, w: r.w, l: r.l, t: r.t, pf: r.pf, pa: r.pa, div: r.div_rank, seed: seedOf[c.id] || 0, champ: c.id === D.champion, live: true }); }
+  return out;
+}
+/* where a club stands among the clubs that have played, in points a game scored (high is good) or allowed (low is good) */
+function leagueRank(c, key) {
+  const per = x => x.record[key] / gamesOf(x.record), pool = clubs.filter(x => !x.exiled && gamesOf(x.record)); if (!pool.length || !gamesOf(c.record)) return "";
+  const mine = per(c); return `${nth(1 + pool.filter(x => key === "pf" ? per(x) > mine : per(x) < mine).length)} of ${pool.length}`;
+}
+function coachCard(c, role, title, q) {
+  if (!q) return "";
+  const ss = coachSeasons(role, q.name, c), sum = k => ss.reduce((a, x) => a + x[k], 0), g = sum("w") + sum("l") + sum("t"), n = ss.length;
+  let since = D.season; { const yrs = HIST().filter(x => x.clubs && x.clubs[c.id] && x.clubs[c.id][COACH_AT[role]] === q.name).map(x => x.year); if (yrs.length) since = Math.min(...yrs); }
+  const here = !c.exiled && gamesOf(c.record) ? c.record : null, line = (a, b) => `<dt>${a}</dt><dd>${b}</dd>`;
+  let rows = line("Hired", `${HIST().length ? "in " + since : "Founding Day"} · ${e(q.trait)} · ${e(q.hometown)}${q.age ? ", " + q.age : ""}`);
+  if (role === "head_coach") {
+    rows += line("This season", here ? `<b>${rec(here)}</b> (${pct(here)}) · ${nth(here.div_rank)} in the division${c.id === D.champion ? " · <b>champions</b>" : ""}` : c.exiled ? "In exile" : "No game played yet");
+    if (n) rows += line("With the DFL", `<b>${sum("w")}-${sum("l")}${sum("t") ? "-" + sum("t") : ""}</b> (${pct({ w: sum("w"), l: sum("l"), t: sum("t") })}) in ${n} season${n === 1 ? "" : "s"}`) + line("Honours", `${ss.filter(x => x.seed).length} playoff trip${ss.filter(x => x.seed).length === 1 ? "" : "s"} · ${ss.filter(x => x.div === 1).length} division title${ss.filter(x => x.div === 1).length === 1 ? "" : "s"} · ${ss.filter(x => x.champ).length} championship${ss.filter(x => x.champ).length === 1 ? "" : "s"}`);
+  } else {
+    const off = role === "offensive_coordinator", key = off ? "pf" : "pa", unit = off ? "scored" : "allowed", best = ss.filter(x => x.w + x.l + x.t).reduce((b, x) => { const v = x[key] / (x.w + x.l + x.t); return !b || (off ? v > b.v : v < b.v) ? { v, year: x.year } : b; }, null);
+    rows += line(off ? "Offense this season" : "Defense this season", here ? `<b>${f1(here[key] / gamesOf(here))}</b> points ${unit} a game · ${leagueRank(c, key)}` : c.exiled ? "In exile" : "No game played yet");
+    if (n) rows += line("With the DFL", `<b>${f1(sum(key) / g)}</b> points ${unit} a game over ${n} season${n === 1 ? "" : "s"}${n > 1 && best ? ` · best ${f1(best.v)} (${best.year})` : ""}`);
+    rows += line("Record behind it", here ? `${rec(here)}${n > 1 ? ` this season; ${sum("w")}-${sum("l")}${sum("t") ? "-" + sum("t") : ""} in all` : ""}` : "");
+  }
+  return `<div class="card"><div class="eyebrow">${title}</div><h3 style="margin:4px 0 12px">${e(q.name)}</h3><dl class="kv">${rows}</dl>${role === "head_coach" ? "" : `<p class="note" style="margin-top:12px;font-size:13px">A coordinator is judged by the whole unit's results, whoever the players are.</p>`}</div>`;
+}
+/* the club's years one under another: this one first (while it is being played), then every year over */
+function seasonTable(c) {
+  const hist = HIST().filter(x => x.clubs && x.clubs[c.id]), seen = hist.some(x => x.year === D.season), rows = [];
+  const fin = (r, champ) => champ ? `<b>Champions</b> ◆` : r[7] === "exile" ? "In exile" : r[6] ? `Seed ${r[6]}${r[7] ? " · out in the " + e(String(r[7]).replace(/^playoff_/, "").replace("_", " ")) : ""}` : "Missed";
+  if (!seen) { const r = c.record; rows.push(c.exiled ? `<tr class="exile"><td class="l">${D.season} <span class="tag">now</span></td><td colspan="6" style="text-align:left">In exile · Ambassador Season ${rec(c.ambassador)}</td></tr>` : `<tr><td class="l">${D.season} <span class="tag">${D.champion != null ? "final" : "now"}</span></td><td>${rec(r)}</td><td>${r.pf}</td><td>${r.pa}</td><td>${r.div_rank ? nth(r.div_rank) : "–"}</td><td class="l">${c.id === D.champion ? "<b>Champions</b> ◆" : seedOf[c.id] ? "Seed " + seedOf[c.id] + (r.exit ? " · out in the " + e(r.exit.replace(/^playoff_/, "").replace("_", " ")) : "") : D.champion != null ? "Missed" : "–"}</td><td class="l hide-sm">${e((c.people.head_coach || {}).name || "")}</td></tr>`); }
+  hist.slice().reverse().forEach(x => { const r = x.clubs[c.id]; rows.push(r[7] === "exile" ? `<tr class="exile"><td class="l">${x.year}</td><td colspan="6" style="text-align:left">In exile · Ambassador Season ${r[0]}-${r[1]}${r[2] ? "-" + r[2] : ""}</td></tr>` : `<tr><td class="l"><a href="#seasons-${HIST().indexOf(x) + 1}">${x.year}</a></td><td>${r[0]}-${r[1]}${r[2] ? "-" + r[2] : ""}</td><td>${r[3]}</td><td>${r[4]}</td><td>${r[5] ? nth(r[5]) : "–"}</td><td class="l">${fin(r, x.champion === c.id)}</td><td class="l hide-sm">${e(r[8])}</td></tr>`); });
+  return `<div class="stack" style="gap:8px;padding-top:0"><h2>Season by season</h2><div class="tablewrap"><table><thead><tr><th class="l">Season</th><th>Record</th><th>PF</th><th>PA</th><th>Division</th><th class="l">Playoffs</th><th class="l hide-sm">Head coach</th></tr></thead><tbody>${rows.join("")}</tbody></table></div>${LIVE ? "" : `<p class="note">One season so far. Each season the league plays adds a row, and the page keeps every one.</p>`}</div>`;
+}
+/* the season line of a player, from her box scores */
+const LINE_CAT = { QB: "pass", RB: "rush", WR: "recv", TE: "recv", DL: "def", LB: "def", CB: "def", S: "def", K: "kick" };
+function lineText(cat, r) {
+  if (!r) return "";
+  const n = x => Math.round(x);
+  return cat === "pass" ? `${n(r.cmp)}/${n(r.att)}, ${n(r.yds)} yds, ${n(r.td)} TD, ${n(r.int)} INT` : cat === "rush" ? `${n(r.car)} car, ${n(r.yds)} yds, ${n(r.td)} TD` : cat === "recv" ? `${n(r.rec)} rec, ${n(r.yds)} yds, ${n(r.td)} TD` : cat === "def" ? `${n(r.tkl)} tkl, ${n(r.sacks)} sk, ${n(r.ints)} int` : `${n(r.fgm)}/${n(r.fga)} FG`;
+}
 function club(abbr) {
   const c = byAbbr[abbr]; if (!c) return notFound();
   const games = D.games.filter(g => g.home === c.id || g.away === c.id).sort((a, b) => a.week - b.week);
@@ -409,22 +473,79 @@ function club(abbr) {
   if (c.exiled) h += `<dt>Status</dt><dd>In exile; played the Ambassador Season ${c.ambassador.w}-${c.ambassador.l}</dd>`;
   else h += `<dt>Record</dt><dd><b>${rec(r)}</b> · ${r.pf} points for, ${r.pa} against</dd><dt>Division finish</dt><dd>${r.div_rank} of 5${c.id === D.champion ? " · <b>Diamond Coronation champions</b>" : r.playoffs ? ` · playoff seed ${seedOf[c.id]}${r.exit ? ", out in the " + e(r.exit.replace("_", " ")) : ""}` : ""}</dd>`;
   h += `<dt>Founding seed</dt><dd>${c.exiled0 ? "in exile" : c.seed}</dd><dt>Completed on Founding Day</dt><dd>${c.founding_order} of 48</dd><dt>Colours</dt><dd>${c.colors.map((x, i) => `<span class="sw" style="background:${x}"></span>${e(c.color_names[i])}`).join(" &nbsp; ")}</dd></dl></div>
-    <div class="card"><h3>Front office</h3><div class="people" style="margin-top:12px">${person("CEO", P.ceo)}${person("General manager", P.gm)}${person("Head coach", P.head_coach)}${person("Offensive coordinator", P.offensive_coordinator)}${person("Defensive coordinator", P.defensive_coordinator)}</div></div></div>
-  <div class="card"><h3>Founding Day</h3><p style="margin-top:8px">${e(c.story)}</p></div>`;
+    <div class="card"><h3>Front office</h3><div class="people" style="margin-top:12px">${person("CEO", P.ceo)}${person("General manager", P.gm)}</div></div></div>
+  <div class="stack" style="gap:8px;padding-top:0"><h2>Coaching staff</h2><div class="grid">${coachCard(c, "head_coach", "Head coach", P.head_coach)}${coachCard(c, "offensive_coordinator", "Offensive coordinator", P.offensive_coordinator)}${coachCard(c, "defensive_coordinator", "Defensive coordinator", P.defensive_coordinator)}</div></div>
+  ${seasonTable(c)}
+  <div class="card"><h3>Founding Day</h3><p style="margin-top:8px">${e(c.story)}</p></div>
+  <div class="stack" style="gap:8px;padding-top:0"><h2>Team statistics</h2><p class="note" id="cprog"></p><div class="grid" id="cstat"></div></div>`;
   if (!c.exiled) { h += `<div class="stack" style="gap:8px;padding-top:0"><h2>Schedule and results</h2><div class="tablewrap"><table><thead><tr><th>Wk</th><th class="l">Date</th><th class="l">Opponent</th><th>Result</th><th class="hide-sm l">Slot</th></tr></thead><tbody>${games.map(g => { const home = g.home === c.id, o = byId[home ? g.away : g.home], mine = home ? g.hp : g.ap, th = home ? g.ap : g.hp, res = mine == null ? "" : mine > th ? "W" : mine < th ? "L" : "T";
       return `<tr><td>${g.week}</td><td class="l">${fmtDate(g.date)}</td><td class="l">${home ? "vs" : "at"} ${clubLink(o)}</td><td>${mine == null ? `<span style="color:var(--muted)">${g.live ? "live" : fmtTime(g.time)}</span>` : `<a href="#game-${g.id}" title="Box score and replay"><b>${res}</b> ${mine}-${th}</a>`}</td><td class="hide-sm l">${slotOf(g)[0]}</td></tr>`; }).join("")}</tbody></table></div></div>`; }
-  h += `<div class="stack" style="gap:8px;padding-top:0"><h2>Founding roster</h2><p class="note">The 53 players on Founding Day, all rookies. Rating is the engine's overall.</p>`;
-  POSITIONS.forEach(([grp, ps]) => { const rows = c.roster.map((p, i) => [p, i]).filter(([p]) => ps.includes(p.pos));
-    h += `<div class="tablewrap"><table><thead><tr><th>${grp}</th><th>Pos</th><th>Age</th><th>Ovr</th><th class="hide-sm l">College</th></tr></thead><tbody>${rows.map(([p, i]) => `<tr><td><a href="#player-${c.abbr}-${i}"><b>${e(p.name)}</b></a></td><td>${p.pos}</td><td>${p.age}</td><td>${p.ovr}</td><td class="hide-sm l">${e(p.college)}</td></tr>`).join("")}</tbody></table></div>`; });
+  h += `<div class="stack" style="gap:8px;padding-top:0"><h2>Players</h2><p class="note">${c.roster.length} players on the roster${HIST().length ? ` as the ${D.season} season began` : ""}; the season column adds up the games played so far. <a href="#search" data-srch-club="${c.abbr}">Find players of this club with filters</a>.</p>`;
+  POSITIONS.forEach(([grp, ps]) => { const rows = c.roster.filter(p => ps.includes(p.pos));
+    h += `<div class="tablewrap"><table><thead><tr><th>${grp}</th><th>Pos</th><th>Age</th><th>Ovr</th><th class="l">Season</th><th class="hide-sm l">College</th></tr></thead><tbody>${rows.map(p => `<tr><td><a href="${playerHref(p)}"><b>${e(p.name)}</b></a></td><td>${p.pos}</td><td>${p.age}</td><td>${p.ovr}</td><td class="l" data-pl="${p.pid != null ? p.pid : ""}" data-pos="${p.pos}" style="color:var(--muted)"></td><td class="hide-sm l">${e(p.college)}</td></tr>`).join("")}</tbody></table></div>`; });
+  setTimeout(() => clubExtras(c), 0);
   return h + `</div></div>`;
 }
+/* the club's numbers, from its box scores (loaded as the stats page loads them, and kept): its own per-game figures, with the league rank once every game of the season is in */
+async function clubExtras(c) {
+  if (c.exiled) { const el = document.getElementById("cstat"); if (el) el.parentElement.style.display = "none"; return; }
+  const run = ++STATS.run, $ = x => document.getElementById(x), reg = statGames("reg"), mine = reg.filter(g => g.home === c.id || g.away === c.id);
+  const draw = () => {
+    if (run !== STATS.run || !$("cstat")) return;
+    const rs = mine.map(g => STATS.cache[g.id]).filter(Boolean);
+    $("cprog").textContent = !mine.length ? "No game has been played yet." : rs.length < mine.length ? `${rs.length} of ${mine.length} games counted…` : `${rs.length} games counted.`;
+    if (!rs.length) return;
+    const all = reg.map(g => STATS.cache[g.id]).filter(Boolean), full = all.length === reg.length;
+    const tbl = (view, title) => {
+      const rows = teamRows(full ? all : rs, view), me = rows.find(x => x.id === c.id); if (!me) return "";
+      const cols = TEAM_COLS[view].filter(k => k[0] !== "gp" && (STATS.v2 || (k[0] !== "pen" && k[0] !== "peny")));
+      const rank = k => { const low = k[5]; return full ? `<td style="color:var(--muted)">${nth(1 + rows.filter(x => low ? x[k[0]] < me[k[0]] : x[k[0]] > me[k[0]]).length)}</td>` : "<td></td>"; };
+      const fmt = (k, v) => k[0] === "top" ? Math.floor(v / 60) + ":" + String(Math.round(v % 60)).padStart(2, "0") : k[2] === 0 ? String(Math.round(v * 10) / 10) : v.toFixed(k[2]);
+      return `<div class="tablewrap"><table><thead><tr><th class="l">${title}</th><th>Per game</th><th title="${full ? "Rank among the clubs that played" : "Open Team statistics to compare with the league"}">${full ? "Rank" : ""}</th></tr></thead><tbody>${cols.map(k => `<tr><td class="l" title="${e(k[3])}">${e(k[3].replace(/ \(.*\)/, ""))}</td><td>${fmt(k, me[k[0]])}</td>${rank(k)}</tr>`).join("")}</tbody></table></div>`;
+    };
+    $("cstat").innerHTML = tbl("off", "Offense") + tbl("def", "Defense");
+    // each player's season line, found by her id in the box scores
+    const cells = [...document.querySelectorAll("[data-pl]")]; if (!cells.length) return;
+    const byCat = {}; for (const cat of ["pass", "rush", "recv", "def", "kick"]) { byCat[cat] = {}; playerRows(rs, cat, id => id === c.id).forEach(x => { byCat[cat][x.id] = x; }); }
+    cells.forEach(td => { const cat = LINE_CAT[td.dataset.pos]; td.textContent = cat && td.dataset.pl ? lineText(cat, byCat[cat]["p" + td.dataset.pl]) : ""; });
+  };
+  draw();
+  try { await statsLoad(mine, run, draw); } catch (err) { if (run === STATS.run && $("cprog")) $("cprog").textContent = "Some games could not be loaded: " + err; }
+  draw();
+  if (!LIVE && run === STATS.run) { try { await statsLoad(reg, run, () => {}); } catch (err) {} draw(); }       // the founding season is all in the page: rank the club against the league too (the live page fetches only this club's games; open Team statistics there to compare)
+}
 
-function player(abbr, idx) {
-  const c = byAbbr[abbr], p = c && c.roster[idx]; if (!p) return notFound();
-  const prev = idx > 0 ? `<a class="chip" href="#player-${abbr}-${idx - 1}">← ${e(c.roster[idx - 1].name)}</a>` : "", next = idx < c.roster.length - 1 ? `<a class="chip" href="#player-${abbr}-${idx + 1}">${e(c.roster[idx + 1].name)} →</a>` : "";
- return `<div class="stack">${crumbs([["#dfl", "DFL"], ["#conference-" + confOf(c), conf(confOf(c)) + " Conference"], ["#division-" + c.did, c.division], ["#club-" + abbr, c.name], [null, p.name]])}<div class="row" style="align-items:flex-start">${badge(c, "lg")}<div style="min-width:0"><div class="eyebrow">${e(POSNAME[p.pos] || p.pos)} · <a href="#club-${abbr}" style="text-decoration:underline">${e(c.name)}</a></div><h1>${e(p.name)} <span class="tag" style="font-size:14px;vertical-align:middle">${p.pos}</span></h1></div></div>
+/* a player's page: who she is, her contract and story, and her season so far */
+function player(a, b) {
+  let p, c;
+  if (b != null) { c = byAbbr[a]; p = c && c.roster[+b]; } else { p = playerById[a]; c = p && p.club; }
+  if (!p) return notFound();
+  const abbr = c.abbr, idx = p.idx;
+  const prev = idx > 0 ? `<a class="chip" href="${playerHref(c.roster[idx - 1])}">← ${e(c.roster[idx - 1].name)}</a>` : "", next = idx < c.roster.length - 1 ? `<a class="chip" href="${playerHref(c.roster[idx + 1])}">${e(c.roster[idx + 1].name)} →</a>` : "";
+  setTimeout(() => playerSeason(p), 0);
+  return `<div class="stack">${crumbs([["#dfl", "DFL"], ["#conference-" + confOf(c), conf(confOf(c)) + " Conference"], ["#division-" + c.did, c.division], ["#club-" + abbr, c.name], [null, p.name]])}<div class="row" style="align-items:flex-start">${badge(c, "lg")}<div style="min-width:0"><div class="eyebrow">${e(POSNAME[p.pos] || p.pos)} · <a href="#club-${abbr}" style="text-decoration:underline">${e(c.name)}</a></div><h1>${e(p.name)} <span class="tag" style="font-size:14px;vertical-align:middle">${p.pos}</span></h1></div></div>
   <div class="grid"><div class="card"><div class="row"><div><div class="eyebrow">Overall</div><div class="ovr">${p.ovr}</div></div><dl class="kv" style="flex:1 1 220px"><dt>Position</dt><dd><b>${e(POSNAME[p.pos] || p.pos)}</b> (${p.pos})</dd><dt>Age</dt><dd>${p.age}</dd><dt>College</dt><dd>${e(p.college)}</dd><dt>Hometown</dt><dd>${e(p.hometown)}</dd><dt>Temperament</dt><dd>${e(p.trait)}</dd><dt>Contract</dt><dd>${money(p.salary)} a year, ${p.years} year${p.years === 1 ? "" : "s"} left</dd></dl></div></div>
-  <div class="card"><h3>Backstory</h3><p class="bio" style="margin-top:8px">${e(p.bio)}</p></div></div><div class="chips">${prev}${next}</div></div>`;
+  <div class="card"><h3>Backstory</h3><p class="bio" style="margin-top:8px">${p.bio ? e(p.bio) : "No backstory on file yet."}</p></div></div>
+  <div class="stack" style="gap:8px;padding-top:0"><h2>${D.season} season</h2><p class="note" id="pprog"></p><div id="pstat"></div></div><div class="chips">${prev}${next}</div></div>`;
+}
+async function playerSeason(p) {
+  const run = ++STATS.run, $ = x => document.getElementById(x), c = p.club, mine = statGames("reg").filter(g => g.home === c.id || g.away === c.id);
+  const draw = () => {
+    if (run !== STATS.run || !$("pstat")) return;
+    const rs = mine.map(g => STATS.cache[g.id]).filter(Boolean);
+    $("pprog").textContent = !mine.length ? "No game has been played yet." : rs.length < mine.length ? `${rs.length} of ${mine.length} games counted…` : `${rs.length} game${rs.length === 1 ? "" : "s"} counted.`;
+    if (!rs.length || p.pid == null) { if (p.pid == null) $("pprog").textContent = "This page was built without player ids, so her games cannot be found."; return; }
+    let h = "";
+    for (const [cat, name] of PLAYER_CATS) {
+      const row = playerRows(rs, cat, () => true).find(x => x.id === "p" + p.pid); if (!row) continue;
+      const cols = PLAYER_COLS[cat], fmt = (k, v) => k[2] === 0 ? String(Math.round(v * 10) / 10) : v.toFixed(k[2]);
+      h += `<div class="tablewrap"><table><thead><tr><th class="l">${name}</th>${cols.map(k => `<th title="${e(k[3])}">${k[1]}</th>`).join("")}</tr></thead><tbody><tr><td class="l">${D.season}</td>${cols.map(k => `<td>${fmt(k, row[k[0]] || 0)}</td>`).join("")}</tr></tbody></table></div>`;
+    }
+    $("pstat").innerHTML = h || `<p class="note">No statistics yet: ${e(p.name)} has not been credited with a pass, carry, catch, tackle or kick in the games so far.</p>`;
+  };
+  draw();
+  try { await statsLoad(mine, run, draw); } catch (err) { if (run === STATS.run && $("pprog")) $("pprog").textContent = "Some games could not be loaded: " + err; }
+  draw();
 }
 
 let showAll = false;
@@ -846,6 +967,7 @@ function phaseText() {
 const wp = r => (r.w + r.t / 2) / Math.max(1, r.w + r.l + r.t);
 function derive() {
   const R = FEED.results, S = FEED.season, fin = R.final || {}, nowx = R.now || {};
+  applyTeams(S);
   D.season = S.season; D.calendar = S.calendar;
   clubs.forEach(c => { c.exiled = S.exiled.includes(c.id); c.record = { w: 0, l: 0, t: 0, pf: 0, pa: 0 }; c.ambassador = { w: 0, l: 0, t: 0, pf: 0, pa: 0 }; });
   const mk = (a, i) => { const [id, week, home, away, start, kind, when] = a, f = fin[id];
@@ -928,7 +1050,7 @@ function seasonsPage(k) {
   }
   return h + `</tbody></table></div>${hist.length ? "" : `<p class="note">No season has finished yet; the first one is listed here once its Diamond Coronation has been played.</p>`}</div>`;
 }
-document.addEventListener("click", ev => { if (ev.target.closest("[data-live]")) { ev.preventDefault(); endView(); if (location.hash === "#live") render(true); else location.hash = "live"; } });
+document.addEventListener("click", ev => { const sc = ev.target.closest("[data-srch-club]"); if (sc) Object.assign(SRCH, { q: "", type: "player", pos: "", club: sc.dataset.srchClub, minOvr: "", minAge: "", maxAge: "", sort: "ovr", more: 1 }); if (ev.target.closest("[data-live]")) { ev.preventDefault(); endView(); if (location.hash === "#live") render(true); else location.hash = "live"; } });
 /* The league's Pause / Resume button. It exists only when the server has the pause switch (api/state answers) and the league is a blocks league. */
 const CTL = { state: null, busy: false, err: null, asked: false };
 async function ctlLoad() {
@@ -1135,7 +1257,7 @@ function render(scroll = true) {
   if (LIVE && !FEED.results.year && page !== "live" && ["standings", "schedule", "playoffs", "club", "dfl", "conference", "division"].includes(page)) { location.hash = "live"; return; }
   const html = page === "home" ? homePage() : page === "dfl" || page === "clubs" ? dflPage() : page === "conference" ? conferencePage(+parts[1]) : page === "division" ? divisionPage(+parts[1]) : page === "search" || page === "players" ? (page === "players" && (SRCH.type = "player"), searchPage()) : page === "info" ? infoPage()
     : page === "live" ? livePage() : page === "standings" ? standings() : page === "schedule" ? schedule(+parts[1] || (LIVE ? curWeek() : 1)) : page === "guide" ? guide() : page === "playoffs" ? playoffs() : page === "club" ? club(parts[1])
-    : page === "game" ? game(parts[1]) : page === "player" ? player(parts[1], +parts[2]) : page === "stats" ? statsPage(parts[1]) : page === "seasons" ? seasonsPage(parts[1]) : page === "founding" ? founding() : page === "calendar" ? calendarPage() : notFound();
+    : page === "game" ? game(parts[1]) : page === "player" ? player(parts[1], parts[2]) : page === "stats" ? statsPage(parts[1]) : page === "seasons" ? seasonsPage(parts[1]) : page === "founding" ? founding() : page === "calendar" ? calendarPage() : notFound();
   if (REPLAY) { REPLAY.stop(); if (REPLAY.destroy) REPLAY.destroy(); REPLAY = null; }
   const banner = LIVE && FEED.view && page !== "seasons" ? `<div class="stack" style="padding-bottom:0"><p class="note" style="margin:0"><b>You are looking back at season ${e(D.season)}, a finished season.</b> <a href="#seasons">All seasons</a> · <a href="#live" data-live="1">Back to live</a></p></div>` : "";
   document.getElementById("app").innerHTML = banner + html;
@@ -1150,7 +1272,7 @@ document.getElementById("foot").innerHTML = `Diamond Football League · season $
 const q = document.getElementById("q"), res = document.getElementById("res");
 q.addEventListener("input", () => { const s = q.value.trim().toLowerCase(); if (s.length < 2) { res.hidden = true; return; }
   const cs = clubs.filter(c => c.name.toLowerCase().includes(s) || c.abbr.toLowerCase() === s).slice(0, 4), ps = players.filter(p => p.name.toLowerCase().includes(s)).slice(0, 8);
-  res.innerHTML = cs.map(c => `<a href="#club-${c.abbr}">${badge(c, "sm")}<span>${e(c.name)}</span><small>club</small></a>`).join("") + ps.map(p => `<a href="#player-${p.club.abbr}-${p.idx}">${badge(p.club, "sm")}<span>${e(p.name)}</span><small>${p.pos} · ${e(p.club.abbr)}</small></a>`).join("") + `<a href="#search" data-all="1"><span>All results for “${e(q.value.trim())}”</span><small>search</small></a>`; res.hidden = false; });
+  res.innerHTML = cs.map(c => `<a href="#club-${c.abbr}">${badge(c, "sm")}<span>${e(c.name)}</span><small>club</small></a>`).join("") + ps.map(p => `<a href="${playerHref(p)}">${badge(p.club, "sm")}<span>${e(p.name)}</span><small>${p.pos} · ${e(p.club.abbr)}</small></a>`).join("") + `<a href="#search" data-all="1"><span>All results for “${e(q.value.trim())}”</span><small>search</small></a>`; res.hidden = false; });
 res.addEventListener("click", ev => { if (ev.target.closest("[data-all]")) { SRCH.q = q.value.trim(); SRCH.type = "all"; SRCH.more = 1; if (location.hash === "#search") render(false); } res.hidden = true; q.value = ""; });
 document.addEventListener("click", ev => { if (!ev.target.closest(".search")) res.hidden = true; });
 q.addEventListener("keydown", ev => { if (ev.key === "Enter") { const a = res.querySelector("a"); if (a) { location.hash = a.getAttribute("href"); res.hidden = true; q.value = ""; } } if (ev.key === "Escape") res.hidden = true; });
