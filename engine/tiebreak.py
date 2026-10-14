@@ -2,17 +2,20 @@
 
 The procedures follow the NFL's published ones (checked against nfl.com on 2026-10-04):
 
-  division ties         head-to-head, division record, common games, conference record, strength of victory,
-                        strength of schedule, combined ranking in points among conference teams, then among all
+  division ties         head-to-head, division record, common games, strength of schedule, strength of victory,
+                        combined ranking in points among conference teams, then among all
                         teams, net points in common games, net points in all games, net touchdowns, coin toss
   wild card / seeding   head-to-head (sweep when three or more), conference record, common games (at least four),
-                        strength of victory, strength of schedule, combined ranking (conference, all), net points
+                        strength of schedule, strength of victory, combined ranking (conference, all), net points
                         in conference games, net points in all games, net touchdowns, coin toss
   draft order           strength of schedule (the lower one picks first), then the division or conference
                         procedure, then head-to-head, common games (at least four), strength of victory, combined
                         ranking, net points, net touchdowns, coin toss. The worse team picks first at each step.
 
 Rules that go beyond what the NFL has to deal with are ADAPTED (the rulebook label):
+  * the Commissioner (2026-10-14) changed the NFL's order in two places: strength of schedule now comes before strength of
+    victory (division and conference lists), because clubs in one division can have met very different opposition (a former
+    1st seed and a former 5th seed); and the division list no longer has a conference record step;
   * three or more clubs: a step keeps the clubs with the best value; when two remain the two-club list restarts
     from step 1 (the NFL's restart rule); the process is repeated to rank everyone, not just pick a winner;
   * wild-card ties among clubs of one division are first settled by the division procedure;
@@ -198,10 +201,10 @@ def _chain(kind: str, n: int):
     nall = ("net_points_all", lambda L, t, g: L.m_net_all(t, g))
     ntd = ("net_touchdowns", lambda L, t, g: L.m_net_td(t, g))
     if kind == "division":
-        return [h2h, div, common0, conf, sov, sos, rkc, rka, ncom, nall, ntd]
+        return [h2h, div, common0, sos, sov, rkc, rka, ncom, nall, ntd]
     if kind == "conference":
         first = [h2h] if n == 2 else [("head_to_head_sweep", None)]
-        return first + [conf, common4, sov, sos, rkc, rka, ncon, nall, ntd]
+        return first + [conf, common4, sos, sov, rkc, rka, ncon, nall, ntd]
     if kind == "draft_inter":
         return [h2h, common4, sov, rka, nall, ntd]
     if kind == "ambassador":

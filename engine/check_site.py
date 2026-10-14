@@ -85,6 +85,49 @@ if sync_playwright is not None:
     check("rules 2: the page's penalty names and automatic-first-down list are the engine's", r2["names"] == list(game_engine.PENALTY_NAMES) and r2["afd"] == [i for i, p in enumerate(game_engine.PENALTIES) if p[3]], str(r2["names"][:3]))
     check("rules 2: every play of forty games reads as a sentence, and the game page opens without script errors", r2["text"] and not errs2 and "penalt" in txt2.lower(), str(errs2[:2]))
 if sync_playwright is not None:
+    # ---- the standings columns: Div, Conf, SOS and SOV are the engine's own tiebreak measures; GB and the magic number agree with the standings at every point of a season ----
+    import types
+    import tiebreak
+    d7 = site_export.export(7, 1)
+    gl = [types.SimpleNamespace(home=g["home"], away=g["away"], home_pts=g["hp"], away_pts=g["ap"]) for g in d7["games"]]
+    did = {c["id"]: i // 6 for i, c in enumerate(d7["clubs"])}
+    lg = types.SimpleNamespace(by_id={i: types.SimpleNamespace(conf=did[i] // 4, division_id=did[i]) for i in did})
+    played = sorted({x for g in gl for x in (g.home, g.away)})
+    L = tiebreak.Ledger(lg, gl, played)
+    fmt = lambda f: ("%.3f" % float(f)).lstrip("0") if float(f) < 1 else "1.000"
+    rec = lambda gs: "%d-%d%s" % (sum(1 for x in gs if x[1] > x[2]), sum(1 for x in gs if x[1] < x[2]), ("-%d" % sum(1 for x in gs if x[1] == x[2])) if any(x[1] == x[2] for x in gs) else "")
+    want = {}
+    for i in played:
+        dv = [x for x in L.g[i] if lg.by_id[x[0]].division_id == lg.by_id[i].division_id]; cf = [x for x in L.g[i] if lg.by_id[x[0]].conf == lg.by_id[i].conf]
+        want[i] = [rec(dv), rec(cf), fmt(L.m_sos(i, [])), fmt(L.m_sov(i, []))]
+    outS = os.path.join(tempfile.mkdtemp(), "s.html"); build_site.build(outS, 7, rules=1)
+    JSS = """(cuts) => { const X = standExtras(), res = { cols: {}, magic: [] };
+      clubs.forEach(c => { const x = X[c.id]; res.cols[c.id] = [x.div, x.conf, x.sos, x.sov]; });
+      const real = D.games.map(g => [g.hp, g.ap]);
+      for (const cut of cuts) { D.games.forEach((g, i) => { if (g.week > cut) { g.hp = null; g.ap = null; } else { g.hp = real[i][0]; g.ap = real[i][1]; } });
+        const Y = standExtras(), html = standings(), div = document.createElement("div"); div.innerHTML = html;
+        const rows = [...div.querySelectorAll("table")].map(t => [...t.tBodies[0].rows].filter(r => !r.classList.contains("exile")));
+        rows.forEach((rs, k) => { const ids = rs.map(r => clubs.find(c => r.cells[0].innerText.includes(c.name)).id), lead = ids[0], oth = ids.slice(1);
+          const cell = rs[0].cells[5].innerText.trim(), bound = Math.max(...oth.map(i => Y[i].credit + Y[i].left)), clinched = Y[lead].credit > bound, done = ids.every(i => Y[i].left === 0);
+          res.magic.push({ cut, cell, clinched, done, gb: rs.slice(1).map((r, j) => [r.cells[5].innerText.trim(), ((Y[lead].credit - Y[ids[j + 1]].credit) + (Y[ids[j + 1]].lossCredit - Y[lead].lossCredit)) / 2]) }); }); }
+      return res; }"""
+    with sync_playwright() as pw:
+        br = pw.chromium.launch(); pg = br.new_page(); errsS = []
+        pg.on("pageerror", lambda e: errsS.append(str(e)))
+        pg.goto("file://" + outS)
+        rs = pg.evaluate(JSS, [4, 8, 12, 15, 17, 19])
+        br.close()
+    colbad = [i for i in played if rs["cols"][str(i)] != want[i]]
+    check("standings: Div, Conf, SOS and SOV for all 40 active clubs equal the engine's tiebreak measures", not colbad and not errsS, str([(i, rs["cols"][str(i)], want[i]) for i in colbad[:2]] + errsS[:1]))
+    bad = []
+    for m in rs["magic"]:
+        c = m["cell"]
+        if m["done"]: ok = c == "Won"
+        elif m["clinched"]: ok = c == "Clinched"
+        else: ok = c.startswith("M ") and int(c[2:]) >= 1
+        ok = ok and all(float(g[0]) == g[1] for g in m["gb"])
+        if not ok: bad.append(m)
+    check("standings: the leader's magic number reads Won, Clinched or M n exactly when the games left say so, at six points of the season, and GB is the half-game gap", not bad and sum(1 for m in rs["magic"] if m["cell"].startswith("M ")) > 10, str(bad[:2]))
     # ---- rules version 3: spikes and kneels (clock management) are in the log, and the page's replay still gives the engine's totals back ----
     out3 = os.path.join(tempfile.mkdtemp(), "g3.html"); build_site.build(out3, 7, rules=3)
     JS4 = JS2.replace("if (pl[6] === \"PN\") pens++;", "if (pl[6] === \"PN\") pens++; if (pl[6] === \"SP\") sps++; if (pl[6] === \"KN\") kns++;").replace("let pens = 0, tos = 0;", "let pens = 0, tos = 0, sps = 0, kns = 0;").replace("return { bad: bad.length, pens, tos,", "return { bad: bad.length, pens, tos, sps, kns,")

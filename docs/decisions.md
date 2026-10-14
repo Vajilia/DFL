@@ -441,6 +441,17 @@ Players are told apart by the engine's player id, now the fourth entry of a box'
 punt returns, long plays, extra points. "G" is the number of games a player took part in a counted play.
 Live, the tab downloads each finished game's file once (six at a time) and keeps the replay for the rest of the league year; about 360 small files, then nothing more except the games that finish later.
 
+## Tiebreak order change (2026-10-14)
+
+The Commissioner changed two things in the NFL-style tiebreak lists (`engine/tiebreak.py`):
+
+- **Strength of schedule now comes before strength of victory** in the division list and in the conference list. Reason: clubs tied in a later season's ranking can have faced very different opposition (a former 1st seed against a former 5th seed in the same division, say), and what a club was up against says more than whom it happened to beat.
+- **The division list no longer has a conference record step.** The conference list keeps it.
+
+Division list now: head-to-head, division record, common games, strength of schedule, strength of victory, combined ranking (conference, then all), net points in common games, net points in all games, net touchdowns, coin toss. Conference list now: head-to-head (sweep for three or more), conference record, common games (at least four), strength of schedule, strength of victory, combined ranking (conference, all), net points in conference games, net points in all games, net touchdowns, coin toss. The draft-order and Ambassador lists are unchanged.
+
+Effect: in a 25-season check, strength of schedule decided 110 division ties and strength of victory 2, so the order barely changes results; it only matters when everything above is level. A tie already decided in the running league is not re-ranked in anything stored, but any standing computed afresh after the update uses the new order.
+
 ## Past seasons on the live page
 
 The Commissioner asked that finished games stay viewable (box score, not replay). They always were (every game's file is kept, per year, and the Schedule and club pages link them), but the Live page listed only the latest 8, so games seemed to vanish. The Live page now has a "Show 20 more" button, and a new **Seasons** tab (live leagues) lists the season in progress and every finished season with its champion. Opening a past season shows it with the same pages as the live season (Standings, Schedule, Playoffs, box scores, Statistics), under a banner with "Back to live".
@@ -467,6 +478,27 @@ The game page can act each play out on a small sideline-view field: figures for 
 - **Off switch.** An "Animation" button on the game page, remembered in the browser. A visitor who asks for reduced motion starts with it off. Off, the page shows the old strip (kept updated underneath, so switching is instant).
 - **Checks** (`check_stage.py`): every play of every game (62,680 in the founding league) builds a scene that stays on the field and ends where the log says (good field goals go through the posts, misses do not; touchdowns are announced only when the log scored one); the page runs a replay at 4x and 60x with no script error; the canvas is drawn; the switch and the reduced-motion default work; a live game animates a play that arrives while open.
 - **Not done:** kickoffs and extra points are not acted out (the log does not record them), a play's tackle is shown as one tackler plus a pursuit. Players are drawn alike apart from kit colours and skin tone, since the log has no looks.
+
+## Standings columns: tiebreak measures, games behind, magic number
+
+The Commissioner asked for the first tiebreak statistics beside the record, and a games-behind column that shows the magic number for the leader.
+
+- **Columns:** Club, W, L, T, Pct, GB / Magic, Div, Conf, SOS, SOV, Diff. PF and PA were dropped from the table to make room (Diff stays; the Statistics tab has points for and against). Conf, SOS and SOV are hidden on phones. The tables are one division wide now instead of two side by side.
+- **Not columns:** head-to-head and common games depend on which clubs are tied, so there is no single number per club to show.
+- **GB:** half the sum of the leader's extra wins and the club's extra losses (a tie counts half), against the division leader as the engine ranks the division.
+- **Magic number (leader):** `18 + ½ − the leader's wins − the closest rival's losses`, rounded up, with ties counting half. Any mix of that many leader wins and rival losses clinches the division outright; a tie on record could still be settled by the tiebreakers, so the number is the clear-cut one. Shows `Clinched` once it reaches zero, and `Won` when every game in the division is played (the engine's own order then stands).
+- **Arithmetic on the page, checked against the engine:** Div, Conf, SOS and SOV are computed from the games on the page with the engine's definitions (strength of schedule and of victory count the opponents' whole records, each opponent once per game) and `check_site.py` compares them with `tiebreak.Ledger` for all 40 active clubs; it also checks the magic number and GB at six points through a season.
+- **Not changed:** the order of the clubs. It is still the engine's order (the page's win percentage then points difference during a live season). Making the live order follow the full tiebreak procedure is a separate change.
+
+## Playoff seeds all season
+
+The standings page already showed seed badges once a season was over. The Commissioner asked for them all season, updating with the standings.
+
+- **What is shown:** while the regular season is played, each club that would qualify wears a numbered badge (1 to 7 a conference): the seed it would have if the regular season ended now. When the regular season ends the real seeds take over; the badge's hover text says which it is. Nothing is shown before the first regular season game is final.
+- **Who works it out:** the engine, not the page. Each time the feed is written (`results.json`), `Season.table_now` ranks every division and seeds both conferences from the games that are final, using the league's own tiebreak procedures (`tiebreak.py`, `seed_conference`), and writes `now_ranks` and `now_seeds`. The page only reads them. The same numbers set the order of the clubs inside each division, so the order during the season now follows the full tiebreak procedure and not win percentage then points difference.
+- **Coin tosses:** a tie that only a coin toss can settle is tossed with a fixed seed per season and number of finals, so the display does not flicker between refreshes. The real season's coin toss is separate, so such a tie can come out differently at the end; no other step differs, and with every regular game final the table equals the real order and seeds (tested over six seasons).
+- **Not changed:** the Playoffs tab still shows the real seeds only, once decided; no results are revealed early (only finished games feed the table).
+- **Checks** (`check_seeds_live.py`): feed fields absent before the first final and then present, with fourteen distinct qualifiers and four division winners at the top; equal to the real order and seeds when the season is over; the page's badges and order equal the feed's, move when games end with the page open, and turn into the real seeds at the end of the regular season.
 
 ## Clock management (rules version 3)
 
