@@ -3,7 +3,7 @@
 **Orientation snapshot:** 2026-10-15. This is a navigation document, **not** an automatically updated live-status feed.
 
 ## Branches and production
-- The deployed branch at this snapshot is `step6-rebuild` (head `fd6555f`); `main` is older and must not be assumed canonical.
+- `main` and `step6-rebuild` both point at `fd6555f` since 2026-10-15 (`main` was fast-forwarded; it had stopped at `02490ab`). `step6-rebuild` is still the branch the deploy scripts and the server use, so it is kept as a mirror of `main` until the server is switched. See `docs/WORK_LOG.md`.
 - `deploy/update.sh` defaults to `step6-rebuild` (overridable with `DFL_BRANCH`), fetches and hard-resets the server checkout, rebuilds the site, and can restart `dfl-live`. **Never run casually.**
 - The production site and live feed are separate from this documentation branch. No deployment is authorized by this document.
 - The existing rulebook reference is `docs/decisions.md` together with `engine/rulebook.py` and `engine/rules.py`. Resolve conflicts with the project owner.
@@ -27,4 +27,4 @@ These are **source-level observations**, not claims that all requirements are im
 5. Specify and test the proposed Truth → Beta → Alpha → Truth release pipeline before deployment automation.
 
 ## Next safe milestone
-Documentation-only repository orientation PR; then a read-only source-to-rulebook gap analysis and a schedule regression test proposal. No code move or production changes.
+Documentation-only repository orientation PR (merged with the owner's approval); then the two failing fast checks recorded in `docs/WORK_LOG.md`, a read-only source-to-rulebook gap analysis and a schedule regression test proposal. No code move or production changes.

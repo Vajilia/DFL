@@ -5,7 +5,7 @@
 ## First five minutes
 1. Read `PROJECT_STATUS.md`, `docs/REPOSITORY_MAP.md`, and `docs/GLOSSARY.md`.
 2. Read `docs/decisions.md`, `engine/rulebook.py`, and `engine/rules.py` for the existing rulebook and its provenance. `docs/DFL_Reference_Corrected.txt` explicitly warns that it is **not** authoritative.
-3. Check the current GitHub branch, its head commit, and the deployment configuration. As inspected 2026-10-15, `step6-rebuild` is the live deployment branch; `main` is older. **Verify again** before work.
+3. Check the current GitHub branch, its head commit, and the deployment configuration. As of 2026-10-15, `main` and `step6-rebuild` point at the same commit; the deploy scripts still default to `step6-rebuild`, which is kept as a mirror of `main`. **Verify again** before work.
 4. Read the relevant source and its `engine/check_*.py` tests. Do not assume a feature is absent because it was absent from an earlier roadmap.
 5. Report observations as **verified**, **untested**, or **proposed**. Ask for a decision when project requirements conflict.
 
