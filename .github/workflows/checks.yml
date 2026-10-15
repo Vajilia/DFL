@@ -41,7 +41,15 @@ jobs:
           node-version: "22"
       - run: pip install -r requirements.txt
       - name: Run the fast tier
-        run: python engine/run_checks.py -j 2
+        run: |
+          set -o pipefail
+          python engine/run_checks.py -j 2 | tee checks.log
+      - name: Report which checks failed
+        if: always()
+        run: |
+          { echo '### Fast tier'; echo '```'; grep -E '^(ok|FAIL)|passed' checks.log; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+          grep -E '^FAIL' checks.log | while read -r _ name _; do echo "::error title=Check failed::check_$name"; done
+          true
 
   plan-slow:
     name: Plan slow tier
@@ -80,4 +88,12 @@ jobs:
           node-version: "22"
       - run: pip install -r requirements.txt
       - name: Run check_${{ matrix.script }}
-        run: python engine/check_${{ matrix.script }}.py
+        run: |
+          set -o pipefail
+          python engine/check_${{ matrix.script }}.py 2>&1 | tee check.log
+      - name: Report the result
+        if: always()
+        run: |
+          { echo '### check_${{ matrix.script }}'; echo '```'; tail -n 12 check.log; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+          tail -n 3 check.log | sed 's/^/::notice title=check_${{ matrix.script }}::/'
+          true
