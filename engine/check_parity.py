@@ -23,9 +23,10 @@ try:
 except ValueError:
     check("an unknown profile is refused", True)
 
-# tight: the same six seasons as before the profiles existed (the hash was taken on the code without them)
+# tight: the same six seasons as before the profiles existed (the hash was first taken on the code without them, baa3e7353bf2281b, and held through the parity merge;
+# it moved to the value below at PR #14, the Commissioner's tiebreak-order change, 2026-10-14, and has not moved since)
 lg, res, _ = fingerprint.run(33, 6)
-check("tight plays seed 33 for six seasons exactly as the code did before profiles", fingerprint.fingerprint_of(lg, res) == "baa3e7353bf2281b")
+check("tight plays seed 33 for six seasons exactly as the code did before profiles", fingerprint.fingerprint_of(lg, res) == "9871d9a5986ec47d")
 
 # none
 parity.apply("none")
