@@ -32,6 +32,7 @@ EXEMPT = {
     "rules.BASIS": "the basis of each rule, one entry per rule or group; the rulebook rows are the authority",
     "rules.FINAL_OLD_NAME": "the old name \"Super Bowl\", kept so the old text can be read",
     "economy.C": "an imported module, not a constant",
+    "economy.REGULATED": "parity-profile switch (engine/parity.py): the \"none\" profile turns the regulated economy off; a test-bed setting, not a rule",
     "finance.BOOKS_YEARS": "club-finance model dial (engine/finance.py); not a rule",
     "finance.C": "an imported module, not a constant",
     "finance.SP": "an imported module, not a constant",
