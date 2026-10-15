@@ -47,7 +47,8 @@ def covered(lg):
 
 
 # ---- the autopilot's tables are the old rule -------------------------------------------------------------------------------------
-GOLD = {33: "a5ee0f5ea410771b", 21: "65626b2e8339c6af"}
+# regenerated with engine/golden_fingerprints.json for the tiebreak-order change (PR #14); were 33 a5ee0f5ea410771b, 21 65626b2e8339c6af
+GOLD = {33: "092162a073a30c72", 21: "af9bce4817e720af"}
 for seed, want in GOLD.items():
     lg, res, _ = play(seed, 40)
     got = FP.fingerprint_of(lg, res)
