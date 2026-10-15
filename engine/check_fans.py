@@ -167,8 +167,13 @@ fb0.boycott = 1.0
 cut = FIN.revenue(probe, 0.5, False, False, False)["local"]
 check("a full boycott lowers local revenue by the boycott cap (and never touches the national share)", abs(cut / base - (1 - FM.BOYCOTT_MAX)) < 1e-6
       and FIN.revenue(probe, 0.5, False, False, False)["national"] == FIN.NATIONAL_POOL, f"{100 * (1 - cut / base):.0f}% lower")
+# The property is about the new memory itself. A probe club whose twelve kept memories all outweigh it would trim it at once (MEMORY_KEEP 12, the
+# boycott_end memory has weight 0.4), as happened for club 0 once PR #14 shifted the seeded history; so give the probe an empty memory for this step.
+memories_before = fb0.memories
+fb0.memories = []
 FM.new_ceo(probe, 99)
 check("a new CEO ends the boycott and the fans remember that it ended", fb0.boycott == 0.0 and any(m["kind"] == "boycott_end" for m in fb0.memories))
+fb0.memories = memories_before
 check("boycott levels stay between 0 and 1 for all 48 clubs after 40 seasons", all(0.0 <= t.fans.boycott <= 1.0 for t in L.teams))
 check("a boycott happens only when the fans are unhappy (approval under the line, or it is fading out)",
       all(t.fans.approval < FM.BOYCOTT_APPROVAL + 0.12 or t.fans.boycott < 0.3 for t in L.teams))
