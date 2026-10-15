@@ -1,0 +1,83 @@
+# DFL checks: the fast tier on every pull request and push to main; the slow tier weekly or on demand.
+# The tiers are defined in engine/run_checks.py (python engine/run_checks.py --list); this file reads them from there,
+# so a new check script is picked up without editing this file (anything not named FAST there is slow).
+name: DFL checks
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  schedule:
+    - cron: "17 9 * * 1"        # Mondays 09:17 UTC: the slow tier
+  workflow_dispatch:
+    inputs:
+      tier:
+        description: "Which tier to run"
+        type: choice
+        options: [fast, slow, all]
+        default: fast
+
+permissions:
+  contents: read
+
+concurrency:
+  group: checks-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  fast:
+    name: Fast tier
+    if: github.event_name != 'schedule' && (github.event_name != 'workflow_dispatch' || inputs.tier != 'slow')
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+      - uses: actions/setup-node@v4          # check_stage and check_stage3d run scenes under node
+        with:
+          node-version: "22"
+      - run: pip install -r requirements.txt
+      - name: Run the fast tier
+        run: python engine/run_checks.py -j 2
+
+  plan-slow:
+    name: Plan slow tier
+    if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.tier != 'fast')
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      scripts: ${{ steps.list.outputs.scripts }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - id: list
+        run: |
+          names=$(python engine/run_checks.py --list | sed -n 's/^slow: //p')
+          echo "scripts=$(python -c 'import json,sys; print(json.dumps(sys.argv[1].split()))' "$names")" >> "$GITHUB_OUTPUT"
+
+  slow:
+    name: Slow / ${{ matrix.script }}
+    needs: plan-slow
+    runs-on: ubuntu-latest
+    timeout-minutes: 150                   # run_checks.py allows a slow script 2 hours
+    strategy:
+      fail-fast: false                     # one slow failure must not hide the others
+      matrix:
+        script: ${{ fromJSON(needs.plan-slow.outputs.scripts) }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: pip install -r requirements.txt
+      - name: Run check_${{ matrix.script }}
+        run: python engine/check_${{ matrix.script }}.py
