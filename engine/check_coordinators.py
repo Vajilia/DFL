@@ -153,7 +153,13 @@ def statistics_mean(xs):
     return sum(xs) / len(xs)
 tight, Lt = banked("tight")
 allin, La = banked("all_in")
-check("a GM who keeps extra room back banks more of it than one who spends to the limit", tight > allin, f"{tight:.2f} vs {allin:.2f}")
+# One seed is too noisy for this comparison: the gap is about 1 on a mean near 9, and a harmless tiebreak change (PR #14) flipped seed 21.
+# Compare the means over several seeds (seed 21 is reused from above); across 7 seeds the gap was +0.96 before PR #14 and +1.02 after.
+BANK_SEEDS = (1, 2, 3, 4)
+tights = [tight] + [banked("tight", s)[0] for s in BANK_SEEDS]
+allins = [allin] + [banked("all_in", s)[0] for s in BANK_SEEDS]
+check("a GM who keeps extra room back banks more of it than one who spends to the limit (mean over 5 seeds)",
+      st.mean(tights) > st.mean(allins), f"{st.mean(tights):.2f} vs {st.mean(allins):.2f}")
 check("neither plan breaks the hard cap", all(OFF.EC.counted_51([p.salary for p in t.roster], t.dead_now) <= OFF.EC.limit(t) + 1.0 for Lx in (Lt, La) for t in Lx.teams))
 team = L.teams[0]
 saved = team.roster
