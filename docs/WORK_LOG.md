@@ -99,7 +99,7 @@ Authority boundaries for CEO, GM, head coach and coordinators (including the req
 
 **Fast tier: all 31 scripts pass** (GitHub Actions; `main` at `9961ff6`, and again on the PR #30 branch at `7eba956`). First fully green since PR #6 and PR #14.
 
-**Slow tier (GitHub Actions, workflow_dispatch):** run on the PR #30 branch. At `9bbc723` (goldens regenerated, `check_tables` copy not yet) 23 of 24 passed, the failure being `check_tables`; at `7eba956` (the same plus the `check_tables` fix) `check_tables`, `check_decisions` and `check_parity` pass. The slow-tier summary is recorded below once `phase2` finishes on `7eba956`; `phase2` itself passed on `9bbc723`.
+**Slow tier (GitHub Actions, workflow_dispatch):** run on the PR #30 branch. At `9bbc723` (goldens regenerated, `check_tables` copy not yet) 23 of 24 passed, the failure being `check_tables`; at `7eba956` (the same plus the `check_tables` fix) `check_tables`, `check_decisions` and `check_parity` pass. **The full slow tier passed on `7eba956`: 24 of 24** (run 38786772303).
 
 **Before the baselines were regenerated** (slow tier on `e29785f`): `check_decisions`, `check_tables`, `check_parity` and `check_fans` failed. The first three were the stale baselines above (PR #14); `check_fans` was PR #29.
 
