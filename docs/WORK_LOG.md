@@ -4,13 +4,13 @@ A running record of what has been built, what has been verified, and what is sti
 
 **How to keep it current.** Add a dated entry at the bottom of the Timeline when a milestone lands, and move items between *Open work* and the Timeline as they close. Label claims **verified** (a command was run on a named commit), **untested**, or **proposed**. Do not record a decision here as approved unless the project owner said so.
 
-Last updated: 2026-10-15, on `main` at `fd6555f`.
+Last updated: 2026-10-15, on `main` at `9961ff6`.
 
 ## Where things stand
 
 - `main` and `step6-rebuild` point at the same commit (`fd6555f`). `main` was fast-forwarded on 2026-10-15; before that it had stopped at `02490ab` (2026-10-05).
 - `step6-rebuild` is **kept as a mirror of `main` on purpose**: `deploy/setup.sh`, `deploy/update.sh` and `deploy/start-live.sh` all default to it (override with `DFL_BRANCH`), and `PROJECT_STATUS.md` records it as the deployed branch. Do not delete it until the server is switched to `main`. Until then, any commit to `main` must also be pushed to `step6-rebuild`, or the server will not receive it.
-- Check results on `fd6555f` are in the section **Verification on `fd6555f`** below: 29 of 31 fast checks pass; 2 fail; the slow tier is untested.
+- The fast check tier passes on `main` (31 of 31, run by GitHub Actions on `9961ff6`). The slow tier has not been run to completion on any revision recently, and `check_parity` fails when run alone (see Verification).
 - Nothing in this log authorizes a production deploy, restart or reset of live league state.
 
 ## Timeline
@@ -58,14 +58,16 @@ Live pacing blocks, pause button, play-by-play text, field visuals, parity profi
 - 22 merged feature branches and `step6-service` deleted (all contained in `main`). `step6-rebuild` was deleted by mistake and immediately recreated at `fd6555f` once the deploy scripts' dependence on it was noticed; it is kept as a mirror (see above).
 - The founding data was compared with the owner's latest workbook (see Open work, item 5).
 - The fast check tier was run on `main`; two failures were found and traced to PR #6 and PR #14 (see Verification).
+- The two failing fast checks were fixed through PR #25 (rulebook exemption for `economy.REGULATED`) and PR #27 (`check_coordinators` compares GM banking over 5 seeds instead of 1; the GM behavior itself did not change).
+- PR #26 added GitHub Actions (`.github/workflows/checks.yml`): the fast tier on every pull request and push to `main`, the slow tier weekly or on demand.
 - This log was added, and `AGENTS.md`, `PROJECT_STATUS.md` and `docs/DECISION_LOG.md` were updated to reflect the branch change, through pull request #24.
 
 ## Open work
 
 Sources are named so each item can be checked. Nothing here is an approved decision unless the cited document says so.
 
-### 0. Failing checks on `main` (see Verification below)
-Fix or consciously accept `check_rulebook` (`economy.REGULATED`, PR #6) and `check_coordinators` (PR #14); then run the slow tier on the fixed revision, which has not been run.
+### 0. Slow tier and `check_parity`
+Run the slow tier (Actions tab, "Run workflow", tier `slow` or `all`) and record the results here. `check_parity` fails on `main` with "tight plays seed 33 for six seasons exactly as the code did before profiles"; probable cause is a stale baseline after rules v4 and v5 changed outcomes, **not yet confirmed**. Regenerating a baseline needs the owner's approval (`AGENTS.md`).
 
 ### 1. Step 6 gaps (`reports/verification_step6e_i.md`)
 - Extensions are made only when a contract expires; the contract table has no guarantee or bonus terms.
@@ -91,17 +93,20 @@ Authority boundaries for CEO, GM, head coach and coordinators (including the req
 - **Schedule observations (workbook, Season 1 only; later seasons are not in the file):** time-slot points are inside the 33 to 38 band but uneven (23 of 40 clubs at 34; Chicago 38, Omaha 37); five clubs have a four-game home or away streak; all byes fall in weeks 15 to 19, which are all divisional games; the workbook's formulas refer to team rows by position and to teams by city name rather than by ID.
 - Palette overlaps among the non-NFL clubs (for example Montana and Utah) conflict with the rule that each of the 16 gets a unique palette; this needs checking against whichever palette set is adopted.
 
-## Verification on `fd6555f`
+## Verification
 
-Run 2026-10-15 with `python3 engine/run_checks.py -j 2` (the fast tier, Python 3.13, numpy 2.5.3) on `main` at `fd6555f`, before this documentation was added.
+**Fast tier, `main` at `9961ff6` (GitHub Actions, 2026-10-15): all 31 scripts pass.** This is the first revision on which the fast tier is fully green since PR #6 and PR #14.
 
-- **Result: 29 of 31 scripts passed, 2 failed.** Total 1,392 s of script time on two cores.
-- **The slow tier (24 scripts: fairness, drive engine, decisions, store round trips and others) has not been run on this revision.** It is untested.
-- Both failures were absent at commit `2621f79` (2026-10-12, before pull requests #2 to #23) and were traced by re-running the failing script at each merge.
+**History of the two failures** (found by running the fast tier locally on `fd6555f`: 29 of 31 passed). Both were absent at commit `2621f79` (2026-10-12, before pull requests #2 to #23) and were traced by re-running the failing script at each merge.
 
-| Script | Failure | First failing merge | Notes |
+| Script | Failure | First failing merge | Resolution |
 | --- | --- | --- | --- |
-| `check_rulebook.py` | "every constant in economy.py is in a rulebook row" (`economy.REGULATED`) | PR #6, `parity` (`25e7d82`) | The parity profile "none" switches `economy.REGULATED` off, but the constant has no rulebook row and no entry in `rulebook.EXEMPT`. Passing needs a row or an exemption with a reason. **Proposed:** an `EXEMPT` entry saying it is a parity-profile switch, not a rule. Needs the owner, because it classifies a constant in the rulebook. |
-| `check_coordinators.py` | "a GM who keeps extra room back banks more of it than one who spends to the limit" (9.53 versus 10.21, expected the first to be larger) | PR #14, `tiebreak-order` (`d32a88f`) | Fails the same way on a second run (deterministic). The assertion compares two simulated averages, so one hypothesis is that a legitimate tiebreak change shifted outcomes and the assertion is fragile; the other is that GM banking behavior really changed. **Untested which.** Check whether PR #14 regenerated the golden fingerprints before deciding. |
+| `check_rulebook.py` | "every constant in economy.py is in a rulebook row" (`economy.REGULATED`) | PR #6, `parity` (`25e7d82`) | PR #25: classified as a parity-profile switch in `rulebook.EXEMPT`. No behavior change. |
+| `check_coordinators.py` | "a GM who keeps extra room back banks more of it than one who spends to the limit" (9.53 versus 10.21 on seed 21) | PR #14, `tiebreak-order` (`d32a88f`) | PR #27: the check was fragile, not the behavior. Over 7 seeds the gap (keeps room back minus all-in) was +0.96 before PR #14 and +1.02 after, with one reversed seed each. The check now compares means over 5 seeds (8.90 versus 8.14). Only 7 seeds per side were sampled; this is a test-design fix, not proof for every league. |
 
-Both failures have been on `step6-rebuild` since the merges (2026-10-13 for PR #6, 2026-10-14 for PR #14). Whether the checks were run before those merges is not recorded in the repository.
+Both failures sat on `step6-rebuild` from the merges (2026-10-13 for PR #6, 2026-10-14 for PR #14). Whether the checks were run before those merges is not recorded in the repository.
+
+**Not yet verified**
+- **Slow tier (24 scripts):** not run to completion on the current `main`. A local attempt was lost when the working environment restarted. The first scheduled Actions run is Monday 09:17 UTC, or start it from the Actions tab.
+- **`check_parity` (slow tier):** failed when run alone on `fd6555f` (see item 0 above).
+- **Workbook comparison:** see item 5 under Open work.
