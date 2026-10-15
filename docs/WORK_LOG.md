@@ -8,9 +8,9 @@ Last updated: 2026-10-15, on `main` at `9961ff6`.
 
 ## Where things stand
 
-- `main` and `step6-rebuild` point at the same commit (`fd6555f`). `main` was fast-forwarded on 2026-10-15; before that it had stopped at `02490ab` (2026-10-05).
+- `main` and `step6-rebuild` point at the same commit (`00b6fb2`). `main` was fast-forwarded on 2026-10-15; before that it had stopped at `02490ab` (2026-10-05).
 - `step6-rebuild` is **kept as a mirror of `main` on purpose**: `deploy/setup.sh`, `deploy/update.sh` and `deploy/start-live.sh` all default to it (override with `DFL_BRANCH`), and `PROJECT_STATUS.md` records it as the deployed branch. Do not delete it until the server is switched to `main`. Until then, any commit to `main` must also be pushed to `step6-rebuild`, or the server will not receive it.
-- The fast check tier passes on `main` (31 of 31, run by GitHub Actions on `9961ff6`). The slow tier has not been run to completion on any revision recently, and `check_parity` fails when run alone (see Verification).
+- The fast tier passes (31 of 31). The slow tier passes (24 of 24) with the regenerated baselines; see Verification for the revisions. The fairness study (`engine/fairness.py`) has **not** been re-run since PR #14 (Open work, item 0).
 - Nothing in this log authorizes a production deploy, restart or reset of live league state.
 
 ## Timeline
@@ -59,6 +59,8 @@ Live pacing blocks, pause button, play-by-play text, field visuals, parity profi
 - The founding data was compared with the owner's latest workbook (see Open work, item 5).
 - The fast check tier was run on `main`; two failures were found and traced to PR #6 and PR #14 (see Verification).
 - The two failing fast checks were fixed through PR #25 (rulebook exemption for `economy.REGULATED`) and PR #27 (`check_coordinators` compares GM banking over 5 seeds instead of 1; the GM behavior itself did not change).
+- PR #29 fixed `check_fans` (the check, not the fans: the boycott-end memory assertion now clears the memory list first, because memory trimming can legitimately drop an old entry).
+- PR #30 regenerated the autopilot goldens (`engine/golden_fingerprints.json`, seeds 33, 5, 21), the `check_parity` seed-33 hash, and `check_tables`' own copy of the seed 33 and 21 goldens, all stale since the Commissioner's tiebreak-order change (PR #14). Owner approved the regeneration.
 - PR #26 added GitHub Actions (`.github/workflows/checks.yml`): the fast tier on every pull request and push to `main`, the slow tier weekly or on demand.
 - This log was added, and `AGENTS.md`, `PROJECT_STATUS.md` and `docs/DECISION_LOG.md` were updated to reflect the branch change, through pull request #24.
 
@@ -66,8 +68,8 @@ Live pacing blocks, pause button, play-by-play text, field visuals, parity profi
 
 Sources are named so each item can be checked. Nothing here is an approved decision unless the cited document says so.
 
-### 0. Slow tier and `check_parity`
-Run the slow tier (Actions tab, "Run workflow", tier `slow` or `all`) and record the results here. `check_parity` fails on `main` with "tight plays seed 33 for six seasons exactly as the code did before profiles"; probable cause is a stale baseline after rules v4 and v5 changed outcomes, **not yet confirmed**. Regenerating a baseline needs the owner's approval (`AGENTS.md`).
+### 0. Fairness bands after PR #14
+`engine/fairness.py` (the 13 fairness bands, hours-long) is not part of either check tier and has not been run since the tiebreak-order change. The regenerated goldens only show that outcomes changed; whether any band moved is **untested**. Run it on `main` and record the result (it needs the owner's attention if a band leaves its range).
 
 ### 1. Step 6 gaps (`reports/verification_step6e_i.md`)
 - Extensions are made only when a contract expires; the contract table has no guarantee or bonus terms.
@@ -95,7 +97,11 @@ Authority boundaries for CEO, GM, head coach and coordinators (including the req
 
 ## Verification
 
-**Fast tier, `main` at `9961ff6` (GitHub Actions, 2026-10-15): all 31 scripts pass.** This is the first revision on which the fast tier is fully green since PR #6 and PR #14.
+**Fast tier: all 31 scripts pass** (GitHub Actions; `main` at `9961ff6`, and again on the PR #30 branch at `7eba956`). First fully green since PR #6 and PR #14.
+
+**Slow tier (GitHub Actions, workflow_dispatch):** run on the PR #30 branch. At `9bbc723` (goldens regenerated, `check_tables` copy not yet) 23 of 24 passed, the failure being `check_tables`; at `7eba956` (the same plus the `check_tables` fix) `check_tables`, `check_decisions` and `check_parity` pass. **The full slow tier passed on `7eba956`: 24 of 24** (run 38786772303).
+
+**Before the baselines were regenerated** (slow tier on `e29785f`): `check_decisions`, `check_tables`, `check_parity` and `check_fans` failed. The first three were the stale baselines above (PR #14); `check_fans` was PR #29.
 
 **History of the two failures** (found by running the fast tier locally on `fd6555f`: 29 of 31 passed). Both were absent at commit `2621f79` (2026-10-12, before pull requests #2 to #23) and were traced by re-running the failing script at each merge.
 
@@ -107,6 +113,5 @@ Authority boundaries for CEO, GM, head coach and coordinators (including the req
 Both failures sat on `step6-rebuild` from the merges (2026-10-13 for PR #6, 2026-10-14 for PR #14). Whether the checks were run before those merges is not recorded in the repository.
 
 **Not yet verified**
-- **Slow tier (24 scripts):** not run to completion on the current `main`. A local attempt was lost when the working environment restarted. The first scheduled Actions run is Monday 09:17 UTC, or start it from the Actions tab.
-- **`check_parity` (slow tier):** failed when run alone on `fd6555f` (see item 0 above).
+- **Fairness bands** after PR #14 (Open work, item 0).
 - **Workbook comparison:** see item 5 under Open work.
