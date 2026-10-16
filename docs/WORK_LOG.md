@@ -71,6 +71,14 @@ Live pacing blocks, pause button, play-by-play text, field visuals, parity profi
 - Rollback: `bash /opt/dfl/deploy/make-public.sh --undo` (restores `/etc/caddy/Caddyfile.before-public`), or restore the snapshot.
 - Noted, left alone: `/var/www/dfl/dfl-frontend-review.tar.gz` (400 KB, 2026-10-15) sits in the web root, so it is now downloadable; it holds an older copy of the page and live feed (same data the site serves). Remove it if it should not be public.
 
+### 2026-10-16: own domain, diamondfootballleague.com (production change, owner approved in chat)
+- The owner bought `diamondfootballleague.com` at IONOS. In IONOS DNS: `A @` changed from IONOS's parking address (`74.208.236.111`) to the server (`143.198.130.68`), `A www` added at the same address; IONOS disabled its own "Default Site" records in the same step (the old A, an IPv6 `AAAA @` to the parking host, and a `_dep_ws_mutex` TXT). Mail records (MX, SPF, DKIM, DMARC, autodiscover) were not touched. TTL 1 hour.
+- Server: `/etc/caddy/Caddyfile` site address is now `diamondfootballleague.com, www.diamondfootballleague.com, 143-198-130-68.sslip.io`. Backups: `/root/dfl-backup-2026-10-16/Caddyfile.before-domain` and `/etc/caddy/Caddyfile.pre-domain` (config as it was before this change; `Caddyfile.before-public` is the one from before the site was made public).
+- **Verified:** Caddy logged "certificate obtained" for both new names; from the server, all three hostnames return 200 with a valid certificate and `/api/state` returns 401 on each; `https://diamondfootballleague.com/` loads in the owner's Chrome over public DNS. **Not verified:** `www` through public DNS in a browser (it resolves to the server at IONOS's own nameservers), and a Pause-button login on the new name.
+- **Heads up:** the extra names live only in the server's Caddyfile. Running `deploy/render.sh` rewrites that file from `/etc/dfl/host` (still the `sslip.io` name) and would drop them; re-add them afterwards or change `/etc/dfl/host`.
+- Rollback: copy `Caddyfile.pre-domain` over `/etc/caddy/Caddyfile` and `systemctl reload caddy`. DNS can be set back in IONOS.
+- Not done, proposed: a DigitalOcean Reserved IP, so the domain keeps working if the server is ever rebuilt or upgraded (before any peer-review release).
+
 ## Open work
 
 Sources are named so each item can be checked. Nothing here is an approved decision unless the cited document says so.
