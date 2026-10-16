@@ -32,7 +32,7 @@ point it at the server and tell Claude; it is one line to change.
 
 ## 3. Later
 
-- **New version of the league window:** open the Console and run `bash /opt/dfl/deploy/update.sh`
+- **New version of the league window:** open the Console and run `bash /opt/dfl/deploy/update.sh`. **Careful once a league is running:** this also restarts the runner on the newest code, and the league is replayed from its seed, so engine changes can change results already played. Take a snapshot first and read `deploy/RUNBOOK_public_site.md` ("Later").
 - **Change the login for the Pause button:** `bash /opt/dfl/deploy/render.sh`
 - **If something goes wrong:** copy whatever the Console printed and paste it to Claude.
 
