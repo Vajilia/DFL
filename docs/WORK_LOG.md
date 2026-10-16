@@ -64,6 +64,13 @@ Live pacing blocks, pause button, play-by-play text, field visuals, parity profi
 - PR #26 added GitHub Actions (`.github/workflows/checks.yml`): the fast tier on every pull request and push to `main`, the slow tier weekly or on demand.
 - This log was added, and `AGENTS.md`, `PROJECT_STATUS.md` and `docs/DECISION_LOG.md` were updated to reflect the branch change, through pull request #24.
 
+### 2026-10-16: website made public (production change, owner approved in chat)
+- PRs #32 (Standings tab restored), #33 (login moved to `/api/*` only; the page asks for the Pause switch only in a browser opened with `?admin=1`), #34 (`deploy/make-public.sh` and `deploy/RUNBOOK_public_site.md`).
+- **Server state found (verified, read-only):** `/opt/dfl` at `5cd50ab` (updated 07:32 UTC with `update.sh`, which also restarted `dfl-live`), league `meta.json` `engine_commit` `fd6555f`, seed 7, Founding Day 2026-10-14. Between `fd6555f` and `5cd50ab` the only non-check engine change is one `engine/rulebook.py` exemption line (no gameplay code), so the restart's replay-from-seed warning did not change any result. Worth knowing for any later update: the warning is real whenever gameplay code differs.
+- **Done:** DigitalOcean snapshot `before-public-site-2026-10-16` (2.56 GB) taken first; `/root/dfl-backup-2026-10-16/` holds the Caddyfile and a tarball of `/var/www/dfl/live` and `/etc/dfl`; then `make-public.sh` was run. **Verified from the server with plain requests:** `/`, `/live/results.json`, `/live/meta.json` answer 200 without a password; `/api/state` answers 401; `x-robots-tag: noindex, nofollow` still sent; `dfl-live`, `dfl-control` and `caddy` active; the deployed page contains the `?admin=1` logic. **Not verified:** the Pause button after logging in (the login for `/api/*` is the existing one).
+- Rollback: `bash /opt/dfl/deploy/make-public.sh --undo` (restores `/etc/caddy/Caddyfile.before-public`), or restore the snapshot.
+- Noted, left alone: `/var/www/dfl/dfl-frontend-review.tar.gz` (400 KB, 2026-10-15) sits in the web root, so it is now downloadable; it holds an older copy of the page and live feed (same data the site serves). Remove it if it should not be public.
+
 ## Open work
 
 Sources are named so each item can be checked. Nothing here is an approved decision unless the cited document says so.
