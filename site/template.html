@@ -1247,8 +1247,8 @@ async function statsRun(kind) {
 }
 
 /* ---------- router, tabs, search ---------- */
-const TABS = [["dfl", "DFL"]].concat(LIVE ? [["live", "Live"]] : []).concat([["schedule", "Schedule"], ["playoffs", "Playoffs"], ["stats", "Statistics"], ["search", "Search"], ["info", "History and Information"]]);
-const SECTION = { club: "dfl", clubs: "dfl", player: "dfl", players: "search", standings: "dfl", conference: "dfl", division: "dfl", game: "schedule", guide: "info", seasons: "info", founding: "info", calendar: "info", home: "" };
+const TABS = [["dfl", "DFL"]].concat(LIVE ? [["live", "Live"]] : []).concat([["standings", "Standings"], ["schedule", "Schedule"], ["playoffs", "Playoffs"], ["stats", "Statistics"], ["search", "Search"], ["info", "History and Information"]]);
+const SECTION = { club: "dfl", clubs: "dfl", player: "dfl", players: "search", standings: "standings", conference: "dfl", division: "dfl", game: "schedule", guide: "info", seasons: "info", founding: "info", calendar: "info", home: "" };
 const curWeek = () => { const g = D.games.filter(x => !x.final).sort((a, b) => a.week - b.week)[0]; return g ? g.week : 19; };
 function render(scroll = true) {
   const parts = routeParts(), page = parts[0];

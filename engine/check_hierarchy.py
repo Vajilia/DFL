@@ -1,6 +1,6 @@
 """The site's hierarchy: a home page, the DFL (conferences, divisions, clubs), search, history and information, and the grouped, sortable statistics.
 
-  1  opens on the home page; the tabs are DFL, Schedule, Playoffs, Statistics, Search and History and Information (Live second on the live page)
+  1  opens on the home page; the tabs are DFL, Standings, Schedule, Playoffs, Statistics, Search and History and Information (Live second on the live page)
   2  the DFL page shows both conferences side by side, every division with its six clubs, and links to every conference, division and club
   3  a division page carries the same standings rows as the standings page; a conference page has its four divisions; club and player pages say where they are (breadcrumbs)
   4  search: finds clubs, players (words in any order, positions, colleges, hometowns), coaches and games, and its filters agree with a count made straight from the data
@@ -30,7 +30,7 @@ def serve(root):
     return f"http://127.0.0.1:{srv.server_address[1]}/index.html"
 
 root = tempfile.mkdtemp(); build_site.build(os.path.join(root, "index.html"), 7, rules=5); url = serve(root)
-TABS = ["DFL", "SCHEDULE", "PLAYOFFS", "STATISTICS", "SEARCH", "HISTORY AND INFORMATION"]
+TABS = ["DFL", "STANDINGS", "SCHEDULE", "PLAYOFFS", "STATISTICS", "SEARCH", "HISTORY AND INFORMATION"]
 with sync_playwright() as pw:
     br = pw.chromium.launch(); errs = []
     pg = br.new_page(viewport=dict(width=1100, height=900)); pg.on("pageerror", lambda e: errs.append(str(e)))
@@ -39,7 +39,7 @@ with sync_playwright() as pw:
     pg.goto(url); pg.wait_for_timeout(600)
     tabs = pg.evaluate("[...document.querySelectorAll('#tabs a')].map(a => a.textContent.trim().toUpperCase())")
     check("the page opens on the home page", pg.evaluate("document.querySelector('#app h1').textContent") == "Diamond Football League" and pg.evaluate("document.querySelector('.brand').getAttribute('href')") == "#home" and not pg.evaluate("!!document.querySelector('#tabs [aria-current]')"), pg.evaluate("document.querySelector('#app h1').textContent"))
-    check("the tabs are DFL, Schedule, Playoffs, Statistics, Search, History and Information", tabs == TABS, str(tabs))
+    check("the tabs are DFL, Standings, Schedule, Playoffs, Statistics, Search, History and Information", tabs == TABS, str(tabs))
     check("home shows the final games and each division's leader", pg.evaluate("document.querySelectorAll('#app .gamelink').length") == 5 and pg.evaluate("document.querySelectorAll('#app .confs tbody tr').length") == 8, "")
     # 2 --------------------------------------------------------------------------------------------------------------------------
     go("#dfl")
@@ -53,6 +53,7 @@ with sync_playwright() as pw:
     # 3 --------------------------------------------------------------------------------------------------------------------------
     rows = lambda: pg.evaluate("[...document.querySelectorAll('#app tbody tr')].map(r => r.innerText.replace(/\\s+/g, ' ').trim())")
     go("#standings"); stand = rows(); head = pg.evaluate("document.querySelector('#app thead').innerText.replace(/\\s+/g, ' ')")
+    check("the Standings tab links to the standings page and is lit there", pg.evaluate("document.querySelector('#tabs a[href=\"#standings\"]') !== null") and pg.evaluate("document.querySelector('#tabs [aria-current]').textContent.trim().toUpperCase()") == "STANDINGS" and len(stand) == 48, str(len(stand)))
     go("#division-2"); div = rows(); dh = pg.evaluate("document.querySelector('#app thead').innerText.replace(/\\s+/g, ' ')")
     check("a division page has the standings page's columns and exactly the rows it shows for that division", dh == head and len(div) == 6 and all(r in stand for r in div), f"{len(div)} {[r for r in div if r not in stand][:2]}")
     bc = pg.evaluate("document.querySelector('.crumbs').innerText.replace(/\\s+/g, ' ')")
@@ -138,7 +139,7 @@ with sync_playwright() as pw:
     pg = br.new_page(viewport=dict(width=1100, height=900)); pg.on("pageerror", lambda e: errs.append(str(e)))
     pg.goto(url); pg.wait_for_timeout(3500)
     tabs = pg.evaluate("[...document.querySelectorAll('#tabs a')].map(a => a.textContent.trim().toUpperCase())")
-    check("the live page opens on home, with Live as its second tab", pg.evaluate("document.querySelector('#app h1').textContent") == "Diamond Football League" and tabs[:2] == ["DFL", "LIVE"] and len(tabs) == 7, str(tabs))
+    check("the live page opens on home, with Live as its second tab", pg.evaluate("document.querySelector('#app h1').textContent") == "Diamond Football League" and tabs[:3] == ["DFL", "LIVE", "STANDINGS"] and len(tabs) == 8, str(tabs))
     heads = pg.evaluate("[...document.querySelectorAll('#app h2')].map(h => h.textContent.trim())")
     check("the live home shows what is on or next, the latest results, and the division leaders", "Division leaders" in heads and ("Latest results" in heads or "Up next" in heads or "On now" in heads), str(heads))
     pg.evaluate("location.hash='#dfl'"); pg.wait_for_timeout(600)
