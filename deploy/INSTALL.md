@@ -1,6 +1,6 @@
 # Putting the DFL website on its own server
 
-This puts the read-only league window on a small always-on server, behind a login, with a secure (https) address. About 15 minutes, about
+This puts the read-only league window on a small always-on server, open to anyone with the address (only the Pause button is behind a login), with a secure (https) address. About 15 minutes, about
 $12 a month. You do the account and the server; the password is typed only on the server, never to Claude or into the repository.
 
 ## 1. Make the server (DigitalOcean)
@@ -23,9 +23,9 @@ $12 a month. You do the account and the server; the password is typed only on th
        curl -fsSL https://raw.githubusercontent.com/Vajilia/dfl/step6-rebuild/deploy/setup.sh | bash
 
 3. It takes a few minutes. Near the end it asks for a **website login name** (press Enter to accept `dfl`) and a **password**
-   (at least 10 characters, typed twice; nothing shows as you type). This is what you and your peers will use.
+   (at least 10 characters, typed twice; nothing shows as you type). The website itself needs no login; this login protects only the Pause / Resume switch, so it is yours alone.
 4. It ends with the address, for example `https://203-0-113-5.sslip.io`. Open it; the first visit can take up to a minute while the security
-   certificate is issued. Give peers the address and the login.
+   certificate is issued. Give peers the address; there is no login to share.
 
 The address is built from the server's number using the free sslip.io service, so no domain purchase is needed. If you later buy a domain,
 point it at the server and tell Claude; it is one line to change.
@@ -33,7 +33,7 @@ point it at the server and tell Claude; it is one line to change.
 ## 3. Later
 
 - **New version of the league window:** open the Console and run `bash /opt/dfl/deploy/update.sh`
-- **Change the website login:** `bash /opt/dfl/deploy/render.sh`
+- **Change the login for the Pause button:** `bash /opt/dfl/deploy/render.sh`
 - **If something goes wrong:** copy whatever the Console printed and paste it to Claude.
 
 ## 3b. The live league
@@ -52,7 +52,7 @@ A new league runs block after block (a game about 30 minutes, 2 minutes between 
 nothing is lost. To see how it is doing: `systemctl status dfl-live`, or `journalctl -u dfl-live -n 20`.
 
 - **Pause / resume** (new leagues only): `bash /opt/dfl/deploy/pause-live.sh pause`, `... resume`, `... status`. A paused league stands still and picks up where it stopped.
-- **Pause button on the website** (new leagues only): run `bash /opt/dfl/deploy/enable-controls.sh` once. It starts a small local service (`dfl-control`) and adds one route to the website configuration, behind the same login; it refuses to stay on if the route could be reached without the password. The Live tab then shows a Pause / Resume button. Anyone with the website login can use it, and it pauses the league for everyone watching.
+- **Pause button on the website** (new leagues only): run `bash /opt/dfl/deploy/enable-controls.sh` once. It starts a small local service (`dfl-control`) and adds one route to the website configuration, behind the login (the website itself is public, so the page only looks for the button in a browser you have opened once as `https://your-address/?admin=1`; `?admin=0` makes it forget); it refuses to stay on if the route could be reached without the password. The Live tab then shows a Pause / Resume button. Anyone with the login can use it, and it pauses the league for everyone watching.
 - **Start over** (erase the league and begin again; the old feed is kept in `/var/lib/dfl-archive`): `bash /opt/dfl/deploy/reset-live.sh`. It asks for the first kickoff, a seed and a parity profile (tight = the rules as written; none = no cap, floor, exile help or lottery).
 
 ## What this does and does not do
@@ -63,7 +63,7 @@ agents come later and will run on this same server).
 ## What the script does (for the curious or the cautious)
 
 Installs Caddy (web server, automatic https), Python 3 and git; opens ports 22, 80, 443 only; clones https://github.com/Vajilia/dfl (public)
-to `/opt/dfl`; builds the page to `/var/www/dfl/index.html`; writes `/etc/caddy/Caddyfile` with the login stored as a bcrypt hash. Pages
+to `/opt/dfl`; builds the page to `/var/www/dfl/index.html`; writes `/etc/caddy/Caddyfile` with the login for `/api/*` stored as a bcrypt hash. The website is public and read-only. Pages
 are marked do-not-index so search engines skip them. The script file is in this folder if you want to read it first.
 
 ## Honest caveat

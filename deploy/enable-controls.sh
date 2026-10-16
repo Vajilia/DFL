@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Turn on the website's Pause / Resume button. Run as root:  bash /opt/dfl/deploy/enable-controls.sh
-# It starts the small pause service (dfl-control) and adds one route to the existing website configuration (the login is left exactly as it is). Safe to run again.
+# It starts the small pause service (dfl-control) and adds one route to the existing website configuration (the login is left exactly as it is; with the current template the route is already there and behind the login). Safe to run again.
 set -euo pipefail
 main() {
   [ "$(id -u)" -eq 0 ] || { echo "Run as root."; exit 1; }
