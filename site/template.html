@@ -1053,8 +1053,17 @@ function seasonsPage(k) {
 document.addEventListener("click", ev => { const sc = ev.target.closest("[data-srch-club]"); if (sc) Object.assign(SRCH, { q: "", type: "player", pos: "", club: sc.dataset.srchClub, minOvr: "", minAge: "", maxAge: "", sort: "ovr", more: 1 }); if (ev.target.closest("[data-live]")) { ev.preventDefault(); endView(); if (location.hash === "#live") render(true); else location.hash = "live"; } });
 /* The league's Pause / Resume button. It exists only when the server has the pause switch (api/state answers) and the league is a blocks league. */
 const CTL = { state: null, busy: false, err: null, asked: false };
+/* The website is public; the pause switch is behind a login, and asking for it would make every visitor's browser pop up a password box. So the page asks only in a browser that was told it belongs to the Commissioner: open the site once with ?admin=1 (and ?admin=0 to forget). */
+function ctlAdmin() {
+  try {
+    const m = /[?&]admin=([01])/.exec(location.search);
+    if (m) { if (m[1] === "1") localStorage.setItem("dfl_admin", "1"); else localStorage.removeItem("dfl_admin"); }
+    return localStorage.getItem("dfl_admin") === "1";
+  } catch (err) { return false; }
+}
 async function ctlLoad() {
   CTL.asked = true;
+  if (!ctlAdmin()) { CTL.state = null; return; }
   try { const r = await fetch("api/state", { cache: "no-store" }); CTL.state = r.ok ? await r.json() : null; } catch (err) { CTL.state = null; }
 }
 async function ctlSet(pause) {

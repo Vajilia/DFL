@@ -572,6 +572,10 @@ The page was one flat row of eleven tabs. It is now organised the way the league
 - **Not done, on purpose:** logins, accounts and each person's own league. The addresses and pages leave room (a league is reached from home), but nothing is built for them: they need a server side the page does not have, and the Commissioner is the only user for now.
 - **Checks** (`check_hierarchy.py`): home, tabs, the DFL page's shape and 48 club links, division pages equal to the standings' rows, trails, search results against counts made from the data, statistics groups and sorting and filters, old addresses, and the live page's home. `check_past_seasons.py` now looks for Seasons under History and Information.
 
+## The website is public; only the pause switch has a login
+
+The Commissioner asked (2026-10-16) for the website not to be hidden behind a password. In the server's web configuration (`deploy/Caddyfile.template`) the login now guards only `/api/*`, the Pause / Resume switch; the pages, the live feed and the past seasons are open and read-only. The "do not index" header is **kept** (search engines still skip the site; only people with the address see it), which is a separate choice from the password. Because a login on `/api/state` would make every visitor's browser ask for a password, the page now asks for the switch only in a browser opened once with `?admin=1` (`?admin=0` forgets it). **This takes effect on the server only when the server is updated and `deploy/render.sh` is run there**; the repository change deploys nothing.
+
 ## A club's page keeps up with the league
 
 Until now a club's page showed the Founding Day roster and people for ever, although the live league changes both every year (the draft, retirements, free agency, hirings and firings; after one year about a quarter of a roster is new) (decided with the Commissioner, 2026-10-14: "the team pages will be updated at the end of each season based on what happened, and the richer each one will be").

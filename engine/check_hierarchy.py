@@ -145,5 +145,13 @@ with sync_playwright() as pw:
     pg.evaluate("location.hash='#dfl'"); pg.wait_for_timeout(600)
     check("the live DFL page lists all 48 clubs", pg.evaluate("document.querySelectorAll('.confs a.club[href^=\"#club-\"]').length") == 48)
     check("no script error on the live page", not errs, str(errs[:2]))
+    # the website is public; the pause switch is not, so only a browser opened once with ?admin=1 asks for it (anyone else would get a password box)
+    asked = []
+    for q, want, what in (("", False, "an ordinary visitor's browser never asks for the pause switch (it would get a password box)"), ("?admin=1", True, "a browser opened once with ?admin=1 asks for the pause switch"), ("", True, "and keeps asking on later visits"), ("?admin=0", False, "?admin=0 makes it forget")):
+        ctx = br.new_context() if q == "" and not asked else ctx
+        pg2 = ctx.new_page(); seen = []; pg2.on("request", lambda r, seen=seen: seen.append(r.url) if "/api/" in r.url else None)
+        pg2.goto(url + q); pg2.wait_for_timeout(3000); asked.append(seen)
+        check(what, bool([u for u in seen if u.endswith("/api/state")]) == want, str(seen))
+        pg2.close()
     br.close()
 print("\n" + ("ALL PASS" if not failures else f"{len(failures)} FAILED")); sys.exit(1 if failures else 0)

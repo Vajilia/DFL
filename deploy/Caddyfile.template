@@ -1,10 +1,11 @@
 # The Diamond Football League website. Filled in by deploy/render.sh (host, user and password hash come from the server, never from the repo).
+# The website itself is public and read-only. Only /api/* (the Pause / Resume switch) sits behind the login.
 __HOST__ {
 	encode gzip
-	basic_auth {
-		__USER__ __HASH__
-	}
 	handle /api/* {
+		basic_auth {
+			__USER__ __HASH__
+		}
 		reverse_proxy 127.0.0.1:8081
 	}
 	handle {

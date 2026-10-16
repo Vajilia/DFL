@@ -2,7 +2,7 @@
 # One-time setup of the DFL website on a fresh Ubuntu 24.04 server. Run as root (the DigitalOcean web Console is root).
 #   curl -fsSL https://raw.githubusercontent.com/Vajilia/dfl/step6-rebuild/deploy/setup.sh | bash
 # Safe to run again: it updates what is there. It installs Caddy (web server with automatic HTTPS), Python and git, opens ports 22/80/443,
-# fetches the league code, builds the page, and asks you for a website login (typed on this machine only).
+# fetches the league code, builds the page, and asks you for a login for the Pause button (typed on this machine only).
 set -euo pipefail
 [ "$(id -u)" -eq 0 ] || { echo "Run as root."; exit 1; }
 BRANCH="${DFL_BRANCH:-step6-rebuild}"
@@ -47,7 +47,7 @@ echo "   address: https://$(cat /etc/dfl/host)"
 echo "== 5/6 Build the page"
 bash "$APP/deploy/update.sh" --no-pull
 
-echo "== 6/6 Website login"
+echo "== 6/6 Login for the Pause button (the website itself is public)"
 bash "$APP/deploy/render.sh"
 
 echo
