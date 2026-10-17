@@ -3,6 +3,9 @@ Date: 2026-10-17
 Status: implementation proposal; no gameplay behavior changed
 Scope: DFL character models, decision guards, agent inputs, stand-in policies
 
+## Design authority and supersession
+The Commissioner's latest five-meter and hidden X-factor decisions supersede contradictory earlier design assumptions. Do **not** preserve archetype-constrained trait selection, fixed soul-based personality limits, or trait-string decision policies merely for backward compatibility. Existing code may be reused as infrastructure, but conflicting behavioral rules must be replaced. Preserve historical design documents as records and mark them superseded instead of silently rewriting the past.
+
 ## Confirmed source observations
 - `engine/cards.py` defines player and coach cards with `trait`, `wants`, `fears`, `pressure`, and other character properties. Player personality is selected from an archetype-constrained family, with perception and confidence influencing the expressed trait.
 - `engine/living.py` describes changing ratings, self-perception, and a core personality bounded by the character's soul.
@@ -19,11 +22,11 @@ Scope: DFL character models, decision guards, agent inputs, stand-in policies
 6. The currently running season is observational. Durable historical persistence is an Alpha concern, not a prerequisite to this work.
 
 ## Decisions that require explicit engineering definitions, not guesses
-- Names and semantics of the five meters. Do not assume the existing `trait` string, ratings, pressure thresholds, or wants/fears are equivalent to the five meters.
+- Names and semantics of the five meters (not yet specified in the inspected sources; do not invent them). Do not assume the existing `trait` string, ratings, pressure thresholds, or wants/fears are equivalent to the five meters.
 - Whether an X-factor is represented by one amplified meter or a separate private multiplier applied to an ordinary meter. Whichever representation is chosen must not introduce a sixth decision-driving meter.
 - Whether the 5% assignment is independent per character or sampled to an exact quota per generated population. Test the chosen interpretation statistically.
 - Meter initialization distributions, lifecycle changes, and precise influence on different decision types.
-- Compatibility of old card constructors, deterministic seeds, serialized snapshots, and existing fairness checks.
+- Migration of old card constructors, deterministic seeds, serialized snapshots, and existing fairness checks. Compatibility is an engineering tool, not a reason to keep superseded psychology. The observational season can be regenerated.
 
 ## Implementation sequence
 ### P1: Inventory and contract
@@ -36,7 +39,7 @@ Scope: DFL character models, decision guards, agent inputs, stand-in policies
 ### P2: Safe character creation
 - Add deterministic, per-character meter initialization without consuming the football engine's random stream.
 - Add deterministic 5% X-factor assignment, independent of request order.
-- Preserve existing APIs until tests show migration is safe.
+- Replace superseded archetype/personality decision rules. Retain APIs only when they serve the new contract and simplify testing.
 - Add invariants: five meters exactly, ordinary 1–100 bounds, one amplified dimension at most, X-factor 1–200, no hidden-field serialization.
 
 ### P3: Decision integration
