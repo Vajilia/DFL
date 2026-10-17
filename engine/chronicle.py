@@ -972,9 +972,14 @@ def main(argv=None):
     llm = LLMWriter()
     budget = Budget(os.path.join(a.out, "spend.json"), float(os.environ.get("DFL_CHRONICLE_BUDGET", "18")))
     while True:
-        feed = Feed(a.feed)
-        for y, u in scan(feed, a.out, llm if llm.enabled() else None, budget):
-            print(f"wrote {y} {u}", flush=True)
+        try:
+            feed = Feed(a.feed)
+            for y, u in scan(feed, a.out, llm if llm.enabled() else None, budget):
+                print(f"wrote {y} {u}", flush=True)
+        except (OSError, ValueError, KeyError) as err:         # the feed was caught mid-write or the runner is replaying: try again next time round
+            if not a.every:
+                raise
+            print(f"waiting: {err!r}", flush=True)
         if not a.every:
             return 0
         time.sleep(a.every)
