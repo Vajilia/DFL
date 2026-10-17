@@ -168,17 +168,17 @@ function draw(S, g, cur) {
   g.setTransform(S.dpr, 0, 0, S.dpr, 0, 0);
   drawField(S, g, M);
   drawLines(S, g, M);
-  // the cues, once the play is over; they stay until the next play is being lined up
-  let cueSc = null, alpha = 0;
-  if (S.scene) { const sc = S.scene, tA = sc.tAct == null ? sc.dur - 1 : sc.tAct; if (S.t > tA + .35) { cueSc = sc; alpha = clamp((S.t - tA - .35) / .5, 0, 1); } }
-  else if (S.cueScene && !S.tw) { cueSc = S.cueScene; alpha = 1; }
+  // the cues are up for the whole play, from the lineup to the whistle, and stay until the next play is being lined up; only the marks for who won or lost wait for the end of the play
+  let cueSc = null, alpha = 0, mAlpha = 0;
+  if (S.scene) { const sc = S.scene, tA = sc.tAct == null ? sc.dur - 1 : sc.tAct; cueSc = sc; alpha = clamp((S.t + (S.L || 0) + .05) / .6, 0, 1); mAlpha = clamp((S.t - tA - .35) / .5, 0, 1); }
+  else if (S.cueScene && !S.tw) { cueSc = S.cueScene; alpha = 1; mAlpha = 1; }
   if (cueSc) { drawCues(S, g, M, cueSc, alpha * .92); if (S.oncue && S.cueSeen !== cueSc) { S.cueSeen = cueSc; S.oncue(cueSc.call); } }
   else if (S.cueSeen) { S.cueSeen = null; if (S.oncue) S.oncue(null); }
   // dots, far side first is not needed on a flat board; the ball carrier is ringed
   const carrier = cur.ball && cur.ball.held ? cur.ball.who : -1;
   (cur.act || []).forEach((a, i) => drawDot(S, g, M, a, i, off, false, i === carrier));
   if (cur.ball) drawBall(S, g, M, cur.ball);
-  if (cueSc) drawMarks(S, g, M, cueSc, cur, alpha);
+  if (cueSc && mAlpha > 0) drawMarks(S, g, M, cueSc, cur, mAlpha);
   drawTags(S, g, M, cur);
   if (cur.ev) S.drawBanners(g, cur);
 }
