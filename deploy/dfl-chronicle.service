@@ -1,0 +1,21 @@
+[Unit]
+Description=Diamond Football League Chronicle (writes the weekly story once each week is played; reads the feed, never touches the league)
+After=network.target dfl-live.service
+
+[Service]
+User=dfl
+Group=dfl
+WorkingDirectory=/opt/dfl
+Environment=TZ=America/Los_Angeles
+# Optional, root-only file with ANTHROPIC_API_KEY, DFL_CHRONICLE_MODEL, DFL_PRICE_IN and DFL_PRICE_OUT (dollars per million tokens). Without it the free template writer is used.
+EnvironmentFile=-/etc/dfl/chronicle.env
+ExecStart=/usr/bin/python3 -I /opt/dfl/engine/chronicle.py --feed /var/www/dfl/live --out /var/www/dfl/live/chronicle --every 60
+Restart=always
+RestartSec=10
+NoNewPrivileges=true
+ProtectSystem=strict
+ReadWritePaths=/var/www/dfl/live/chronicle
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
