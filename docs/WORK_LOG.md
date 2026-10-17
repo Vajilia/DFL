@@ -130,3 +130,11 @@ Both failures sat on `step6-rebuild` from the merges (2026-10-13 for PR #6, 2026
 **Not yet verified**
 - **Fairness bands** after PR #14 (Open work, item 0).
 - **Workbook comparison:** see item 5 under Open work.
+
+### 2026-10-17: the Chronicle (narrative layer), built on branch `chronicle`, not deployed
+The Commissioner asked for 1 to 10 narrative entries after each week, 1 to 5 paragraphs each (about 2 on average), with up to $20 a month for AI writing, and decided the game never sees the narrative.
+- `engine/chronicle.py`: a read-only consumer of the live feed. Per finished unit (a regular-season week, a playoff round) it scores each game (upset, thriller, overtime, blowout, shutout, streaks, big individual nights, star injuries, the playoffs), picks 1 to 9 stories under a 950-word cap, builds a closed fact sheet per story, writes the prose, holds it to the sheet with a checker (every number, score and name must be on the sheet), and adds a short "Around the league" roundup. Written once to `chronicle/<year>_<unit>.json` and never regenerated (the runner replays past seasons from the seed, so the words cannot be re-derived). Another league's chronicle is refused.
+- Writers: a free template writer (the fallback, always passes its own checker) and an LLM writer that is OFF unless `ANTHROPIC_API_KEY`, `DFL_CHRONICLE_MODEL`, `DFL_PRICE_IN` and `DFL_PRICE_OUT` are set on the server. Bad text is retried once, then replaced by the template; a monthly budget (`DFL_CHRONICLE_BUDGET`, default 18 dollars) in `spend.json` stops it. `--estimate` sizes one week's prompts (about 4,000 tokens in, 1,300 out for 7 stories).
+- Site: a "From the Chronicle" block on the live home page and a `#chronicle` page (every week, `#chronicle-<year>_<unit>`); no new tab.
+- Rule (Commissioner): the game machine never sees the narrative. The chronicle only reads the feed; `check_chronicle.py` fails if it imports the simulation or the runner imports it. Characters other than the CEO do not read it; the CEO reads the press through the engine's own deterministic media cards, never the prose.
+- Not yet: season review piece, playoff seeds in the playoff stories, firings/exile/trade events (they are not in the feed), the LLM prompts tuned on real output, deployment (needs the Commissioner's go-ahead, a backup, and a server-side API key he places himself).

@@ -342,6 +342,7 @@ function homePage() {
   if (live.length) h += `<h2>On now</h2><div class="tablewrap">${live.map(g => liveRow(g, `<b style="color:var(--accent)">LIVE</b> ${liveClock(g.id)}`)).join("")}</div>`;
   if (next.length) h += `<h2>Up next</h2><div class="tablewrap">${next.map(g => liveRow(g, `${e(realTime(g.start))}<small style="color:var(--muted)">${inText(g.start)}</small>`)).join("")}</div>`;
   if (latest.length) h += `<h2>${LIVE ? "Latest results" : "Final games"}</h2><div class="tablewrap">${latest.map(g => line(g, `Final${g.ot ? " / OT" : ""}`)).join("")}</div>`;
+  if (LIVE) h += `<div id="chr-home">${CHR.home || ""}</div>`;
   h += `<h2>Division leaders</h2><div class="confs">`;
   D.conferences.forEach((cn, ci) => { h += `<div class="tablewrap"><table><thead><tr><th class="l">${e(cn)}</th><th class="l">Leader</th><th>Record</th></tr></thead><tbody>${[0, 1, 2, 3].map(di => { const did = ci * 4 + di, c = standingOrder(did)[0];
     return `<tr><td class="l"><a href="#division-${did}">${e(divName(did))}</a></td><td class="l">${c && !c.exiled ? clubLink(c) : "–"}</td><td>${c && !c.exiled ? rec(c.record) : ""}</td></tr>`; }).join("")}</tbody></table></div>`; });
@@ -1255,9 +1256,26 @@ async function statsRun(kind) {
   draw();
 }
 
+/* the Chronicle: the league's story, one write-up per week, written once by engine/chronicle.py from the finished games and never changed after. Live site only; the game engine never sees it */
+const CHR = { idx: null, docs: {} };
+async function chrIndex() { if (CHR.idx && Date.now() - CHR.t < 60000) return CHR.idx; CHR.t = Date.now(); try { CHR.idx = (await getJSON("chronicle/index.json")).units || []; } catch (err) { CHR.idx = CHR.idx || []; } return CHR.idx; }
+async function chrDoc(u) { if (!CHR.docs[u.file]) CHR.docs[u.file] = await getJSON("chronicle/" + u.file); return CHR.docs[u.file]; }
+function chrEntry(en) { const cl = (en.clubs || []).map(id => byId[id]).filter(Boolean);
+  return `<article class="card" style="margin:0 0 12px"><h3 style="margin:0 0 6px">${cl.map(c => badge(c, "sm")).join(" ")} ${e(en.headline)}</h3>${en.paragraphs.map(p => `<p style="margin:8px 0">${e(p)}</p>`).join("")}</article>`; }
+function chrTitle(u) { return `${e(u.label)}, season ${e(u.season)}`; }
+async function chrHome() { const box = document.getElementById("chr-home"); if (!box) return; const idx = await chrIndex(); if (!idx.length || !document.getElementById("chr-home")) return;
+  const u = idx[idx.length - 1], d = await chrDoc(u); if (!document.getElementById("chr-home") || !d.entries.length) return;
+  const en = d.entries[0]; box.innerHTML = CHR.home = `<h2>From the Chronicle</h2><p class="note" style="margin-top:0">${chrTitle(u)}</p>${chrEntry({ ...en, paragraphs: en.paragraphs.slice(0, 1) })}<p><a href="#chronicle-${e(u.file.replace(".json", ""))}">Read all ${d.entries.length} stories from ${e(u.label)}</a> · <a href="#chronicle">Every week</a></p>`; }
+function chroniclePage(arg) { setTimeout(() => chrBody(arg), 0); return `<div class="stack"><h1>The Chronicle</h1><div id="chr-body"><p class="note">Loading…</p></div></div>`; }
+async function chrBody(arg) { const box = document.getElementById("chr-body"); if (!box) return; const idx = await chrIndex(); if (!document.getElementById("chr-body")) return;
+  if (!idx.length) { box.innerHTML = `<p class="note">The first write-up appears when the first week of the season has been played.</p>`; return; }
+  const cur = idx.find(u => u.file === arg + ".json") || idx[idx.length - 1], d = await chrDoc(cur); if (!document.getElementById("chr-body")) return;
+  const list = idx.slice().reverse().map(u => `<a href="#chronicle-${e(u.file.replace(".json", ""))}" ${u === cur ? 'aria-current="page" style="font-weight:700"' : ""}>${chrTitle(u)}</a>`).join(" · ");
+  box.innerHTML = `<p class="note" style="margin-top:0">The week as it was played. Each write-up is published once and never changed.</p><h2>${chrTitle(cur)}</h2>${d.entries.map(chrEntry).join("")}<h2>Every week</h2><p style="line-height:2">${list}</p>`; }
+
 /* ---------- router, tabs, search ---------- */
 const TABS = [["dfl", "DFL"]].concat(LIVE ? [["live", "Live"]] : []).concat([["standings", "Standings"], ["schedule", "Schedule"], ["playoffs", "Playoffs"], ["stats", "Statistics"], ["search", "Search"], ["info", "History and Information"]]);
-const SECTION = { club: "dfl", clubs: "dfl", player: "dfl", players: "search", standings: "standings", conference: "dfl", division: "dfl", game: "schedule", guide: "info", seasons: "info", founding: "info", calendar: "info", home: "" };
+const SECTION = { club: "dfl", clubs: "dfl", player: "dfl", players: "search", standings: "standings", conference: "dfl", division: "dfl", game: "schedule", guide: "info", chronicle: "info", seasons: "info", founding: "info", calendar: "info", home: "" };
 const curWeek = () => { const g = D.games.filter(x => !x.final).sort((a, b) => a.week - b.week)[0]; return g ? g.week : 19; };
 function render(scroll = true) {
   const parts = routeParts(), page = parts[0];
@@ -1265,12 +1283,13 @@ function render(scroll = true) {
   if (LIVE && FEED.view && page === "live") { endView(); }
   if (LIVE && !FEED.results.year && page !== "live" && ["standings", "schedule", "playoffs", "club", "dfl", "conference", "division"].includes(page)) { location.hash = "live"; return; }
   const html = page === "home" ? homePage() : page === "dfl" || page === "clubs" ? dflPage() : page === "conference" ? conferencePage(+parts[1]) : page === "division" ? divisionPage(+parts[1]) : page === "search" || page === "players" ? (page === "players" && (SRCH.type = "player"), searchPage()) : page === "info" ? infoPage()
-    : page === "live" ? livePage() : page === "standings" ? standings() : page === "schedule" ? schedule(+parts[1] || (LIVE ? curWeek() : 1)) : page === "guide" ? guide() : page === "playoffs" ? playoffs() : page === "club" ? club(parts[1])
+    : page === "live" ? livePage() : page === "standings" ? standings() : page === "schedule" ? schedule(+parts[1] || (LIVE ? curWeek() : 1)) : page === "guide" ? guide() : page === "chronicle" ? chroniclePage((parts[1] || "")) : page === "playoffs" ? playoffs() : page === "club" ? club(parts[1])
     : page === "game" ? game(parts[1]) : page === "player" ? player(parts[1], parts[2]) : page === "stats" ? statsPage(parts[1]) : page === "seasons" ? seasonsPage(parts[1]) : page === "founding" ? founding() : page === "calendar" ? calendarPage() : notFound();
   if (REPLAY) { REPLAY.stop(); if (REPLAY.destroy) REPLAY.destroy(); REPLAY = null; }
   const banner = LIVE && FEED.view && page !== "seasons" ? `<div class="stack" style="padding-bottom:0"><p class="note" style="margin:0"><b>You are looking back at season ${e(D.season)}, a finished season.</b> <a href="#seasons">All seasons</a> · <a href="#live" data-live="1">Back to live</a></p></div>` : "";
   document.getElementById("app").innerHTML = banner + html;
   if (page === "game") startGame(parts[1]);
+  if (LIVE && page === "home") chrHome();
   const section = page in SECTION ? SECTION[page] : page;
   document.getElementById("tabs").innerHTML = TABS.map(([k, n]) => `<a href="#${k}" ${k === section ? 'aria-current="page"' : ""}>${n}</a>`).join("");
   if (scroll) window.scrollTo(0, 0);
