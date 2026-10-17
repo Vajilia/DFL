@@ -194,26 +194,29 @@ function withAlign(call, f) {
 }
 function trackFor(S, fig, st, asg, tS, tA, ball, role) {
   const X0 = st[0], Y0 = st[1], pre = st[2], face0 = st[3];
-  const hard = new Set(["zone", "block", "drive", "pass_set", "release", "stalk", "kick"]);
-  const pts = (asg && asg.pts || []).map(p => [clamp(S.X(p[0]), -3.5, 123.5), clamp(p[1], .6, FW - .6)]);
-  const tr = [[0, X0, Y0, pre, face0]];
-  const tGo = tS + .1 + (pre === "stance" ? .04 : 0);
-  let pose = asg && hard.has(asg.act) ? "block" : "run", t = tGo, px = X0, py = Y0;
-  if (pts.length) {
-    let L = 0; const seg = pts.map(p => { const d = Math.hypot(p[0] - px, p[1] - py); L += d; px = p[0]; py = p[1]; return d; });
-    const win = Math.max(.6, tA - .1 - tGo);
-    let dur = clamp(L / (pose === "block" ? 3 : 6.2), .4, win); if (L / dur > 8.4) dur = L / 8.4;
-    tr.push([tGo, X0, Y0, L < .3 ? "stand" : pose, null]);
-    let tt = tGo; px = X0; py = Y0;
-    pts.forEach((p, k) => { tt += dur * (L > 0 ? seg[k] / L : 1 / pts.length); tr.push([Math.max(tt, tr[tr.length - 1][0] + .02), p[0], p[1], pose, null]); });
-    t = tr[tr.length - 1][0]; px = pts[pts.length - 1][0]; py = pts[pts.length - 1][1];
-  } else tr.push([tGo, X0, Y0, "stand", null]);
-  // having got where he was sent, a defender (or a rusher who got through) closes on the ball while the play ends
-  if (role === 1 && tA + .25 - t > .35) {
-    const dx = ball[0] - px, dy = ball[1] - py, d = Math.hypot(dx, dy), m = Math.min(d * .55, 9);
-    if (d > .5) { tr[tr.length - 1][3] = "run"; tr.push([tA + .25, px + dx / d * m, clamp(py + dy / d * m, .6, FW - .6), "stand", null]); }
+  const hard = new Set(["zone", "block", "drive", "pass_set", "release", "stalk", "kick"]), pose = asg && hard.has(asg.act) ? "block" : "run";
+  let path = [[X0, Y0]].concat((asg && asg.pts || []).map(p => [clamp(S.X(p[0]), -3.5, 123.5), clamp(p[1], .6, FW - .6)]));
+  // having got where he was sent, a defender (or a rusher who got through) closes on the ball while the play ends: one more leg of the same path
+  const tGo = tS + .1 + (pre === "stance" ? .04 : 0), lastP = path[path.length - 1];
+  if (role === 1) { const dx = ball[0] - lastP[0], dy = ball[1] - lastP[1], d = Math.hypot(dx, dy), m = Math.min(d * .55, 9); if (d > 1.2 && m > .8) path.push([lastP[0] + dx / d * m, clamp(lastP[1] + dy / d * m, .6, FW - .6)]); }
+  // round the corners (two passes of corner cutting), so nobody turns on a dime
+  for (let it = 0; it < 2 && path.length > 2; it++) {
+    const q = [path[0]]; for (let k = 0; k < path.length - 1; k++) { const a = path[k], b = path[k + 1]; q.push([a[0] * .75 + b[0] * .25, a[1] * .75 + b[1] * .25], [a[0] * .25 + b[0] * .75, a[1] * .25 + b[1] * .75]); } q.push(path[path.length - 1]); path = q;
   }
-  tr[tr.length - 1][3] = "stand";
+  const cum = [0]; for (let k = 1; k < path.length; k++) cum.push(cum[k - 1] + Math.hypot(path[k][0] - path[k - 1][0], path[k][1] - path[k - 1][1]));
+  const L = cum[cum.length - 1], tr = [[0, X0, Y0, pre, face0]];
+  if (L < .3) { tr.push([tGo, X0, Y0, "stand", null]); return tr; }
+  const tEnd = role === 1 ? tA + .25 : tA - .1, win = Math.max(.6, tEnd - tGo), speed = pose === "block" ? 3.2 : 6;
+  let T = clamp(L / speed, .45, win); if (L / T > 7.4) T = L / 7.4;
+  const ease = u => .5 * u + .5 * (u * u * (3 - 2 * u)), N = Math.max(2, Math.round(T / .1));        // a reading about every tenth of a second, easing in and out
+  let face = face0 || 1, k = 0;
+  tr.push([tGo, X0, Y0, pose, face]);
+  for (let n = 1; n <= N; n++) {
+    const d = ease(n / N) * L; while (k < path.length - 2 && cum[k + 1] < d) k++;
+    const u = cum[k + 1] > cum[k] ? clamp((d - cum[k]) / (cum[k + 1] - cum[k]), 0, 1) : 1, x = path[k][0] + (path[k + 1][0] - path[k][0]) * u, y = path[k][1] + (path[k + 1][1] - path[k][1]) * u;
+    const prev = tr[tr.length - 1]; if (Math.abs(x - prev[1]) > .35) face = Math.sign(x - prev[1]);
+    tr.push([tGo + T * n / N, x, y, n === N ? "stand" : pose, face]);
+  }
   return tr;
 }
 function applyCall(S, call) {
