@@ -124,7 +124,7 @@ const TD_SUB = d => d ? (d[7] === 7 ? "Extra point good" : d[7] === 6 ? "Extra p
    ctx.hint     where the next possession begins, as a spot in this play's offense frame (0..100), when the log says; null if it does not
    ctx.dr       the drive record, when this is the last play of the drive
    ctx.abbr     [home, away] club codes;  ctx.pen  the penalty's name;  ctx.seed  any number: it only varies the choreography */
-function buildScene(P, ctx) {
+function buildSceneCore(P, ctx) {
   let [off, down, toGo, pos, yds, to, kind, a, bb, c, , , , , gt] = P;
   ctx = ctx || {};
   const orig = kind;
@@ -178,6 +178,68 @@ function buildScene(P, ctx) {
   }
   S.dur += .3;
   S.balls.sort((x, y) => x.t0 - y.t0);
+  S.H = H;
+  return S;
+}
+
+
+/* ---------- the chalkboard's call (site/playcalls.js): the formation, and the assignments of the players a play does not name ----------
+   The scene is built twice. The first build, with the usual formation, only tells which figures the log names (the carrier, the passer, the receiver, the tackler, the sacker); the call is
+   chosen for that result; the second build lines everyone up the way the call says (the choreography starts from those spots) and the figures the log does not name then follow their
+   assignments instead of the usual script. The figures the log names, the ball, the banners and the end of the play are exactly what they were. Only the chalkboard view asks for this. */
+function withAlign(call, f) {
+  const sO = OFF_F.map(p => p.slice()), sD = DEF_F.map(p => p.slice());
+  call.at.o.forEach((p, k) => { OFF_F[k] = [p[0], p[1]]; }); call.at.d.forEach((p, k) => { DEF_F[k] = [p[0], p[1]]; });
+  try { return f(); } finally { sO.forEach((p, k) => { OFF_F[k] = p; }); sD.forEach((p, k) => { DEF_F[k] = p; }); }
+}
+function trackFor(S, fig, st, asg, tS, tA, ball, role) {
+  const X0 = st[0], Y0 = st[1], pre = st[2], face0 = st[3];
+  const hard = new Set(["zone", "block", "drive", "pass_set", "release", "stalk", "kick"]);
+  const pts = (asg && asg.pts || []).map(p => [clamp(S.X(p[0]), -3.5, 123.5), clamp(p[1], .6, FW - .6)]);
+  const tr = [[0, X0, Y0, pre, face0]];
+  const tGo = tS + .1 + (pre === "stance" ? .04 : 0);
+  let pose = asg && hard.has(asg.act) ? "block" : "run", t = tGo, px = X0, py = Y0;
+  if (pts.length) {
+    let L = 0; const seg = pts.map(p => { const d = Math.hypot(p[0] - px, p[1] - py); L += d; px = p[0]; py = p[1]; return d; });
+    const win = Math.max(.6, tA - .1 - tGo);
+    let dur = clamp(L / (pose === "block" ? 3 : 6.2), .4, win); if (L / dur > 8.4) dur = L / 8.4;
+    tr.push([tGo, X0, Y0, L < .3 ? "stand" : pose, null]);
+    let tt = tGo; px = X0; py = Y0;
+    pts.forEach((p, k) => { tt += dur * (L > 0 ? seg[k] / L : 1 / pts.length); tr.push([Math.max(tt, tr[tr.length - 1][0] + .02), p[0], p[1], pose, null]); });
+    t = tr[tr.length - 1][0]; px = pts[pts.length - 1][0]; py = pts[pts.length - 1][1];
+  } else tr.push([tGo, X0, Y0, "stand", null]);
+  // having got where he was sent, a defender (or a rusher who got through) closes on the ball while the play ends
+  if (role === 1 && tA + .25 - t > .35) {
+    const dx = ball[0] - px, dy = ball[1] - py, d = Math.hypot(dx, dy), m = Math.min(d * .55, 9);
+    if (d > .5) { tr[tr.length - 1][3] = "run"; tr.push([tA + .25, px + dx / d * m, clamp(py + dy / d * m, .6, FW - .6), "stand", null]); }
+  }
+  tr[tr.length - 1][3] = "stand";
+  return tr;
+}
+function applyCall(S, call) {
+  const H = S.H, inv = new Set([S.O(9)]);
+  S.balls.forEach(b => { if (b.k === "carry") inv.add(b.who); });
+  S.ev.forEach(e => { if (e.k === "tag") inv.add(e.a); });
+  H.used.forEach(k => inv.add(S.D(k)));
+  if (call.off.type === "run") inv.add(S.O(10));
+  const tS = H.tS, tA = S.tAct != null ? S.tAct : Math.max(1.5, S.dur - 1), b = endBall(S);
+  for (let role = 0; role < 2; role++) for (let k = 0; k < 11; k++) {
+    const fig = role === 0 ? S.O(k) : S.D(k); if (inv.has(fig)) continue;
+    S.tr[fig] = trackFor(S, fig, S.start[fig], (role === 0 ? call.plan.o : call.plan.d)[k], tS, tA, [b.x, b.y], role);
+  }
+  S.inv = inv;
+}
+function buildScene(P, ctx) {
+  const ch = ctx && ctx.chalk, kind = P[6];
+  if (!ch || !root.DFLCalls || !(kind === "RU" || kind === "PC" || kind === "PI" || kind === "IN" || kind === "SK" || kind === "2P")) return buildSceneCore(P, ctx);
+  const S0 = buildSceneCore(P, ctx), off = S0.off, qb = S0.O(9);
+  const named = S0.ev.filter(e => e.k === "tag").map(e => e.a), tgt = named.find(f => Math.floor(f / 11) === off && f !== qb), used = [...S0.H.used];
+  const info = { oc: ch.oc, dc: ch.dc, seed: ch.seed, rate: ch.rate, tj: tgt != null && P[6] !== "RU" ? tgt - off * 11 : -1, sj: used.length ? used[0] : -1 };
+  const call = root.DFLCalls.choose(P, ch.sit, info);
+  if (!call) { S0.call = null; return S0; }
+  const S = withAlign(call, () => buildSceneCore(P, ctx));
+  applyCall(S, call);
+  S.call = call;
   return S;
 }
 
@@ -230,6 +292,7 @@ function runScene(H) {
   }
   for (const k of [5, 6, 7, 8]) { const f = OFF_F[k], dU = clamp(Math.max(3, uEnd * .8) + 2 + R() * 4, 4, td ? goal + 1 : 18), vv = clamp(f[1] + (vEnd - f[1]) * .25, 2, 51); S.hold(S.O(k), tS + .1).go(S.O(k), Math.max(tE - .05, tS + .8), dU, vv, "run").hold(S.O(k), tE + .4, "block"); }
   S.tag(rb, tH, tE + 1, name(a)); if (tk >= 0) S.tag(S.D(tk), tE - .1, tE + 1, name(bb));
+  S.tAct = tE;
   finishPlay(H, rb, tk >= 0 ? S.D(tk) : -1, tE, uEnd, vEnd, td);
 }
 
@@ -249,7 +312,7 @@ function sackScene(H) {
   for (const k of [5, 6, 7, 8]) { const f = OFF_F[k]; S.hold(S.O(k), tS + .1).go(S.O(k), tK + .3, 7 + R() * 7, clamp(f[1] + (R() - .5) * 8, 3, 50), "run"); }
   S.hold(rbk, tS).go(rbk, tS + .5, -4.2, 25.6, "block").hold(rbk, tK + .4, "block");
   S.hold(qb, tK + .2, "down").hold(qb, tK + 3, "down");
-  S.hold(D, tK + .9, "tackle");
+  S.hold(D, tK + .9, "tackle"); S.tAct = tK + .3;
   S.tag(qb, tS + .3, tK + 1.2, name(a)); S.tag(D, tK - .2, tK + 1.2, name(bb));
   if (to === 2) {                                                        // sacked and stripped
     const rk = 4 + (sk + 1 + (R() * 3 | 0)) % 7, rec = S.D(rk === sk ? 4 + (rk - 3) % 7 : rk), uB = uQ - 1.6, uR = H.hu != null ? H.hu : uB;
@@ -307,7 +370,7 @@ function passScene(H) {
     S.brest(tR + .35, uR + (pickTd ? 0 : .3), vR, 0);
     S.tag(Dc, tC, tR + .8, name(c));
     S.banner(tC + .1, tR + 1.2, pickTd ? "PICK SIX" : "INTERCEPTED", pickTd ? name(c) : "", "bad");
-    S.endSpot = { off, u: uR }; S.dur = Math.max(S.dur, tR + 1.6);
+    S.endSpot = { off, u: uR }; S.dur = Math.max(S.dur, tR + 1.6); S.tAct = tR;
     return;
   }
   if (kind === "PI") {
@@ -318,7 +381,7 @@ function passScene(H) {
     for (let k = 4; k < 11; k++) if (k !== cov) H.converge(S.D(k), tS + .3, tC + .3, uC + (R() - .3) * 4 + (k > 8 ? 2 : 0), vT + (R() - .5) * 12);
     S.tag(tgt, tC - .5, tC + 1, name(bb));
     S.banner(tC + .25, tC + 1.7, "INCOMPLETE", "", "small");
-    S.endSpot = { off, u: 0 }; S.dur = Math.max(S.dur, tC + 1.5);
+    S.endSpot = { off, u: 0 }; S.dur = Math.max(S.dur, tC + 1.5); S.tAct = tC + .5;
     return;
   }
   // a completion: the catch, then the run after the catch to the spot of the tackle
@@ -330,6 +393,7 @@ function passScene(H) {
   for (let k = 4; k < 11; k++) if (k !== cov) H.converge(S.D(k), tS + .3, tE + R() * .25, uEnd + (td ? -1 - R() * 5 : .8 + R() * 3.5), vEnd + (R() - .5) * 6);
   S.tag(tgt, tC - .4, tE + 1, name(bb)); if (!td) S.tag(Dc, tE - .1, tE + 1, name(c));
   for (const k of [5, 6, 7, 8]) if (k !== tgtSlot) S.hold(S.O(k), Math.max(S.where(S.O(k))[2], tE + .2), "stand");
+  S.tAct = tE;
   finishPlay(H, tgt, td ? -1 : Dc, tE, uEnd, vEnd, td);
 }
 const hintOr = (H, dflt) => H.hu != null ? H.hu : dflt;
@@ -530,6 +594,7 @@ function Stage(cv, o) {
 }
 Stage.prototype = {
   size() {
+    if (this.chalk && root.DFLChalk) { root.DFLChalk.layout(this); return; }
     const cv = this.cv, w = Math.max(200, cv.clientWidth || 600), h = Math.max(100, cv.clientHeight || Math.round(w / 3.1)), dpr = Math.min(2, window.devicePixelRatio || 1);
     this.W = w; this.Hh = h; this.dpr = dpr; cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
     if (this.r3) this.r3.resize(w, h, dpr);
@@ -554,6 +619,13 @@ Stage.prototype = {
       this.r3.setView(mode); this.mode = mode; this.size(); this.draw(); fin("ok");
     }, () => { if (this.want3 === mode) { this.mode = "2d"; this.want3 = null; fin("fail"); } });
   },
+  /* setView(mode, done): "chalk" is the flat dot board (site/chalk.js); "2d", "side" and "behind" are the sprite field and the two 3D views (set3d) */
+  setView(mode, done) {
+    const C = root.DFLChalk;
+    if (mode === "chalk" && C) { this.drop3(); this.want3 = null; this.mode = "chalk"; this.chalk = true; this.layerKey = ""; this.size(); this.draw(); if (done) done("ok"); return; }
+    if (this.chalk) { this.chalk = false; if (C) C.leave(this); this.size(); }
+    this.set3d(mode === "chalk" ? "2d" : mode, done);
+  },
   drop3() {
     if (this.r3) { this.r3.dispose(); this.r3 = null; }
     this.cv.style.position = ""; this.cv.style.left = ""; this.cv.style.top = ""; this.cv.style.pointerEvents = "";
@@ -568,7 +640,7 @@ Stage.prototype = {
   show(sit, o) {
     o = o || {};
     if (this.scene && !o.snap) { this.pend = [sit, o]; return; }
-    this.pend = null;
+    this.pend = null; if (o.snap) this.cueScene = null;
     if (!sit) { this.tLos = this.tFd = null; if (o.snap) { this.lineLos = this.lineFd = null; } this.kick(); return; }
     const kind = o.kind === "FG" || o.kind === "PU" || o.kind === "KO" ? o.kind : o.kind === "XP" ? "FG" : "N", los = wxOf(sit.off, sit.pos), toGoal = sit.pos + sit.toGo >= 100;
     this.sit = sit; this.tLos = o.dim ? null : los; this.tFd = toGoal || o.dim ? null : wxOf(sit.off, sit.pos + sit.toGo);
@@ -586,12 +658,12 @@ Stage.prototype = {
   fire() { const f = this.onsettle; this.onsettle = null; if (f) f(); },
   far(a, b) { let m = 0; for (let i = 0; i < 22; i++) m = Math.max(m, Math.hypot(a[i].x - b[i].x, a[i].y - b[i].y)); return m; },
   settle() {
-    if (this.scene) { const e = sampleScene(this.scene, this.scene.dur + 1); this.rest = e.act; this.ball = e.ball; this.scene = null; this.fire(); }
+    if (this.scene) { const e = sampleScene(this.scene, this.scene.dur + 1); this.rest = e.act; this.ball = e.ball; this.cueScene = this.scene.call ? this.scene : null; this.scene = null; this.fire(); }
     if (this.tw) { this.rest = this.tw.to; this.ball = { x: this.tw.bx, y: MID, z: 0, spin: 0, held: false }; this.tw = null; }
   },
   /* play(scene, avail): animate a scene; avail is the real time in seconds before the next play is due (null: take the time it needs). Returns false when it was shown as the result only. */
   play(sc, avail) {
-    this.settle(); this.pend = null;
+    this.settle(); this.pend = null; this.cueScene = null; if (sc.lu) this.lu = sc.lu;
     const start = sc.start.map(p => ({ x: p[0], y: p[1], pose: p[2], face: p[3] }));
     let L = 0;
     if (!this.rest || this.far(this.rest, start) > 32) { this.rest = start; this.ball = sampleBall(sc, 0, start); }
@@ -644,6 +716,7 @@ Stage.prototype = {
   draw() {
     if (this.dead) return;
     const g = this.g, cur = this.current(); this.cur = cur;
+    if (this.chalk && root.DFLChalk) { root.DFLChalk.draw(this, g, cur); return; }
     g.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
     if (this.r3) {                                                  // the 3D view draws the picture; the 2D canvas laid over it carries the banners and the name tags
       g.clearRect(0, 0, this.W, this.Hh);
