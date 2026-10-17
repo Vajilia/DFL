@@ -32,7 +32,12 @@ def build(out: str, seed: int = 7, live: bool = False, rules: int = 1) -> int:
     data = json.dumps(spoiler_free(d) if live else d, separators=(",", ":")).replace("</", "<\\/")      # safe inside a script tag
     stage = open(os.path.join(ROOT, "site", "stage.js"), encoding="utf-8").read()
     stage3d = open(os.path.join(ROOT, "site", "stage3d.js"), encoding="utf-8").read()
-    html = open(os.path.join(ROOT, "site", "template.html"), encoding="utf-8").read().replace("__STAGE__", stage).replace("__STAGE3D__", stage3d).replace("__DATA__", data)
+    playcalls = open(os.path.join(ROOT, "site", "playcalls.js"), encoding="utf-8").read()
+    chalk = open(os.path.join(ROOT, "site", "chalk.js"), encoding="utf-8").read()
+    playbook = json.dumps(json.load(open(os.path.join(ROOT, "data", "playbook.json"), encoding="utf-8")), separators=(",", ":")).replace("</", "<\\/")
+    html = open(os.path.join(ROOT, "site", "template.html"), encoding="utf-8").read()
+    for key, val in (("__STAGE__", stage), ("__STAGE3D__", stage3d), ("__PLAYCALLS__", playcalls), ("__CHALK__", chalk), ("__PLAYBOOK__", playbook), ("__DATA__", data)):
+        html = html.replace(key, val)
     with open(out, "w", encoding="utf-8") as f:
         f.write(html)
     return len(html)

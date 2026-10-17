@@ -134,6 +134,7 @@ select, .btn { font: inherit; padding: 7px 12px; border: 1px solid var(--line); 
 .fld .first { position: absolute; top: 0; bottom: 0; width: 4px; margin-left: -2px; background: var(--accent); box-shadow: 0 0 10px 1px var(--accent); transition: left .35s; }
 .stagewrap { position: relative; margin-top: 10px; border: 2px solid #0A150F; box-shadow: 0 0 0 1px var(--line), inset 0 8px 18px rgba(0,0,0,.35); background: #05070B; overflow: hidden; }
 .stagewrap canvas { display: block; width: 100%; height: clamp(220px, 31vw, 380px); }
+.callline { margin: 8px 0 0; font-size: 15px; line-height: 1.45; max-width: none; color: var(--ink); min-height: 2.9em; } .callline b { color: var(--accent); } .callline small { color: var(--muted); font-size: 13px; display: block; }
 .stagebar { display: flex; justify-content: flex-end; align-items: center; gap: 10px; margin-top: 6px; color: var(--muted); font-size: 14px; }
 .stagebar .btn { padding: 3px 12px; font-size: 15px; }
 .stagewrap canvas.gl { display: block; }
@@ -164,6 +165,9 @@ footer { max-width: 1080px; margin: 40px auto 0; color: var(--muted); font-size:
 <script id="data" type="application/json">__DATA__</script>
 <script>__STAGE__</script>
 <script>__STAGE3D__</script>
+<script id="playbook" type="application/json">__PLAYBOOK__</script>
+<script>__PLAYCALLS__</script>
+<script>__CHALK__</script>
 <script>
 "use strict";
 const D = JSON.parse(document.getElementById("data").textContent);
@@ -772,6 +776,7 @@ function game(id) {
   <div class="sitrow"><div id="poss"></div><div class="dd" id="dd"></div><div class="r" id="drv1"></div></div>
   <div class="fld" id="field" aria-hidden="true">${fieldMarks(A, H)}<span class="trail" id="trail"></span><span class="first" id="first"></span><span class="los" id="los"></span><span class="ball" id="ball"></span></div>
   <div class="stagewrap" id="stagewrap" hidden><canvas id="stage" role="img" aria-label="Animated field: the plays of the game as they are run. The play by play below tells the same story in words."></canvas></div>
+  <p class="callline" id="callline" hidden></p>
   <div class="stagebar"><span id="animnote"></span><button class="btn" id="view3d" type="button" hidden>View: 2D</button><button class="btn" id="anim" type="button" aria-pressed="false">Animation: off</button></div>
   <p id="sit" style="margin-top:6px;color:var(--muted);font-size:14px;max-width:none"></p><div class="dch" id="dch"></div>
   ${live ? `<p class="note" style="margin-top:12px"><b style="color:var(--accent)">LIVE</b> This game is being played now. Each play appears here as it happens, and you can replay it once it is over.</p>` : `<div class="controls" style="margin-top:12px"><button class="btn primary" id="watch">Watch replay</button><button class="btn" id="pause" disabled>Pause</button><label style="color:var(--muted);font-size:14px">Speed <select id="speed"><option value="1">1x (about ${realLen} min)</option><option value="4">4x</option><option value="16">16x</option><option value="60">60x</option></select></label><button class="btn" id="final">Skip to final</button></div>`}</div>
@@ -825,20 +830,54 @@ function startGame(id) {
   const setAnim = on => {
     on = !!on && !!ST; $("anim").textContent = "Animation: " + (on ? "on" : "off"); $("anim").setAttribute("aria-pressed", on ? "true" : "false");
     $("stagewrap").hidden = !on; $("field").style.display = on ? "none" : "";
-    if (on && !stage) { stage = new ST.Stage($("stage"), { H, A }); applyView(); }
+    if (on && !stage) { stage = new ST.Stage($("stage"), { H, A }); if (CHK) stage.lu = LU.map(x => ({ o: x.o, d: x.d })); stage.oncue = callText; applyView(); }
     if (!on && stage) { stage.destroy(); stage = null; }
-    $("view3d").hidden = !on || !window.DFLStage3D;
+    $("view3d").hidden = !on; if (!on) $("callline").hidden = true;
   };
   /* the field can be drawn flat (2D, always works) or in 3D (site/stage3d.js, which fetches three.js the first time and gives up quietly to the 2D field when it cannot) */
-  const VIEWS = ["2d", "side", "behind"], VLAB = { "2d": "View: 2D", side: "View: 3D sideline", behind: "View: 3D behind the offense" };
+  const VIEWS = ["2d", "chalk", "side", "behind"], VLAB = { "2d": "View: 2D", chalk: "View: Chalkboard", side: "View: 3D sideline", behind: "View: 3D behind the offense" };
   let view = (() => { try { const v = localStorage.getItem("dfl.view"); if (VIEWS.includes(v)) return v; } catch (err) {} return "2d"; })();
   const applyView = () => {
     $("view3d").textContent = VLAB[view];
-    if (stage) stage.set3d(view, st => { if (st === "fail") { view = "2d"; $("view3d").textContent = VLAB["2d"]; $("animnote").textContent = "The 3D view could not start in this browser, so the field stays flat."; } else if (st === "ok") $("animnote").textContent = ""; });
+    $("callline").hidden = !stage || view !== "chalk"; if (view !== "chalk") $("callline").textContent = ""; else if (!$("callline").textContent) $("callline").innerHTML = "<small>The coordinators' calls are drawn here after each play.</small>";
+    if (stage) stage.setView(view, st => { if (st === "fail") { view = "2d"; $("callline").hidden = true; $("view3d").textContent = VLAB["2d"]; $("animnote").textContent = "The 3D view could not start in this browser, so the field stays flat."; } else if (st === "ok") $("animnote").textContent = ""; });
+  };
+  /* the chalkboard (site/chalk.js, site/playcalls.js): the dots carry jersey numbers and the call each coordinator most likely made is drawn after the play. Numbers and the players on the
+     board are the roster's best at each position (the players the log names take their dots); both are reconstruction, not records. */
+  const CHK = !!(window.DFLChalk && window.DFLCalls && ST), CLUBS = [H, A];
+  if (CHK && !DFLCalls.ready) { try { DFLCalls.use(JSON.parse($("playbook").textContent)); DFLCalls.ready = true; } catch (err) { DFLCalls.ready = false; } }
+  const NUM0 = { QB: 1, RB: 20, WR: 10, TE: 80, OL: 60, DL: 90, LB: 50, CB: 30, S: 40, K: 3, P: 4 };
+  const LU = CLUBS.map(c => {
+    const by = {}, ent = {}; c.roster.forEach(p => (by[p.pos] = by[p.pos] || []).push(p));
+    for (const k in by) { by[k].sort((x, y) => (y.ovr - x.ovr) || (x.name < y.name ? -1 : 1)); by[k].forEach((p, i) => { ent[p.name] = { num: (NUM0[k] || 0) + (i % 10), pos: k, name: p.name, ovr: p.ovr }; }); }
+    const at = (pos, i) => by[pos] && by[pos][i] ? ent[by[pos][i].name] : null;
+    return { ent, o: [at("OL", 0), at("OL", 1), at("OL", 2), at("OL", 3), at("OL", 4), at("TE", 0), at("WR", 0), at("WR", 1), at("WR", 2), at("QB", 0), at("RB", 0)],
+      d: [at("DL", 0), at("DL", 1), at("DL", 2), at("DL", 3), at("LB", 0), at("LB", 1), at("CB", 2), at("CB", 0), at("CB", 1), at("S", 0), at("S", 1)] };
+  });
+  const luFor = sc => {
+    const lu = LU.map(x => ({ o: x.o.slice(), d: x.d.slice() }));
+    sc.ev.forEach(ev => { if (ev.k !== "tag" || !ev.text) return; const club = Math.floor(ev.a / 11), job = ev.a % 11, arr = lu[club][club === sc.off ? "o" : "d"], en = LU[club].ent[ev.text]; if (!en) return;
+      const j = arr.indexOf(en); if (j >= 0) { arr[j] = arr[job]; } arr[job] = en; });
+    return lu;
+  };
+  const coordOf = (club, key) => { const q = club.people && club.people[key]; return q ? { name: q.name, arch: q.trait } : { name: "", arch: "" }; };
+  const chalkFor = (pl, i) => {
+    const off = pl[0], dfn = 1 - off, lu = LU;
+    return { sit: DFLCalls.situation(plays, b.dr, i), oc: coordOf(CLUBS[off], "offensive_coordinator"), dc: coordOf(CLUBS[dfn], "defensive_coordinator"), seed: [...String(id)].reduce((h, ch) => (Math.imul(h, 31) + ch.charCodeAt(0)) | 0, 7),
+      rate: (side, j) => { const en = side === 0 ? lu[off].o[j] : lu[dfn].d[j]; return en ? en.ovr : null; } };
+  };
+  const who = q => q && q.name ? `${e(q.name)}${q.arch ? `, the ${e(q.arch)}` : ""}` : "";
+  const form = (al, nm) => nm && al.split(/[ ,]/)[0].toLowerCase() === nm.split(/[ ,(]/)[0].toLowerCase() ? "" : `, lined up in ${e(al.charAt(0).toLowerCase() + al.slice(1))}`;
+  const callText = c => {
+    const el = $("callline"); if (!el || view !== "chalk") return;
+    if (!c) { el.innerHTML = "<small>The coordinators' calls are drawn here after each play.</small>"; return; }
+    el.innerHTML = `<b>Offense</b>${c.coord.o && c.coord.o.name ? ` (${who(c.coord.o)})` : ""}: ${e(c.off.name)}${form(c.off.alignName)}. <b>Defense</b>${c.coord.d && c.coord.d.name ? ` (${who(c.coord.d)})` : ""}: ${e(c.def.name)}${form(c.def.alignName, c.def.name)}.<small>${e(c.situation.charAt(0).toUpperCase() + c.situation.slice(1))}. A reconstruction: the most likely calls given what the play log says happened, not a record of what was called.</small>`;
   };
   const sceneFor = i => {
-    const pl = plays[i], nx = plays[i + 1];
-    return ST.buildScene(pl, { nm: j => b.pl[j] || null, hint: nx && nx[13] !== pl[13] ? (nx[0] === pl[0] ? nx[3] : 100 - nx[3]) : null, dr: driveFor(i), next: nextRow(i), abbr: [H.abbr, A.abbr], pen: PEN[pl[7]] ? PEN[pl[7]][0] : "" });
+    const pl = plays[i], nx = plays[i + 1], wantChalk = CHK && DFLCalls.ready && view === "chalk";
+    const sc = ST.buildScene(pl, { nm: j => b.pl[j] || null, hint: nx && nx[13] !== pl[13] ? (nx[0] === pl[0] ? nx[3] : 100 - nx[3]) : null, dr: driveFor(i), next: nextRow(i), abbr: [H.abbr, A.abbr], pen: PEN[pl[7]] ? PEN[pl[7]][0] : "", chalk: wantChalk ? chalkFor(pl, i) : null });
+    if (CHK) sc.lu = luFor(sc);
+    return sc;
   };
   const availFor = i => plays[i + 1] ? (real(plays[i + 1]) - real(plays[i])) / speed : 6;
   /* the down-and-distance panel and the line saying who has the ball: with the animation on, they change when the play on the field is over, not when it starts */
