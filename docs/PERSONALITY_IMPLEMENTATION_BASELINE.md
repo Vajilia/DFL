@@ -13,7 +13,7 @@
 ## 0. The short version
 
 1. **Nothing in the repository today implements the new contract.** Every person has an older personality system: a soul (two archetype labels plus a "family"), a one-of-four `trait` string, `wants`/`fears` text, `pressure` thresholds, plus a self-image (`ego`, `perceived`, `temper`). None of it is five numbers from 1 to 100.
-2. **The production autopilot uses almost none of it.** Of the 25 decision kinds, the autopilot's default rule reads personality-like numbers in exactly two places, both for CEOs (`OwnerCard.ratings`: patience sets the firing threshold, ambition sets the boycott reply and reinvestment share). Players, coaches, GMs, fans and media have no personality in their autopilot. The only code that keys behavior on trait *words* is the test stand-in agent (`agents.py`) and a few text/relationship tables. **Verified.**
+2. **The production autopilot uses almost none of it, and what it uses is on CEOs.** Of the 25 decision kinds, the autopilot's default rule reads a personality-like number in two: `staff_review` (patience sets the firing threshold) and `ceo_boycott` (ambition sets the reply), both from `OwnerCard.ratings`. The same CEO ratings also move money and votes outside the decision points (reinvestment share, rule votes, committee seats, approval), and trait-derived `pressure` feeds subsidy and sale decisions and relationship scaling. Players, coaches, GMs, fans and media have no personality in any decision default. The only code that keys behavior on trait *words* is the test stand-in agent (`agents.py`), the coach and GM pairing table and some scene text. **Verified.**
 3. **The hidden-information boundary is good at the agent door and weak everywhere else.** `DecisionPoint.public()` is a clean allowlist of one bounded card view. But the `trait` word is published to every spectator in the live feed and the site, it is shown to other characters in several contexts, and the whole card is written to disk with `dataclasses.asdict`. A hidden value stored as a card field would be saved, exported and (if anyone widened a serializer) published automatically.
 4. **A hidden X-factor cannot be derived from the seed alone.** The repository is public, `/live/meta.json` publishes the league seed (verified live: seed 7, rules 5), and every card is a pure function of that seed. Anyone can clone the repo, run the generator, and read every X-factor, including those of players not yet drafted. Principle 5 needs a **secret salt** that is never in the repo or the feed. This is the largest design finding and it must be approved before coding.
 5. **The test baseline is in section 9 with the numbers actually obtained.** The brief and PR #40 both say "13 fairness bands"; the code defines **15** (`rules.FAIR_COMPETITION_BANDS`). The fast-engine bands are asserted by `check_phase2.py` inside the slow tier (16 leagues × 48 seasons); the drive-engine bands and the error-bar verdict table exist only in the separate `fairness.py --write` study, which is in neither tier.
@@ -21,7 +21,7 @@
 
 ---
 
-## 1. Repository state (verified 2026-10-17)
+## 1. Repository state (verified 2026-10-17 and 2026-10-18)
 
 | Item | Finding |
 | --- | --- |
@@ -54,7 +54,7 @@ PR #40 is a 66-line, documentation-only proposal. It is honest about its scope (
 | 5 | Lists "P2: safe creation" and "replace superseded rules" together | Those are different risk classes. Creation is zero-behavior-change and provable by the golden fingerprints; replacing rules changes outcomes and needs the fairness study. They must be separate pull requests (section 8) |
 | 6 | "Rerun … the 13 fairness bands after any behavioral change" | Only part of the bands is covered by the tiers: `check_phase2.py` (slow tier) asserts all 15 on the fast engine. The drive-engine run (6 leagues) and the "inside / edge / outside" error-bar verdicts live in `fairness.py --write`, which no tier runs. Which of the two a change must rerun should be named in the PR |
 | 7 | Does not distinguish "character" from "decision-maker" | Fanbases and media outlets are cards with `wants`, `fears`, `ratings`, `pressure`; the DFLPA representative, Commissioner and Competition Committee are not cards. "Every in-world character" needs a definition (section 3.3) |
-| 8 | "X-factor 1–200, 100 normal" | This implies an X-factor could lower a meter (below 100). The brief says it *amplifies*. These are different designs and the choice changes the distribution and the "harmful" mechanism. Needs a ruling (section 7, question 5) |
+| 8 | "X-factor 1–200, 100 normal" | This implies an X-factor could lower a meter (below 100). The brief says it *amplifies*. These are different designs and the choice changes the distribution and the "harmful" mechanism. Needs a ruling (section 7, question 2) |
 | 9 | No mention of lazy card creation | Player cards are not created with the player. `cards._touch` builds them the first time `ensure_cards` runs. "At creation" must be defined (section 3.2) |
 | 10 | No mention of determinism hazards | `card_seed = hash(rng.getstate()[1]) % 2**31` (`league.py:168`) relies on CPython's tuple hash. It is stable today but is not a documented guarantee across Python versions |
 | 11 | No hidden-information test design | A canary test (plant a recognizable hidden value, search every output for it) is the only way to prove "no leak"; PR #40 only lists "no hidden-field serialization" as an invariant |
@@ -80,7 +80,7 @@ Verdict: keep PR #40 as the statement of intent; do not treat it as the inventor
 | Competition Committee | seats held by CEO cards | `governance.annual_meeting` | uses `oid` | yearly | yearly | in league state | n/a | n/a |
 | Prospect (draft class) | a dict `Player.origin` from `prospects.make_origin`, not a card | `PR.ensure_origin` | `pid` | with the player | with the player | in the pickle / player row | GM sees blurred grade and stat line only | college, hometown shown after draft |
 
-All persons that decide, plus fanbases and media, are therefore **six card classes in four modules**, built by six constructors that each take the league `card_seed` and use their own `random.Random("-".join((seed,)+key))` stream. **Verified**: the card constructors never touch `league.rng`.
+All persons that decide, plus fanbases and media, are therefore **six card classes in three modules** (`cards.py`, `staff_cards.py`, `fan_media_cards.py`), built by six constructors that each take the league `card_seed` and use their own `random.Random("-".join((seed,)+key))` stream. **Verified**: the card constructors never touch `league.rng`.
 
 ### 3.2 When is "creation"? (design-critical)
 
@@ -151,7 +151,7 @@ A naming hazard: `OwnerCard.ratings` already has a key called `ambition`. If any
 | 12 | `ceo_pledge` | CEO | `ceo_card.pledge_decisions` | fan approval, meters (`rapport`, `standing`, `legacy`) | `standard` | `rt["ambition"] >= 65`, `rt["business"] >= 70` (CEO ratings, **not trait**) | three fixed shares | choice_log, decision_log |
 | 13 | `ceo_boycott` | CEO | `ceo_card.boycott_decisions` | boycott level, fan memories, `your_meters` | `concede` if `ratings["ambition"] >= CONCEDE_AMBITION` else `hold` (**autopilot reads CEO ambition**, `ceo_card.py:115`) | `step_aside` if tenure ≤2, else ambition ≥50 → concede | hold / concede / step_aside | choice_log, decision_log |
 | 14 | `fan_demand` | fanbase | `finance._fan_demands` | CEO approval | `fair` | approval thresholds (0.45 / 0.70) | modest / fair / demanding | choice_log, fan decision_log |
-| 15 | `coord_scheme` | coordinator | `coordinators.coord_scheme` | perceived roster lean per scheme (blurred by `gamecraft`) | the truly best-fit scheme with probability `VISION_BASE + VISION_SPAN·gamecraft/100`, else a random other | pick max `perceived_fit` | `SCHEMES[side]` | choice_log, decision_log |
+| 15 | `coord_scheme` | coordinator | `coordinators._scheme_point` | perceived roster lean per scheme (blurred by `gamecraft`) | the truly best-fit scheme with probability `VISION_BASE + VISION_SPAN·gamecraft/100`, else a random other | pick max `perceived_fit` | `SCHEMES[side]` | choice_log, decision_log |
 | 16 | `scheme_veto` | head coach | `coordinators._veto_point` | head coach's blurred view of fit, `relations.gm_note` | `veto` if view < `VETO_BAR` | same threshold | approve / veto | choice_log, both decision_logs |
 | 17 | `coord_review` | head coach | `coordinators._review_point` | heat and perceived ratings of each coordinator | per-coordinator heat thresholds | fire if heat > 0.3 | keep_both / fire_oc / fire_dc / fire_both | choice_log, decision_log |
 | 18 | `hire_coordinator` | head coach | `coordinators` (~line 385) | candidate perceived ratings, former-head-coach flag, `gm_note` | `candidate_0` | best `playcalling + vision` | slate | choice_log, decision_log |
@@ -169,7 +169,7 @@ A naming hazard: `OwnerCard.ratings` already has a key called `ambition`. If any
 | Location | What it does | Live effect? |
 | --- | --- | --- |
 | `agents.py:20-30` `PATIENCE`, `LOOKS_FOR`, `OFFER_OPEN`, `OFFER_LIMIT` (8 CEO trait words), the inline trait tests (`agents.py:163,166,185`) and reads of `pressure["contract"]` (`agents._wants`, `_contract_reply`) | stand-in's whole CEO, candidate and player psychology | **No** (test agent only) |
-| `relations.py:35-40` `CLICK`, `GRATE` (coach/GM trait-word pairs) → `_affinity` → starting feeling | seeds the GM–head-coach relationship meters | Indirect; meters only inform, no rule reads them |
+| `relations.py:29-32` `CLICK`, `GRATE` (coach/GM trait-word pairs) → `_affinity` → starting feeling | seeds the GM–head-coach relationship meters | Indirect; meters only inform, no rule reads them |
 | `interactions.py:276` `OPTIMISTIC_OWNERS[owner.trait]` | how far a CEO shades her self-assessment in a press scene | Text/scene only |
 | `interactions.py:186-348` quotes interpolating `{trait}`, `{wants}` | narrative lines | Text only |
 | `cards.py` / `living.py` `express`, `trait_scores`, `TRAIT_SWITCH_MARGIN`, `personality_shift` | the trait word itself, which can change between seasons | Yes, changes the card |
@@ -207,7 +207,7 @@ Nothing in the football game engine reads a card. **Verified:** searching `game_
 ### 5.2 The seed problem (new, important)
 
 1. The repository is public (verified).
-2. `/live/meta.json` is public and contains `"seed": 7` (verified by fetching `https://diamondfootballleague.com/live/meta.json` on 2026-10-17).
+2. `/live/meta.json` is public and contains `"seed": 7` (verified during this investigation by fetching `https://diamondfootballleague.com/live/meta.json`; the response was `{"seed":7,"epoch_ms":1792001100000,"pacing":"blocks","real_per_game":0.48,"halftime":20.0,"engine_commit":"fd6555f","parity":"tight","rules":5}`).
 3. Every card draws from `random.Random(f"{card_seed}-{kind}-{id}…")`, with `card_seed` derived from the league seed (`league.py:168`). The football engine is also a pure function of the seed (that is why a restart can replay the years).
 4. Therefore a visitor can clone the repo, run `live.py` or `founding.open_league(7)`, and read any value the code computes, including values the site never publishes, and including seasons that have not been revealed on the clock yet.
 
@@ -279,11 +279,11 @@ The live league's behavior depends on personality only through (1) CEO ratings a
 
 ## 7. Design decisions that need the Commissioner's approval before code
 
-1. **The five meters:** names, one-sentence meaning of high and low, and which decision kinds each is meant to govern. Phase One schema code takes the names from a data file so it does not hard-code them, but the later wiring cannot.
+1. **The five meters:** names, one-sentence meaning of high and low, which decision kinds each is meant to govern, the starting distribution (for example bell-shaped around 50 or flat; independent or correlated) and whether meters can change over a career. Phase One schema code takes the names from a data file so it does not hard-code them, but the later wiring cannot.
 2. **X-factor representation.** (a) One of the five meters carries a second, private value from 101 to 200 that replaces the ordinary one in engine rules, or (b) a private multiplier applied to that meter. Neither adds a sixth meter. Recommendation: (a), because it is one number per affected person. And: **can an X-factor ever lower a meter** (PR #40's "1–200, 100 normal" implies yes; the brief says amplify)? Recommendation: amplify only; "harmful" comes from consequences (an extreme value pushes a decision into a bad region), not from a sign flip.
 3. **What anyone may see of the *ordinary* meters.** Today the trait word is public. Options: (i) fully private to the engine, characters infer from behavior; (ii) the owner of a card sees her own five; (iii) other characters see a blurred read (as with `patience_as_you_read_her`); (iv) spectators see them on the site. This decides what `card_view`, `_person_view`, the feed and the page publish. Recommendation: self sees exact, others see noisy reads, spectators see a coarse band, and the X-factor is visible to nobody.
 4. **Who counts as a character** (section 3.3): individuals only, or fans and media too.
-5. **The 5% rule:** independent coin per character (recommended; "approximately 5%") or an exact quota per generated cohort. Independent means a league of ~3,000 people has about 150 ± 12 X-factors; a 53-player roster has no X-factor player about 7% of the time (0.95^53) and three or more about half the time (50%), which is what "approximately 5%" means.
+5. **The 5% rule:** independent coin per character (recommended; "approximately 5%") or an exact quota per generated cohort. Independent means a league of ~3,000 people has about 150 ± 12 X-factors; a 53-player roster has no X-factor player about 7% of the time (0.95^53) and three or more about half the time.
 6. **CEO `ratings` and `meters`:** replace `OwnerCard.ratings` with the new five, map them, or keep them as non-personality fields; `OwnerCard.meters` stays as situational state.
 7. **Secret salt** (section 5.2): approve a server-held salt for X-factors, accept that X-factors are not reproducible from the public seed, and accept the backup duty.
 8. **Existing history:** regenerate the observational season with the new contract (it is allowed to be regenerated) or keep seed 7 as it is and only apply the new personalities from a new `rules` version. Either way the running league must not be restarted by this work.
@@ -316,7 +316,7 @@ Principles for all pull requests: documentation or additive code only until PR 5
 ### PR 4: The private X-factor registry and the leak harness
 - **Files:** `engine/persona.py` (registry `lg.xfactors` or on-demand function), `engine/store.py` (separate private table or none), `engine/decisions.py` (allowlist in `card_view`; deep copy of `context` in `public()`), `engine/site_export.py` (explicit person/roster row builders), `engine/live.py` (reads the salt from a path outside the web root; never writes it to the feed), `engine/check_hidden.py` (new, FAST).
 - **Tests:** the canary test (section 5.3 item 4) across every decision kind in a full simulated season, every live-feed file, `export_card`, the built page and Chronicle fact sheets; an import-graph test banning the private accessor outside engine rule modules; a test that `meta.json` contains no salt-derived value; a test that two runs with different salts give identical game results (X-factors still do not move anything).
-- **Acceptance:** canary absent from all public surfaces; goldens unchanged; no new file in the web root.
+- **Acceptance:** canary absent from all public surfaces; `public()` output for every existing decision kind and the site-export rows are identical to before for all existing fields (the allowlists may drop nothing that was shown); goldens unchanged; no new file in the web root.
 
 ### PR 5 (Phase Two preview, not Phase One): wire one small decision category
 Listed for ordering only. Only after the meter semantics, mechanism (question 9) and version gate exist: pick one decision kind (a CEO decision is the natural first, since the autopilot already reads CEO numbers), bind it to meters through the stand-in and the autopilot, put the change behind a new `rules` version so seed 7's replay is unchanged, add falsification tests (low vs high meter under identical context changes the choice; hold personality fixed and change only perceived information), and run the fairness study with the result recorded. This PR is where goldens may legitimately change, with the Commissioner's approval.
@@ -331,9 +331,88 @@ PR 2: `engine/persona.py` plus `engine/check_persona.py`, reading names and boun
 
 ## 9. Verified test baseline
 
-*(See the results block below. Commands, environment, durations and every failure are recorded exactly as observed. A test that was not run is marked not run.)*
+### 9.1 Environment and method
 
-RESULTS_PLACEHOLDER
+| Item | Value |
+| --- | --- |
+| Commit under test | `84ce78f8d6c969448f6914894a3bc94827ca5c8d` (`main`), clean worktree `personality-baseline`, no local changes to code |
+| Machine | cloud container, Linux 6.18.44, **2 cores**, 8 GB RAM, Python 3.13.16, numpy 2.5.3 |
+| Interpreter used | `python3` (the brief writes `python`; same interpreter) |
+| Fast tier ran | 2026-10-18 06:48:55 to 07:15:02 UTC (26 min wall), alongside the start of the slow tier on the other core |
+| Slow tier ran | 2026-10-18 06:53 to ~09:58 UTC (about 3 h 5 min wall) |
+| Timing caveat | the two tiers shared two cores for the first 20 minutes and the slow scripts ran up to three at a time later, so the per-script seconds below are not clean benchmarks |
+
+**Commands actually run**
+
+1. `python3 engine/run_checks.py --list` — ran. Output: `fast:` 32 scripts, `slow:` 24 scripts (56 in all).
+2. `python3 engine/run_checks.py` — ran as written. Result: **`32 of 32 passed, 1568s`**, exit code 0.
+3. `python3 engine/run_checks.py --slow` — **not run as that single command.** `run_checks.py` prints nothing until every script has finished, and a 3-hour job in a sandbox that can be reclaimed would lose everything. Instead a small wrapper in the scratchpad (not committed) imported `run_checks.scripts()` for the list and ran each slow script with the same subprocess call as `run_checks.run_one` (`python <engine>/check_<name>.py`, 7200 s timeout), writing one log line per script. One worker ran the list in order; when the second core went idle, further workers took `team_pages tables store stats_live stage3d stage`, then `staff`, then `seeds_live`. Each of the 24 scripts ran exactly once to completion; the in-order worker was stopped after `phase2` so none ran twice. This changes how long it took, not what each script does.
+4. Re-measurement of the 15 fairness bands (9.4), with the same function and seeds that `check_phase2.py` uses, spread over two processes.
+
+**Independent corroboration (not a substitute for the above).** GitHub Actions workflow "DFL checks" run 39016308872, event `push`, `main` at `84ce78f`, completed with conclusion `success` (the fast tier). The last recorded full slow-tier pass on GitHub is run 38786772303 on `7eba956` (24 of 24, from the WORK_LOG); it was not repeated on GitHub for this commit.
+
+### 9.2 Results
+
+| Tier | Scripts | Passed | Failed | Not run |
+| --- | --- | --- | --- | --- |
+| Fast (`run_checks.py`) | 32 | **32** | 0 | 0 |
+| Slow (per-script wrapper, see above) | 24 | **24** | 0 | 0 |
+
+**Pre-existing failures observed: none.** (The WORK_LOG records earlier failures that were fixed by PRs #25, #27, #29 and #30; none reappeared.)
+
+Fast tier seconds: `agents` 343s, `autotrade` 15s, `calendar` 0s, `cards` 117s, `ceo` 62s, `chronicle` 17s, `contracts` 63s, `coordinators` 227s, `elevations` 5s, `enrichment` 61s, `extensions` 14s, `founding` 10s, `gm_roster` 128s, `governance` 51s, `injuries` 59s, `live` 50s, `movement` 23s, `phase0` 0s, `phase1` 3s, `playlog` 1s, `prospects` 32s, `relations` 35s, `rosters` 5s, `rulebook` 0s, `service` 6s, `service_pay` 42s, `site` 53s, `skeleton` 23s, `tiebreaks` 34s, `ties` 16s, `transactions` 71s, `verdicts` 0s.
+
+Slow tier seconds: `blocks` 31s, `clock` 41s, `control` 4s, `decisions` 1531s, `economy` 392s, `fans` 323s, `finance` 414s, `hierarchy` 58s, `hiring` 519s, `ingame_injuries` 23s, `interactions` 430s, `kickoffs` 9s, `living` 2268s, `parity` 32s, `past_seasons` 46s, `phase2` 5000s, `seeds_live` 28s, `staff` 262s, `stage` 116s, `stage3d` 47s, `stats_live` 22s, `store` 973s, `tables` 1164s, `team_pages` 68s.
+
+### 9.3 What is not covered by these runs
+
+- `fairness.py --write` (drive engine, 6 leagues × 48 seasons, and the 12-league fast study with the verdict table) was **not run**. `staff_sweep.py`, `coach_sweep.py`, `decision_sweep.py`, `fan_media_sweep.py` (the studies behind the CEO, GM, coach, agent and fan levers) were **not run**; they are in neither tier.
+- Nothing in these tiers tests personality. The only tests that touch the old personality model are listed in section 3.4's consumers and in 9.5.
+- Branch-only checks (`check_calls` on PR #39) were not part of this baseline.
+- `check_stage.js` is invoked by `check_stage.py` (slow tier, passed); it was not run separately.
+
+### 9.4 The fairness bands (15, not 13)
+
+Defined in `engine/rules.py` (`FAIR_COMPETITION_BANDS`), measured by `engine/fairness.py` (`measure_league`, `evaluate`, `verdicts`). `check_phase2.py` calls `fairness.run("fast", range(100, 116), 48)`: 16 leagues of 48 seasons, the first 8 discarded, and asserts each band by name (`fair competitiveness: <band> inside <lo> to <hi>`). That passed in the slow tier above. The band values below are the same measurement, re-run with its per-league numbers shown.
+
+| # | Band | Allowed range | Meaning | Measured (16 leagues) |
+| --- | --- | --- | --- | --- |
+| 1 | `win_pct_sd` | 0.13 to 0.19 | spread of regular-season win percentage across teams | 0.148 (leagues 0.143 to 0.150; inside, ±0.001) |
+| 2 | `year_to_year_corr` | 0.1 to 0.5 | how much a team's win % repeats from one season to the next | 0.184 (leagues 0.149 to 0.224; inside, ±0.006) |
+| 3 | `close_game_share` | 0.35 to 0.55 | share of games decided by 8 points or fewer | 0.478 (leagues 0.468 to 0.486; inside, ±0.001) |
+| 4 | `repeat_champion_rate` | 0.0 to 0.12 | share of seasons in which the champion is the previous champion | 0.061 (leagues 0.026 to 0.154; inside, ±0.009) |
+| 5 | `max_titles_in_20` | 0 to 4.7 | most titles one team wins in any 20-season stretch, averaged over leagues (equal odds among the 14 playoff teams would give 4.7) | 3.312 (leagues 3.000 to 5.000; inside, ±0.151) |
+| 6 | `worst_league_titles` | 0 to 7 | most titles one team wins in any 20 seasons in the single worst league | 5.000 (leagues 3.000 to 5.000; inside, ±0.000) |
+| 7 | `best_team_title_odds` | 0.08 to 0.25 | how often the strongest team on paper wins the title | 0.141 (leagues 0.075 to 0.250; inside, ±0.012) |
+| 8 | `returner_avg_finish` | 2.8 to 3.4 | average division finish of a team back from exile | 3.184 (leagues 3.003 to 3.275; inside, ±0.019) |
+| 9 | `returner_win_div` | 0.1 to 0.3 | share of returning teams that win their division | 0.170 (leagues 0.138 to 0.206; inside, ±0.005) |
+| 10 | `returner_fifth_again` | 0.1 to 0.3 | share of returning teams that finish 5th again | 0.242 (leagues 0.191 to 0.272; inside, ±0.006) |
+| 11 | `returner_top3_in_3` | 0.75 to 0.97 | share of clubs back from exile that finish 3rd or better in their division at least once in their first three seasons back | 0.830 (leagues 0.806 to 0.865; inside, ±0.005) |
+| 12 | `returner_playoff_first` | 0.2 to 0.55 | share of clubs back from exile that make the playoffs in their first season back | 0.302 (leagues 0.286 to 0.329; inside, ±0.003) |
+| 13 | `exile_effect` | -0.5 to 0.5 | extra team rating (points, about half a win per point) two years after finishing 5th versus 4th | 0.186 (leagues -0.129 to 0.616; inside, ±0.061) |
+| 14 | `exile_double_early` | 0.0 to 0.1 | share of exiled teams that get a top-8 pick in the lottery and then a top-16 pick in their second draft | 0.000 (leagues 0.000 to 0.000; inside, ±0.000) |
+| 15 | `stuck_at_bottom` | 0.0 to 0.1 | share of team-seasons that follow three straight bottom-two finishes | 0.082 (leagues 0.074 to 0.092; inside, ±0.001) |
+
+**Result (measured 2026-10-18, commit `84ce78f`, seeds 100 to 115, 48 seasons each, fast engine): all 15 bands are inside their ranges, none is on the edge, none is outside.** Method: `fairness.measure_league` for the 16 seeds across two processes (40 min wall), then `fairness.evaluate`, `verdicts` and `table` unchanged; this is the same computation `check_phase2.py` performs, and `check_phase2.py` itself passed in the slow tier. "±" is the standard error across leagues. Three readings worth keeping in mind: `stuck_at_bottom` (0.082) is the closest to its limit (0.10); `exile_effect` is inside as a pooled figure (0.19) but single leagues range from -0.13 to 0.62, so it is noisy by nature, as the code comment says; `best_team_title_odds` single leagues reach both ends of its band (0.075 to 0.250). The drive-engine bands were not measured.
+
+**How to verify, in increasing cost.**
+1. `python3 engine/check_verdicts.py` (fast tier): the inside / edge / outside logic only; does not simulate.
+2. `python3 engine/check_phase2.py` (slow tier, about 80 min on one core here): asserts all 15 on the fast engine.
+3. `python3 engine/fairness.py --engine fast --leagues 16 --seasons 48` prints the table with error-bar verdicts; add `--engine drives --leagues 6` for the drive engine; `python3 engine/fairness.py --write` regenerates `reports/fairness_report.md` for both engines (12 + 6 leagues, hours). A band counts as a problem only when it is "outside" (beyond two standard errors), per `fairness.verdicts`.
+4. Whenever personality changes any decision the live league makes, the result of (3) with personality switched on must be recorded in the pull request. Thresholds are not to be edited to make a run pass.
+
+### 9.5 Existing tests that pin the old personality model (will need deliberate change in later phases, not Phase One)
+
+| Test | What it asserts |
+| --- | --- |
+| `check_cards.py` | every soul comes from the position's list; every archetype belongs to a temperament family; the soul never changes; a personality is always one her soul allows; personalities shift for 8% to 60% of long careers; "personalities are still varied" (exactly 10 distinct traits among active players); a coach's self-image lags the truth |
+| `check_living.py` | souls never change; personalities always come from the four their soul allows; archetype labels on cards |
+| `check_store.py` | an exported coach card carries `soul_pos, soul_neg, ratings, …, trait, pressure` |
+| `check_relations.py` | some temperaments click and some grate (`CLICK`/`GRATE` by trait word) |
+| `check_agents.py` | CEOs of different traits fire at rates that differ by more than 5 points (needs at least 4 traits with 30+ reviews); and the only existing leak test: `"internal" not in str(choice_log[0])` |
+| `check_decisions.py` | a stub decider with trait "Steady Hand"; a re-hired coach keeps her soul |
+| `golden_fingerprints.json`, `check_parity` hash, `check_tables` copies | pin outcomes for seeds 33, 5, 21; Phase One must leave them byte-identical |
+
 
 ---
 
