@@ -53,8 +53,15 @@ class Contract:
     def active_in(self, year: int) -> bool:
         return self.start_year <= year < self.end_year
 
+    def bonus_charge(self, year: int) -> Decimal:
+        if not self.active_in(year):
+            return D(0)
+        idx = year-self.start_year
+        return (self.bonus-self.yearly_bonus*(len(self.bases)-1)
+                if idx == len(self.bases)-1 else self.yearly_bonus)
+
     def cap_hit(self, year: int) -> Decimal:
-        return self.bases[year-self.start_year] + self.yearly_bonus if self.active_in(year) else D(0)
+        return self.bases[year-self.start_year] + self.bonus_charge(year) if self.active_in(year) else D(0)
 
     def guarantee(self, year: int) -> Decimal:
         return self.guarantees[year-self.start_year] if self.active_in(year) else D(0)
@@ -62,7 +69,7 @@ class Contract:
     def uncharged_bonus(self, year: int) -> Decimal:
         if not self.active_in(year):
             return D(0)
-        return self.yearly_bonus * (self.end_year - year)
+        return self.bonus - sum((self.bonus_charge(y) for y in range(self.start_year,year)),D(0))
 
 
 @dataclass(frozen=True)
