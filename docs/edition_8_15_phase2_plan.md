@@ -39,7 +39,7 @@ league-total quotas.
 | Append-only authoritative event history | Hash-chain/restart/anti-mutation checks | Isolated, tested |
 | Fixture-bound game-final ingestion | Reject wrong fixture, negative score, duplicate, cross-season event; 360 synthetic-result replay and restart | Isolated, 62/62 FAST CI |
 | 22-player spatial ticks and trace codec | Eleven per side, ball and intent states each 0.05 s; lossless compressed restart and deterministic hashes | Trace contract/codec isolated; spatial physics engine not started; CI pending |
-| Play calling, motion, assignment and substitution | Legal snap/formation, offensive and defensive assignments, causal player action with personnel eligibility | Not started |
+| Play calling, motion, assignment and substitution | Legal snap/formation, offensive and defensive assignments, causal player action with personnel eligibility | Experimental single-carrier spatial rush only; full playbook, collision and substitution unbuilt |
 | Game laws and outcomes | Edition 8.15 kicking, possession, clock, penalties, overtime, challenges and scoring | Not started |
 | Causal player/team statistics | Every stat and score aggregates from validated play/decisive events, no drawn final score | Not started |
 | Deterministic full-season engine runner | Independently reproduce 360 game results and event hashes from explicit seeds across restart | Not started |
@@ -59,5 +59,9 @@ league-total quotas.
    including rates with per-exposure denominators and appropriate sample sizes.
 5. Obtain the owner's specific release approval and backup/rollback review before
    changing `main`, `step6-rebuild`, the live website or its database.
+
+## Explicit experimental limit
+
+The `ed815_spatial_rush.py` kernel is a deterministic **one-play rushing prototype**. It advances 22 abstract players every 0.05 seconds, reconsiders defender pursuit every 0.10 seconds and derives tackle/goal-line outcomes from geometrical contact. Its stationary/simple blocking, movement speeds, tackles, no passing, no offensive choice model and no injuries/penalties mean it **cannot** be used for real league outcomes, NFL-rate calibration or final scores. Its generated spatial trace exercises the lossless `ed815_spatial_trace.py` contract. The full 22-player game model must replace the provisional action dials and have its own verification.
 
 No test harness result shall be represented as the first official DFL season.
