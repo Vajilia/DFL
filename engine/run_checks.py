@@ -18,7 +18,7 @@ import time
 from concurrent.futures import ThreadPoolExecutor
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-FAST = """ed815_settlement ed815_transactions ed815_reference ed815_compensation ed815_waivers ed815_picks ed815_contracts ed815_cap ed815_market ed815_calendar ed815_cycle ed815_standings agents autotrade calendar cards ceo chronicle contracts coordinators elevations enrichment extensions founding gm_roster governance injuries live movement phase0 phase1 playlog
+FAST = """ed815_storage ed815_settlement ed815_transactions ed815_reference ed815_compensation ed815_waivers ed815_picks ed815_contracts ed815_cap ed815_market ed815_calendar ed815_cycle ed815_standings agents autotrade calendar cards ceo chronicle contracts coordinators elevations enrichment extensions founding gm_roster governance injuries live movement phase0 phase1 playlog
 prospects relations rosters rulebook service service_pay site skeleton tiebreaks ties transactions verdicts""".split()
 
 
