@@ -25,8 +25,8 @@ def check_group_scope():
     r["b"].wins,r["b"].losses = 1,1
     r["c"].wins,r["c"].losses = 1,1
     r["a"].div_wins = 5
-    r["b"].differential = 5
-    r["c"].differential = 3
+    r["b"].points_for = 5
+    r["c"].points_for = 3
     # Different divisions/conferences: division win difference must be ignored.
     assert S.ranking(["a","b","c"],clubs,r,77,"test")[0] == "b"
     assert S.ranking(["c","a","b"],clubs,r,77,"test") == S.ranking(["a","b","c"],clubs,r,77,"test")
