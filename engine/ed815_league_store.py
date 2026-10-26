@@ -17,6 +17,8 @@ import ed815_storage as STORE
 import ed815_transactions as TX
 import ed815_picks as PICKS
 import ed815_compensation as COMP
+import ed815_cycle as CYCLE
+import ed815_calendar as CAL
 
 SCHEMA=1
 CLUBS=48
@@ -38,6 +40,7 @@ class League:
     compensation: tuple=()
     pending: PendingTrade|None=None
     events: tuple=()
+    structure: CYCLE.SeasonStructure|None=None
 
     def __post_init__(self):
         if self.revision<0 or len(self.clubs)!=CLUBS:
@@ -54,6 +57,11 @@ class League:
             raise ValueError("ordinary pick owner outside league")
         if any(p.owner not in self.clubs for p in self.compensation):
             raise ValueError("compensation owner outside league")
+        if self.structure is not None:
+            listed={cid for ids in self.structure.seeded_divisions.values() for cid in ids}
+            listed.update(self.structure.ambassadors.values())
+            if listed!=set(self.clubs):
+                raise ValueError("season structure must contain exactly these 48 clubs")
 
 def _leg(leg):
     return dict(from_club=leg.from_club,to_club=leg.to_club,
@@ -71,12 +79,17 @@ def encode(state: League):
         token=state.pending.token,clubs=list(state.pending.clubs),
         legs=[_leg(x) for x in state.pending.legs],season=state.pending.season,
         post_cut=state.pending.post_cut,require_eleven=state.pending.require_eleven)
+    structure=None if state.structure is None else dict(
+        season=state.structure.season,
+        seeded_divisions=[list(state.structure.seeded_divisions[d]) for d in CAL.DIVISION_ORDER],
+        ambassadors=[state.structure.ambassadors[d] for d in CAL.DIVISION_ORDER],
+        fixtures=list(state.structure.fixtures))
     payload=dict(schema=SCHEMA,revision=state.revision,
         clubs={k:STORE.encode_club(v) for k,v in sorted(state.clubs.items())},
         ordinary=[asdict(p) for p in sorted(state.ordinary.values(),key=lambda x:str(x.identity))],
         compensation=[{**asdict(p),"qualifying_base":str(p.qualifying_base)}
                       for p in state.compensation],
-        pending=pending,events=[list(x) for x in state.events])
+        pending=pending,events=[list(x) for x in state.events],structure=structure)
     return json.dumps(payload,sort_keys=True,separators=(",",":"),allow_nan=False)
 
 def _tuple_tree(value):
@@ -103,8 +116,15 @@ def decode(payload):
     pending=None if p is None else PendingTrade(p["token"],tuple(p["clubs"]),
                 tuple(_parse_leg(x) for x in p["legs"]),
                 p["season"],p["post_cut"],p["require_eleven"])
+    structure=None
+    if raw.get("structure") is not None:
+        x=raw["structure"]
+        structure=CYCLE.SeasonStructure(x["season"],
+            {d:tuple(ids) for d,ids in zip(CAL.DIVISION_ORDER,x["seeded_divisions"])},
+            {d:club for d,club in zip(CAL.DIVISION_ORDER,x["ambassadors"])},
+            tuple(x["fixtures"]))
     return League(raw["revision"],clubs,ordinary,compensation,pending,
-                  tuple(_tuple_tree(x) for x in raw["events"]))
+                  tuple(_tuple_tree(x) for x in raw["events"]),structure)
 
 class LeagueTradeStore:
     def __init__(self,path):
@@ -172,6 +192,8 @@ class LeagueTradeStore:
         def transform(s):
             if s.pending is not None:
                 raise ValueError("league has a pending trade")
+            if s.structure is not None and season!=s.structure.season:
+                raise ValueError("trade season differs from active league structure")
             names=tuple(sorted({n for x in legs for n in (x.from_club,x.to_club)}))
             if len(names)!=2 or any(n not in s.clubs for n in names):
                 raise ValueError("trade requires two member clubs")
@@ -200,7 +222,7 @@ class LeagueTradeStore:
             updated.update(results)
             event=("trade",pending.token,pending.season,moment.isoformat(),
                    pending.clubs)
-            return League(s.revision+1,updated,picks,comp,None,s.events+(event,)),event
+            return League(s.revision+1,updated,picks,comp,None,s.events+(event,),s.structure),event
         return self._atomic(expected_revision,transform)
 
     def cancel(self,pending:PendingTrade,*,expected_revision):
@@ -208,6 +230,16 @@ class LeagueTradeStore:
             if s.pending!=pending:
                 raise ValueError("trade reservation not held")
             return replace(s,revision=s.revision+1,pending=None),None
+        return self._atomic(expected_revision,transform)
+
+    def advance_season(self,results,*,expected_revision,seed,coronation_complete,
+                       template_path=None):
+        import ed815_handoff as HANDOFF
+        def transform(state):
+            after,report=HANDOFF.advance(state,results,seed=seed,
+                       coronation_complete=coronation_complete,
+                       template_path=template_path)
+            return after,after.events[-1]
         return self._atomic(expected_revision,transform)
 
     def committed_events(self):
