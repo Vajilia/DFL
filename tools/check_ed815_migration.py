@@ -50,7 +50,7 @@ def main() -> None:
     bible = BIBLE.read_text(encoding="utf-8")
     blocks = re.findall(r"```\s*\n(.*?)```", bible, flags=re.S)
     def canonical(header: str) -> list[dict[str, str]]:
-        matches = [b for b in blocks if b.startswith(header + ",")]
+        matches = [b for b in blocks if b.startswith(header + ",") or b.startswith(header + "\\n")]
         require(len(matches) == 1, f"missing or ambiguous Bible CSV: {header}")
         return list(csv.DictReader(io.StringIO(matches[0].strip())))
 
