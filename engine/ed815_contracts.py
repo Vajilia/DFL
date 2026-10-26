@@ -113,10 +113,11 @@ def _years(current_year: int):
 
 
 def _approve(before: Ledger, after: Ledger, year: int, action: str,
-             post_cut: bool, *, rookie_holds=()):
+             post_cut: bool, *, rookie_holds=(),rookie_holds_after=None):
     prev = {y:projection(before,y,post_cut=post_cut,rookie_holds=rookie_holds if y==year else ())
             for y in _years(year)}
-    next_ = {y:projection(after,y,post_cut=post_cut,rookie_holds=rookie_holds if y==year else ())
+    final_holds=rookie_holds if rookie_holds_after is None else rookie_holds_after
+    next_ = {y:projection(after,y,post_cut=post_cut,rookie_holds=final_holds if y==year else ())
              for y in _years(year)}
     verdict=CAP.assess_transaction(prev,next_,action=action,final_cut=False)
     if not verdict.allowed:
@@ -124,13 +125,14 @@ def _approve(before: Ledger, after: Ledger, year: int, action: str,
 
 
 def sign(ledger: Ledger, contract: Contract, year: int, *,
-         post_cut=False, rookie_holds=()) -> Ledger:
+         post_cut=False, rookie_holds=(),rookie_holds_after=None) -> Ledger:
     if year != contract.start_year or contract.player_id in ledger.contracts:
         raise ValueError("sign at contract start; player cannot have two deals")
     updated=dict(ledger.contracts)
     updated[contract.player_id]=contract
     after=replace(ledger,contracts=updated)
-    _approve(ledger,after,year,"sign",post_cut,rookie_holds=rookie_holds)
+    _approve(ledger,after,year,"sign",post_cut,rookie_holds=rookie_holds,
+             rookie_holds_after=rookie_holds_after)
     return after
 
 
