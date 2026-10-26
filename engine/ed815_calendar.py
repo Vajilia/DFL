@@ -140,3 +140,67 @@ def season_calendar(season: int) -> list[CalendarRow]:
                                 numbered.get(cweek), sat, sat + timedelta(days=1),
                                 sat + timedelta(days=2)))
     return rows
+
+
+def fixtures_for_season(season: int, seeded_divisions: dict,
+                        template_path=None) -> list[dict]:
+    """Fill Edition 8.15's immutable Season 1 bed pairings from current seeds.
+
+    Returns 360 fixture dicts (week, game, ISO date, kickoff, away, home).
+    The builder cannot independently modify opponents or home/away allocation.
+    """
+    import csv
+    from pathlib import Path
+
+    path = (Path(template_path) if template_path is not None
+            else Path(__file__).resolve().parents[1] / "data" / "ed815_fixture_beds.csv")
+    mapping = assign_bed_ids(season, seeded_divisions)
+    by_bed = {bed: cid for cid, bed in mapping.items()}
+    rows = []
+    with path.open(newline="", encoding="utf-8") as f:
+        for raw in csv.DictReader(f):
+            week = int(raw["week"])
+            game = int(raw["game"])
+            offset = int(raw["day_offset"])
+            if offset not in (0, 1, 2):
+                raise ValueError("invalid fixture weekday offset")
+            if raw["away_bed"] not in by_bed or raw["home_bed"] not in by_bed:
+                raise ValueError("unknown seed bed in immutable fixture")
+            if raw["away_bed"] == raw["home_bed"]:
+                raise ValueError("self-fixture")
+            saturday = fixture_weekend(season, week)[0]
+            rows.append({"week": week, "game": game,
+                         "date": (saturday + timedelta(days=offset)).isoformat(),
+                         "kickoff": raw["kickoff"],
+                         "away": by_bed[raw["away_bed"]],
+                         "home": by_bed[raw["home_bed"]]})
+    if len(rows) != 360 or len({(r["week"], r["game"]) for r in rows}) != 360:
+        raise ValueError("fixture template must contain exactly 360 unique slots")
+    rows.sort(key=lambda x: (x["week"], x["game"]))
+    return rows
+
+
+def validate_fixture_counts(fixtures: list[dict], seeded_divisions: dict) -> None:
+    """Cheap independent structural gate; semantic opponent checks are next."""
+    from collections import Counter
+
+    active = {club for ids in seeded_divisions.values() for club in ids}
+    games = Counter()
+    home = Counter()
+    away = Counter()
+    by_week = Counter()
+    for fixture in fixtures:
+        h, a = fixture["home"], fixture["away"]
+        if h == a or h not in active or a not in active:
+            raise ValueError("invalid club pairing")
+        games[h] += 1
+        games[a] += 1
+        home[h] += 1
+        away[a] += 1
+        by_week[fixture["week"]] += 1
+    if len(fixtures) != 360 or len(active) != 40:
+        raise ValueError("wrong league shape")
+    if any(games[club] != 18 or home[club] != 9 or away[club] != 9 for club in active):
+        raise ValueError("a club lacks 18 games or 9H/9A")
+    if any(by_week[w] != (20 if w <= 14 else 16) for w in range(1, 20)):
+        raise ValueError("fixture-week game count differs from Edition 8.15")
