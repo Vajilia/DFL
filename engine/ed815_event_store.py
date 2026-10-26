@@ -68,13 +68,15 @@ def _digest(previous, sequence, payload):
         (previous + "\n" + str(sequence) + "\n" + payload).encode("utf-8")
     ).hexdigest()
 
-def append(conn: sqlite3.Connection, event):
-    """One event becomes durable with its sequence and hash in one transaction."""
+def append(conn: sqlite3.Connection, event, *, check_existing=None):
+    """Durably append; optionally validate existing history under the writer lock."""
     payload = _validate(event)
     if conn.in_transaction:
         raise ValueError("event append requires ownership of the SQLite transaction")
     try:
         conn.execute("BEGIN IMMEDIATE")
+        if check_existing is not None:
+            check_existing(load_verified(conn))
         row = conn.execute(
             "SELECT sequence, event_hash FROM ed815_events ORDER BY sequence DESC LIMIT 1"
         ).fetchone()
