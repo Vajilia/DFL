@@ -51,8 +51,8 @@
     {
       "id": "normative_open_items",
       "state": "blocked",
-      "meaning": "Edition 8.15 §20 contains provisional or unanswered constitutional details",
-      "artifact": "docs/DFL_Design_Document_Ed8.15.md"
+      "meaning": "Six pre-founding rule freeze choices identified among all eighteen §20 items; none silently approved",
+      "artifact": "docs/ed815_open_items.json"
     },
     {
       "id": "nfl_reference_snapshot",
