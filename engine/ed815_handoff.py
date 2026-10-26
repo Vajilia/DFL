@@ -21,6 +21,8 @@ def advance(state: LEAGUE.League,results,*,seed,coronation_complete,
         raise ValueError("Coronation must be complete before league-year handoff")
     if state.pending is not None:
         raise ValueError("cannot advance season with an outstanding trade reservation")
+    if state.waivers:
+        raise ValueError("cannot advance season with unresolved waivers")
     if state.structure is None:
         raise ValueError("validated active season structure required for handoff")
     current=state.structure
@@ -58,7 +60,7 @@ def advance(state: LEAGUE.League,results,*,seed,coronation_complete,
     event=("season_handoff",current.season,next_struct.season,digest,
            tuple(sorted(expired)),retired)
     updated=LEAGUE.League(state.revision+1,next_clubs,state.ordinary,
-            state.compensation,None,state.events+(event,),next_struct,pool,state.prospects)
+            state.compensation,None,state.events+(event,),next_struct,pool,state.prospects,state.waivers)
     report=dict(completed=current.season,next=next_struct.season,
                 expired_players=tuple(sorted(expired)),retired_players=retired,
                 exiled=summary["exiled_clubs"],returning=summary["returning_clubs"],
