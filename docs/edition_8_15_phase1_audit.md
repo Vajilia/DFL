@@ -84,3 +84,12 @@ The user's current instruction that real NFL changes never alter DFL resolves th
 - [ ] Freeze Edition 8.15 baseline with reproducible hash and CI evidence.
 
 **Release gate: blocked.** This audit is a migration blueprint, not a claim that Phase 1 or Edition 8.15 is implemented. Do not merge into production until audited changes and tests actually match the design.
+
+## Progress checkpoint — 2026-10-26
+
+- Pinned exact 82,148-byte Edition 8.15 source as `docs/DFL_Design_Document_Ed8.15.md`; independently recomputed its declared SHA-256 and obtained the exact declared `6a77c043...` digest.
+- Created `docs/ed815_rule_register.json` with 158 source-anchored **coarse** clauses across §0 and §§1–19, plus `tools/check_ed815_register.py` to reject missing/altered anchors and source checksum drift. The checker syntax was parsed successfully. Full execution against a local working checkout is still pending.
+- The register is **not yet atomic**: some entries include several independently enforceable requirements. §5/§6/§7/§8's tabular reference data remain pinned in the document but are not each separately identified as rule IDs; §20's open items remain unresolved.
+- No legacy executable rules were replaced and no engine regression suite was run. The new validator is not yet wired into CI. `main` remains unchanged.
+
+**Rule status:** constitutional source pinned, early compliance map created; Edition 8.15 engine compliance **not established**. Do not declare Phase 1 frozen.
