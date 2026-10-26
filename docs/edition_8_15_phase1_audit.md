@@ -161,3 +161,14 @@ The user's current instruction that real NFL changes never alter DFL resolves th
 - **Known limitations:** This transaction interface does not yet trade post-round-seven compensatory picks; it models start-of-contract-payment-year economics rather than weekly earned-base settlement; two-phase persistent locks/commit are not implemented. The off-season trade opening is still the earlier provisional February 1 proxy in `ed815_market`, pending the Bible's exact global close of leadership hiring. The normal 11-player check is optional at game-day validation, and cannot substitute for full position-specific on-field lineup checks.
 
 **Phase 1 remains open.** The new reference components have not replaced the contradictory legacy production execution paths.
+
+
+## Tenth checkpoint — compensatory trading and optimistic reserve/commit
+
+- Expanded `engine/ed815_transactions.py` so a single trade bundle can move named players, ordinary picks **and** post-round-seven compensatory picks. The original compensation identity remains unchanged as its owner changes; reserved/used compensatory selections cannot transfer; duplicate picks are rejected. Cap projections include the post-trade rookie salary holds of both ordinary and compensation picks.
+- Corrected a substantive calculation defect: the after-state rookie-hold projection previously tested `y == season` (a season ordinal) rather than `y == year` (the civil accounting year). A regression case now proves that a $25 incoming round-one reservation cannot quietly raise an over-cap club.
+- Added `engine/ed815_settlement.py`: an isolated **in-memory optimistic** state machine for propose → reserve → commit or cancel. The snapshot's revision and SHA-256 fingerprint are compared at commit; replays, stale revisions and intervening mutations are rejected. The full bundle is financially and temporally revalidated at commit, which advances the revision and appends an event record only on success.
+- Added `engine/check_ed815_settlement.py` and extended `engine/check_ed815_transactions.py`, both enrolled in FAST. Focused in-memory runs passed. No entire branch FAST/SLOW run, database fault-injection or concurrent process test was executed.
+- **Important distinction:** This is NOT yet a true persistent atomic database commit or a durable lock. The snapshot contains in-memory dictionaries, so process crashes, multiple workers, or races require a transactional storage adapter with compare-and-swap and durable event append. Current trading clock also retains the provisional February 1 opening until leadership hiring completion is specified. The reference interface now returns (clubs, ordinary picks, compensation picks), and no production callers are connected to it.
+
+**Phase 1 remains open; production `main` is not changed.**
