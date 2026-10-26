@@ -183,3 +183,14 @@ The user's current instruction that real NFL changes never alter DFL resolves th
 - This adapter remains deliberately isolated and scoped to a two-club trade snapshot; it is **not connected to the live league state**, is not a global 48-club transaction database, does not verify real multi-process races, and does not solve recovery/orphan-reservation policy or leaguewide draft/character locking. The trading-opening timestamp is still provisional pending global hiring-close rule wiring.
 
 **Phase 1 remains unfrozen.** No changes were made to production `main`.
+
+
+## Twelfth checkpoint — 48-club globally versioned trade state
+
+- Added `engine/ed815_league_store.py`, a separate isolated **48-club SQLite reference state** with the complete named-player roster/contract ledgers, leaguewide ordinary/compensatory pick ownership, one pending trade reservation and replayable committed-event records. Reused exact contract/club JSON converters exposed in `engine/ed815_storage.py`.
+- `LeagueTradeStore.reserve` checks the full proposed player/pick/cap trade, takes a globally revisioned reservation and locks trade processing until commit/cancel. `commit` revalidates at the actual finalize timestamp and substitutes **only the two involved clubs** into the original 48-club map; draft ownership and the event are changed in the same SQLite `BEGIN IMMEDIATE` transaction. Other 46 club records are untouched.
+- New `engine/check_ed815_league_store.py` entered FAST. An isolated **in-memory SQLite** run passed full 48-club JSON round trips, preservation of 46 uninvolved clubs, mutually transferred ordinary/compensation picks, rejection of overlapping or replayed reservations, and injected failure in event insertion with full rollback. A nested event-tuple JSON round-trip defect was caught and repaired during the test.
+- **The checked-in file-backed close/reopen test was not executable in this read-only sandbox.** A writable GitHub runner/checkout must run the complete test, then the whole FAST/SLOW suite. No production integration or actual multi-process concurrency test has occurred.
+- Explicit scaling tradeoff: the reference store allows **one pending trade globally**. This is safe but serializes every trade, so throughput/lock expiry and crash recovery require later design. It is not yet a unified league database for games, season boundaries, people, injuries, votes, honors or real-time events. A full atomic 48-club universe handoff remains unbuilt.
+
+**Phase 1 remains open; no production `main` changes.**
