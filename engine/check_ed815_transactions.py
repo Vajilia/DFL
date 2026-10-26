@@ -76,4 +76,28 @@ assert R.coverage([R.Player(str(i),pos) for i,pos in enumerate(
     ["HB","HB","FB","QB","QB","QB"])])["WR"]==5
 assert "HB" not in R.coverage([R.Player(str(i),pos) for i,pos in enumerate(
     ["HB","HB","FB","QB","QB","QB"])])
+# Exact final-cut positional coverage and practice-squad veteran restrictions.
+template={"K":1,"P":1,"QB":3,"HB":2,"FB":1,"WR":5,"TE":2,"LT":2,
+          "LG":2,"C":1,"RG":2,"RT":2,"LE":2,"RE":2,"DT":3,"ROLB":2,
+          "MLB":3,"LOLB":2,"CB":5,"FS":2,"SS":2,"LS":1}
+full={}
+for pos,count in template.items():
+    for i in range(count):
+        pid=f"{pos}{i}"
+        full[pid]=R.Player(pid,pos)
+assert len(full)==48, len(full)
+for i in range(5):
+    full[f"extra{i}"]=R.Player(f"extra{i}","WR")
+roster=R.Roster("A",full)
+assert R.validate(roster,final_cut=True)
+bad=dict(full)
+del bad["LS0"]
+try: R.validate(R.Roster("A",bad),final_cut=True)
+except ValueError: pass
+else: raise AssertionError("invalid final cut accepted")
+for i in range(7):
+    bad[f"ps{i}"]=R.Player(f"ps{i}","WR","practice",3)
+try: R.validate(R.Roster("A",bad))
+except ValueError as e: assert "veteran" in str(e)
+else: raise AssertionError("practice veteran limit failed")
 print("Edition 8.15 atomic trade + roster focused tests passed")
