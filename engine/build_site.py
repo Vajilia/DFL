@@ -38,7 +38,28 @@ def build(out: str, seed: int = 7, live: bool = False, rules: int = 1) -> int:
     return len(html)
 
 
+def build_ed815_preview(out: str) -> int:
+    """Opt-in canonical founding preview; never call the legacy simulated export."""
+    import ed815_site_preview
+    from pathlib import Path
+    target = Path(out)
+    if target.exists():
+        raise FileExistsError(f"preview output already exists: {target}")
+    html = ed815_site_preview.render_html(
+        ed815_site_preview.SOURCE.read_text(encoding="utf-8")
+    )
+    with target.open("x", encoding="utf-8") as file:
+        file.write(html)
+    return len(html)
+
+
 if __name__ == "__main__":
+    if "--ed815-preview" in sys.argv:
+        args = [a for a in sys.argv[1:] if a != "--ed815-preview"]
+        if len(args) != 1 or "--live" in args:
+            raise SystemExit("Usage: build_site.py --ed815-preview <new-output.html>")
+        print(args[0], build_ed815_preview(args[0]), "bytes; preview only")
+        raise SystemExit(0)
     args = [a for a in sys.argv[1:] if a != "--live"]
     out = args[0] if args else os.path.join(ROOT, "site", "index.html")
     print(out, build(out, int(args[1]) if len(args) > 1 else 7, "--live" in sys.argv), "bytes")
