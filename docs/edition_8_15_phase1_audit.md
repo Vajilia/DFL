@@ -250,3 +250,14 @@ The user's current instruction that real NFL changes never alter DFL resolves th
 - At checkpoint writing, pull-request GitHub Actions FAST was **in progress**; no success was claimed. Collect actual workflow job conclusions and failures before any release status change.
 
 **Production `main` unchanged; Phase 1 still not frozen.**
+
+
+## Eighteenth checkpoint — independent DFLv2 74-check founding validator
+
+- Inspected owner-controlled `Vajilia/DFLv2` at commit `9c9254f3d11967e7d520db92ee98398f590f405b` rather than assuming the old README's import status was current. The independent `tools/validate.py` and all six founding tables **exist**.
+- Verified exact line-by-line identity between Edition 8.15's fenced CSV tables and DFLv2's checked-in `CALENDAR` (27 rows), `TEAMS` (48), `SCHEDULE` (360), `TOUR` (28), `INTL_VENUES` (50), and `COLOR_REGISTRY` (12). All six headers match as well.
+- Vendored a provenance-stamped unmodified reference validator as `tools/ed815_independent_validator.py` and added `engine/check_ed815_independent.py` to FAST. This extracts the six tables directly from the pinned Bible and invokes the independent source validator, including the edition-document hash check, in a temporary folder. No production data is modified.
+- Executed the DFLv2 validator from its original source with those exact six CSV inputs in an isolated in-memory Python session: **74 passed, 0 failed, 0 warnings**, with the stated relaxed Tour rule. This run omitted the `--doc` option because the already independently verified 82,148-byte source document was not copied into the in-memory command; the new checked-in wrapper **does** include `--doc`, which must pass on writable CI.
+- The reference validator was originally written for Edition 8, so its success is evidence for the listed founding-table invariants, **not** all subsequent constitutional rules or the real player/game engine. Do not mark Phase 1 frozen from this 74/74 result alone.
+
+**Production `main` unchanged.**
