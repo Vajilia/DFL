@@ -32,9 +32,20 @@ def public_character(card, *, season_year):
     required = ("id", "name", "role", "position", "height", "weight", "look")
     if any(key not in c for key in required):
         raise ValueError("incomplete public character identity")
+    for key in ("id", "name", "role", "position"):
+        if not isinstance(c[key], str) or not c[key]:
+            raise ValueError(f"{key} must be a nonempty public string")
+    for key in ("height", "weight"):
+        if isinstance(c[key], bool) or not isinstance(c[key], (int, float)) or not 0 < c[key] < 1000:
+            raise ValueError(f"{key} must be a positive public measurement")
     result = {key: copy.deepcopy(c[key]) for key in required}
     look = _record(c["look"], "creation look")
-    result["look"] = {key: copy.deepcopy(look[key]) for key in LOOK_FIELDS if key in look}
+    result["look"] = {}
+    for key in LOOK_FIELDS:
+        if key in look:
+            if not isinstance(look[key], str) or not look[key]:
+                raise ValueError(f"creation look field {key} must be a nonempty string")
+            result["look"][key] = look[key]
     result["age"] = age
     return result
 
@@ -62,6 +73,9 @@ def public_digest(events, *, since_sequence=0):
         keys = ("id", "sequence", "simulated_time", "public_summary")
         if any(key not in event for key in keys):
             raise ValueError("public event lacks its safe display fields")
+        for key in ("id", "simulated_time", "public_summary"):
+            if not isinstance(event[key], str) or not event[key]:
+                raise ValueError(f"public event {key} must be a nonempty string")
         result.append({key: copy.deepcopy(event[key]) for key in keys})
     return result
 
