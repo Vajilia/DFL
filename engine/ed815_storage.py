@@ -82,7 +82,8 @@ def decode(payload: str) -> SETTLEMENT.Snapshot:
         if pick.identity in ordinary:
             raise ValueError("duplicate stored ordinary pick")
         ordinary[pick.identity]=pick
-    compensation=tuple(COMP.CompPick(**p) for p in raw["compensation"])
+    compensation=tuple(COMP.CompPick(**{**p,"qualifying_base":Decimal(p["qualifying_base"])})
+                       for p in raw["compensation"])
     if len({p.identity for p in compensation})!=len(compensation):
         raise ValueError("duplicate stored compensatory pick")
     r=raw["reservation"]
