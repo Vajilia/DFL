@@ -74,9 +74,39 @@ def check_assignments():
         raise AssertionError("duplicate club permitted")
 
 
+
+def check_immutable_fixtures():
+    from collections import Counter, defaultdict
+    seeded = {div:[f"{i}:{rank}" for rank in range(1,6)]
+              for i,div in enumerate(C.DIVISION_ORDER)}
+    where = {cid:div for div,clubs in seeded.items() for cid in clubs}
+    for season in range(1,17):
+        fixtures = C.fixtures_for_season(season, seeded)
+        C.validate_fixture_counts(fixtures, seeded)
+        by_club = defaultdict(list)
+        for f in fixtures:
+            by_club[f["home"]].append((f, f["away"]))
+            by_club[f["away"]].append((f, f["home"]))
+        for cid, own in by_club.items():
+            div = where[cid]
+            same_div = [other for _, other in own if where[other] == div]
+            other_conf = [other for _, other in own if where[other][0] != div[0]]
+            same_conf_other_div = [other for _, other in own
+                                   if where[other][0] == div[0] and where[other] != div]
+            assert (len(same_div),len(other_conf),len(same_conf_other_div)) == (8,4,6)
+            assert sorted(Counter(same_div).values()) == [2,2,2,2]
+            assert len({f["week"] for f,_ in own}) == 18
+            assert len(set(range(15,20)) - {f["week"] for f,_ in own}) == 1
+            slot = {"10:00":1,"13:00":2,"17:30":3}
+            pts = sum((4 if __import__("datetime").date.fromisoformat(f["date"]).weekday() == 5
+                 else 5 if __import__("datetime").date.fromisoformat(f["date"]).weekday() == 0
+                 else slot[f["kickoff"]]) for f,_ in own)
+            assert 33 <= pts <= 38, (cid, pts)
+
 if __name__ == "__main__":
     check_known_2000()
     check_three_centuries()
     check_eight_year_rotation()
     check_assignments()
+    check_immutable_fixtures()
     print("Edition 8.15 calendar: 300 years; rotation: 400 seasons; passed")
