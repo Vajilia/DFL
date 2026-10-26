@@ -272,3 +272,11 @@ The user's current instruction that real NFL changes never alter DFL resolves th
 - **Phase 1 is still NOT frozen:** full SLOW suite, stable-ID atomic decomposition, explicit normative open-item treatment, actual Edition 8.15 production routing and year-zero operational gate remain incomplete.
 
 Draft PR #42 remains unmerged and unpromoted.
+
+
+## Twentieth checkpoint — non-mutating canonical migration guard
+
+- Independently compared `data/teams.csv` and `data/schedule_2000.csv` with the pinned Edition 8.15 §5 and §6 tables. All **48 numeric club IDs (1–48)** retain their original club identity and unchanged conference, division, city, nickname, home venue and division seed. All **360 numbered regular-season fixtures** match exactly on week, game, date, kickoff, away and home after expanding each legacy full team name to its stable canonical city. The four playoff date placeholders in the old schedule are not numbered regular-season games and are excluded from that comparison.
+- Generated `docs/ed815_legacy_identity_delta.json`: an audit-only, per-club inventory of **176 differences** across 48 clubs, principally the revised division gemstone tertiary colors (48 tertiary names and 48 hex values), with other primary/secondary palette changes, two location strings and one abbreviation. None is applied to production data here.
+- Added independent guard `tools/check_ed815_migration.py` and `engine/check_ed815_migration.py` to FAST. It rereads both original legacy CSV files, Edition 8.15 and the delta inventory, rejects any unintended identity or schedule changes, and verifies the delta field counts. The guard was added after the previous 52/52 passing CI snapshot and must pass in the newer workflow before release claims.
+- This is a controlled migration specification, **not** a live data swap, season migration, site integration or freeze. `main` unchanged; draft PR #42 unmerged.
