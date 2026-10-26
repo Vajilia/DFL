@@ -79,6 +79,11 @@ def encode(state: League):
         pending=pending,events=[list(x) for x in state.events])
     return json.dumps(payload,sort_keys=True,separators=(",",":"),allow_nan=False)
 
+def _tuple_tree(value):
+    if isinstance(value,list):
+        return tuple(_tuple_tree(x) for x in value)
+    return value
+
 def decode(payload):
     raw=json.loads(payload)
     if raw.get("schema")!=SCHEMA:
@@ -99,7 +104,7 @@ def decode(payload):
                 tuple(_parse_leg(x) for x in p["legs"]),
                 p["season"],p["post_cut"],p["require_eleven"])
     return League(raw["revision"],clubs,ordinary,compensation,pending,
-                  tuple(tuple(x) for x in raw["events"]))
+                  tuple(_tuple_tree(x) for x in raw["events"]))
 
 class LeagueTradeStore:
     def __init__(self,path):
