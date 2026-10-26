@@ -42,7 +42,8 @@ assert h.count("<tr>") == 410  # two headers, 48 clubs, 360 fixtures
 assert "&lt;script&gt;Player&lt;/script&gt;" in h
 assert "&lt;script&gt;Signed&lt;/script&gt;" in h
 assert "<script>" not in h
-assert "DO NOT EXPOSE" not in h\nassert "Final recorded" not in h
+assert "DO NOT EXPOSE" not in h
+assert "Final recorded" not in h
 assert "pause-live" not in h
 assert "admin=1" not in h
 assert "<button" not in h and "<form" not in h
