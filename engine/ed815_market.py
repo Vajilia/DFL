@@ -34,7 +34,7 @@ def trade_deadline(season: int) -> datetime:
 
 def may_finalize_trade(season: int, moment: datetime) -> bool:
     _require_utc(moment)
-    if moment < trade_open(season) or moment > trade_deadline(season):
+    if moment < trade_open(season) or moment >= trade_deadline(season) + timedelta(minutes=1):
         return False
     if moment < first_kickoff(season):
         return True  # Offseason: trading remains open continuously.
@@ -45,5 +45,5 @@ def may_finalize_trade(season: int, moment: datetime) -> bool:
     if weekday in (2,3):
         return True
     if weekday == 4:
-        return moment.time() <= datetime.min.time().replace(hour=23,minute=59)
+        return True
     return False
