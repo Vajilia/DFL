@@ -1,7 +1,7 @@
 """Validate Edition 8.15's stable, source-anchored tabular rule identities.
 
 These rows are normative reference DATA, not proof that the running DFL engine
-complies. One ID per team, fixture, and international venue; pinned source
+complies. One ID per calendar, team, fixture, Tour, venue and color-registry row; pinned source
 anchors cannot silently drift or lose identities.
 """
 from __future__ import annotations
@@ -13,13 +13,13 @@ from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1]
 BIBLE=ROOT/"docs"/"DFL_Design_Document_Ed8.15.md"
 MANIFEST=ROOT/"docs"/"ed815_table_row_register.json"
-COUNTS={5:48,6:360,8:50}
-LABELS={5:"TEAM",6:"GAME",8:"VENUE"}
+COUNTS={2:27,5:48,6:360,7:28,8:50,9:12}
+LABELS={2:"CAL",5:"TEAM",6:"GAME",7:"TOUR",8:"VENUE",9:"COLOR"}
 
 def source_tables(raw):
     section=0
     fenced=False
-    content={5:[],6:[],8:[]}
+    content={section:[] for section in COUNTS}
     for lineno,line in enumerate(raw.splitlines(),1):
         m=re.match(r"^## §(\d+)\s+",line)
         if m:
@@ -34,7 +34,7 @@ def source_tables(raw):
 def main():
     raw=BIBLE.read_text(encoding="utf-8")
     manifest=json.loads(MANIFEST.read_text(encoding="utf-8"))
-    if manifest.get("schema")!="dfl-ed815-table-row-register-v1":
+    if manifest.get("schema")!="dfl-ed815-table-row-register-v2":
         raise AssertionError("unknown Edition 8.15 table registry schema")
     source=source_tables(raw)
     observed=manifest["rows"]
@@ -58,8 +58,14 @@ def main():
             keys=[row["team_id"] for row in records]
         elif section==6:
             keys=[(row["week"],row["game"]) for row in records]
-        else:
+        elif section==2:
+            keys=[row["calendar_week"] for row in records]
+        elif section==7:
+            keys=[(row["tour_round"],row["game"]) for row in records]
+        elif section==8:
             keys=[row["venue_id"] for row in records]
+        else:
+            keys=[(row["scope"],row["name"]) for row in records]
         if len(keys)!=len(set(keys)):
             raise AssertionError(f"§{section}: duplicate canonical source-row identity")
         for i,(line_no,anchor) in enumerate(lines[1:],1):
@@ -69,7 +75,7 @@ def main():
         raise AssertionError("registered table row counts changed")
     if observed!=expected:
         raise AssertionError("table row IDs or source anchors do not match Edition 8.15")
-    print("OK: 458 source-anchored Edition 8.15 table row IDs (48 clubs, 360 games, 50 venues)")
+    print("OK: 525 source-anchored Edition 8.15 founding table row IDs")
     return 0
 
 if __name__=="__main__":
