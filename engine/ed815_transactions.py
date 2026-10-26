@@ -1,9 +1,8 @@
 """Atomic two-club Edition 8.15 player/pick trade reference (§§11–12).
 
-This is a pure proposal/commit calculation: no write occurs if validation fails.
+This is a pure proposal calculation: no write occurs if validation fails.
 It handles pre-payment-year contract transfers, roster membership and ordinary
-pick ownership; compensation picks may be supplied for cap reservations but
-are not yet tradable through this particular interface.
+pick ownership, including post-round-seven compensatory selections.
 """
 from __future__ import annotations
 from dataclasses import dataclass, replace
@@ -31,11 +30,12 @@ class TradeLeg:
     to_club: str
     player_ids: tuple[str,...] = ()
     pick_ids: tuple[tuple,...] = ()
+    comp_pick_ids: tuple[tuple,...] = ()
 
 def propose_trade(clubs: Mapping[str,Club], ordinary: Mapping,
                   legs: tuple[TradeLeg,...], *, season: int, moment: datetime,
                   post_cut: bool, compensation=(), require_eleven=False):
-    """Return (new_clubs,new_picks) only if the ENTIRE bundle is legal.
+    """Return (new_clubs,new_ordinary,new_compensation) if entire bundle legal.
 
     Final-roster positional minimums are intentionally not enforced for an
     in-season trade: §11 permits temporary shortfalls. Kickoff viability can
@@ -59,13 +59,16 @@ def propose_trade(clubs: Mapping[str,Club], ordinary: Mapping,
     new_rosters={k:dict(v.roster.players) for k,v in clubs.items()}
     new_dead={k:{y:CAP.D(a) for y,a in v.ledger.booked_dead.items()} for k,v in clubs.items()}
     new_picks=dict(ordinary)
+    new_comp={p.identity:p for p in compensation}
+    if len(new_comp)!=len(tuple(compensation)):
+        raise ValueError("duplicate compensatory pick identity")
     moved_players=set()
     moved_picks=set()
     for leg in legs:
         src,dst=leg.from_club,leg.to_club
         if src not in clubs or dst not in clubs or src==dst:
             raise ValueError("trade leg clubs invalid")
-        if not leg.player_ids and not leg.pick_ids:
+        if not leg.player_ids and not leg.pick_ids and not leg.comp_pick_ids:
             raise ValueError("empty trade leg")
         for pid in leg.player_ids:
             if pid in moved_players:
@@ -88,7 +91,15 @@ def propose_trade(clubs: Mapping[str,Club], ordinary: Mapping,
             moved_picks.add(identity)
             new_picks=PICKS.transfer(new_picks,identity,from_club=src,to_club=dst,
                                      current_draft_year=year)
-    after_holds=COMP.rookie_holds_by_owner(year,new_picks,compensation)
+        for identity in leg.comp_pick_ids:
+            if identity in moved_picks:
+                raise ValueError("comp pick cannot move twice in one trade")
+            moved_picks.add(identity)
+            if identity not in new_comp:
+                raise ValueError("compensatory pick does not exist")
+            new_comp[identity]=COMP.transfer_comp(new_comp[identity],src,dst,year)
+    new_compensation=tuple(new_comp[p.identity] for p in compensation)
+    after_holds=COMP.rookie_holds_by_owner(year,new_picks,new_compensation)
     result={}
     for name,club in clubs.items():
         ledger=replace(club.ledger,contracts=new_contracts[name],booked_dead=new_dead[name])
@@ -99,10 +110,10 @@ def propose_trade(clubs: Mapping[str,Club], ordinary: Mapping,
                    rookie_holds=before_holds.get(name,()) if y==year else ())
                 for y in years}
         after={y:CONTRACTS.projection(ledger,y,post_cut=post_cut,
-                   rookie_holds=after_holds.get(name,()) if y==season else ())
+                   rookie_holds=after_holds.get(name,()) if y==year else ())
                for y in years}
         verdict=CAP.assess_transaction(before,after,action="trade")
         if not verdict.allowed:
             raise ValueError(name+": "+"; ".join(verdict.reasons))
         result[name]=Club(ledger,roster)
-    return result,new_picks
+    return result,new_picks,new_compensation
