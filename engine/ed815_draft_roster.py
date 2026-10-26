@@ -20,7 +20,7 @@ class Prospect:
         if self.draft_year<2000:
             raise ValueError("invalid draft class year")
         if self.player.status!="camp":
-            raise ValueError("unselcted prospect must carry camp entry category")
+            raise ValueError("unselected prospect must carry camp entry category")
 
     @property
     def player_id(self):
