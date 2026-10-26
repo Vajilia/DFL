@@ -21,6 +21,8 @@ import ed815_cycle as CYCLE
 import ed815_calendar as CAL
 import ed815_free_agents as FREE
 import ed815_draft_roster as DRAFT
+import ed815_waiver_ledger as WAIVER_LEDGER
+import ed815_waivers as WAIVERS
 
 SCHEMA=1
 CLUBS=48
@@ -45,6 +47,7 @@ class League:
     structure: CYCLE.SeasonStructure|None=None
     free_agents: dict=None
     prospects: dict=None
+    waivers: dict=None
 
     def __post_init__(self):
         if self.revision<0 or len(self.clubs)!=CLUBS:
@@ -65,6 +68,8 @@ class League:
             object.__setattr__(self,"free_agents",{})
         if self.prospects is None:
             object.__setattr__(self,"prospects",{})
+        if self.waivers is None:
+            object.__setattr__(self,"waivers",{})
         if set(self.free_agents) & {pid for club in self.clubs.values() for pid in club.roster.players}:
             raise ValueError("free agent cannot remain on a club roster")
         if set(self.free_agents) & {pid for club in self.clubs.values() for pid in club.ledger.contracts}:
@@ -75,6 +80,13 @@ class League:
             raise ValueError("draft prospect cannot be on a team or free-agent list")
         if any(pid!=prospect.player_id for pid,prospect in self.prospects.items()):
             raise ValueError("draft prospect map identity mismatch")
+        for pid,pending_waiver in self.waivers.items():
+            club_id=pending_waiver.notice.releasing_club
+            if (pid!=pending_waiver.notice.player_id or club_id not in self.clubs
+                or pid in self.clubs[club_id].roster.players
+                or pid not in self.clubs[club_id].ledger.contracts
+                or pid in self.free_agents or pid in self.prospects):
+                raise ValueError("pending waiver and contract/roster identity mismatch")
         if self.structure is not None:
             listed={cid for ids in self.structure.seeded_divisions.values() for cid in ids}
             listed.update(self.structure.ambassadors.values())
@@ -107,13 +119,22 @@ def encode(state: League):
                  for pid,entry in sorted(state.free_agents.items())}
     prospects={pid:dict(player=asdict(p.player),draft_year=p.draft_year)
                for pid,p in sorted(state.prospects.items())}
+    waivers={pid:dict(notice=dict(player_id=v.notice.player_id,
+                 releasing_club=v.notice.releasing_club,
+                 released_at=v.notice.released_at.isoformat(),
+                 expires_at=v.notice.expires_at.isoformat()),
+                 player=asdict(v.player),
+                 claims=[dict(claimant=c.claim.claimant,
+                              filed_at=c.claim.filed_at.isoformat(),status=c.status)
+                         for c in v.claims])
+             for pid,v in sorted(state.waivers.items())}
     payload=dict(schema=SCHEMA,revision=state.revision,
         clubs={k:STORE.encode_club(v) for k,v in sorted(state.clubs.items())},
         ordinary=[asdict(p) for p in sorted(state.ordinary.values(),key=lambda x:str(x.identity))],
         compensation=[{**asdict(p),"qualifying_base":str(p.qualifying_base)}
                       for p in state.compensation],
         pending=pending,events=[list(x) for x in state.events],structure=structure,
-        free_agents=free_agents,prospects=prospects)
+        free_agents=free_agents,prospects=prospects,waivers=waivers)
     return json.dumps(payload,sort_keys=True,separators=(",",":"),allow_nan=False)
 
 def _tuple_tree(value):
@@ -152,8 +173,19 @@ def decode(payload):
                  v["entered_year"]) for pid,v in raw.get("free_agents",{}).items()}
     prospects={pid:DRAFT.Prospect(ROSTER.Player(**v["player"]),v["draft_year"])
                for pid,v in raw.get("prospects",{}).items()}
+    waivers={}
+    for pid,v in raw.get("waivers",{}).items():
+        notice=v["notice"]
+        waiver=WAIVERS.Waiver(notice["player_id"],notice["releasing_club"],
+              datetime.fromisoformat(notice["released_at"]),
+              datetime.fromisoformat(notice["expires_at"]))
+        claims=tuple(WAIVER_LEDGER.ClaimIntent(
+                WAIVERS.Claim(c["claimant"],datetime.fromisoformat(c["filed_at"])),
+                c["status"]) for c in v["claims"])
+        waivers[pid]=WAIVER_LEDGER.PendingWaiver(waiver,
+                      ROSTER.Player(**v["player"]),claims)
     return League(raw["revision"],clubs,ordinary,compensation,pending,
-                  tuple(_tuple_tree(x) for x in raw["events"]),structure,free_agents,prospects)
+                  tuple(_tuple_tree(x) for x in raw["events"]),structure,free_agents,prospects,waivers)
 
 class LeagueTradeStore:
     def __init__(self,path):
@@ -208,7 +240,8 @@ class LeagueTradeStore:
                 raise ValueError("concurrent league revision mismatch")
             if event is not None:
                 self.db.execute("""INSERT INTO ed815_league_events(token,revision,event)
-                      VALUES(?,?,?)""",(event[1],after.revision,json.dumps(event)))
+                      VALUES(?,?,?)""",(f"{after.revision}:{event[0]}:{event[1]}",
+                                     after.revision,json.dumps(event)))
             self.db.execute("COMMIT")
             return after
         except BaseException:
@@ -251,7 +284,7 @@ class LeagueTradeStore:
             updated.update(results)
             event=("trade",pending.token,pending.season,moment.isoformat(),
                    pending.clubs)
-            return League(s.revision+1,updated,picks,comp,None,s.events+(event,),s.structure,s.free_agents,s.prospects),event
+            return League(s.revision+1,updated,picks,comp,None,s.events+(event,),s.structure,s.free_agents,s.prospects,s.waivers),event
         return self._atomic(expected_revision,transform)
 
     def cancel(self,pending:PendingTrade,*,expected_revision):
@@ -284,6 +317,33 @@ class LeagueTradeStore:
         def transform(state):
             after=DRAFT.select_rookie(state,club_id=club_id,player_id=player_id,
                      pick_identity=pick_identity,post_cut=post_cut)
+            return after,after.events[-1]
+        return self._atomic(expected_revision,transform)
+
+    def begin_waiver_release(self,club_id,player_id,*,expected_revision,at,
+                             post_cut=False):
+        def transform(state):
+            after=WAIVER_LEDGER.begin_release(state,club_id,player_id,
+                                              at=at,post_cut=post_cut)
+            return after,after.events[-1]
+        return self._atomic(expected_revision,transform)
+
+    def file_waiver_claim(self,player_id,claimant,*,expected_revision,at,
+                          status="main"):
+        def transform(state):
+            after=WAIVER_LEDGER.file_claim(state,player_id,claimant,
+                                           at=at,status=status)
+            return after,after.events[-1]
+        return self._atomic(expected_revision,transform)
+
+    def resolve_waiver(self,player_id,*,expected_revision,at,week,
+                       previous_draft_priority,current_standings_priority=None,
+                       post_cut=False):
+        def transform(state):
+            after=WAIVER_LEDGER.resolve(state,player_id,at=at,week=week,
+                previous_draft_priority=previous_draft_priority,
+                current_standings_priority=current_standings_priority,
+                post_cut=post_cut)
             return after,after.events[-1]
         return self._atomic(expected_revision,transform)
 
