@@ -56,4 +56,18 @@ fails([{**final(first, 1, 10, 7), "home": "unknown"}])
 fails([final(first, 2, 10, 7), final(second, 1, 3, 5)])
 fails(log, cursor=-1)
 fails([{**final(first, 1, 10, 7), "game": 999}])
+
+# The six-tab HTML must honor the exact same reveal cursor.
+h0 = SITE.render_html(doc, events=log, revealed_through_sequence=0)
+h1 = SITE.render_html(doc, events=log, revealed_through_sequence=1)
+h2 = SITE.render_html(doc, events=log, revealed_through_sequence=2)
+h3 = SITE.render_html(doc, events=log, revealed_through_sequence=3)
+assert "17–17" not in h0 and "Final recorded" not in h0
+assert "17–17" in h1 and "Final recorded" in h1
+assert "999" not in h2 and "888" not in h2
+assert "777" not in h2 and "666" not in h2
+assert "666–777" in h3
+assert "Revealed final games: 2" in h3
+assert "Tied games: 1" in h3
+assert "No publicly revealed game finals yet." in h0
 print("OK: strict reveal cursor; private/unreleased scores cannot change public standings")
