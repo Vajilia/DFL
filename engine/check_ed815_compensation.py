@@ -67,6 +67,32 @@ def check_ownership_and_reservations():
     assert transferred.identity==awards[0].identity
 
 
+def check_atomic_rookie_signing():
+    import ed815_contracts as CONTRACTS
+    picks=P.ordinary_picks(2000,CLUBS)
+    club=CLUBS[0]
+    pick_id=(2000,1,club)
+    vet=CONTRACTS.Contract("veteran",2000,(911,),(0,),0)
+    ledger=CONTRACTS.Ledger(club,contracts={"veteran":vet})
+    holds=C.rookie_holds_by_owner(2000,picks,[])
+    assert sum(holds[club])==89
+    assert CONTRACTS.projection(ledger,2000,post_cut=False,
+                                 rookie_holds=holds[club]).cap_number==1000
+    selected,updated=C.select_and_sign_rookie(2000,picks,[],pick_id,ledger,"new-rookie")
+    assert not picks[pick_id].used and selected[pick_id].used
+    assert "new-rookie" not in ledger.contracts
+    assert updated.contracts["new-rookie"].bases==(Decimal(25),)*4
+    new_holds=C.rookie_holds_by_owner(2000,selected,[])
+    assert CONTRACTS.projection(updated,2000,post_cut=False,
+                                 rookie_holds=new_holds[club]).cap_number==1000
+    try:
+        C.select_and_sign_rookie(2000,picks,[],pick_id,CONTRACTS.Ledger(CLUBS[1]),"bad")
+    except ValueError:
+        pass
+    else:
+        raise AssertionError("wrong-club pick signed")
+
+
 def check_randomized():
     rng=random.Random(81515)
     for run in range(2000):
@@ -91,5 +117,6 @@ def check_randomized():
 if __name__ == "__main__":
     check_netting()
     check_ownership_and_reservations()
+    check_atomic_rookie_signing()
     check_randomized()
     print("Edition 8.15 compensation: 2,000 randomized movement sets passed")
