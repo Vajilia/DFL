@@ -217,3 +217,14 @@ The user's current instruction that real NFL changes never alter DFL resolves th
 - **Limits:** This is a core unrestricted-free-agent flow, not the full offseason people/decision system. Pending waiver claims, compensatory free-agent netting integration, player medical recovery, permanent archival of retirees, creator-enforced minimum eight available unsigned players per position, in-game signing blackout, AI-generated negotiations, and leader hiring windows remain unconnected. All branch FAST/SLOW and physical on-disk restart tests remain outstanding.
 
 **Phase 1 still not frozen; production `main` unchanged.**
+
+
+## Fifteenth checkpoint — fixed-rookie draft selection into the global ledger
+
+- Added `engine/ed815_draft_roster.py` with a durable **creator-supplied** `Prospect` reference. Selection consumes exactly one listed player and one owned, unused, non-reserved **ordinary or post-round-seven compensatory pick** from the active draft year. No draft routine creates a new character card or mutates her permanent position.
+- Rookies receive the source-defined fixed four-year base deal (§11, §12): $25 / $18 / $14 / $11 / $9 / $7 / $5 by regular round, or $5 after round seven. The already-reserved rookie pick cap hold is replaced by the signed rookie's salary hit within the same before/after ledger guard—no double billing and no unsigned unreserved selection.
+- Extended `engine/ed815_league_store.py` to retain the immutable draft prospect pool in each globally versioned SQLite state. `select_rookie` atomically marks the pick used, signs the rookie against current/future cap, adds her to her club's roster, removes her from the draft pool and inserts a permanent selection event. Updates to `ed815_handoff.py` preserve existing prospect references across year boundaries instead of silently discarding data.
+- New `engine/check_ed815_draft_roster.py` in FAST passed isolated in-memory tests for both pick classes, fixed wages, one-time selection, persistent card/position identity, exact round-trip serialization, and forced SQLite event-write failure that rolls back pick use, contract signing and player movement. Re-ran focused season-handoff checks after the additional persistent draft field; passed.
+- **Important remaining gaps:** No fully built 672-prospect creator class or quota validator, randomized draft decision maker, complete seven-round draft clock, rookie first-round fifth-year option exercise, post-draft unsold character handling, permanent rookie card storage, or actual front-office decision integration yet. The `Prospect` reference is an identity bridge, not the creator's full 1–99 hidden-attribute card. Waiver release/claim settlement remains a separate unconnected domain. Full branch FAST/SLOW and on-disk restart verification still pending.
+
+**Phase 1 remains open. Production `main` is unchanged.**
