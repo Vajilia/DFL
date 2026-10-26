@@ -116,3 +116,11 @@ The user's current instruction that real NFL changes never alter DFL resolves th
 - Focused in-memory Python execution passed. A full branch checkout, complete FAST/SLOW suites, integrated historical archive comparisons and production clock tests have not been run.
 
 **Phase 1 still blocked:** contradictory legacy systems exist; source register is coarse; Edition 8.15 has normative open items. Structural reference modules cannot be substituted into production until remaining domains are reconciled.
+
+## Fifth checkpoint — financial guardrails and trading intervals
+
+- Added isolated `engine/ed815_cap.py`: decimal-precise cap projections at $1,000/year, highest 69 contract hits until cut and all afterward, $25 reserve, $5 minimum replacement cost, strict-dead ceiling $735 (prorated current-year minimum), rookie-pick cap holds, future-year transaction guards and no rollover.
+- Added `engine/check_ed815_cap.py`, focused boundary/invalid-input testing and 10,000 deterministic randomized cap cases; passed after fixing a test fixture whose booked-dead balance had been incorrectly excluded from its strict liability.
+- Added `engine/ed815_market.py`: UTC-only off-season trade opening and the Tuesday 00:01–Friday 23:59 competition window ending before numbered week 9. The end minute is treated inclusively; added `engine/check_ed815_market.py` and passed 300 years of boundary cases.
+- All four new files are reference modules and their checks are enrolled in FAST. Full branch execution of the entire FAST tier remains outstanding.
+- **Not built here:** actual per-player contract-year ledger, signing bonus proration/acceleration, guarantees, release/restructure and split-release generation, two-phase reserve/commit, minimum-positional lineup, rookie ownership reservation updates, waivers, draft compensatory picks and real trade settlement. Inputs to `ed815_cap.YearProjection` must come from those future mechanisms, so its green checks are not evidence that club finances are now correct.
