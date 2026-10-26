@@ -20,6 +20,7 @@ import ed815_compensation as COMP
 import ed815_cycle as CYCLE
 import ed815_calendar as CAL
 import ed815_free_agents as FREE
+import ed815_draft_roster as DRAFT
 
 SCHEMA=1
 CLUBS=48
@@ -43,6 +44,7 @@ class League:
     events: tuple=()
     structure: CYCLE.SeasonStructure|None=None
     free_agents: dict=None
+    prospects: dict=None
 
     def __post_init__(self):
         if self.revision<0 or len(self.clubs)!=CLUBS:
@@ -61,10 +63,18 @@ class League:
             raise ValueError("compensation owner outside league")
         if self.free_agents is None:
             object.__setattr__(self,"free_agents",{})
+        if self.prospects is None:
+            object.__setattr__(self,"prospects",{})
         if set(self.free_agents) & {pid for club in self.clubs.values() for pid in club.roster.players}:
             raise ValueError("free agent cannot remain on a club roster")
         if set(self.free_agents) & {pid for club in self.clubs.values() for pid in club.ledger.contracts}:
             raise ValueError("free agent cannot have an active club contract")
+        roster_ids={pid for club in self.clubs.values() for pid in club.roster.players}
+        contract_ids={pid for club in self.clubs.values() for pid in club.ledger.contracts}
+        if set(self.prospects)&(roster_ids|contract_ids|set(self.free_agents)):
+            raise ValueError("draft prospect cannot be on a team or free-agent list")
+        if any(pid!=prospect.player_id for pid,prospect in self.prospects.items()):
+            raise ValueError("draft prospect map identity mismatch")
         if self.structure is not None:
             listed={cid for ids in self.structure.seeded_divisions.values() for cid in ids}
             listed.update(self.structure.ambassadors.values())
@@ -95,13 +105,15 @@ def encode(state: League):
     free_agents={pid:dict(player=asdict(entry.player),last_club=entry.last_club,
                   entered_year=entry.entered_year)
                  for pid,entry in sorted(state.free_agents.items())}
+    prospects={pid:dict(player=asdict(p.player),draft_year=p.draft_year)
+               for pid,p in sorted(state.prospects.items())}
     payload=dict(schema=SCHEMA,revision=state.revision,
         clubs={k:STORE.encode_club(v) for k,v in sorted(state.clubs.items())},
         ordinary=[asdict(p) for p in sorted(state.ordinary.values(),key=lambda x:str(x.identity))],
         compensation=[{**asdict(p),"qualifying_base":str(p.qualifying_base)}
                       for p in state.compensation],
         pending=pending,events=[list(x) for x in state.events],structure=structure,
-        free_agents=free_agents)
+        free_agents=free_agents,prospects=prospects)
     return json.dumps(payload,sort_keys=True,separators=(",",":"),allow_nan=False)
 
 def _tuple_tree(value):
@@ -138,8 +150,10 @@ def decode(payload):
     import ed815_roster as ROSTER
     free_agents={pid:FREE.FreeAgent(ROSTER.Player(**v["player"]),v["last_club"],
                  v["entered_year"]) for pid,v in raw.get("free_agents",{}).items()}
+    prospects={pid:DRAFT.Prospect(ROSTER.Player(**v["player"]),v["draft_year"])
+               for pid,v in raw.get("prospects",{}).items()}
     return League(raw["revision"],clubs,ordinary,compensation,pending,
-                  tuple(_tuple_tree(x) for x in raw["events"]),structure,free_agents)
+                  tuple(_tuple_tree(x) for x in raw["events"]),structure,free_agents,prospects)
 
 class LeagueTradeStore:
     def __init__(self,path):
@@ -237,7 +251,7 @@ class LeagueTradeStore:
             updated.update(results)
             event=("trade",pending.token,pending.season,moment.isoformat(),
                    pending.clubs)
-            return League(s.revision+1,updated,picks,comp,None,s.events+(event,),s.structure,s.free_agents),event
+            return League(s.revision+1,updated,picks,comp,None,s.events+(event,),s.structure,s.free_agents,s.prospects),event
         return self._atomic(expected_revision,transform)
 
     def cancel(self,pending:PendingTrade,*,expected_revision):
@@ -262,6 +276,14 @@ class LeagueTradeStore:
         def transform(state):
             after=FREE.sign(state,club_id,player_id,contract,status=status,
                             post_cut=post_cut)
+            return after,after.events[-1]
+        return self._atomic(expected_revision,transform)
+
+    def select_rookie(self,club_id,player_id,pick_identity,*,expected_revision,
+                      post_cut=False):
+        def transform(state):
+            after=DRAFT.select_rookie(state,club_id=club_id,player_id=player_id,
+                     pick_identity=pick_identity,post_cut=post_cut)
             return after,after.events[-1]
         return self._atomic(expected_revision,transform)
 
