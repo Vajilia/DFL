@@ -57,7 +57,8 @@ def main() -> None:
     clubs = canonical("team_id,abbr,team_city,team_name")
     fixtures = canonical("week,game,date,kickoff,away,home")
     old_clubs = read_csv(ROOT / "data" / "teams.csv")
-    old_fixtures = read_csv(ROOT / "data" / "schedule_2000.csv")
+    old_fixtures = [r for r in read_csv(ROOT / "data" / "schedule_2000.csv")
+                    if r["week"] and r["game"]]
     delta = json.loads(DELTA.read_text(encoding="utf-8"))
 
     require(len(clubs) == len(old_clubs) == 48, "expected 48 teams")
