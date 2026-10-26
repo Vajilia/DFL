@@ -19,6 +19,7 @@ import ed815_picks as PICKS
 import ed815_compensation as COMP
 import ed815_cycle as CYCLE
 import ed815_calendar as CAL
+import ed815_free_agents as FREE
 
 SCHEMA=1
 CLUBS=48
@@ -41,6 +42,7 @@ class League:
     pending: PendingTrade|None=None
     events: tuple=()
     structure: CYCLE.SeasonStructure|None=None
+    free_agents: dict=None
 
     def __post_init__(self):
         if self.revision<0 or len(self.clubs)!=CLUBS:
@@ -57,6 +59,12 @@ class League:
             raise ValueError("ordinary pick owner outside league")
         if any(p.owner not in self.clubs for p in self.compensation):
             raise ValueError("compensation owner outside league")
+        if self.free_agents is None:
+            object.__setattr__(self,"free_agents",{})
+        if set(self.free_agents) & {pid for club in self.clubs.values() for pid in club.roster.players}:
+            raise ValueError("free agent cannot remain on a club roster")
+        if set(self.free_agents) & {pid for club in self.clubs.values() for pid in club.ledger.contracts}:
+            raise ValueError("free agent cannot have an active club contract")
         if self.structure is not None:
             listed={cid for ids in self.structure.seeded_divisions.values() for cid in ids}
             listed.update(self.structure.ambassadors.values())
@@ -84,12 +92,16 @@ def encode(state: League):
         seeded_divisions=[list(state.structure.seeded_divisions[d]) for d in CAL.DIVISION_ORDER],
         ambassadors=[state.structure.ambassadors[d] for d in CAL.DIVISION_ORDER],
         fixtures=list(state.structure.fixtures))
+    free_agents={pid:dict(player=asdict(entry.player),last_club=entry.last_club,
+                  entered_year=entry.entered_year)
+                 for pid,entry in sorted(state.free_agents.items())}
     payload=dict(schema=SCHEMA,revision=state.revision,
         clubs={k:STORE.encode_club(v) for k,v in sorted(state.clubs.items())},
         ordinary=[asdict(p) for p in sorted(state.ordinary.values(),key=lambda x:str(x.identity))],
         compensation=[{**asdict(p),"qualifying_base":str(p.qualifying_base)}
                       for p in state.compensation],
-        pending=pending,events=[list(x) for x in state.events],structure=structure)
+        pending=pending,events=[list(x) for x in state.events],structure=structure,
+        free_agents=free_agents)
     return json.dumps(payload,sort_keys=True,separators=(",",":"),allow_nan=False)
 
 def _tuple_tree(value):
@@ -123,8 +135,11 @@ def decode(payload):
             {d:tuple(ids) for d,ids in zip(CAL.DIVISION_ORDER,x["seeded_divisions"])},
             {d:club for d,club in zip(CAL.DIVISION_ORDER,x["ambassadors"])},
             tuple(x["fixtures"]))
+    import ed815_roster as ROSTER
+    free_agents={pid:FREE.FreeAgent(ROSTER.Player(**v["player"]),v["last_club"],
+                 v["entered_year"]) for pid,v in raw.get("free_agents",{}).items()}
     return League(raw["revision"],clubs,ordinary,compensation,pending,
-                  tuple(_tuple_tree(x) for x in raw["events"]),structure)
+                  tuple(_tuple_tree(x) for x in raw["events"]),structure,free_agents)
 
 class LeagueTradeStore:
     def __init__(self,path):
@@ -222,7 +237,7 @@ class LeagueTradeStore:
             updated.update(results)
             event=("trade",pending.token,pending.season,moment.isoformat(),
                    pending.clubs)
-            return League(s.revision+1,updated,picks,comp,None,s.events+(event,),s.structure),event
+            return League(s.revision+1,updated,picks,comp,None,s.events+(event,),s.structure,s.free_agents),event
         return self._atomic(expected_revision,transform)
 
     def cancel(self,pending:PendingTrade,*,expected_revision):
@@ -239,6 +254,14 @@ class LeagueTradeStore:
             after,report=HANDOFF.advance(state,results,seed=seed,
                        coronation_complete=coronation_complete,
                        template_path=template_path)
+            return after,after.events[-1]
+        return self._atomic(expected_revision,transform)
+
+    def sign_free_agent(self,club_id,player_id,contract,*,expected_revision,
+                        status="main",post_cut=False):
+        def transform(state):
+            after=FREE.sign(state,club_id,player_id,contract,status=status,
+                            post_cut=post_cut)
             return after,after.events[-1]
         return self._atomic(expected_revision,transform)
 
