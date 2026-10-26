@@ -45,7 +45,6 @@ def retire_due(pool: Mapping[str,FreeAgent],opening_year:int):
 def sign(league,club_id:str,player_id:str,contract:CONTRACTS.Contract, *,
          status="main",post_cut=False):
     """Pure atomic proposal; caller persists resulting state in one commit."""
-    from ed815_league_store import League
     if league.pending is not None:
         raise ValueError("cannot sign while trade is reserved")
     if league.structure is None:
@@ -75,9 +74,6 @@ def sign(league,club_id:str,player_id:str,contract:CONTRACTS.Contract, *,
     new_roster[player_id]=replace(entry.player,status=status)
     roster=replace(club.roster,players=new_roster)
     ROSTER.validate(roster)
-    if status=="practice" and entry.player.credited_seasons>2:
-        # validate() enforces six-veteran practice squad maximum.
-        pass
     clubs=dict(league.clubs)
     clubs[club_id]=replace(club,ledger=ledger,roster=roster)
     pool=dict(league.free_agents)
