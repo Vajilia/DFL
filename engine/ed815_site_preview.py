@@ -13,6 +13,7 @@ from pathlib import Path
 import re
 
 import ed815_public_view as PUBLIC
+import ed815_public_results as RESULTS
 
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE = ROOT / "docs" / "DFL_Design_Document_Ed8.15.md"
@@ -42,9 +43,14 @@ def founding_tables(document: str):
     return teams, games
 
 def render_html(document: str, *, cards=(), events=(), season_year=2000,
-                since_sequence=0):
+                since_sequence=0, revealed_through_sequence=0):
     teams, games = founding_tables(document)
-    packet = PUBLIC.public_packet(cards=cards, events=events,
+    finals, records = RESULTS.revealed_finals(
+        teams, games, events, through_sequence=revealed_through_sequence
+    )
+    revealed_events = [event for event in events
+                       if event["sequence"] <= revealed_through_sequence]
+    packet = PUBLIC.public_packet(cards=cards, events=revealed_events,
                                   season_year=season_year,
                                   since_sequence=since_sequence)
     def e(value):
@@ -60,11 +66,16 @@ def render_html(document: str, *, cards=(), events=(), season_year=2000,
             f'<td>{e(t["conference"])}</td><td>{e(t["division"])}</td>'
             f'<td>{e(t["club_status"].title())}</td></tr>'
         )
-    fixtures = [
-        f'<tr><td>{e(g["week"])}</td><td>{e(g["date"])}</td>'
-        f'<td>{e(g["kickoff"])} UTC</td><td>{e(g["away"])}</td>'
-        f'<td>{e(g["home"])}</td></tr>' for g in games
-    ]
+    fixtures = []
+    for g in games:
+        final = finals.get((int(g["week"]), int(g["game"])))
+        score = (f'{final["away_score"]}–{final["home_score"]}'
+                 if final is not None else "—")
+        fixtures.append(
+            f'<tr><td>{e(g["week"])}</td><td>{e(g["date"])}</td>'
+            f'<td>{e(g["kickoff"])} UTC</td><td>{e(g["away"])}</td>'
+            f'<td>{e(g["home"])}</td><td>{e(score)}</td></tr>'
+        )
     players = [
         '<article class="person"><strong>' + e(p["name"]) + '</strong>'
         + '<span>' + e(p["role"]) + ' · ' + e(p["position"]) + ' · age '
@@ -80,6 +91,36 @@ def render_html(document: str, *, cards=(), events=(), season_year=2000,
         players = ['<p>No public player cards have been imported yet.</p>']
     if not digest:
         digest = ['<li>No new public events in this preview.</li>']
+    if finals:
+        standing_rows = []
+        for t in sorted((t for t in teams if t["is_active"] == "true"),
+                        key=lambda t: (t["conference"], t["division"], t["team_city"])):
+            rec = records[t["team_city"]]
+            standing_rows.append(
+                f'<tr><td>{e(t["team_city"] + " " + t["team_name"])}</td>'
+                f'<td>{e(rec.games_played)}</td><td>{e(rec.wins)}</td>'
+                f'<td>{e(rec.losses)}</td><td>{e(rec.points_for)}</td>'
+                f'<td>{e(rec.points_against)}</td></tr>'
+            )
+        standings_html = (
+            '<p>Public completed games only; ties do not count as wins or losses. '
+            'Playoff seeds are not declared in this provisional table.</p>'
+            '<table><thead><tr><th>Club</th><th>GP</th><th>W</th>'
+            '<th>L</th><th>PF</th><th>PA</th></tr></thead><tbody>'
+            + "".join(standing_rows) + '</tbody></table>'
+        )
+        totals = RESULTS.public_totals(finals)
+        stats_html = (
+            '<p>Revealed final games: ' + e(totals["final_games"]) + '</p>'
+            '<p>Tied games: ' + e(totals["ties"]) + '</p>'
+            '<p>Points scored: ' + e(totals["total_points"]) + '</p>'
+            '<p>Player performance statistics await a verified event feed.</p>'
+        )
+    else:
+        standings_html = ('<p>No publicly revealed game finals yet. '
+                          'Standings will use Edition 8.15 tiebreaks.</p>')
+        stats_html = ('<p>No publicly revealed game finals yet. '
+                      'No projected results or hidden ability ratings are displayed.</p>')
     sections = (
         ('Home', '<div class="numbers"><div><b>48</b> franchises</div>'
          '<div><b>40</b> active</div><div><b>8</b> Ambassadors</div>'
@@ -90,12 +131,10 @@ def render_html(document: str, *, cards=(), events=(), season_year=2000,
          + "".join(rows) + '</tbody></table>'),
         ('Players', '<div class="people">' + "".join(players) + '</div>'),
         ('Schedule', '<table><thead><tr><th>Week</th><th>Date</th>'
-         '<th>Kickoff</th><th>Away</th><th>Home</th></tr></thead><tbody>'
+         '<th>Kickoff</th><th>Away</th><th>Home</th><th>Final</th></tr></thead><tbody>'
          + "".join(fixtures) + '</tbody></table>'),
-        ('Standings', '<p>Results have not been simulated in this founding preview. '
-         'Standings will use Edition 8.15 tiebreaks when authoritative results exist.</p>'),
-        ('Statistics', '<p>Official statistics will appear only after verified games. '
-         'No projected results or hidden ability ratings are displayed.</p>'),
+        ('Standings', standings_html),
+        ('Statistics', stats_html),
     )
     if tuple(s[0] for s in sections) != PUBLIC.TABS:
         raise AssertionError("navigation differs from Edition 8.15 §16")
