@@ -1,0 +1,169 @@
+{
+  "schema": "dfl-ed815-open-item-register-v1",
+  "source": "docs/DFL_Design_Document_Ed8.15.md §20",
+  "policy": "This register tracks open items, not amendments. Blocked decisions are not approved by implementing defaults; later NFL changes never propagate automatically.",
+  "items": [
+    {
+      "id": "DFL-20-001",
+      "number": 1,
+      "anchor": "1. Definitions for the analytics terms: role execution, opponent-adjusted difficulty, leverage, replacement baseline, opportunity threshold.",
+      "freeze_impact": "nonblocking",
+      "disposition": "future_implementation_or_calibration",
+      "next_action": "Define statistical analytics in calibration data during Phase 4",
+      "blocker_reason": null
+    },
+    {
+      "id": "DFL-20-002",
+      "number": 2,
+      "anchor": "2. Engine content: play catalogue, numeric route landmarks, blocking rules, coverage responsibilities, ball flight, injury and fatigue models.",
+      "freeze_impact": "nonblocking",
+      "disposition": "future_implementation_or_calibration",
+      "next_action": "Build a tested game-action and physics catalogue during Phase 3",
+      "blocker_reason": null
+    },
+    {
+      "id": "DFL-20-003",
+      "number": 3,
+      "anchor": "3. Negotiation and market-clearing mechanics; development, aging and retirement curves.",
+      "freeze_impact": "nonblocking",
+      "disposition": "future_implementation_or_calibration",
+      "next_action": "Implement market clearing and aging curves in the character/people layer",
+      "blocker_reason": null
+    },
+    {
+      "id": "DFL-20-004",
+      "number": 4,
+      "anchor": "4. Bowl roster repair mechanism when a position shortfall occurs.",
+      "freeze_impact": "blocking",
+      "disposition": "requires_explicit_freeze",
+      "next_action": "Present a deterministic ranked-choice fallback for approval",
+      "blocker_reason": "Bowl shortfall repair rule must be decided before official All-Star selections"
+    },
+    {
+      "id": "DFL-20-005",
+      "number": 5,
+      "anchor": "5. The real-time to simulated-time mapping under deterministic pacing (target about 50 hours a season, non-binding).",
+      "freeze_impact": "nonblocking",
+      "disposition": "future_implementation_or_calibration",
+      "next_action": "Calibrate deterministic live-time mapping as a presentation parameter",
+      "blocker_reason": null
+    },
+    {
+      "id": "DFL-20-006",
+      "number": 6,
+      "anchor": "6. §19 promises a stable ID on every rule; none are assigned yet, so the changelog uses section references.",
+      "freeze_impact": "blocking",
+      "disposition": "requires_explicit_freeze",
+      "next_action": "Atomize the 158 coarse clauses and attach implementation/test evidence",
+      "blocker_reason": "Every normative rule needs stable, atomic source identity"
+    },
+    {
+      "id": "DFL-20-007",
+      "number": 7,
+      "anchor": "7. Tie-game frequency: ties are excluded from records, so the order of overall wins before overall win % matters only when ties occur. Calibrate in simulation so that ties stay highly unlikely.",
+      "freeze_impact": "nonblocking",
+      "disposition": "future_implementation_or_calibration",
+      "next_action": "Measure tie frequency without changing standings treatment",
+      "blocker_reason": null
+    },
+    {
+      "id": "DFL-20-008",
+      "number": 8,
+      "anchor": "8. Fill-in parameters inherited from the NFL and not yet confirmed: game-day roster 48/47, two practice-squad elevations a game and three a player a season, four-game injured reserve minimum. The out-of-position penalty belongs with engine content (item 2).",
+      "freeze_impact": "blocking",
+      "disposition": "requires_explicit_freeze",
+      "next_action": "Verify and adopt or replace the 2026 NFL-derived provisional numbers",
+      "blocker_reason": "Emergency game-day, elevation and IR defaults must be explicitly frozen"
+    },
+    {
+      "id": "DFL-20-009",
+      "number": 9,
+      "anchor": "9. Standings assumptions to confirm: higher strength of schedule and strength of victory rank higher (NFL default); a club with no decisions has a win % of 0; the seeded draw is the last resort and is rerun from a season-and-scope seed.",
+      "freeze_impact": "blocking",
+      "disposition": "requires_explicit_freeze",
+      "next_action": "Lock higher SOS/SOV, zero win percentage for no-decisions and deterministic final draw—or amend explicitly",
+      "blocker_reason": "Standings SOS/SOV, no-decision and seeded draw defaults must be explicitly frozen"
+    },
+    {
+      "id": "DFL-20-010",
+      "number": 10,
+      "anchor": "10. Calibrate the pre-cut cap count (§0) once the market exists: it is adapted from the NFL's top 51 of a 90-player camp roster, and the ratio does not carry over exactly. (The rookie reserve, §11, is built and replaces the open question about rookie room.)",
+      "freeze_impact": "blocking",
+      "disposition": "requires_explicit_freeze",
+      "next_action": "Test top-69 economic viability and approve the pre-cut cap figure",
+      "blocker_reason": "Top-69 preseason cap treatment is normative; calibrate and approve before founding"
+    },
+    {
+      "id": "DFL-20-011",
+      "number": 11,
+      "anchor": "11. Floor removal relies on the sentiment and recall mechanism pricing poor spending and poor results; its inputs are unbuilt (people layer). Payroll spread across clubs is a fairness-band candidate.",
+      "freeze_impact": "nonblocking",
+      "disposition": "future_implementation_or_calibration",
+      "next_action": "Implement measured fan sentiment and recall response to low spending",
+      "blocker_reason": null
+    },
+    {
+      "id": "DFL-20-012",
+      "number": 12,
+      "anchor": "12. Emergency cap borrowing (owner proposal): deferred. The viability invariant is built so that no legal roster is ever unreachable; revisit only if a real jam appears once the market exists.",
+      "freeze_impact": "nonblocking",
+      "disposition": "explicitly_deferred",
+      "next_action": "Keep emergency cap borrowing deferred until real viability failure exists",
+      "blocker_reason": null
+    },
+    {
+      "id": "DFL-20-013",
+      "number": 13,
+      "anchor": "13. Exile-return loop: a club exiled as last place returns the next year as seed 5 with a lottery pick in slots 1-8; whether this traps weak clubs in a cycle, and whether extra picks for exiled clubs would help or would reward losing, must be measured with the real engine (parity profiles, Phase 4).",
+      "freeze_impact": "nonblocking",
+      "disposition": "future_implementation_or_calibration",
+      "next_action": "Measure exile-return feedback without rewarding intentional losing",
+      "blocker_reason": null
+    },
+    {
+      "id": "DFL-20-014",
+      "number": 14,
+      "anchor": "14. Offseason dates in §2 are provisional.",
+      "freeze_impact": "blocking",
+      "disposition": "requires_explicit_freeze",
+      "next_action": "Approve precise offseason windows and remove stand-in dates",
+      "blocker_reason": "Provisional offseason windows must become a fixed calendar before founding"
+    },
+    {
+      "id": "DFL-20-015",
+      "number": 15,
+      "anchor": "15. Character attributes, their means and the age curve are placeholders until the engine (Phase 3) says which attributes it uses and how; the attribute list and every distribution are data in `data/characters/` and may change. Overall ratings are not yet comparable across positions (a calibration job for Phase 3/4).",
+      "freeze_impact": "nonblocking",
+      "disposition": "future_implementation_or_calibration",
+      "next_action": "Calibrate attribute lists/distributions and age curves when game roles exist",
+      "blocker_reason": null
+    },
+    {
+      "id": "DFL-20-016",
+      "number": 16,
+      "anchor": "16. Appearance: the creation look is immutable; whether and how a character visibly ages is decided in presentation (Phase 7), by redrawing from the stored look.",
+      "freeze_impact": "nonblocking",
+      "disposition": "future_implementation_or_calibration",
+      "next_action": "Derive visible aging from immutable creation look in viewer implementation",
+      "blocker_reason": null
+    },
+    {
+      "id": "DFL-20-017",
+      "number": 17,
+      "anchor": "17. Leader pools and hiring (four willing candidates per role, §13) use the same creator and the four-year pool rule; the hiring market itself is people-layer work (Phase 5).",
+      "freeze_impact": "nonblocking",
+      "disposition": "future_implementation_or_calibration",
+      "next_action": "Build four-candidate role pools and hiring market within existing creator rules",
+      "blocker_reason": null
+    },
+    {
+      "id": "DFL-20-018",
+      "number": 18,
+      "anchor": "18. Jersey numbers: none open. The same-club re-signing reclaim and lowest-open assignment are the builder's defaults (change on request).",
+      "freeze_impact": "closed",
+      "disposition": "fixed_default",
+      "next_action": "Retain existing approved jersey-number builder defaults",
+      "blocker_reason": null
+    }
+  ]
+}
