@@ -1,0 +1,1015 @@
+{
+  "schema": "dfl-ed815-identity-delta-v1",
+  "status": "audit-only; no data mutation",
+  "authority": "docs/DFL_Design_Document_Ed8.15.md §5",
+  "legacy": "data/teams.csv",
+  "verified_numeric_identity_range": "1..48 preserved",
+  "counts": {
+    "clubs": 48,
+    "with_changes": 48,
+    "by_field": {
+      "primary_color": 17,
+      "primary_hex": 20,
+      "secondary_color": 18,
+      "secondary_hex": 22,
+      "tertiary_color": 48,
+      "tertiary_hex": 48,
+      "location": 2,
+      "abbr": 1
+    }
+  },
+  "changes": [
+    {
+      "stable_club_id": 30,
+      "club": "Montana Outriders",
+      "changes": {
+        "primary_color": {
+          "old": "Copper",
+          "new": "Dark Forest Green"
+        },
+        "primary_hex": {
+          "old": "#B87333",
+          "new": "#174A32"
+        },
+        "secondary_color": {
+          "old": "Pine Green",
+          "new": "Tan"
+        },
+        "secondary_hex": {
+          "old": "#1F4D3A",
+          "new": "#C2A477"
+        },
+        "tertiary_color": {
+          "old": "Big Sky Azure",
+          "new": "Topaz"
+        },
+        "tertiary_hex": {
+          "old": "#3D8FD1",
+          "new": "#E6A32E"
+        }
+      }
+    },
+    {
+      "stable_club_id": 21,
+      "club": "Seattle Orcas",
+      "changes": {
+        "tertiary_color": {
+          "old": "Gray",
+          "new": "Topaz"
+        },
+        "tertiary_hex": {
+          "old": "#A5ACAF",
+          "new": "#E6A32E"
+        }
+      }
+    },
+    {
+      "stable_club_id": 31,
+      "club": "Utah Avalanche",
+      "changes": {
+        "primary_color": {
+          "old": "Arctic Cyan",
+          "new": "Glacier Blue"
+        },
+        "primary_hex": {
+          "old": "#3FD0E0",
+          "new": "#8FC8D8"
+        },
+        "secondary_color": {
+          "old": "Red Rock",
+          "new": "Deep Navy Blue"
+        },
+        "secondary_hex": {
+          "old": "#C1440E",
+          "new": "#16324F"
+        },
+        "tertiary_color": {
+          "old": "Snow White",
+          "new": "Topaz"
+        },
+        "tertiary_hex": {
+          "old": "#F7FAFC",
+          "new": "#E6A32E"
+        }
+      }
+    },
+    {
+      "stable_club_id": 39,
+      "club": "Calgary Stampede",
+      "changes": {
+        "primary_color": {
+          "old": "Stampede Coral",
+          "new": "Root Beer Brown"
+        },
+        "primary_hex": {
+          "old": "#F26B5B",
+          "new": "#492716"
+        },
+        "secondary_color": {
+          "old": "Chinook Navy",
+          "new": "Prairie Green"
+        },
+        "secondary_hex": {
+          "old": "#1D3557",
+          "new": "#688B45"
+        },
+        "tertiary_color": {
+          "old": "Prairie Gold",
+          "new": "Topaz"
+        },
+        "tertiary_hex": {
+          "old": "#E8B33A",
+          "new": "#E6A32E"
+        }
+      }
+    },
+    {
+      "stable_club_id": 40,
+      "club": "Idaho Tomahawks",
+      "changes": {
+        "primary_color": {
+          "old": "Huckleberry",
+          "new": "Pine Green"
+        },
+        "primary_hex": {
+          "old": "#6B2D5C",
+          "new": "#17543B"
+        },
+        "secondary_hex": {
+          "old": "#9AA5AE",
+          "new": "#87949E"
+        },
+        "tertiary_color": {
+          "old": "Pine Green",
+          "new": "Topaz"
+        },
+        "tertiary_hex": {
+          "old": "#1F4D3A",
+          "new": "#E6A32E"
+        }
+      }
+    },
+    {
+      "stable_club_id": 41,
+      "club": "Portland Tempest",
+      "changes": {
+        "primary_color": {
+          "old": "Electric Purple",
+          "new": "Storm Gray"
+        },
+        "primary_hex": {
+          "old": "#7A00FF",
+          "new": "#606A75"
+        },
+        "secondary_color": {
+          "old": "Storm Gray",
+          "new": "Electric Purple"
+        },
+        "secondary_hex": {
+          "old": "#3A3F45",
+          "new": "#A334E8"
+        },
+        "tertiary_color": {
+          "old": "Ice Blue",
+          "new": "Topaz"
+        },
+        "tertiary_hex": {
+          "old": "#9BD9FF",
+          "new": "#E6A32E"
+        }
+      }
+    },
+    {
+      "stable_club_id": 7,
+      "club": "San Francisco Shine",
+      "changes": {
+        "tertiary_color": {
+          "old": "White",
+          "new": "Peridot"
+        },
+        "tertiary_hex": {
+          "old": "#FFFFFF",
+          "new": "#A5C83B"
+        }
+      }
+    },
+    {
+      "stable_club_id": 20,
+      "club": "San Diego Sirens",
+      "changes": {
+        "tertiary_color": {
+          "old": "Navy",
+          "new": "Peridot"
+        },
+        "tertiary_hex": {
+          "old": "#002244",
+          "new": "#A5C83B"
+        }
+      }
+    },
+    {
+      "stable_club_id": 33,
+      "club": "Sacramento Sting",
+      "changes": {
+        "primary_color": {
+          "old": "Bright Yellow",
+          "new": "Electric Yellow"
+        },
+        "primary_hex": {
+          "old": "#FFD100",
+          "new": "#EFFF00"
+        },
+        "secondary_color": {
+          "old": "Sting Navy",
+          "new": "Black"
+        },
+        "secondary_hex": {
+          "old": "#0A1F44",
+          "new": "#101010"
+        },
+        "tertiary_color": {
+          "old": "Neon Aqua Blue",
+          "new": "Peridot"
+        },
+        "tertiary_hex": {
+          "old": "#00E5FF",
+          "new": "#A5C83B"
+        }
+      }
+    },
+    {
+      "stable_club_id": 6,
+      "club": "Arizona Thunderbirds",
+      "changes": {
+        "tertiary_color": {
+          "old": "Yellow",
+          "new": "Peridot"
+        },
+        "tertiary_hex": {
+          "old": "#FFB612",
+          "new": "#A5C83B"
+        }
+      }
+    },
+    {
+      "stable_club_id": 19,
+      "club": "Las Vegas Invaders",
+      "changes": {
+        "tertiary_color": {
+          "old": "White",
+          "new": "Peridot"
+        },
+        "tertiary_hex": {
+          "old": "#FFFFFF",
+          "new": "#A5C83B"
+        }
+      }
+    },
+    {
+      "stable_club_id": 4,
+      "club": "Los Angeles Legion",
+      "changes": {
+        "primary_color": {
+          "old": "Hollywood Magenta",
+          "new": "Royal Blue"
+        },
+        "primary_hex": {
+          "old": "#D2158A",
+          "new": "#003DA5"
+        },
+        "secondary_color": {
+          "old": "Gunmetal",
+          "new": "Silver"
+        },
+        "secondary_hex": {
+          "old": "#2A3439",
+          "new": "#B0B7BC"
+        },
+        "tertiary_color": {
+          "old": "Champagne Gold",
+          "new": "Peridot"
+        },
+        "tertiary_hex": {
+          "old": "#D8C08A",
+          "new": "#A5C83B"
+        }
+      }
+    },
+    {
+      "stable_club_id": 43,
+      "club": "Oklahoma City Outlaws",
+      "changes": {
+        "primary_color": {
+          "old": "Outlaw Sage",
+          "new": "Desert Tan"
+        },
+        "primary_hex": {
+          "old": "#8A9A5B",
+          "new": "#C2A477"
+        },
+        "secondary_color": {
+          "old": "Midnight Black",
+          "new": "Blued Gunmetal"
+        },
+        "secondary_hex": {
+          "old": "#0A0A12",
+          "new": "#293C4A"
+        },
+        "tertiary_color": {
+          "old": "Burnt Orange",
+          "new": "Tourmaline"
+        },
+        "tertiary_hex": {
+          "old": "#CC5500",
+          "new": "#D94B89"
+        }
+      }
+    },
+    {
+      "stable_club_id": 34,
+      "club": "Omaha Assassins",
+      "changes": {
+        "primary_color": {
+          "old": "Acid Green",
+          "new": "Obsidian"
+        },
+        "primary_hex": {
+          "old": "#B6FF00",
+          "new": "#111318"
+        },
+        "secondary_color": {
+          "old": "Obsidian",
+          "new": "Acid Green"
+        },
+        "secondary_hex": {
+          "old": "#0B0B10",
+          "new": "#A8FF2A"
+        },
+        "tertiary_color": {
+          "old": "Smoke Gray",
+          "new": "Tourmaline"
+        },
+        "tertiary_hex": {
+          "old": "#8A8F94",
+          "new": "#D94B89"
+        }
+      }
+    },
+    {
+      "stable_club_id": 27,
+      "club": "Dakota Divas",
+      "changes": {
+        "secondary_color": {
+          "old": "White",
+          "new": "Silver"
+        },
+        "secondary_hex": {
+          "old": "#FFFFFF",
+          "new": "#B0B7BC"
+        },
+        "tertiary_color": {
+          "old": "Black",
+          "new": "Tourmaline"
+        },
+        "tertiary_hex": {
+          "old": "#000000",
+          "new": "#D94B89"
+        }
+      }
+    },
+    {
+      "stable_club_id": 18,
+      "club": "Kansas City Reapers",
+      "changes": {
+        "tertiary_color": {
+          "old": "White",
+          "new": "Tourmaline"
+        },
+        "tertiary_hex": {
+          "old": "#FFFFFF",
+          "new": "#D94B89"
+        }
+      }
+    },
+    {
+      "stable_club_id": 16,
+      "club": "Denver Unicorns",
+      "changes": {
+        "tertiary_color": {
+          "old": "White",
+          "new": "Tourmaline"
+        },
+        "tertiary_hex": {
+          "old": "#FFFFFF",
+          "new": "#D94B89"
+        }
+      }
+    },
+    {
+      "stable_club_id": 5,
+      "club": "Minnesota Warriors",
+      "changes": {
+        "tertiary_color": {
+          "old": "White",
+          "new": "Tourmaline"
+        },
+        "tertiary_hex": {
+          "old": "#FFFFFF",
+          "new": "#D94B89"
+        }
+      }
+    },
+    {
+      "stable_club_id": 17,
+      "club": "Houston Faeries",
+      "changes": {
+        "tertiary_color": {
+          "old": "White",
+          "new": "Garnet"
+        },
+        "tertiary_hex": {
+          "old": "#FFFFFF",
+          "new": "#9A1B36"
+        }
+      }
+    },
+    {
+      "stable_club_id": 42,
+      "club": "Mexico City Aztecas",
+      "changes": {
+        "primary_color": {
+          "old": "Marigold",
+          "new": "Turquoise"
+        },
+        "primary_hex": {
+          "old": "#FF9F1C",
+          "new": "#20AFA6"
+        },
+        "secondary_color": {
+          "old": "Aztec Crimson",
+          "new": "Sun Gold"
+        },
+        "secondary_hex": {
+          "old": "#9E1B32",
+          "new": "#E9B44C"
+        },
+        "tertiary_color": {
+          "old": "Turquoise",
+          "new": "Garnet"
+        },
+        "tertiary_hex": {
+          "old": "#1BB5A9",
+          "new": "#9A1B36"
+        }
+      }
+    },
+    {
+      "stable_club_id": 1,
+      "club": "Dallas Starlings",
+      "changes": {
+        "tertiary_color": {
+          "old": "White",
+          "new": "Garnet"
+        },
+        "tertiary_hex": {
+          "old": "#FFFFFF",
+          "new": "#9A1B36"
+        }
+      }
+    },
+    {
+      "stable_club_id": 29,
+      "club": "San Antonio Vaqueras",
+      "changes": {
+        "primary_color": {
+          "old": "Saddle Brown",
+          "new": "Bronze"
+        },
+        "primary_hex": {
+          "old": "#6B4423",
+          "new": "#CD7F32"
+        },
+        "secondary_hex": {
+          "old": "#2E8B8B",
+          "new": "#3D8C8C"
+        },
+        "tertiary_color": {
+          "old": "Cream",
+          "new": "Garnet"
+        },
+        "tertiary_hex": {
+          "old": "#F5EBD3",
+          "new": "#9A1B36"
+        }
+      }
+    },
+    {
+      "stable_club_id": 44,
+      "club": "New Mexico Scorpions",
+      "changes": {
+        "location": {
+          "old": "Albequerque, NM",
+          "new": "Albuquerque, NM"
+        },
+        "primary_color": {
+          "old": "Sandstone",
+          "new": "Midnight Plum"
+        },
+        "primary_hex": {
+          "old": "#E0C9A0",
+          "new": "#321C31"
+        },
+        "secondary_color": {
+          "old": "Scorpion Brown",
+          "new": "Desert Copper"
+        },
+        "secondary_hex": {
+          "old": "#4A2E1C",
+          "new": "#D47842"
+        },
+        "tertiary_color": {
+          "old": "Venom Green",
+          "new": "Garnet"
+        },
+        "tertiary_hex": {
+          "old": "#4CD137",
+          "new": "#9A1B36"
+        }
+      }
+    },
+    {
+      "stable_club_id": 45,
+      "club": "Baja Barracudas",
+      "changes": {
+        "primary_color": {
+          "old": "Seafoam",
+          "new": "Abyssal Teal"
+        },
+        "primary_hex": {
+          "old": "#7FDBC0",
+          "new": "#083B4C"
+        },
+        "secondary_color": {
+          "old": "Coral",
+          "new": "Predator Silver"
+        },
+        "secondary_hex": {
+          "old": "#FF6F61",
+          "new": "#A8B7BC"
+        },
+        "tertiary_color": {
+          "old": "Deep Navy",
+          "new": "Garnet"
+        },
+        "tertiary_hex": {
+          "old": "#0B1F3A",
+          "new": "#9A1B36"
+        }
+      }
+    },
+    {
+      "stable_club_id": 35,
+      "club": "St. Louis Archers",
+      "changes": {
+        "location": {
+          "old": "St. Louis, Mo",
+          "new": "St. Louis, MO"
+        },
+        "primary_color": {
+          "old": "Royal Blue",
+          "new": "Navy"
+        },
+        "primary_hex": {
+          "old": "#003DA5",
+          "new": "#002244"
+        },
+        "secondary_color": {
+          "old": "Sol Yellow",
+          "new": "Metallic Gold"
+        },
+        "secondary_hex": {
+          "old": "#FFD100",
+          "new": "#B3995D"
+        },
+        "tertiary_color": {
+          "old": "White",
+          "new": "Aquamarine"
+        },
+        "tertiary_hex": {
+          "old": "#FFFFFF",
+          "new": "#55C5D8"
+        }
+      }
+    },
+    {
+      "stable_club_id": 9,
+      "club": "Chicago Foxes",
+      "changes": {
+        "tertiary_color": {
+          "old": "White",
+          "new": "Aquamarine"
+        },
+        "tertiary_hex": {
+          "old": "#FFFFFF",
+          "new": "#55C5D8"
+        }
+      }
+    },
+    {
+      "stable_club_id": 38,
+      "club": "Tennessee Belles",
+      "changes": {
+        "primary_hex": {
+          "old": "#002244",
+          "new": "#0C2340"
+        },
+        "tertiary_color": {
+          "old": "Red",
+          "new": "Aquamarine"
+        },
+        "tertiary_hex": {
+          "old": "#C8102E",
+          "new": "#55C5D8"
+        }
+      }
+    },
+    {
+      "stable_club_id": 3,
+      "club": "Green Bay Glamour",
+      "changes": {
+        "tertiary_color": {
+          "old": "White",
+          "new": "Aquamarine"
+        },
+        "tertiary_hex": {
+          "old": "#FFFFFF",
+          "new": "#55C5D8"
+        }
+      }
+    },
+    {
+      "stable_club_id": 23,
+      "club": "Cincinnati Shadow Katz",
+      "changes": {
+        "tertiary_color": {
+          "old": "White",
+          "new": "Aquamarine"
+        },
+        "tertiary_hex": {
+          "old": "#FFFFFF",
+          "new": "#55C5D8"
+        }
+      }
+    },
+    {
+      "stable_club_id": 24,
+      "club": "Indianapolis Pit Vipers",
+      "changes": {
+        "primary_color": {
+          "old": "Royal Blue",
+          "new": "Racing Red"
+        },
+        "primary_hex": {
+          "old": "#003DA5",
+          "new": "#D71920"
+        },
+        "secondary_color": {
+          "old": "White",
+          "new": "Electric Lime"
+        },
+        "secondary_hex": {
+          "old": "#FFFFFF",
+          "new": "#C6FF00"
+        },
+        "tertiary_color": {
+          "old": "Gray",
+          "new": "Aquamarine"
+        },
+        "tertiary_hex": {
+          "old": "#A5ACAF",
+          "new": "#55C5D8"
+        }
+      }
+    },
+    {
+      "stable_club_id": 47,
+      "club": "Montreal Storm",
+      "changes": {
+        "primary_hex": {
+          "old": "#C9D3DA",
+          "new": "#B8C5D1"
+        },
+        "secondary_color": {
+          "old": "Fleur Violet",
+          "new": "Nordic Blue"
+        },
+        "secondary_hex": {
+          "old": "#5B4B9A",
+          "new": "#245A81"
+        },
+        "tertiary_color": {
+          "old": "Black",
+          "new": "Emerald"
+        },
+        "tertiary_hex": {
+          "old": "#000000",
+          "new": "#009B77"
+        }
+      }
+    },
+    {
+      "stable_club_id": 26,
+      "club": "New England Rebels",
+      "changes": {
+        "tertiary_color": {
+          "old": "Silver",
+          "new": "Emerald"
+        },
+        "tertiary_hex": {
+          "old": "#B0B7BC",
+          "new": "#009B77"
+        }
+      }
+    },
+    {
+      "stable_club_id": 46,
+      "club": "Toronto Sentinels",
+      "changes": {
+        "primary_color": {
+          "old": "Sentinel Slate",
+          "new": "Crimson"
+        },
+        "primary_hex": {
+          "old": "#5B6B7A",
+          "new": "#A6192E"
+        },
+        "secondary_color": {
+          "old": "Ice White",
+          "new": "Steel Gray"
+        },
+        "secondary_hex": {
+          "old": "#EAF4FB",
+          "new": "#78858B"
+        },
+        "tertiary_color": {
+          "old": "Crimson",
+          "new": "Emerald"
+        },
+        "tertiary_hex": {
+          "old": "#B3122D",
+          "new": "#009B77"
+        }
+      }
+    },
+    {
+      "stable_club_id": 12,
+      "club": "Philadelphia Harpies",
+      "changes": {
+        "tertiary_color": {
+          "old": "Black",
+          "new": "Emerald"
+        },
+        "tertiary_hex": {
+          "old": "#000000",
+          "new": "#009B77"
+        }
+      }
+    },
+    {
+      "stable_club_id": 10,
+      "club": "New York Goliaths",
+      "changes": {
+        "tertiary_color": {
+          "old": "White",
+          "new": "Emerald"
+        },
+        "tertiary_hex": {
+          "old": "#FFFFFF",
+          "new": "#009B77"
+        }
+      }
+    },
+    {
+      "stable_club_id": 22,
+      "club": "Buffalo Brats",
+      "changes": {
+        "tertiary_color": {
+          "old": "White",
+          "new": "Emerald"
+        },
+        "tertiary_hex": {
+          "old": "#FFFFFF",
+          "new": "#009B77"
+        }
+      }
+    },
+    {
+      "stable_club_id": 36,
+      "club": "Carolina Comets",
+      "changes": {
+        "secondary_hex": {
+          "old": "#000000",
+          "new": "#101820"
+        },
+        "tertiary_color": {
+          "old": "Silver",
+          "new": "Turquoise"
+        },
+        "tertiary_hex": {
+          "old": "#B0B7BC",
+          "new": "#26A9A0"
+        }
+      }
+    },
+    {
+      "stable_club_id": 2,
+      "club": "Detroit Soul",
+      "changes": {
+        "tertiary_color": {
+          "old": "White",
+          "new": "Turquoise"
+        },
+        "tertiary_hex": {
+          "old": "#FFFFFF",
+          "new": "#26A9A0"
+        }
+      }
+    },
+    {
+      "stable_club_id": 14,
+      "club": "Washington Commandos",
+      "changes": {
+        "tertiary_color": {
+          "old": "White",
+          "new": "Turquoise"
+        },
+        "tertiary_hex": {
+          "old": "#FFFFFF",
+          "new": "#26A9A0"
+        }
+      }
+    },
+    {
+      "stable_club_id": 28,
+      "club": "Pittsburgh Riviters",
+      "changes": {
+        "primary_hex": {
+          "old": "#000000",
+          "new": "#101820"
+        },
+        "secondary_color": {
+          "old": "Gold",
+          "new": "Light Blue"
+        },
+        "secondary_hex": {
+          "old": "#D3BC8D",
+          "new": "#83C9EF"
+        },
+        "tertiary_color": {
+          "old": "White",
+          "new": "Turquoise"
+        },
+        "tertiary_hex": {
+          "old": "#FFFFFF",
+          "new": "#26A9A0"
+        }
+      }
+    },
+    {
+      "stable_club_id": 15,
+      "club": "Cleveland Mud Dawgs",
+      "changes": {
+        "tertiary_color": {
+          "old": "White",
+          "new": "Turquoise"
+        },
+        "tertiary_hex": {
+          "old": "#FFFFFF",
+          "new": "#26A9A0"
+        }
+      }
+    },
+    {
+      "stable_club_id": 32,
+      "club": "Baltimore Rooks",
+      "changes": {
+        "tertiary_color": {
+          "old": "Metallic Gold",
+          "new": "Turquoise"
+        },
+        "tertiary_hex": {
+          "old": "#85714D",
+          "new": "#26A9A0"
+        }
+      }
+    },
+    {
+      "stable_club_id": 48,
+      "club": "Alabama Thunder",
+      "changes": {
+        "primary_color": {
+          "old": "Camellia Pink",
+          "new": "Dark Thunder Blue"
+        },
+        "primary_hex": {
+          "old": "#F4A6C0",
+          "new": "#102A43"
+        },
+        "secondary_color": {
+          "old": "Deep Violet",
+          "new": "Lightning Yellow"
+        },
+        "secondary_hex": {
+          "old": "#4B1D8F",
+          "new": "#F5D547"
+        },
+        "tertiary_color": {
+          "old": "Lightning Yellow",
+          "new": "Alexandrite"
+        },
+        "tertiary_hex": {
+          "old": "#FFE600",
+          "new": "#7040A0"
+        }
+      }
+    },
+    {
+      "stable_club_id": 37,
+      "club": "Florida Fangs",
+      "changes": {
+        "abbr": {
+          "old": "FLA",
+          "new": "JAX"
+        },
+        "secondary_hex": {
+          "old": "#000000",
+          "new": "#101820"
+        },
+        "tertiary_color": {
+          "old": "Gold",
+          "new": "Alexandrite"
+        },
+        "tertiary_hex": {
+          "old": "#D3BC8D",
+          "new": "#7040A0"
+        }
+      }
+    },
+    {
+      "stable_club_id": 25,
+      "club": "Miami Monsters",
+      "changes": {
+        "tertiary_color": {
+          "old": "Navy",
+          "new": "Alexandrite"
+        },
+        "tertiary_hex": {
+          "old": "#002244",
+          "new": "#7040A0"
+        }
+      }
+    },
+    {
+      "stable_club_id": 8,
+      "club": "Atlanta Mavericks",
+      "changes": {
+        "tertiary_color": {
+          "old": "White",
+          "new": "Alexandrite"
+        },
+        "tertiary_hex": {
+          "old": "#FFFFFF",
+          "new": "#7040A0"
+        }
+      }
+    },
+    {
+      "stable_club_id": 11,
+      "club": "New Orleans Mayfairs",
+      "changes": {
+        "tertiary_color": {
+          "old": "White",
+          "new": "Alexandrite"
+        },
+        "tertiary_hex": {
+          "old": "#FFFFFF",
+          "new": "#7040A0"
+        }
+      }
+    },
+    {
+      "stable_club_id": 13,
+      "club": "Tampa Bay Corsairs",
+      "changes": {
+        "tertiary_color": {
+          "old": "Orange",
+          "new": "Alexandrite"
+        },
+        "tertiary_hex": {
+          "old": "#FF5F05",
+          "new": "#7040A0"
+        }
+      }
+    }
+  ]
+}
