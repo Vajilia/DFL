@@ -261,3 +261,14 @@ The user's current instruction that real NFL changes never alter DFL resolves th
 - The reference validator was originally written for Edition 8, so its success is evidence for the listed founding-table invariants, **not** all subsequent constitutional rules or the real player/game engine. Do not mark Phase 1 frozen from this 74/74 result alone.
 
 **Production `main` unchanged.**
+
+
+## Nineteenth checkpoint — full GitHub FAST success and complete six-table identity coverage
+
+- GitHub Actions **DFL checks** workflow run `40355647549` on audit commit `7f3c96d9899971a6c25abf61858df2dc87bd5ca5` completed successfully at 2026-10-26 16:16 UTC: **52 / 52 FAST scripts passed, 0 failures**. The workflow ran on Ubuntu with Python 3.13; the logged combined script CPU/runtime estimate was 1,232 seconds, while the parallel job took about 11 minutes. It included Edition 8.15 SQLite physical-disk/reopen tests as well as all legacy fast checks. This is the first complete branch-fast evidence, not evidence of aligned production semantics.
+- Expanded the row register and checker from 458 to **525 stable table-row IDs** covering all six founding CSV blocks: CALENDAR 27; TEAMS 48; SCHEDULE 360; TOUR 28; INTL_VENUES 50; COLOR_REGISTRY 12. All 525 anchors were cross-compared in a separate JS pass; the updated Python script syntax parsed. The new GitHub run must execute the expanded checker before claiming it passed there.
+- Independently executed 16 original DFLv2 standings unit/property tests in an isolated memory-backed Python session; **16/16 passed**. Also independently cross-checked `ed815_calendar.bed_assignment` against DFLv2's separate rotation formula across 400 seasons × 8 divisions (3,200 identities); exact match. Added `engine/check_ed815_cross_rotation.py` to FAST.
+- The expanded checker/cross-rotation additions are newer than the 52/52 successful commit. A later CI run must verify them independently; do not conflate old run results with these new files.
+- **Phase 1 is still NOT frozen:** full SLOW suite, stable-ID atomic decomposition, explicit normative open-item treatment, actual Edition 8.15 production routing and year-zero operational gate remain incomplete.
+
+Draft PR #42 remains unmerged and unpromoted.
