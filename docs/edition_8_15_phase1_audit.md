@@ -132,3 +132,12 @@ The user's current instruction that real NFL changes never alter DFL resolves th
 - First run exposed a genuine numeric accounting problem: equal annual bonus divisions involving repeating decimals did not always add exactly to the original amount. Fixed by assigning the exact residual to the final contract year; rerun passed. This is an implementation rounding policy, not a new DFL rule.
 - The contract reference operates at the beginning of a payment year. **Not yet implemented:** paid-week accrual and midseason prorating, year-crossing transaction clock, guaranteed-base offsets on midseason release, any negotiated market, contract-year shape escalation by season, full 53/16 roster counts, real rookie scale contracts and holds, waiver claims, pick compensation, persisted atomic reserve/commit, or production engine replacement.
 - This is an isolated submodule with limited focused tests, not proof that the production financial system complies with Edition 8.15.
+
+## Seventh checkpoint — waivers and draft-pick identity
+
+- Added `engine/ed815_waivers.py`: releases after fewer than four credited seasons enter a one-day waiver claim interval; vested veterans enter free agency directly; claimant priority stays at last draft order through four league weeks, then is supplied by current Edition 8.15 standings/Tour ordering. Claim settlement follows priority and skips failing legal-eligibility checks. It does not mutate a club ledger.
+- Added `engine/check_ed815_waivers.py`: clock and service boundary cases plus 10,000 randomized claim scenarios passed.
+- Added `engine/ed815_picks.py`: 7×48 ordinary pick ledger retaining original-club identity, owner, slot, reserved/used status; transfer restricted to the next three incomplete drafts; deterministic equal-chance eight-returning-Ambassador lottery independent of pick ownership.
+- Added `engine/check_ed815_picks.py`: 10,000 seeded lottery permutations and 10,000 randomized transfers, plus reservation/selection boundary checks, passed. Lottery frequencies were checked as a sanity bound, not a formal randomness proof.
+- Both suites added to the FAST tier. These are provisional pure rule kernels only.
+- **Pending:** the standings-to-waiver ranking (including Tour clubs in prior draft bands), an atomic claim that transfers an actual player/contract and cap reservation, exact 336-pick class signing and rookie cap holds, two-per-club post-R7 compensatory awards, trading windows combined with financial settlement, and full production integration.
