@@ -93,3 +93,10 @@ The user's current instruction that real NFL changes never alter DFL resolves th
 - No legacy executable rules were replaced and no engine regression suite was run. The new validator is not yet wired into CI. `main` remains unchanged.
 
 **Rule status:** constitutional source pinned, early compliance map created; Edition 8.15 engine compliance **not established**. Do not declare Phase 1 frozen.
+
+## Second checkpoint — isolated standings kernel
+
+- Added `engine/ed815_standings.py`: tie games contribute to statistical games/points/differential but not wins/losses or opponent lists; wins before win percentage; context-dependent division/conference steps; SOS, point differential, SOV and seeded deterministic terminal draw; playoff seeds and next-year exile seed handoff.
+- Added `engine/check_ed815_standings.py` with focused tests for those behaviors. An initial test fixture incorrectly assigned a read-only calculated field; the fixture was corrected, and the checks passed when run against the new source in an isolated Python process.
+- Added `engine/check_ed815_reference.py` and enrolled both new checks into the fast-test tier in `engine/run_checks.py`.
+- **Not integrated** into `engine/standings.py`, `engine/tiebreak.py`, `engine/season.py`, or the live runner. Existing simulation output still uses older rules until an explicit migration. Focused tests are not a substitute for independent historical/schedule/cycle and multiseason checks.
