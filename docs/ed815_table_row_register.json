@@ -1,0 +1,2765 @@
+{
+  "schema": "dfl-ed815-table-row-register-v1",
+  "authority": "DFL Living Design Document Edition 8.15",
+  "frozen": false,
+  "counts": {
+    "5": 48,
+    "6": 360,
+    "8": 50
+  },
+  "headers": {
+    "5": "team_id,abbr,team_city,team_name,conference,division,bed_id,division_rank,club_status,is_active,is_league_member,draft_band,venue,location,primary_color,primary_hex,secondary_color,secondary_hex,tertiary_color,tertiary_hex",
+    "6": "week,game,date,kickoff,away,home",
+    "8": "venue_id,city,country,venue_name,capacity,region,suitability,lat,lon,timezone,active"
+  },
+  "rows": [
+    {
+      "id": "DFL-05-TEAM-001",
+      "section": 5,
+      "source_line": 124,
+      "anchor": "30,MON,Montana,Outriders,Western,Northwest,1-1,1,active,true,true,standard,IronGate Stadium,\"Helena, MT\",Dark Forest Green,#174A32,Tan,#C2A477,Topaz,#E6A32E"
+    },
+    {
+      "id": "DFL-05-TEAM-002",
+      "section": 5,
+      "source_line": 125,
+      "anchor": "21,SEA,Seattle,Orcas,Western,Northwest,1-2,2,active,true,true,standard,Lumen Field,\"Seattle, WA\",College Navy,#002244,Action Green,#69BE28,Topaz,#E6A32E"
+    },
+    {
+      "id": "DFL-05-TEAM-003",
+      "section": 5,
+      "source_line": 126,
+      "anchor": "31,UTA,Utah,Avalanche,Western,Northwest,1-3,3,active,true,true,standard,NorthStar Bank Field,\"Salt Lake City, Utah\",Glacier Blue,#8FC8D8,Deep Navy Blue,#16324F,Topaz,#E6A32E"
+    },
+    {
+      "id": "DFL-05-TEAM-004",
+      "section": 5,
+      "source_line": 127,
+      "anchor": "39,CAL,Calgary,Stampede,Western,Northwest,1-4,4,active,true,true,standard,Redwood Credit Union Park,\"Calgary, Canada\",Root Beer Brown,#492716,Prairie Green,#688B45,Topaz,#E6A32E"
+    },
+    {
+      "id": "DFL-05-TEAM-005",
+      "section": 5,
+      "source_line": 128,
+      "anchor": "40,IDA,Idaho,Tomahawks,Western,Northwest,1-5,5,active,true,true,standard,Continental Freight Stadium,\"Boise, ID\",Pine Green,#17543B,Steel Gray,#87949E,Topaz,#E6A32E"
+    },
+    {
+      "id": "DFL-05-TEAM-006",
+      "section": 5,
+      "source_line": 129,
+      "anchor": "41,POR,Portland,Tempest,Western,Northwest,,6,ambassador,false,true,lottery_1_8,HarborTrust Field,\"Portland, OR\",Storm Gray,#606A75,Electric Purple,#A334E8,Topaz,#E6A32E"
+    },
+    {
+      "id": "DFL-05-TEAM-007",
+      "section": 5,
+      "source_line": 130,
+      "anchor": "7,SFX,San Francisco,Shine,Western,Southwest,2-1,1,active,true,true,standard,Candlestick Park,\"San Francisco, CA\",Scarlet Red,#AA0000,Gold,#D3BC8D,Peridot,#A5C83B"
+    },
+    {
+      "id": "DFL-05-TEAM-008",
+      "section": 5,
+      "source_line": 131,
+      "anchor": "20,SDX,San Diego,Sirens,Western,Southwest,2-2,2,active,true,true,standard,Qualcomm Stadium,\"San Diego, CA\",Powder Blue,#6CAEDF,Gold,#D3BC8D,Peridot,#A5C83B"
+    },
+    {
+      "id": "DFL-05-TEAM-009",
+      "section": 5,
+      "source_line": 132,
+      "anchor": "33,SAC,Sacramento,Sting,Western,Southwest,2-3,3,active,true,true,standard,Twin Rivers Stadium,\"West Sacramento, CA\",Electric Yellow,#EFFF00,Black,#101010,Peridot,#A5C83B"
+    },
+    {
+      "id": "DFL-05-TEAM-010",
+      "section": 5,
+      "source_line": 133,
+      "anchor": "6,ARI,Arizona,Thunderbirds,Western,Southwest,2-4,4,active,true,true,standard,State Farm Stadium,\"Glendale, AZ\",Cardinal Red,#97233F,Black,#000000,Peridot,#A5C83B"
+    },
+    {
+      "id": "DFL-05-TEAM-011",
+      "section": 5,
+      "source_line": 134,
+      "anchor": "19,LVR,Las Vegas,Invaders,Western,Southwest,2-5,5,active,true,true,standard,Allegiant Stadium,\"Las Vegas, NV\",Black,#000000,Silver,#B0B7BC,Peridot,#A5C83B"
+    },
+    {
+      "id": "DFL-05-TEAM-012",
+      "section": 5,
+      "source_line": 135,
+      "anchor": "4,LAL,Los Angeles,Legion,Western,Southwest,,6,ambassador,false,true,lottery_1_8,SoFi Stadium,\"Inglewood, CA\",Royal Blue,#003DA5,Silver,#B0B7BC,Peridot,#A5C83B"
+    },
+    {
+      "id": "DFL-05-TEAM-013",
+      "section": 5,
+      "source_line": 136,
+      "anchor": "43,OCO,Oklahoma City,Outlaws,Western,Central,3-1,1,active,true,true,standard,TriAxis Financial Stadium,\"Oklahoma City, OK\",Desert Tan,#C2A477,Blued Gunmetal,#293C4A,Tourmaline,#D94B89"
+    },
+    {
+      "id": "DFL-05-TEAM-014",
+      "section": 5,
+      "source_line": 137,
+      "anchor": "34,OMA,Omaha,Assassins,Western,Central,3-2,2,active,true,true,standard,SilverGate Field,\"Omaha, NE\",Obsidian,#111318,Acid Green,#A8FF2A,Tourmaline,#D94B89"
+    },
+    {
+      "id": "DFL-05-TEAM-015",
+      "section": 5,
+      "source_line": 138,
+      "anchor": "27,DAK,Dakota,Divas,Western,Central,3-3,3,active,true,true,standard,Union Capital Stadium,\"Bismarck, ND\",Gotham Green,#125740,Silver,#B0B7BC,Tourmaline,#D94B89"
+    },
+    {
+      "id": "DFL-05-TEAM-016",
+      "section": 5,
+      "source_line": 139,
+      "anchor": "18,KCC,Kansas City,Reapers,Western,Central,3-4,4,active,true,true,standard,Arrowhead Stadium,\"Kansas City, MO\",Red,#C8102E,Gold,#D3BC8D,Tourmaline,#D94B89"
+    },
+    {
+      "id": "DFL-05-TEAM-017",
+      "section": 5,
+      "source_line": 140,
+      "anchor": "16,DEN,Denver,Unicorns,Western,Central,3-5,5,active,true,true,standard,Empower Field at Mile High,\"Denver, CO\",Orange,#FF5F05,Navy,#002244,Tourmaline,#D94B89"
+    },
+    {
+      "id": "DFL-05-TEAM-018",
+      "section": 5,
+      "source_line": 141,
+      "anchor": "5,MIN,Minnesota,Warriors,Western,Central,,6,ambassador,false,true,lottery_1_8,U.S. Bank Stadium,\"Minneapolis, MN\",Purple,#4F2683,Gold,#D3BC8D,Tourmaline,#D94B89"
+    },
+    {
+      "id": "DFL-05-TEAM-019",
+      "section": 5,
+      "source_line": 142,
+      "anchor": "17,HOU,Houston,Faeries,Western,Southern,4-1,1,active,true,true,standard,NRG Stadium,\"Houston, TX\",Deep Steel Blue,#03202F,Battle Red,#A71930,Garnet,#9A1B36"
+    },
+    {
+      "id": "DFL-05-TEAM-020",
+      "section": 5,
+      "source_line": 143,
+      "anchor": "42,MCA,Mexico City,Aztecas,Western,Southern,4-2,2,active,true,true,standard,Ironclad Insurance Stadium,\"Mexico City, Mexico\",Turquoise,#20AFA6,Sun Gold,#E9B44C,Garnet,#9A1B36"
+    },
+    {
+      "id": "DFL-05-TEAM-021",
+      "section": 5,
+      "source_line": 144,
+      "anchor": "1,DAL,Dallas,Starlings,Western,Southern,4-3,3,active,true,true,standard,AT&T Stadium,\"Arlington, TX\",Navy,#002244,Silver,#B0B7BC,Garnet,#9A1B36"
+    },
+    {
+      "id": "DFL-05-TEAM-022",
+      "section": 5,
+      "source_line": 145,
+      "anchor": "29,SAV,San Antonio,Vaqueras,Western,Southern,4-4,4,active,true,true,standard,Stratos Bank Stadium,\"San Antonio, TX\",Bronze,#CD7F32,Desert Teal,#3D8C8C,Garnet,#9A1B36"
+    },
+    {
+      "id": "DFL-05-TEAM-023",
+      "section": 5,
+      "source_line": 146,
+      "anchor": "44,NMS,New Mexico,Scorpions,Western,Southern,4-5,5,active,true,true,standard,Crown Harbor Field,\"Albuquerque, NM\",Midnight Plum,#321C31,Desert Copper,#D47842,Garnet,#9A1B36"
+    },
+    {
+      "id": "DFL-05-TEAM-024",
+      "section": 5,
+      "source_line": 147,
+      "anchor": "45,BAJ,Baja,Barracudas,Western,Southern,,6,ambassador,false,true,lottery_1_8,PrairieStar Stadium,\"Cabo San Lucas, Mexico\",Abyssal Teal,#083B4C,Predator Silver,#A8B7BC,Garnet,#9A1B36"
+    },
+    {
+      "id": "DFL-05-TEAM-025",
+      "section": 5,
+      "source_line": 148,
+      "anchor": "35,SLR,St. Louis,Archers,Eastern,Midwest,5-1,1,active,true,true,standard,MetroAxis Field,\"St. Louis, MO\",Navy,#002244,Metallic Gold,#B3995D,Aquamarine,#55C5D8"
+    },
+    {
+      "id": "DFL-05-TEAM-026",
+      "section": 5,
+      "source_line": 149,
+      "anchor": "9,CHI,Chicago,Foxes,Eastern,Midwest,5-2,2,active,true,true,standard,Soldier Field,\"Chicago, IL\",Navy,#002244,Orange,#FF5F05,Aquamarine,#55C5D8"
+    },
+    {
+      "id": "DFL-05-TEAM-027",
+      "section": 5,
+      "source_line": 150,
+      "anchor": "38,TEN,Tennessee,Belles,Eastern,Midwest,5-3,3,active,true,true,standard,Nissan Stadium,\"Nashville, TN\",Navy,#0C2340,Titans Blue,#4B92DB,Aquamarine,#55C5D8"
+    },
+    {
+      "id": "DFL-05-TEAM-028",
+      "section": 5,
+      "source_line": 151,
+      "anchor": "3,GBP,Green Bay,Glamour,Eastern,Midwest,5-4,4,active,true,true,standard,Lambeau Field,\"Green Bay, WI\",Green,#203731,Gold,#D3BC8D,Aquamarine,#55C5D8"
+    },
+    {
+      "id": "DFL-05-TEAM-029",
+      "section": 5,
+      "source_line": 152,
+      "anchor": "23,CIN,Cincinnati,Shadow Katz,Eastern,Midwest,5-5,5,active,true,true,standard,Paycor Stadium,\"Cincinnati, OH\",Orange,#FF5F05,Black,#000000,Aquamarine,#55C5D8"
+    },
+    {
+      "id": "DFL-05-TEAM-030",
+      "section": 5,
+      "source_line": 153,
+      "anchor": "24,IND,Indianapolis,Pit Vipers,Eastern,Midwest,,6,ambassador,false,true,lottery_1_8,Lucas Oil Stadium,\"Indianapolis, IN\",Racing Red,#D71920,Electric Lime,#C6FF00,Aquamarine,#55C5D8"
+    },
+    {
+      "id": "DFL-05-TEAM-031",
+      "section": 5,
+      "source_line": 154,
+      "anchor": "47,MOS,Montreal,Storm,Eastern,Northeast,6-1,1,active,true,true,standard,Evergreen Credit Stadium,\"Montreal, Canada\",Frost Silver,#B8C5D1,Nordic Blue,#245A81,Emerald,#009B77"
+    },
+    {
+      "id": "DFL-05-TEAM-032",
+      "section": 5,
+      "source_line": 155,
+      "anchor": "26,NEP,New England,Rebels,Eastern,Northeast,6-2,2,active,true,true,standard,Gillette Stadium,\"Foxborough, MA\",Navy,#002244,Red,#C8102E,Emerald,#009B77"
+    },
+    {
+      "id": "DFL-05-TEAM-033",
+      "section": 5,
+      "source_line": 156,
+      "anchor": "46,TOR,Toronto,Sentinels,Eastern,Northeast,6-3,3,active,true,true,standard,GoldenRail Stadium,\"Toronto, Canada\",Crimson,#A6192E,Steel Gray,#78858B,Emerald,#009B77"
+    },
+    {
+      "id": "DFL-05-TEAM-034",
+      "section": 5,
+      "source_line": 157,
+      "anchor": "12,PHI,Philadelphia,Harpies,Eastern,Northeast,6-4,4,active,true,true,standard,Lincoln Financial Field,\"Philadelphia, PA\",Midnight Green,#004C54,Silver,#B0B7BC,Emerald,#009B77"
+    },
+    {
+      "id": "DFL-05-TEAM-035",
+      "section": 5,
+      "source_line": 158,
+      "anchor": "10,NYG,New York,Goliaths,Eastern,Northeast,6-5,5,active,true,true,standard,MetLife Stadium,\"East Rutherford, NJ\",Blue,#0B2265,Red,#C8102E,Emerald,#009B77"
+    },
+    {
+      "id": "DFL-05-TEAM-036",
+      "section": 5,
+      "source_line": 159,
+      "anchor": "22,BUF,Buffalo,Brats,Eastern,Northeast,,6,ambassador,false,true,lottery_1_8,Highmark Stadium,\"Orchard Park, NY\",Royal Blue,#003DA5,Red,#C8102E,Emerald,#009B77"
+    },
+    {
+      "id": "DFL-05-TEAM-037",
+      "section": 5,
+      "source_line": 160,
+      "anchor": "36,CAR,Carolina,Comets,Eastern,East,7-1,1,active,true,true,standard,Bank of America Stadium,\"Charlotte, NC\",Carolina Blue,#0085CA,Black,#101820,Turquoise,#26A9A0"
+    },
+    {
+      "id": "DFL-05-TEAM-038",
+      "section": 5,
+      "source_line": 161,
+      "anchor": "2,DET,Detroit,Soul,Eastern,East,7-2,2,active,true,true,standard,Ford Field,\"Detroit, MI\",Honolulu Blue,#0076B6,Silver,#B0B7BC,Turquoise,#26A9A0"
+    },
+    {
+      "id": "DFL-05-TEAM-039",
+      "section": 5,
+      "source_line": 162,
+      "anchor": "14,WAS,Washington,Commandos,Eastern,East,7-3,3,active,true,true,standard,Northwest Stadium,\"Landover, MD\",Burgundy,#773141,Gold,#D3BC8D,Turquoise,#26A9A0"
+    },
+    {
+      "id": "DFL-05-TEAM-040",
+      "section": 5,
+      "source_line": 163,
+      "anchor": "28,PIT,Pittsburgh,Riviters,Eastern,East,7-4,4,active,true,true,standard,Acrisure Stadium,\"Pittsburgh, PA\",Black,#101820,Light Blue,#83C9EF,Turquoise,#26A9A0"
+    },
+    {
+      "id": "DFL-05-TEAM-041",
+      "section": 5,
+      "source_line": 164,
+      "anchor": "15,CLE,Cleveland,Mud Dawgs,Eastern,East,7-5,5,active,true,true,standard,Huntington Bank Field,\"Cleveland, OH\",Brown,#311D00,Orange,#FF5F05,Turquoise,#26A9A0"
+    },
+    {
+      "id": "DFL-05-TEAM-042",
+      "section": 5,
+      "source_line": 165,
+      "anchor": "32,BAL,Baltimore,Rooks,Eastern,East,,6,ambassador,false,true,lottery_1_8,M&T Bank Stadium,\"Baltimore, MD\",Purple,#4F2683,Black,#000000,Turquoise,#26A9A0"
+    },
+    {
+      "id": "DFL-05-TEAM-043",
+      "section": 5,
+      "source_line": 166,
+      "anchor": "48,ALA,Alabama,Thunder,Eastern,Southeast,8-1,1,active,true,true,standard,Granite Stadium,\"Birmingham, AL\",Dark Thunder Blue,#102A43,Lightning Yellow,#F5D547,Alexandrite,#7040A0"
+    },
+    {
+      "id": "DFL-05-TEAM-044",
+      "section": 5,
+      "source_line": 167,
+      "anchor": "37,JAX,Florida,Fangs,Eastern,Southeast,8-2,2,active,true,true,standard,EverBank Stadium,\"Jacksonville, FL\",Teal,#006778,Black,#101820,Alexandrite,#7040A0"
+    },
+    {
+      "id": "DFL-05-TEAM-045",
+      "section": 5,
+      "source_line": 168,
+      "anchor": "25,MIA,Miami,Monsters,Eastern,Southeast,8-3,3,active,true,true,standard,Hard Rock Stadium,\"Miami Gardens, FL\",Aqua,#008E97,Orange,#FF5F05,Alexandrite,#7040A0"
+    },
+    {
+      "id": "DFL-05-TEAM-046",
+      "section": 5,
+      "source_line": 169,
+      "anchor": "8,ATL,Atlanta,Mavericks,Eastern,Southeast,8-4,4,active,true,true,standard,Mercedes-Benz Stadium,\"Atlanta, GA\",Black,#000000,Red,#C8102E,Alexandrite,#7040A0"
+    },
+    {
+      "id": "DFL-05-TEAM-047",
+      "section": 5,
+      "source_line": 170,
+      "anchor": "11,NOS,New Orleans,Mayfairs,Eastern,Southeast,8-5,5,active,true,true,standard,Caesars Superdome,\"New Orleans, LA\",Black,#000000,Old Gold,#9F8958,Alexandrite,#7040A0"
+    },
+    {
+      "id": "DFL-05-TEAM-048",
+      "section": 5,
+      "source_line": 171,
+      "anchor": "13,TBB,Tampa Bay,Corsairs,Eastern,Southeast,,6,ambassador,false,true,lottery_1_8,Raymond James Stadium,\"Tampa, FL\",Red,#C8102E,Pewter,#5A5A5A,Alexandrite,#7040A0"
+    },
+    {
+      "id": "DFL-06-GAME-001",
+      "section": 6,
+      "source_line": 179,
+      "anchor": "1,1,2000-07-01,17:30,Oklahoma City,St. Louis"
+    },
+    {
+      "id": "DFL-06-GAME-002",
+      "section": 6,
+      "source_line": 180,
+      "anchor": "1,2,2000-07-02,10:00,Las Vegas,New Orleans"
+    },
+    {
+      "id": "DFL-06-GAME-003",
+      "section": 6,
+      "source_line": 181,
+      "anchor": "1,3,2000-07-02,10:00,Arizona,Pittsburgh"
+    },
+    {
+      "id": "DFL-06-GAME-004",
+      "section": 6,
+      "source_line": 182,
+      "anchor": "1,4,2000-07-02,10:00,Kansas City,Philadelphia"
+    },
+    {
+      "id": "DFL-06-GAME-005",
+      "section": 6,
+      "source_line": 183,
+      "anchor": "1,5,2000-07-02,10:00,Seattle,Florida"
+    },
+    {
+      "id": "DFL-06-GAME-006",
+      "section": 6,
+      "source_line": 184,
+      "anchor": "1,6,2000-07-02,10:00,Mexico City,Chicago"
+    },
+    {
+      "id": "DFL-06-GAME-007",
+      "section": 6,
+      "source_line": 185,
+      "anchor": "1,7,2000-07-02,10:00,Dakota,Tennessee"
+    },
+    {
+      "id": "DFL-06-GAME-008",
+      "section": 6,
+      "source_line": 186,
+      "anchor": "1,8,2000-07-02,10:00,Calgary,Atlanta"
+    },
+    {
+      "id": "DFL-06-GAME-009",
+      "section": 6,
+      "source_line": 187,
+      "anchor": "1,9,2000-07-02,10:00,Denver,Cincinnati"
+    },
+    {
+      "id": "DFL-06-GAME-010",
+      "section": 6,
+      "source_line": 188,
+      "anchor": "1,10,2000-07-02,10:00,Omaha,New England"
+    },
+    {
+      "id": "DFL-06-GAME-011",
+      "section": 6,
+      "source_line": 189,
+      "anchor": "1,11,2000-07-02,10:00,Montana,Carolina"
+    },
+    {
+      "id": "DFL-06-GAME-012",
+      "section": 6,
+      "source_line": 190,
+      "anchor": "1,12,2000-07-02,13:00,Sacramento,Miami"
+    },
+    {
+      "id": "DFL-06-GAME-013",
+      "section": 6,
+      "source_line": 191,
+      "anchor": "1,13,2000-07-02,13:00,San Francisco,Alabama"
+    },
+    {
+      "id": "DFL-06-GAME-014",
+      "section": 6,
+      "source_line": 192,
+      "anchor": "1,14,2000-07-02,13:00,San Antonio,Green Bay"
+    },
+    {
+      "id": "DFL-06-GAME-015",
+      "section": 6,
+      "source_line": 193,
+      "anchor": "1,15,2000-07-02,13:00,San Diego,Detroit"
+    },
+    {
+      "id": "DFL-06-GAME-016",
+      "section": 6,
+      "source_line": 194,
+      "anchor": "1,16,2000-07-02,13:00,Houston,Montreal"
+    },
+    {
+      "id": "DFL-06-GAME-017",
+      "section": 6,
+      "source_line": 195,
+      "anchor": "1,17,2000-07-02,13:00,Utah,Washington"
+    },
+    {
+      "id": "DFL-06-GAME-018",
+      "section": 6,
+      "source_line": 196,
+      "anchor": "1,18,2000-07-02,17:30,New Mexico,New York"
+    },
+    {
+      "id": "DFL-06-GAME-019",
+      "section": 6,
+      "source_line": 197,
+      "anchor": "1,19,2000-07-02,17:30,Idaho,Cleveland"
+    },
+    {
+      "id": "DFL-06-GAME-020",
+      "section": 6,
+      "source_line": 198,
+      "anchor": "1,20,2000-07-03,17:30,Dallas,Toronto"
+    },
+    {
+      "id": "DFL-06-GAME-021",
+      "section": 6,
+      "source_line": 199,
+      "anchor": "2,1,2000-07-08,17:30,Chicago,Omaha"
+    },
+    {
+      "id": "DFL-06-GAME-022",
+      "section": 6,
+      "source_line": 200,
+      "anchor": "2,2,2000-07-09,10:00,Montreal,Oklahoma City"
+    },
+    {
+      "id": "DFL-06-GAME-023",
+      "section": 6,
+      "source_line": 201,
+      "anchor": "2,3,2000-07-09,10:00,New York,Denver"
+    },
+    {
+      "id": "DFL-06-GAME-024",
+      "section": 6,
+      "source_line": 202,
+      "anchor": "2,4,2000-07-09,10:00,Detroit,Seattle"
+    },
+    {
+      "id": "DFL-06-GAME-025",
+      "section": 6,
+      "source_line": 203,
+      "anchor": "2,5,2000-07-09,10:00,Washington,Sacramento"
+    },
+    {
+      "id": "DFL-06-GAME-026",
+      "section": 6,
+      "source_line": 204,
+      "anchor": "2,6,2000-07-09,10:00,Pittsburgh,Calgary"
+    },
+    {
+      "id": "DFL-06-GAME-027",
+      "section": 6,
+      "source_line": 205,
+      "anchor": "2,7,2000-07-09,10:00,Cleveland,Las Vegas"
+    },
+    {
+      "id": "DFL-06-GAME-028",
+      "section": 6,
+      "source_line": 206,
+      "anchor": "2,8,2000-07-09,10:00,Philadelphia,San Antonio"
+    },
+    {
+      "id": "DFL-06-GAME-029",
+      "section": 6,
+      "source_line": 207,
+      "anchor": "2,9,2000-07-09,10:00,Tennessee,Dallas"
+    },
+    {
+      "id": "DFL-06-GAME-030",
+      "section": 6,
+      "source_line": 208,
+      "anchor": "2,10,2000-07-09,10:00,New England,Mexico City"
+    },
+    {
+      "id": "DFL-06-GAME-031",
+      "section": 6,
+      "source_line": 209,
+      "anchor": "2,11,2000-07-09,10:00,Carolina,San Francisco"
+    },
+    {
+      "id": "DFL-06-GAME-032",
+      "section": 6,
+      "source_line": 210,
+      "anchor": "2,12,2000-07-09,13:00,Alabama,Montana"
+    },
+    {
+      "id": "DFL-06-GAME-033",
+      "section": 6,
+      "source_line": 211,
+      "anchor": "2,13,2000-07-09,13:00,Green Bay,Kansas City"
+    },
+    {
+      "id": "DFL-06-GAME-034",
+      "section": 6,
+      "source_line": 212,
+      "anchor": "2,14,2000-07-09,13:00,Florida,San Diego"
+    },
+    {
+      "id": "DFL-06-GAME-035",
+      "section": 6,
+      "source_line": 213,
+      "anchor": "2,15,2000-07-09,13:00,New Orleans,Idaho"
+    },
+    {
+      "id": "DFL-06-GAME-036",
+      "section": 6,
+      "source_line": 214,
+      "anchor": "2,16,2000-07-09,13:00,Miami,Utah"
+    },
+    {
+      "id": "DFL-06-GAME-037",
+      "section": 6,
+      "source_line": 215,
+      "anchor": "2,17,2000-07-09,13:00,Atlanta,Arizona"
+    },
+    {
+      "id": "DFL-06-GAME-038",
+      "section": 6,
+      "source_line": 216,
+      "anchor": "2,18,2000-07-09,17:30,St. Louis,Houston"
+    },
+    {
+      "id": "DFL-06-GAME-039",
+      "section": 6,
+      "source_line": 217,
+      "anchor": "2,19,2000-07-09,17:30,Toronto,Dakota"
+    },
+    {
+      "id": "DFL-06-GAME-040",
+      "section": 6,
+      "source_line": 218,
+      "anchor": "2,20,2000-07-10,17:30,Cincinnati,New Mexico"
+    },
+    {
+      "id": "DFL-06-GAME-041",
+      "section": 6,
+      "source_line": 219,
+      "anchor": "3,1,2000-07-15,17:30,Montana,St. Louis"
+    },
+    {
+      "id": "DFL-06-GAME-042",
+      "section": 6,
+      "source_line": 220,
+      "anchor": "3,2,2000-07-16,10:00,Washington,Dallas"
+    },
+    {
+      "id": "DFL-06-GAME-043",
+      "section": 6,
+      "source_line": 221,
+      "anchor": "3,3,2000-07-16,10:00,Carolina,Houston"
+    },
+    {
+      "id": "DFL-06-GAME-044",
+      "section": 6,
+      "source_line": 222,
+      "anchor": "3,4,2000-07-16,10:00,Arizona,Green Bay"
+    },
+    {
+      "id": "DFL-06-GAME-045",
+      "section": 6,
+      "source_line": 223,
+      "anchor": "3,5,2000-07-16,10:00,Seattle,New England"
+    },
+    {
+      "id": "DFL-06-GAME-046",
+      "section": 6,
+      "source_line": 224,
+      "anchor": "3,6,2000-07-16,10:00,San Francisco,Montreal"
+    },
+    {
+      "id": "DFL-06-GAME-047",
+      "section": 6,
+      "source_line": 225,
+      "anchor": "3,7,2000-07-16,10:00,New Orleans,Denver"
+    },
+    {
+      "id": "DFL-06-GAME-048",
+      "section": 6,
+      "source_line": 226,
+      "anchor": "3,8,2000-07-16,10:00,Florida,Mexico City"
+    },
+    {
+      "id": "DFL-06-GAME-049",
+      "section": 6,
+      "source_line": 227,
+      "anchor": "3,9,2000-07-16,10:00,Miami,Dakota"
+    },
+    {
+      "id": "DFL-06-GAME-050",
+      "section": 6,
+      "source_line": 228,
+      "anchor": "3,10,2000-07-16,10:00,Calgary,Philadelphia"
+    },
+    {
+      "id": "DFL-06-GAME-051",
+      "section": 6,
+      "source_line": 229,
+      "anchor": "3,11,2000-07-16,10:00,San Diego,Chicago"
+    },
+    {
+      "id": "DFL-06-GAME-052",
+      "section": 6,
+      "source_line": 230,
+      "anchor": "3,12,2000-07-16,13:00,Sacramento,Toronto"
+    },
+    {
+      "id": "DFL-06-GAME-053",
+      "section": 6,
+      "source_line": 231,
+      "anchor": "3,13,2000-07-16,13:00,Idaho,Cincinnati"
+    },
+    {
+      "id": "DFL-06-GAME-054",
+      "section": 6,
+      "source_line": 232,
+      "anchor": "3,14,2000-07-16,13:00,Alabama,Oklahoma City"
+    },
+    {
+      "id": "DFL-06-GAME-055",
+      "section": 6,
+      "source_line": 233,
+      "anchor": "3,15,2000-07-16,13:00,Las Vegas,New York"
+    },
+    {
+      "id": "DFL-06-GAME-056",
+      "section": 6,
+      "source_line": 234,
+      "anchor": "3,16,2000-07-16,13:00,Atlanta,San Antonio"
+    },
+    {
+      "id": "DFL-06-GAME-057",
+      "section": 6,
+      "source_line": 235,
+      "anchor": "3,17,2000-07-16,13:00,Cleveland,New Mexico"
+    },
+    {
+      "id": "DFL-06-GAME-058",
+      "section": 6,
+      "source_line": 236,
+      "anchor": "3,18,2000-07-16,17:30,Utah,Tennessee"
+    },
+    {
+      "id": "DFL-06-GAME-059",
+      "section": 6,
+      "source_line": 237,
+      "anchor": "3,19,2000-07-16,17:30,Pittsburgh,Kansas City"
+    },
+    {
+      "id": "DFL-06-GAME-060",
+      "section": 6,
+      "source_line": 238,
+      "anchor": "3,20,2000-07-17,17:30,Detroit,Omaha"
+    },
+    {
+      "id": "DFL-06-GAME-061",
+      "section": 6,
+      "source_line": 239,
+      "anchor": "4,1,2000-07-22,17:30,Chicago,Seattle"
+    },
+    {
+      "id": "DFL-06-GAME-062",
+      "section": 6,
+      "source_line": 240,
+      "anchor": "4,2,2000-07-23,10:00,New England,San Diego"
+    },
+    {
+      "id": "DFL-06-GAME-063",
+      "section": 6,
+      "source_line": 241,
+      "anchor": "4,3,2000-07-23,10:00,Tennessee,Sacramento"
+    },
+    {
+      "id": "DFL-06-GAME-064",
+      "section": 6,
+      "source_line": 242,
+      "anchor": "4,4,2000-07-23,10:00,San Antonio,Pittsburgh"
+    },
+    {
+      "id": "DFL-06-GAME-065",
+      "section": 6,
+      "source_line": 243,
+      "anchor": "4,5,2000-07-23,10:00,Cincinnati,Las Vegas"
+    },
+    {
+      "id": "DFL-06-GAME-066",
+      "section": 6,
+      "source_line": 244,
+      "anchor": "4,6,2000-07-23,10:00,Green Bay,Calgary"
+    },
+    {
+      "id": "DFL-06-GAME-067",
+      "section": 6,
+      "source_line": 245,
+      "anchor": "4,7,2000-07-23,10:00,Denver,Cleveland"
+    },
+    {
+      "id": "DFL-06-GAME-068",
+      "section": 6,
+      "source_line": 246,
+      "anchor": "4,8,2000-07-23,10:00,Omaha,Florida"
+    },
+    {
+      "id": "DFL-06-GAME-069",
+      "section": 6,
+      "source_line": 247,
+      "anchor": "4,9,2000-07-23,10:00,St. Louis,San Francisco"
+    },
+    {
+      "id": "DFL-06-GAME-070",
+      "section": 6,
+      "source_line": 248,
+      "anchor": "4,10,2000-07-23,10:00,Dakota,Washington"
+    },
+    {
+      "id": "DFL-06-GAME-071",
+      "section": 6,
+      "source_line": 249,
+      "anchor": "4,11,2000-07-23,10:00,Kansas City,Atlanta"
+    },
+    {
+      "id": "DFL-06-GAME-072",
+      "section": 6,
+      "source_line": 250,
+      "anchor": "4,12,2000-07-23,13:00,Toronto,Utah"
+    },
+    {
+      "id": "DFL-06-GAME-073",
+      "section": 6,
+      "source_line": 251,
+      "anchor": "4,13,2000-07-23,13:00,New York,Idaho"
+    },
+    {
+      "id": "DFL-06-GAME-074",
+      "section": 6,
+      "source_line": 252,
+      "anchor": "4,14,2000-07-23,13:00,Dallas,Miami"
+    },
+    {
+      "id": "DFL-06-GAME-075",
+      "section": 6,
+      "source_line": 253,
+      "anchor": "4,15,2000-07-23,13:00,New Mexico,New Orleans"
+    },
+    {
+      "id": "DFL-06-GAME-076",
+      "section": 6,
+      "source_line": 254,
+      "anchor": "4,16,2000-07-23,13:00,Philadelphia,Arizona"
+    },
+    {
+      "id": "DFL-06-GAME-077",
+      "section": 6,
+      "source_line": 255,
+      "anchor": "4,17,2000-07-23,13:00,Mexico City,Detroit"
+    },
+    {
+      "id": "DFL-06-GAME-078",
+      "section": 6,
+      "source_line": 256,
+      "anchor": "4,18,2000-07-23,17:30,Oklahoma City,Carolina"
+    },
+    {
+      "id": "DFL-06-GAME-079",
+      "section": 6,
+      "source_line": 257,
+      "anchor": "4,19,2000-07-23,17:30,Montreal,Montana"
+    },
+    {
+      "id": "DFL-06-GAME-080",
+      "section": 6,
+      "source_line": 258,
+      "anchor": "4,20,2000-07-24,17:30,Houston,Alabama"
+    },
+    {
+      "id": "DFL-06-GAME-081",
+      "section": 6,
+      "source_line": 259,
+      "anchor": "5,1,2000-08-05,17:30,Florida,New Orleans"
+    },
+    {
+      "id": "DFL-06-GAME-082",
+      "section": 6,
+      "source_line": 260,
+      "anchor": "5,2,2000-08-06,10:00,New York,Montreal"
+    },
+    {
+      "id": "DFL-06-GAME-083",
+      "section": 6,
+      "source_line": 261,
+      "anchor": "5,3,2000-08-06,10:00,San Francisco,Montana"
+    },
+    {
+      "id": "DFL-06-GAME-084",
+      "section": 6,
+      "source_line": 262,
+      "anchor": "5,4,2000-08-06,10:00,Kansas City,Omaha"
+    },
+    {
+      "id": "DFL-06-GAME-085",
+      "section": 6,
+      "source_line": 263,
+      "anchor": "5,5,2000-08-06,10:00,Toronto,Philadelphia"
+    },
+    {
+      "id": "DFL-06-GAME-086",
+      "section": 6,
+      "source_line": 264,
+      "anchor": "5,6,2000-08-06,10:00,Carolina,New England"
+    },
+    {
+      "id": "DFL-06-GAME-087",
+      "section": 6,
+      "source_line": 265,
+      "anchor": "5,7,2000-08-06,10:00,Atlanta,Washington"
+    },
+    {
+      "id": "DFL-06-GAME-088",
+      "section": 6,
+      "source_line": 266,
+      "anchor": "5,8,2000-08-06,10:00,Arizona,Idaho"
+    },
+    {
+      "id": "DFL-06-GAME-089",
+      "section": 6,
+      "source_line": 267,
+      "anchor": "5,9,2000-08-06,10:00,San Antonio,Las Vegas"
+    },
+    {
+      "id": "DFL-06-GAME-090",
+      "section": 6,
+      "source_line": 268,
+      "anchor": "5,10,2000-08-06,10:00,Dakota,Oklahoma City"
+    },
+    {
+      "id": "DFL-06-GAME-091",
+      "section": 6,
+      "source_line": 269,
+      "anchor": "5,11,2000-08-06,10:00,Tennessee,Detroit"
+    },
+    {
+      "id": "DFL-06-GAME-092",
+      "section": 6,
+      "source_line": 270,
+      "anchor": "5,12,2000-08-06,13:00,San Diego,Utah"
+    },
+    {
+      "id": "DFL-06-GAME-093",
+      "section": 6,
+      "source_line": 271,
+      "anchor": "5,13,2000-08-06,13:00,New Mexico,Houston"
+    },
+    {
+      "id": "DFL-06-GAME-094",
+      "section": 6,
+      "source_line": 272,
+      "anchor": "5,14,2000-08-06,13:00,Mexico City,Sacramento"
+    },
+    {
+      "id": "DFL-06-GAME-095",
+      "section": 6,
+      "source_line": 273,
+      "anchor": "5,15,2000-08-06,13:00,Alabama,Chicago"
+    },
+    {
+      "id": "DFL-06-GAME-096",
+      "section": 6,
+      "source_line": 274,
+      "anchor": "5,16,2000-08-06,13:00,St. Louis,Cincinnati"
+    },
+    {
+      "id": "DFL-06-GAME-097",
+      "section": 6,
+      "source_line": 275,
+      "anchor": "5,17,2000-08-06,13:00,Pittsburgh,Cleveland"
+    },
+    {
+      "id": "DFL-06-GAME-098",
+      "section": 6,
+      "source_line": 276,
+      "anchor": "5,18,2000-08-06,17:30,Seattle,Dallas"
+    },
+    {
+      "id": "DFL-06-GAME-099",
+      "section": 6,
+      "source_line": 277,
+      "anchor": "5,19,2000-08-06,17:30,Miami,Green Bay"
+    },
+    {
+      "id": "DFL-06-GAME-100",
+      "section": 6,
+      "source_line": 278,
+      "anchor": "5,20,2000-08-07,17:30,Calgary,Denver"
+    },
+    {
+      "id": "DFL-06-GAME-101",
+      "section": 6,
+      "source_line": 279,
+      "anchor": "6,1,2000-08-12,17:30,San Francisco,Mexico City"
+    },
+    {
+      "id": "DFL-06-GAME-102",
+      "section": 6,
+      "source_line": 280,
+      "anchor": "6,2,2000-08-13,10:00,Denver,Oklahoma City"
+    },
+    {
+      "id": "DFL-06-GAME-103",
+      "section": 6,
+      "source_line": 281,
+      "anchor": "6,3,2000-08-13,10:00,San Antonio,Utah"
+    },
+    {
+      "id": "DFL-06-GAME-104",
+      "section": 6,
+      "source_line": 282,
+      "anchor": "6,4,2000-08-13,10:00,Cincinnati,Tennessee"
+    },
+    {
+      "id": "DFL-06-GAME-105",
+      "section": 6,
+      "source_line": 283,
+      "anchor": "6,5,2000-08-13,10:00,Omaha,Dakota"
+    },
+    {
+      "id": "DFL-06-GAME-106",
+      "section": 6,
+      "source_line": 284,
+      "anchor": "6,6,2000-08-13,10:00,Las Vegas,Kansas City"
+    },
+    {
+      "id": "DFL-06-GAME-107",
+      "section": 6,
+      "source_line": 285,
+      "anchor": "6,7,2000-08-13,10:00,New Mexico,Idaho"
+    },
+    {
+      "id": "DFL-06-GAME-108",
+      "section": 6,
+      "source_line": 286,
+      "anchor": "6,8,2000-08-13,10:00,Alabama,Atlanta"
+    },
+    {
+      "id": "DFL-06-GAME-109",
+      "section": 6,
+      "source_line": 287,
+      "anchor": "6,9,2000-08-13,10:00,Miami,Pittsburgh"
+    },
+    {
+      "id": "DFL-06-GAME-110",
+      "section": 6,
+      "source_line": 288,
+      "anchor": "6,10,2000-08-13,10:00,New Orleans,Cleveland"
+    },
+    {
+      "id": "DFL-06-GAME-111",
+      "section": 6,
+      "source_line": 289,
+      "anchor": "6,11,2000-08-13,10:00,Montreal,St. Louis"
+    },
+    {
+      "id": "DFL-06-GAME-112",
+      "section": 6,
+      "source_line": 290,
+      "anchor": "6,12,2000-08-13,13:00,Montana,Houston"
+    },
+    {
+      "id": "DFL-06-GAME-113",
+      "section": 6,
+      "source_line": 291,
+      "anchor": "6,13,2000-08-13,13:00,Sacramento,Seattle"
+    },
+    {
+      "id": "DFL-06-GAME-114",
+      "section": 6,
+      "source_line": 292,
+      "anchor": "6,14,2000-08-13,13:00,Dallas,Calgary"
+    },
+    {
+      "id": "DFL-06-GAME-115",
+      "section": 6,
+      "source_line": 293,
+      "anchor": "6,15,2000-08-13,13:00,Philadelphia,New York"
+    },
+    {
+      "id": "DFL-06-GAME-116",
+      "section": 6,
+      "source_line": 294,
+      "anchor": "6,16,2000-08-13,13:00,New England,Toronto"
+    },
+    {
+      "id": "DFL-06-GAME-117",
+      "section": 6,
+      "source_line": 295,
+      "anchor": "6,17,2000-08-13,13:00,Green Bay,Chicago"
+    },
+    {
+      "id": "DFL-06-GAME-118",
+      "section": 6,
+      "source_line": 296,
+      "anchor": "6,18,2000-08-13,17:30,Arizona,San Diego"
+    },
+    {
+      "id": "DFL-06-GAME-119",
+      "section": 6,
+      "source_line": 297,
+      "anchor": "6,19,2000-08-13,17:30,Detroit,Washington"
+    },
+    {
+      "id": "DFL-06-GAME-120",
+      "section": 6,
+      "source_line": 298,
+      "anchor": "6,20,2000-08-14,17:30,Florida,Carolina"
+    },
+    {
+      "id": "DFL-06-GAME-121",
+      "section": 6,
+      "source_line": 299,
+      "anchor": "7,1,2000-08-19,17:30,Detroit,Miami"
+    },
+    {
+      "id": "DFL-06-GAME-122",
+      "section": 6,
+      "source_line": 300,
+      "anchor": "7,2,2000-08-20,10:00,Washington,Carolina"
+    },
+    {
+      "id": "DFL-06-GAME-123",
+      "section": 6,
+      "source_line": 301,
+      "anchor": "7,3,2000-08-20,10:00,Idaho,Montana"
+    },
+    {
+      "id": "DFL-06-GAME-124",
+      "section": 6,
+      "source_line": 302,
+      "anchor": "7,4,2000-08-20,10:00,Omaha,Denver"
+    },
+    {
+      "id": "DFL-06-GAME-125",
+      "section": 6,
+      "source_line": 303,
+      "anchor": "7,5,2000-08-20,10:00,Mexico City,New Mexico"
+    },
+    {
+      "id": "DFL-06-GAME-126",
+      "section": 6,
+      "source_line": 304,
+      "anchor": "7,6,2000-08-20,10:00,Dallas,San Antonio"
+    },
+    {
+      "id": "DFL-06-GAME-127",
+      "section": 6,
+      "source_line": 305,
+      "anchor": "7,7,2000-08-20,10:00,Dakota,Calgary"
+    },
+    {
+      "id": "DFL-06-GAME-128",
+      "section": 6,
+      "source_line": 306,
+      "anchor": "7,8,2000-08-20,10:00,Green Bay,Toronto"
+    },
+    {
+      "id": "DFL-06-GAME-129",
+      "section": 6,
+      "source_line": 307,
+      "anchor": "7,9,2000-08-20,10:00,Cleveland,Cincinnati"
+    },
+    {
+      "id": "DFL-06-GAME-130",
+      "section": 6,
+      "source_line": 308,
+      "anchor": "7,10,2000-08-20,10:00,St. Louis,Alabama"
+    },
+    {
+      "id": "DFL-06-GAME-131",
+      "section": 6,
+      "source_line": 309,
+      "anchor": "7,11,2000-08-20,10:00,Chicago,Montreal"
+    },
+    {
+      "id": "DFL-06-GAME-132",
+      "section": 6,
+      "source_line": 310,
+      "anchor": "7,12,2000-08-20,13:00,Oklahoma City,Seattle"
+    },
+    {
+      "id": "DFL-06-GAME-133",
+      "section": 6,
+      "source_line": 311,
+      "anchor": "7,13,2000-08-20,13:00,Utah,Arizona"
+    },
+    {
+      "id": "DFL-06-GAME-134",
+      "section": 6,
+      "source_line": 312,
+      "anchor": "7,14,2000-08-20,13:00,San Diego,Houston"
+    },
+    {
+      "id": "DFL-06-GAME-135",
+      "section": 6,
+      "source_line": 313,
+      "anchor": "7,15,2000-08-20,13:00,Tennessee,Florida"
+    },
+    {
+      "id": "DFL-06-GAME-136",
+      "section": 6,
+      "source_line": 314,
+      "anchor": "7,16,2000-08-20,13:00,Atlanta,New York"
+    },
+    {
+      "id": "DFL-06-GAME-137",
+      "section": 6,
+      "source_line": 315,
+      "anchor": "7,17,2000-08-20,13:00,Pittsburgh,New Orleans"
+    },
+    {
+      "id": "DFL-06-GAME-138",
+      "section": 6,
+      "source_line": 316,
+      "anchor": "7,18,2000-08-20,17:30,Las Vegas,San Francisco"
+    },
+    {
+      "id": "DFL-06-GAME-139",
+      "section": 6,
+      "source_line": 317,
+      "anchor": "7,19,2000-08-20,17:30,Philadelphia,New England"
+    },
+    {
+      "id": "DFL-06-GAME-140",
+      "section": 6,
+      "source_line": 318,
+      "anchor": "7,20,2000-08-21,17:30,Kansas City,Sacramento"
+    },
+    {
+      "id": "DFL-06-GAME-141",
+      "section": 6,
+      "source_line": 319,
+      "anchor": "8,1,2000-08-26,17:30,Denver,San Antonio"
+    },
+    {
+      "id": "DFL-06-GAME-142",
+      "section": 6,
+      "source_line": 320,
+      "anchor": "8,2,2000-08-27,10:00,Carolina,Pittsburgh"
+    },
+    {
+      "id": "DFL-06-GAME-143",
+      "section": 6,
+      "source_line": 321,
+      "anchor": "8,3,2000-08-27,10:00,Miami,Alabama"
+    },
+    {
+      "id": "DFL-06-GAME-144",
+      "section": 6,
+      "source_line": 322,
+      "anchor": "8,4,2000-08-27,10:00,Oklahoma City,Omaha"
+    },
+    {
+      "id": "DFL-06-GAME-145",
+      "section": 6,
+      "source_line": 323,
+      "anchor": "8,5,2000-08-27,10:00,New Mexico,Dallas"
+    },
+    {
+      "id": "DFL-06-GAME-146",
+      "section": 6,
+      "source_line": 324,
+      "anchor": "8,6,2000-08-27,10:00,Dakota,Mexico City"
+    },
+    {
+      "id": "DFL-06-GAME-147",
+      "section": 6,
+      "source_line": 325,
+      "anchor": "8,7,2000-08-27,10:00,Seattle,Utah"
+    },
+    {
+      "id": "DFL-06-GAME-148",
+      "section": 6,
+      "source_line": 326,
+      "anchor": "8,8,2000-08-27,10:00,New York,New Orleans"
+    },
+    {
+      "id": "DFL-06-GAME-149",
+      "section": 6,
+      "source_line": 327,
+      "anchor": "8,9,2000-08-27,10:00,Washington,Florida"
+    },
+    {
+      "id": "DFL-06-GAME-150",
+      "section": 6,
+      "source_line": 328,
+      "anchor": "8,10,2000-08-27,10:00,Cleveland,Atlanta"
+    },
+    {
+      "id": "DFL-06-GAME-151",
+      "section": 6,
+      "source_line": 329,
+      "anchor": "8,11,2000-08-27,10:00,Montana,San Diego"
+    },
+    {
+      "id": "DFL-06-GAME-152",
+      "section": 6,
+      "source_line": 330,
+      "anchor": "8,12,2000-08-27,13:00,Idaho,Kansas City"
+    },
+    {
+      "id": "DFL-06-GAME-153",
+      "section": 6,
+      "source_line": 331,
+      "anchor": "8,13,2000-08-27,13:00,Houston,San Francisco"
+    },
+    {
+      "id": "DFL-06-GAME-154",
+      "section": 6,
+      "source_line": 332,
+      "anchor": "8,14,2000-08-27,13:00,Arizona,Las Vegas"
+    },
+    {
+      "id": "DFL-06-GAME-155",
+      "section": 6,
+      "source_line": 333,
+      "anchor": "8,15,2000-08-27,13:00,Toronto,Detroit"
+    },
+    {
+      "id": "DFL-06-GAME-156",
+      "section": 6,
+      "source_line": 334,
+      "anchor": "8,16,2000-08-27,13:00,St. Louis,Green Bay"
+    },
+    {
+      "id": "DFL-06-GAME-157",
+      "section": 6,
+      "source_line": 335,
+      "anchor": "8,17,2000-08-27,13:00,Montreal,New England"
+    },
+    {
+      "id": "DFL-06-GAME-158",
+      "section": 6,
+      "source_line": 336,
+      "anchor": "8,18,2000-08-27,17:30,Calgary,Sacramento"
+    },
+    {
+      "id": "DFL-06-GAME-159",
+      "section": 6,
+      "source_line": 337,
+      "anchor": "8,19,2000-08-27,17:30,Cincinnati,Chicago"
+    },
+    {
+      "id": "DFL-06-GAME-160",
+      "section": 6,
+      "source_line": 338,
+      "anchor": "8,20,2000-08-28,17:30,Tennessee,Philadelphia"
+    },
+    {
+      "id": "DFL-06-GAME-161",
+      "section": 6,
+      "source_line": 339,
+      "anchor": "9,1,2000-09-02,17:30,Miami,Atlanta"
+    },
+    {
+      "id": "DFL-06-GAME-162",
+      "section": 6,
+      "source_line": 340,
+      "anchor": "9,2,2000-09-03,10:00,Utah,Omaha"
+    },
+    {
+      "id": "DFL-06-GAME-163",
+      "section": 6,
+      "source_line": 341,
+      "anchor": "9,3,2000-09-03,10:00,Dallas,Houston"
+    },
+    {
+      "id": "DFL-06-GAME-164",
+      "section": 6,
+      "source_line": 342,
+      "anchor": "9,4,2000-09-03,10:00,San Francisco,Arizona"
+    },
+    {
+      "id": "DFL-06-GAME-165",
+      "section": 6,
+      "source_line": 343,
+      "anchor": "9,5,2000-09-03,10:00,Las Vegas,Sacramento"
+    },
+    {
+      "id": "DFL-06-GAME-166",
+      "section": 6,
+      "source_line": 344,
+      "anchor": "9,6,2000-09-03,10:00,Kansas City,Denver"
+    },
+    {
+      "id": "DFL-06-GAME-167",
+      "section": 6,
+      "source_line": 345,
+      "anchor": "9,7,2000-09-03,10:00,Toronto,Montreal"
+    },
+    {
+      "id": "DFL-06-GAME-168",
+      "section": 6,
+      "source_line": 346,
+      "anchor": "9,8,2000-09-03,10:00,Green Bay,Cincinnati"
+    },
+    {
+      "id": "DFL-06-GAME-169",
+      "section": 6,
+      "source_line": 347,
+      "anchor": "9,9,2000-09-03,10:00,Detroit,Cleveland"
+    },
+    {
+      "id": "DFL-06-GAME-170",
+      "section": 6,
+      "source_line": 348,
+      "anchor": "9,10,2000-09-03,10:00,New England,New York"
+    },
+    {
+      "id": "DFL-06-GAME-171",
+      "section": 6,
+      "source_line": 349,
+      "anchor": "9,11,2000-09-03,10:00,Carolina,Alabama"
+    },
+    {
+      "id": "DFL-06-GAME-172",
+      "section": 6,
+      "source_line": 350,
+      "anchor": "9,12,2000-09-03,13:00,Idaho,San Antonio"
+    },
+    {
+      "id": "DFL-06-GAME-173",
+      "section": 6,
+      "source_line": 351,
+      "anchor": "9,13,2000-09-03,13:00,Seattle,Dakota"
+    },
+    {
+      "id": "DFL-06-GAME-174",
+      "section": 6,
+      "source_line": 352,
+      "anchor": "9,14,2000-09-03,13:00,Calgary,New Mexico"
+    },
+    {
+      "id": "DFL-06-GAME-175",
+      "section": 6,
+      "source_line": 353,
+      "anchor": "9,15,2000-09-03,13:00,Pittsburgh,Tennessee"
+    },
+    {
+      "id": "DFL-06-GAME-176",
+      "section": 6,
+      "source_line": 354,
+      "anchor": "9,16,2000-09-03,13:00,Chicago,Washington"
+    },
+    {
+      "id": "DFL-06-GAME-177",
+      "section": 6,
+      "source_line": 355,
+      "anchor": "9,17,2000-09-03,13:00,New Orleans,Philadelphia"
+    },
+    {
+      "id": "DFL-06-GAME-178",
+      "section": 6,
+      "source_line": 356,
+      "anchor": "9,18,2000-09-03,17:30,Mexico City,Montana"
+    },
+    {
+      "id": "DFL-06-GAME-179",
+      "section": 6,
+      "source_line": 357,
+      "anchor": "9,19,2000-09-03,17:30,Florida,St. Louis"
+    },
+    {
+      "id": "DFL-06-GAME-180",
+      "section": 6,
+      "source_line": 358,
+      "anchor": "9,20,2000-09-04,17:30,Oklahoma City,San Diego"
+    },
+    {
+      "id": "DFL-06-GAME-181",
+      "section": 6,
+      "source_line": 359,
+      "anchor": "10,1,2000-09-16,17:30,New Mexico,Arizona"
+    },
+    {
+      "id": "DFL-06-GAME-182",
+      "section": 6,
+      "source_line": 360,
+      "anchor": "10,2,2000-09-17,10:00,Pittsburgh,Detroit"
+    },
+    {
+      "id": "DFL-06-GAME-183",
+      "section": 6,
+      "source_line": 361,
+      "anchor": "10,3,2000-09-17,10:00,Cleveland,Carolina"
+    },
+    {
+      "id": "DFL-06-GAME-184",
+      "section": 6,
+      "source_line": 362,
+      "anchor": "10,4,2000-09-17,10:00,Idaho,Seattle"
+    },
+    {
+      "id": "DFL-06-GAME-185",
+      "section": 6,
+      "source_line": 363,
+      "anchor": "10,5,2000-09-17,10:00,Sacramento,San Francisco"
+    },
+    {
+      "id": "DFL-06-GAME-186",
+      "section": 6,
+      "source_line": 364,
+      "anchor": "10,6,2000-09-17,10:00,Chicago,Miami"
+    },
+    {
+      "id": "DFL-06-GAME-187",
+      "section": 6,
+      "source_line": 365,
+      "anchor": "10,7,2000-09-17,10:00,Florida,Toronto"
+    },
+    {
+      "id": "DFL-06-GAME-188",
+      "section": 6,
+      "source_line": 366,
+      "anchor": "10,8,2000-09-17,10:00,San Antonio,Dakota"
+    },
+    {
+      "id": "DFL-06-GAME-189",
+      "section": 6,
+      "source_line": 367,
+      "anchor": "10,9,2000-09-17,10:00,Denver,Las Vegas"
+    },
+    {
+      "id": "DFL-06-GAME-190",
+      "section": 6,
+      "source_line": 368,
+      "anchor": "10,10,2000-09-17,10:00,Philadelphia,Cincinnati"
+    },
+    {
+      "id": "DFL-06-GAME-191",
+      "section": 6,
+      "source_line": 369,
+      "anchor": "10,11,2000-09-17,10:00,Kansas City,Utah"
+    },
+    {
+      "id": "DFL-06-GAME-192",
+      "section": 6,
+      "source_line": 370,
+      "anchor": "10,12,2000-09-17,13:00,Mexico City,Oklahoma City"
+    },
+    {
+      "id": "DFL-06-GAME-193",
+      "section": 6,
+      "source_line": 371,
+      "anchor": "10,13,2000-09-17,13:00,Dallas,San Diego"
+    },
+    {
+      "id": "DFL-06-GAME-194",
+      "section": 6,
+      "source_line": 372,
+      "anchor": "10,14,2000-09-17,13:00,Montana,Calgary"
+    },
+    {
+      "id": "DFL-06-GAME-195",
+      "section": 6,
+      "source_line": 373,
+      "anchor": "10,15,2000-09-17,13:00,New York,Green Bay"
+    },
+    {
+      "id": "DFL-06-GAME-196",
+      "section": 6,
+      "source_line": 374,
+      "anchor": "10,16,2000-09-17,13:00,New England,Washington"
+    },
+    {
+      "id": "DFL-06-GAME-197",
+      "section": 6,
+      "source_line": 375,
+      "anchor": "10,17,2000-09-17,13:00,Tennessee,St. Louis"
+    },
+    {
+      "id": "DFL-06-GAME-198",
+      "section": 6,
+      "source_line": 376,
+      "anchor": "10,18,2000-09-17,17:30,Houston,Omaha"
+    },
+    {
+      "id": "DFL-06-GAME-199",
+      "section": 6,
+      "source_line": 377,
+      "anchor": "10,19,2000-09-17,17:30,Alabama,Montreal"
+    },
+    {
+      "id": "DFL-06-GAME-200",
+      "section": 6,
+      "source_line": 378,
+      "anchor": "10,20,2000-09-18,17:30,Atlanta,New Orleans"
+    },
+    {
+      "id": "DFL-06-GAME-201",
+      "section": 6,
+      "source_line": 379,
+      "anchor": "11,1,2000-09-23,17:30,New England,Tennessee"
+    },
+    {
+      "id": "DFL-06-GAME-202",
+      "section": 6,
+      "source_line": 380,
+      "anchor": "11,2,2000-09-24,10:00,Florida,Miami"
+    },
+    {
+      "id": "DFL-06-GAME-203",
+      "section": 6,
+      "source_line": 381,
+      "anchor": "11,3,2000-09-24,10:00,Arizona,Dallas"
+    },
+    {
+      "id": "DFL-06-GAME-204",
+      "section": 6,
+      "source_line": 382,
+      "anchor": "11,4,2000-09-24,10:00,Las Vegas,New Mexico"
+    },
+    {
+      "id": "DFL-06-GAME-205",
+      "section": 6,
+      "source_line": 383,
+      "anchor": "11,5,2000-09-24,10:00,Oklahoma City,Houston"
+    },
+    {
+      "id": "DFL-06-GAME-206",
+      "section": 6,
+      "source_line": 384,
+      "anchor": "11,6,2000-09-24,10:00,Montana,Utah"
+    },
+    {
+      "id": "DFL-06-GAME-207",
+      "section": 6,
+      "source_line": 385,
+      "anchor": "11,7,2000-09-24,10:00,Calgary,Seattle"
+    },
+    {
+      "id": "DFL-06-GAME-208",
+      "section": 6,
+      "source_line": 386,
+      "anchor": "11,8,2000-09-24,10:00,Washington,Philadelphia"
+    },
+    {
+      "id": "DFL-06-GAME-209",
+      "section": 6,
+      "source_line": 387,
+      "anchor": "11,9,2000-09-24,10:00,Green Bay,Cleveland"
+    },
+    {
+      "id": "DFL-06-GAME-210",
+      "section": 6,
+      "source_line": 388,
+      "anchor": "11,10,2000-09-24,10:00,New York,Pittsburgh"
+    },
+    {
+      "id": "DFL-06-GAME-211",
+      "section": 6,
+      "source_line": 389,
+      "anchor": "11,11,2000-09-24,10:00,Detroit,Montreal"
+    },
+    {
+      "id": "DFL-06-GAME-212",
+      "section": 6,
+      "source_line": 390,
+      "anchor": "11,12,2000-09-24,13:00,Omaha,San Francisco"
+    },
+    {
+      "id": "DFL-06-GAME-213",
+      "section": 6,
+      "source_line": 391,
+      "anchor": "11,13,2000-09-24,13:00,Dakota,Kansas City"
+    },
+    {
+      "id": "DFL-06-GAME-214",
+      "section": 6,
+      "source_line": 392,
+      "anchor": "11,14,2000-09-24,13:00,San Diego,Sacramento"
+    },
+    {
+      "id": "DFL-06-GAME-215",
+      "section": 6,
+      "source_line": 393,
+      "anchor": "11,15,2000-09-24,13:00,St. Louis,Carolina"
+    },
+    {
+      "id": "DFL-06-GAME-216",
+      "section": 6,
+      "source_line": 394,
+      "anchor": "11,16,2000-09-24,13:00,Toronto,Chicago"
+    },
+    {
+      "id": "DFL-06-GAME-217",
+      "section": 6,
+      "source_line": 395,
+      "anchor": "11,17,2000-09-24,13:00,New Orleans,Alabama"
+    },
+    {
+      "id": "DFL-06-GAME-218",
+      "section": 6,
+      "source_line": 396,
+      "anchor": "11,18,2000-09-24,17:30,Denver,Idaho"
+    },
+    {
+      "id": "DFL-06-GAME-219",
+      "section": 6,
+      "source_line": 397,
+      "anchor": "11,19,2000-09-24,17:30,Cincinnati,Atlanta"
+    },
+    {
+      "id": "DFL-06-GAME-220",
+      "section": 6,
+      "source_line": 398,
+      "anchor": "11,20,2000-09-25,17:30,San Antonio,Mexico City"
+    },
+    {
+      "id": "DFL-06-GAME-221",
+      "section": 6,
+      "source_line": 399,
+      "anchor": "12,1,2000-09-30,17:30,Las Vegas,Calgary"
+    },
+    {
+      "id": "DFL-06-GAME-222",
+      "section": 6,
+      "source_line": 400,
+      "anchor": "12,2,2000-10-01,10:00,Oklahoma City,Kansas City"
+    },
+    {
+      "id": "DFL-06-GAME-223",
+      "section": 6,
+      "source_line": 401,
+      "anchor": "12,3,2000-10-01,10:00,Denver,Dakota"
+    },
+    {
+      "id": "DFL-06-GAME-224",
+      "section": 6,
+      "source_line": 402,
+      "anchor": "12,4,2000-10-01,10:00,Mexico City,Dallas"
+    },
+    {
+      "id": "DFL-06-GAME-225",
+      "section": 6,
+      "source_line": 403,
+      "anchor": "12,5,2000-10-01,10:00,Utah,Idaho"
+    },
+    {
+      "id": "DFL-06-GAME-226",
+      "section": 6,
+      "source_line": 404,
+      "anchor": "12,6,2000-10-01,10:00,Pittsburgh,Toronto"
+    },
+    {
+      "id": "DFL-06-GAME-227",
+      "section": 6,
+      "source_line": 405,
+      "anchor": "12,7,2000-10-01,10:00,Miami,New England"
+    },
+    {
+      "id": "DFL-06-GAME-228",
+      "section": 6,
+      "source_line": 406,
+      "anchor": "12,8,2000-10-01,10:00,Detroit,St. Louis"
+    },
+    {
+      "id": "DFL-06-GAME-229",
+      "section": 6,
+      "source_line": 407,
+      "anchor": "12,9,2000-10-01,10:00,Carolina,Chicago"
+    },
+    {
+      "id": "DFL-06-GAME-230",
+      "section": 6,
+      "source_line": 408,
+      "anchor": "12,10,2000-10-01,10:00,New Orleans,Cincinnati"
+    },
+    {
+      "id": "DFL-06-GAME-231",
+      "section": 6,
+      "source_line": 409,
+      "anchor": "12,11,2000-10-01,10:00,San Francisco,San Diego"
+    },
+    {
+      "id": "DFL-06-GAME-232",
+      "section": 6,
+      "source_line": 410,
+      "anchor": "12,12,2000-10-01,13:00,Omaha,Montana"
+    },
+    {
+      "id": "DFL-06-GAME-233",
+      "section": 6,
+      "source_line": 411,
+      "anchor": "12,13,2000-10-01,13:00,Houston,Seattle"
+    },
+    {
+      "id": "DFL-06-GAME-234",
+      "section": 6,
+      "source_line": 412,
+      "anchor": "12,14,2000-10-01,13:00,Sacramento,Arizona"
+    },
+    {
+      "id": "DFL-06-GAME-235",
+      "section": 6,
+      "source_line": 413,
+      "anchor": "12,15,2000-10-01,13:00,Atlanta,Tennessee"
+    },
+    {
+      "id": "DFL-06-GAME-236",
+      "section": 6,
+      "source_line": 414,
+      "anchor": "12,16,2000-10-01,13:00,Alabama,Florida"
+    },
+    {
+      "id": "DFL-06-GAME-237",
+      "section": 6,
+      "source_line": 415,
+      "anchor": "12,17,2000-10-01,13:00,Montreal,Philadelphia"
+    },
+    {
+      "id": "DFL-06-GAME-238",
+      "section": 6,
+      "source_line": 416,
+      "anchor": "12,18,2000-10-01,17:30,San Antonio,New Mexico"
+    },
+    {
+      "id": "DFL-06-GAME-239",
+      "section": 6,
+      "source_line": 417,
+      "anchor": "12,19,2000-10-01,17:30,Washington,Green Bay"
+    },
+    {
+      "id": "DFL-06-GAME-240",
+      "section": 6,
+      "source_line": 418,
+      "anchor": "12,20,2000-10-02,17:30,Cleveland,New York"
+    },
+    {
+      "id": "DFL-06-GAME-241",
+      "section": 6,
+      "source_line": 419,
+      "anchor": "13,1,2000-10-07,17:30,Cincinnati,Pittsburgh"
+    },
+    {
+      "id": "DFL-06-GAME-242",
+      "section": 6,
+      "source_line": 420,
+      "anchor": "13,2,2000-10-08,10:00,San Diego,Las Vegas"
+    },
+    {
+      "id": "DFL-06-GAME-243",
+      "section": 6,
+      "source_line": 421,
+      "anchor": "13,3,2000-10-08,10:00,Houston,San Antonio"
+    },
+    {
+      "id": "DFL-06-GAME-244",
+      "section": 6,
+      "source_line": 422,
+      "anchor": "13,4,2000-10-08,10:00,Chicago,Tennessee"
+    },
+    {
+      "id": "DFL-06-GAME-245",
+      "section": 6,
+      "source_line": 423,
+      "anchor": "13,5,2000-10-08,10:00,New York,Toronto"
+    },
+    {
+      "id": "DFL-06-GAME-246",
+      "section": 6,
+      "source_line": 424,
+      "anchor": "13,6,2000-10-08,10:00,New Mexico,Denver"
+    },
+    {
+      "id": "DFL-06-GAME-247",
+      "section": 6,
+      "source_line": 425,
+      "anchor": "13,7,2000-10-08,10:00,Sacramento,Omaha"
+    },
+    {
+      "id": "DFL-06-GAME-248",
+      "section": 6,
+      "source_line": 426,
+      "anchor": "13,8,2000-10-08,10:00,Alabama,Detroit"
+    },
+    {
+      "id": "DFL-06-GAME-249",
+      "section": 6,
+      "source_line": 427,
+      "anchor": "13,9,2000-10-08,10:00,Montana,Oklahoma City"
+    },
+    {
+      "id": "DFL-06-GAME-250",
+      "section": 6,
+      "source_line": 428,
+      "anchor": "13,10,2000-10-08,10:00,St. Louis,New England"
+    },
+    {
+      "id": "DFL-06-GAME-251",
+      "section": 6,
+      "source_line": 429,
+      "anchor": "13,11,2000-10-08,10:00,Green Bay,New Orleans"
+    },
+    {
+      "id": "DFL-06-GAME-252",
+      "section": 6,
+      "source_line": 430,
+      "anchor": "13,12,2000-10-08,13:00,Utah,Mexico City"
+    },
+    {
+      "id": "DFL-06-GAME-253",
+      "section": 6,
+      "source_line": 431,
+      "anchor": "13,13,2000-10-08,13:00,Dallas,Kansas City"
+    },
+    {
+      "id": "DFL-06-GAME-254",
+      "section": 6,
+      "source_line": 432,
+      "anchor": "13,14,2000-10-08,13:00,Calgary,Idaho"
+    },
+    {
+      "id": "DFL-06-GAME-255",
+      "section": 6,
+      "source_line": 433,
+      "anchor": "13,15,2000-10-08,13:00,Montreal,Carolina"
+    },
+    {
+      "id": "DFL-06-GAME-256",
+      "section": 6,
+      "source_line": 434,
+      "anchor": "13,16,2000-10-08,13:00,Cleveland,Washington"
+    },
+    {
+      "id": "DFL-06-GAME-257",
+      "section": 6,
+      "source_line": 435,
+      "anchor": "13,17,2000-10-08,13:00,Atlanta,Florida"
+    },
+    {
+      "id": "DFL-06-GAME-258",
+      "section": 6,
+      "source_line": 436,
+      "anchor": "13,18,2000-10-08,17:30,Seattle,San Francisco"
+    },
+    {
+      "id": "DFL-06-GAME-259",
+      "section": 6,
+      "source_line": 437,
+      "anchor": "13,19,2000-10-08,17:30,Philadelphia,Miami"
+    },
+    {
+      "id": "DFL-06-GAME-260",
+      "section": 6,
+      "source_line": 438,
+      "anchor": "13,20,2000-10-09,17:30,Dakota,Arizona"
+    },
+    {
+      "id": "DFL-06-GAME-261",
+      "section": 6,
+      "source_line": 439,
+      "anchor": "14,1,2000-10-14,17:30,Omaha,Dallas"
+    },
+    {
+      "id": "DFL-06-GAME-262",
+      "section": 6,
+      "source_line": 440,
+      "anchor": "14,2,2000-10-15,10:00,Kansas City,New Mexico"
+    },
+    {
+      "id": "DFL-06-GAME-263",
+      "section": 6,
+      "source_line": 441,
+      "anchor": "14,3,2000-10-15,10:00,Seattle,Montana"
+    },
+    {
+      "id": "DFL-06-GAME-264",
+      "section": 6,
+      "source_line": 442,
+      "anchor": "14,4,2000-10-15,10:00,Utah,Calgary"
+    },
+    {
+      "id": "DFL-06-GAME-265",
+      "section": 6,
+      "source_line": 443,
+      "anchor": "14,5,2000-10-15,10:00,Houston,Mexico City"
+    },
+    {
+      "id": "DFL-06-GAME-266",
+      "section": 6,
+      "source_line": 444,
+      "anchor": "14,6,2000-10-15,10:00,Chicago,St. Louis"
+    },
+    {
+      "id": "DFL-06-GAME-267",
+      "section": 6,
+      "source_line": 445,
+      "anchor": "14,7,2000-10-15,10:00,Tennessee,Green Bay"
+    },
+    {
+      "id": "DFL-06-GAME-268",
+      "section": 6,
+      "source_line": 446,
+      "anchor": "14,8,2000-10-15,10:00,Carolina,Detroit"
+    },
+    {
+      "id": "DFL-06-GAME-269",
+      "section": 6,
+      "source_line": 447,
+      "anchor": "14,9,2000-10-15,10:00,San Diego,Dakota"
+    },
+    {
+      "id": "DFL-06-GAME-270",
+      "section": 6,
+      "source_line": 448,
+      "anchor": "14,10,2000-10-15,10:00,Philadelphia,Cleveland"
+    },
+    {
+      "id": "DFL-06-GAME-271",
+      "section": 6,
+      "source_line": 449,
+      "anchor": "14,11,2000-10-15,10:00,Montreal,Florida"
+    },
+    {
+      "id": "DFL-06-GAME-272",
+      "section": 6,
+      "source_line": 450,
+      "anchor": "14,12,2000-10-15,13:00,Idaho,Las Vegas"
+    },
+    {
+      "id": "DFL-06-GAME-273",
+      "section": 6,
+      "source_line": 451,
+      "anchor": "14,13,2000-10-15,13:00,San Francisco,Oklahoma City"
+    },
+    {
+      "id": "DFL-06-GAME-274",
+      "section": 6,
+      "source_line": 452,
+      "anchor": "14,14,2000-10-15,13:00,Arizona,Denver"
+    },
+    {
+      "id": "DFL-06-GAME-275",
+      "section": 6,
+      "source_line": 453,
+      "anchor": "14,15,2000-10-15,13:00,Cincinnati,New York"
+    },
+    {
+      "id": "DFL-06-GAME-276",
+      "section": 6,
+      "source_line": 454,
+      "anchor": "14,16,2000-10-15,13:00,Toronto,Atlanta"
+    },
+    {
+      "id": "DFL-06-GAME-277",
+      "section": 6,
+      "source_line": 455,
+      "anchor": "14,17,2000-10-15,13:00,New Orleans,Miami"
+    },
+    {
+      "id": "DFL-06-GAME-278",
+      "section": 6,
+      "source_line": 456,
+      "anchor": "14,18,2000-10-15,17:30,Sacramento,San Antonio"
+    },
+    {
+      "id": "DFL-06-GAME-279",
+      "section": 6,
+      "source_line": 457,
+      "anchor": "14,19,2000-10-15,17:30,New England,Alabama"
+    },
+    {
+      "id": "DFL-06-GAME-280",
+      "section": 6,
+      "source_line": 458,
+      "anchor": "14,20,2000-10-16,17:30,Washington,Pittsburgh"
+    },
+    {
+      "id": "DFL-06-GAME-281",
+      "section": 6,
+      "source_line": 459,
+      "anchor": "15,1,2000-10-28,17:30,Philadelphia,Montreal"
+    },
+    {
+      "id": "DFL-06-GAME-282",
+      "section": 6,
+      "source_line": 460,
+      "anchor": "15,2,2000-10-29,10:00,Pittsburgh,Carolina"
+    },
+    {
+      "id": "DFL-06-GAME-283",
+      "section": 6,
+      "source_line": 461,
+      "anchor": "15,3,2000-10-29,10:00,Atlanta,Alabama"
+    },
+    {
+      "id": "DFL-06-GAME-284",
+      "section": 6,
+      "source_line": 462,
+      "anchor": "15,4,2000-10-29,10:00,New York,New England"
+    },
+    {
+      "id": "DFL-06-GAME-285",
+      "section": 6,
+      "source_line": 463,
+      "anchor": "15,5,2000-10-29,10:00,Kansas City,Oklahoma City"
+    },
+    {
+      "id": "DFL-06-GAME-286",
+      "section": 6,
+      "source_line": 464,
+      "anchor": "15,6,2000-10-29,10:00,New Mexico,Mexico City"
+    },
+    {
+      "id": "DFL-06-GAME-287",
+      "section": 6,
+      "source_line": 465,
+      "anchor": "15,7,2000-10-29,10:00,Arizona,San Francisco"
+    },
+    {
+      "id": "DFL-06-GAME-288",
+      "section": 6,
+      "source_line": 466,
+      "anchor": "15,8,2000-10-29,13:00,Calgary,Montana"
+    },
+    {
+      "id": "DFL-06-GAME-289",
+      "section": 6,
+      "source_line": 467,
+      "anchor": "15,9,2000-10-29,13:00,Denver,Omaha"
+    },
+    {
+      "id": "DFL-06-GAME-290",
+      "section": 6,
+      "source_line": 468,
+      "anchor": "15,10,2000-10-29,13:00,San Antonio,Houston"
+    },
+    {
+      "id": "DFL-06-GAME-291",
+      "section": 6,
+      "source_line": 469,
+      "anchor": "15,11,2000-10-29,13:00,Chicago,Cincinnati"
+    },
+    {
+      "id": "DFL-06-GAME-292",
+      "section": 6,
+      "source_line": 470,
+      "anchor": "15,12,2000-10-29,13:00,Green Bay,St. Louis"
+    },
+    {
+      "id": "DFL-06-GAME-293",
+      "section": 6,
+      "source_line": 471,
+      "anchor": "15,13,2000-10-29,13:00,Cleveland,Detroit"
+    },
+    {
+      "id": "DFL-06-GAME-294",
+      "section": 6,
+      "source_line": 472,
+      "anchor": "15,14,2000-10-29,17:30,Las Vegas,San Diego"
+    },
+    {
+      "id": "DFL-06-GAME-295",
+      "section": 6,
+      "source_line": 473,
+      "anchor": "15,15,2000-10-29,17:30,New Orleans,Florida"
+    },
+    {
+      "id": "DFL-06-GAME-296",
+      "section": 6,
+      "source_line": 474,
+      "anchor": "15,16,2000-10-30,17:30,Seattle,Idaho"
+    },
+    {
+      "id": "DFL-06-GAME-297",
+      "section": 6,
+      "source_line": 475,
+      "anchor": "16,1,2000-11-04,17:30,Dakota,Denver"
+    },
+    {
+      "id": "DFL-06-GAME-298",
+      "section": 6,
+      "source_line": 476,
+      "anchor": "16,2,2000-11-05,10:00,Washington,Cleveland"
+    },
+    {
+      "id": "DFL-06-GAME-299",
+      "section": 6,
+      "source_line": 477,
+      "anchor": "16,3,2000-11-05,10:00,Florida,Atlanta"
+    },
+    {
+      "id": "DFL-06-GAME-300",
+      "section": 6,
+      "source_line": 478,
+      "anchor": "16,4,2000-11-05,10:00,Miami,New Orleans"
+    },
+    {
+      "id": "DFL-06-GAME-301",
+      "section": 6,
+      "source_line": 479,
+      "anchor": "16,5,2000-11-05,10:00,Seattle,Calgary"
+    },
+    {
+      "id": "DFL-06-GAME-302",
+      "section": 6,
+      "source_line": 480,
+      "anchor": "16,6,2000-11-05,10:00,Idaho,Utah"
+    },
+    {
+      "id": "DFL-06-GAME-303",
+      "section": 6,
+      "source_line": 481,
+      "anchor": "16,7,2000-11-05,10:00,San Diego,Arizona"
+    },
+    {
+      "id": "DFL-06-GAME-304",
+      "section": 6,
+      "source_line": 482,
+      "anchor": "16,8,2000-11-05,13:00,Sacramento,Las Vegas"
+    },
+    {
+      "id": "DFL-06-GAME-305",
+      "section": 6,
+      "source_line": 483,
+      "anchor": "16,9,2000-11-05,13:00,Mexico City,San Antonio"
+    },
+    {
+      "id": "DFL-06-GAME-306",
+      "section": 6,
+      "source_line": 484,
+      "anchor": "16,10,2000-11-05,13:00,Dallas,New Mexico"
+    },
+    {
+      "id": "DFL-06-GAME-307",
+      "section": 6,
+      "source_line": 485,
+      "anchor": "16,11,2000-11-05,13:00,Tennessee,Cincinnati"
+    },
+    {
+      "id": "DFL-06-GAME-308",
+      "section": 6,
+      "source_line": 486,
+      "anchor": "16,12,2000-11-05,13:00,New England,Philadelphia"
+    },
+    {
+      "id": "DFL-06-GAME-309",
+      "section": 6,
+      "source_line": 487,
+      "anchor": "16,13,2000-11-05,13:00,Detroit,Pittsburgh"
+    },
+    {
+      "id": "DFL-06-GAME-310",
+      "section": 6,
+      "source_line": 488,
+      "anchor": "16,14,2000-11-05,17:30,Omaha,Kansas City"
+    },
+    {
+      "id": "DFL-06-GAME-311",
+      "section": 6,
+      "source_line": 489,
+      "anchor": "16,15,2000-11-05,17:30,Toronto,New York"
+    },
+    {
+      "id": "DFL-06-GAME-312",
+      "section": 6,
+      "source_line": 490,
+      "anchor": "16,16,2000-11-06,17:30,Chicago,Green Bay"
+    },
+    {
+      "id": "DFL-06-GAME-313",
+      "section": 6,
+      "source_line": 491,
+      "anchor": "17,1,2000-11-11,17:30,Carolina,Washington"
+    },
+    {
+      "id": "DFL-06-GAME-314",
+      "section": 6,
+      "source_line": 492,
+      "anchor": "17,2,2000-11-12,10:00,New Orleans,Atlanta"
+    },
+    {
+      "id": "DFL-06-GAME-315",
+      "section": 6,
+      "source_line": 493,
+      "anchor": "17,3,2000-11-12,10:00,St. Louis,Tennessee"
+    },
+    {
+      "id": "DFL-06-GAME-316",
+      "section": 6,
+      "source_line": 494,
+      "anchor": "17,4,2000-11-12,10:00,New York,Philadelphia"
+    },
+    {
+      "id": "DFL-06-GAME-317",
+      "section": 6,
+      "source_line": 495,
+      "anchor": "17,5,2000-11-12,10:00,Houston,Dallas"
+    },
+    {
+      "id": "DFL-06-GAME-318",
+      "section": 6,
+      "source_line": 496,
+      "anchor": "17,6,2000-11-12,10:00,Idaho,Calgary"
+    },
+    {
+      "id": "DFL-06-GAME-319",
+      "section": 6,
+      "source_line": 497,
+      "anchor": "17,7,2000-11-12,10:00,New Mexico,San Antonio"
+    },
+    {
+      "id": "DFL-06-GAME-320",
+      "section": 6,
+      "source_line": 498,
+      "anchor": "17,8,2000-11-12,13:00,Las Vegas,Arizona"
+    },
+    {
+      "id": "DFL-06-GAME-321",
+      "section": 6,
+      "source_line": 499,
+      "anchor": "17,9,2000-11-12,13:00,San Francisco,Sacramento"
+    },
+    {
+      "id": "DFL-06-GAME-322",
+      "section": 6,
+      "source_line": 500,
+      "anchor": "17,10,2000-11-12,13:00,Denver,Kansas City"
+    },
+    {
+      "id": "DFL-06-GAME-323",
+      "section": 6,
+      "source_line": 501,
+      "anchor": "17,11,2000-11-12,13:00,Cincinnati,Green Bay"
+    },
+    {
+      "id": "DFL-06-GAME-324",
+      "section": 6,
+      "source_line": 502,
+      "anchor": "17,12,2000-11-12,13:00,Montreal,Toronto"
+    },
+    {
+      "id": "DFL-06-GAME-325",
+      "section": 6,
+      "source_line": 503,
+      "anchor": "17,13,2000-11-12,13:00,Alabama,Miami"
+    },
+    {
+      "id": "DFL-06-GAME-326",
+      "section": 6,
+      "source_line": 504,
+      "anchor": "17,14,2000-11-12,17:30,Oklahoma City,Dakota"
+    },
+    {
+      "id": "DFL-06-GAME-327",
+      "section": 6,
+      "source_line": 505,
+      "anchor": "17,15,2000-11-12,17:30,Cleveland,Pittsburgh"
+    },
+    {
+      "id": "DFL-06-GAME-328",
+      "section": 6,
+      "source_line": 506,
+      "anchor": "17,16,2000-11-13,17:30,Utah,Montana"
+    },
+    {
+      "id": "DFL-06-GAME-329",
+      "section": 6,
+      "source_line": 507,
+      "anchor": "18,1,2000-11-18,17:30,Kansas City,Dakota"
+    },
+    {
+      "id": "DFL-06-GAME-330",
+      "section": 6,
+      "source_line": 508,
+      "anchor": "18,2,2000-11-19,10:00,Green Bay,Tennessee"
+    },
+    {
+      "id": "DFL-06-GAME-331",
+      "section": 6,
+      "source_line": 509,
+      "anchor": "18,3,2000-11-19,10:00,Florida,Alabama"
+    },
+    {
+      "id": "DFL-06-GAME-332",
+      "section": 6,
+      "source_line": 510,
+      "anchor": "18,4,2000-11-19,10:00,Philadelphia,Toronto"
+    },
+    {
+      "id": "DFL-06-GAME-333",
+      "section": 6,
+      "source_line": 511,
+      "anchor": "18,5,2000-11-19,10:00,Mexico City,Houston"
+    },
+    {
+      "id": "DFL-06-GAME-334",
+      "section": 6,
+      "source_line": 512,
+      "anchor": "18,6,2000-11-19,10:00,San Antonio,Dallas"
+    },
+    {
+      "id": "DFL-06-GAME-335",
+      "section": 6,
+      "source_line": 513,
+      "anchor": "18,7,2000-11-19,10:00,Arizona,Sacramento"
+    },
+    {
+      "id": "DFL-06-GAME-336",
+      "section": 6,
+      "source_line": 514,
+      "anchor": "18,8,2000-11-19,13:00,Montana,Seattle"
+    },
+    {
+      "id": "DFL-06-GAME-337",
+      "section": 6,
+      "source_line": 515,
+      "anchor": "18,9,2000-11-19,13:00,San Diego,San Francisco"
+    },
+    {
+      "id": "DFL-06-GAME-338",
+      "section": 6,
+      "source_line": 516,
+      "anchor": "18,10,2000-11-19,13:00,Omaha,Oklahoma City"
+    },
+    {
+      "id": "DFL-06-GAME-339",
+      "section": 6,
+      "source_line": 517,
+      "anchor": "18,11,2000-11-19,13:00,Atlanta,Miami"
+    },
+    {
+      "id": "DFL-06-GAME-340",
+      "section": 6,
+      "source_line": 518,
+      "anchor": "18,12,2000-11-19,13:00,St. Louis,Chicago"
+    },
+    {
+      "id": "DFL-06-GAME-341",
+      "section": 6,
+      "source_line": 519,
+      "anchor": "18,13,2000-11-19,13:00,Pittsburgh,Washington"
+    },
+    {
+      "id": "DFL-06-GAME-342",
+      "section": 6,
+      "source_line": 520,
+      "anchor": "18,14,2000-11-19,17:30,Calgary,Utah"
+    },
+    {
+      "id": "DFL-06-GAME-343",
+      "section": 6,
+      "source_line": 521,
+      "anchor": "18,15,2000-11-19,17:30,Detroit,Carolina"
+    },
+    {
+      "id": "DFL-06-GAME-344",
+      "section": 6,
+      "source_line": 522,
+      "anchor": "18,16,2000-11-20,17:30,New England,Montreal"
+    },
+    {
+      "id": "DFL-06-GAME-345",
+      "section": 6,
+      "source_line": 523,
+      "anchor": "19,1,2000-11-25,17:30,Carolina,Cleveland"
+    },
+    {
+      "id": "DFL-06-GAME-346",
+      "section": 6,
+      "source_line": 524,
+      "anchor": "19,2,2000-11-26,10:00,Miami,Florida"
+    },
+    {
+      "id": "DFL-06-GAME-347",
+      "section": 6,
+      "source_line": 525,
+      "anchor": "19,3,2000-11-26,10:00,Washington,Detroit"
+    },
+    {
+      "id": "DFL-06-GAME-348",
+      "section": 6,
+      "source_line": 526,
+      "anchor": "19,4,2000-11-26,10:00,Cincinnati,St. Louis"
+    },
+    {
+      "id": "DFL-06-GAME-349",
+      "section": 6,
+      "source_line": 527,
+      "anchor": "19,5,2000-11-26,10:00,Sacramento,San Diego"
+    },
+    {
+      "id": "DFL-06-GAME-350",
+      "section": 6,
+      "source_line": 528,
+      "anchor": "19,6,2000-11-26,10:00,Oklahoma City,Denver"
+    },
+    {
+      "id": "DFL-06-GAME-351",
+      "section": 6,
+      "source_line": 529,
+      "anchor": "19,7,2000-11-26,10:00,Montana,Idaho"
+    },
+    {
+      "id": "DFL-06-GAME-352",
+      "section": 6,
+      "source_line": 530,
+      "anchor": "19,8,2000-11-26,13:00,Utah,Seattle"
+    },
+    {
+      "id": "DFL-06-GAME-353",
+      "section": 6,
+      "source_line": 531,
+      "anchor": "19,9,2000-11-26,13:00,Dakota,Omaha"
+    },
+    {
+      "id": "DFL-06-GAME-354",
+      "section": 6,
+      "source_line": 532,
+      "anchor": "19,10,2000-11-26,13:00,Houston,New Mexico"
+    },
+    {
+      "id": "DFL-06-GAME-355",
+      "section": 6,
+      "source_line": 533,
+      "anchor": "19,11,2000-11-26,13:00,Montreal,New York"
+    },
+    {
+      "id": "DFL-06-GAME-356",
+      "section": 6,
+      "source_line": 534,
+      "anchor": "19,12,2000-11-26,13:00,Toronto,New England"
+    },
+    {
+      "id": "DFL-06-GAME-357",
+      "section": 6,
+      "source_line": 535,
+      "anchor": "19,13,2000-11-26,13:00,Alabama,New Orleans"
+    },
+    {
+      "id": "DFL-06-GAME-358",
+      "section": 6,
+      "source_line": 536,
+      "anchor": "19,14,2000-11-26,17:30,Dallas,Mexico City"
+    },
+    {
+      "id": "DFL-06-GAME-359",
+      "section": 6,
+      "source_line": 537,
+      "anchor": "19,15,2000-11-26,17:30,Tennessee,Chicago"
+    },
+    {
+      "id": "DFL-06-GAME-360",
+      "section": 6,
+      "source_line": 538,
+      "anchor": "19,16,2000-11-27,17:30,San Francisco,Las Vegas"
+    },
+    {
+      "id": "DFL-08-VENUE-001",
+      "section": 8,
+      "source_line": 591,
+      "anchor": "INTL-001,London,England,Wembley Stadium,90000,Europe,proven,51.556,-0.280,Europe/London,true"
+    },
+    {
+      "id": "DFL-08-VENUE-002",
+      "section": 8,
+      "source_line": 592,
+      "anchor": "INTL-002,London,England,Tottenham Hotspur Stadium,62850,Europe,proven,51.604,-0.066,Europe/London,true"
+    },
+    {
+      "id": "DFL-08-VENUE-003",
+      "section": 8,
+      "source_line": 593,
+      "anchor": "INTL-003,London,England,Twickenham Stadium,82000,Europe,proven,51.456,-0.342,Europe/London,true"
+    },
+    {
+      "id": "DFL-08-VENUE-004",
+      "section": 8,
+      "source_line": 594,
+      "anchor": "INTL-004,London,England,London Stadium,62500,Europe,,51.539,-0.017,Europe/London,true"
+    },
+    {
+      "id": "DFL-08-VENUE-005",
+      "section": 8,
+      "source_line": 595,
+      "anchor": "INTL-005,Manchester,England,Old Trafford,74000,Europe,,53.463,-2.291,Europe/London,true"
+    },
+    {
+      "id": "DFL-08-VENUE-006",
+      "section": 8,
+      "source_line": 596,
+      "anchor": "INTL-006,London,England,Emirates Stadium,60700,Europe,,51.555,-0.108,Europe/London,true"
+    },
+    {
+      "id": "DFL-08-VENUE-007",
+      "section": 8,
+      "source_line": 597,
+      "anchor": "INTL-007,Cardiff,Wales,Principality Stadium,74500,Europe,,51.478,-3.183,Europe/London,true"
+    },
+    {
+      "id": "DFL-08-VENUE-008",
+      "section": 8,
+      "source_line": 598,
+      "anchor": "INTL-008,Edinburgh,Scotland,Murrayfield Stadium,67100,Europe,,55.942,-3.241,Europe/London,true"
+    },
+    {
+      "id": "DFL-08-VENUE-009",
+      "section": 8,
+      "source_line": 599,
+      "anchor": "INTL-009,Dublin,Ireland,Croke Park,82300,Europe,,53.361,-6.251,Europe/Dublin,true"
+    },
+    {
+      "id": "DFL-08-VENUE-010",
+      "section": 8,
+      "source_line": 600,
+      "anchor": "INTL-010,Dublin,Ireland,Aviva Stadium,51700,Europe,,53.335,-6.229,Europe/Dublin,true"
+    },
+    {
+      "id": "DFL-08-VENUE-011",
+      "section": 8,
+      "source_line": 601,
+      "anchor": "INTL-011,Saint-Denis,France,Stade de France,80700,Europe,,48.925,2.360,Europe/Paris,true"
+    },
+    {
+      "id": "DFL-08-VENUE-012",
+      "section": 8,
+      "source_line": 602,
+      "anchor": "INTL-012,Munich,Germany,Allianz Arena,75000,Europe,proven,48.219,11.625,Europe/Berlin,true"
+    },
+    {
+      "id": "DFL-08-VENUE-013",
+      "section": 8,
+      "source_line": 603,
+      "anchor": "INTL-013,Berlin,Germany,Olympiastadion,74200,Europe,,52.515,13.240,Europe/Berlin,true"
+    },
+    {
+      "id": "DFL-08-VENUE-014",
+      "section": 8,
+      "source_line": 604,
+      "anchor": "INTL-014,Frankfurt,Germany,Deutsche Bank Park,58000,Europe,proven,50.069,8.645,Europe/Berlin,true"
+    },
+    {
+      "id": "DFL-08-VENUE-015",
+      "section": 8,
+      "source_line": 605,
+      "anchor": "INTL-015,Dortmund,Germany,Signal Iduna Park,81300,Europe,,51.493,7.452,Europe/Berlin,true"
+    },
+    {
+      "id": "DFL-08-VENUE-016",
+      "section": 8,
+      "source_line": 606,
+      "anchor": "INTL-016,Madrid,Spain,Santiago Bernabéu,78000,Europe,proven,40.453,-3.688,Europe/Madrid,true"
+    },
+    {
+      "id": "DFL-08-VENUE-017",
+      "section": 8,
+      "source_line": 607,
+      "anchor": "INTL-017,Madrid,Spain,Metropolitano Stadium,70000,Europe,,40.436,-3.600,Europe/Madrid,true"
+    },
+    {
+      "id": "DFL-08-VENUE-018",
+      "section": 8,
+      "source_line": 608,
+      "anchor": "INTL-018,Milan,Italy,San Siro,75800,Europe,,45.478,9.124,Europe/Rome,true"
+    },
+    {
+      "id": "DFL-08-VENUE-019",
+      "section": 8,
+      "source_line": 609,
+      "anchor": "INTL-019,Rome,Italy,Stadio Olimpico,70600,Europe,,41.934,12.455,Europe/Rome,true"
+    },
+    {
+      "id": "DFL-08-VENUE-020",
+      "section": 8,
+      "source_line": 610,
+      "anchor": "INTL-020,Lisbon,Portugal,Estádio da Luz,68100,Europe,,38.753,-9.185,Europe/Lisbon,true"
+    },
+    {
+      "id": "DFL-08-VENUE-021",
+      "section": 8,
+      "source_line": 611,
+      "anchor": "INTL-021,Amsterdam,Netherlands,Johan Cruyff Arena,55900,Europe,,52.314,4.942,Europe/Amsterdam,true"
+    },
+    {
+      "id": "DFL-08-VENUE-022",
+      "section": 8,
+      "source_line": 612,
+      "anchor": "INTL-022,Gothenburg,Sweden,Ullevi Stadium,43000,Europe,,57.706,11.987,Europe/Stockholm,true"
+    },
+    {
+      "id": "DFL-08-VENUE-023",
+      "section": 8,
+      "source_line": 613,
+      "anchor": "INTL-023,Tokyo,Japan,Japan National Stadium,67700,Asia,,35.678,139.715,Asia/Tokyo,true"
+    },
+    {
+      "id": "DFL-08-VENUE-024",
+      "section": 8,
+      "source_line": 614,
+      "anchor": "INTL-024,Yokohama,Japan,Nissan Stadium,72300,Asia,,35.510,139.606,Asia/Tokyo,true"
+    },
+    {
+      "id": "DFL-08-VENUE-025",
+      "section": 8,
+      "source_line": 615,
+      "anchor": "INTL-025,Saitama,Japan,Saitama Stadium 2002,63700,Asia,,35.803,139.718,Asia/Tokyo,true"
+    },
+    {
+      "id": "DFL-08-VENUE-026",
+      "section": 8,
+      "source_line": 616,
+      "anchor": "INTL-026,Seoul,South Korea,Seoul World Cup Stadium,66700,Asia,,37.568,126.897,Asia/Seoul,true"
+    },
+    {
+      "id": "DFL-08-VENUE-027",
+      "section": 8,
+      "source_line": 617,
+      "anchor": "INTL-027,Seoul,South Korea,Seoul Olympic Stadium,69900,Asia,,37.516,127.072,Asia/Seoul,true"
+    },
+    {
+      "id": "DFL-08-VENUE-028",
+      "section": 8,
+      "source_line": 618,
+      "anchor": "INTL-028,Kuala Lumpur,Malaysia,Bukit Jalil National Stadium,87400,Asia,,3.055,101.692,Asia/Kuala_Lumpur,true"
+    },
+    {
+      "id": "DFL-08-VENUE-029",
+      "section": 8,
+      "source_line": 619,
+      "anchor": "INTL-029,Jakarta,Indonesia,Gelora Bung Karno Stadium,77200,Asia,,-6.219,106.802,Asia/Jakarta,true"
+    },
+    {
+      "id": "DFL-08-VENUE-030",
+      "section": 8,
+      "source_line": 620,
+      "anchor": "INTL-030,Lusail,Qatar,Lusail Stadium,88900,Asia,,25.421,51.491,Asia/Qatar,true"
+    },
+    {
+      "id": "DFL-08-VENUE-031",
+      "section": 8,
+      "source_line": 621,
+      "anchor": "INTL-031,Kolkata,India,Salt Lake Stadium,85000,Asia,,22.570,88.410,Asia/Kolkata,true"
+    },
+    {
+      "id": "DFL-08-VENUE-032",
+      "section": 8,
+      "source_line": 622,
+      "anchor": "INTL-032,Ahmedabad,India,Narendra Modi Stadium,132000,Asia,,23.092,72.597,Asia/Kolkata,true"
+    },
+    {
+      "id": "DFL-08-VENUE-033",
+      "section": 8,
+      "source_line": 623,
+      "anchor": "INTL-033,Johannesburg,South Africa,FNB Stadium,94700,Africa,,-26.235,27.982,Africa/Johannesburg,true"
+    },
+    {
+      "id": "DFL-08-VENUE-034",
+      "section": 8,
+      "source_line": 624,
+      "anchor": "INTL-034,Cape Town,South Africa,Cape Town Stadium,58300,Africa,,-33.903,18.411,Africa/Johannesburg,true"
+    },
+    {
+      "id": "DFL-08-VENUE-035",
+      "section": 8,
+      "source_line": 625,
+      "anchor": "INTL-035,Durban,South Africa,Moses Mabhida Stadium,55000,Africa,,-29.829,31.030,Africa/Johannesburg,true"
+    },
+    {
+      "id": "DFL-08-VENUE-036",
+      "section": 8,
+      "source_line": 626,
+      "anchor": "INTL-036,Johannesburg,South Africa,Ellis Park Stadium,62500,Africa,,-26.198,28.060,Africa/Johannesburg,true"
+    },
+    {
+      "id": "DFL-08-VENUE-037",
+      "section": 8,
+      "source_line": 627,
+      "anchor": "INTL-037,Cairo,Egypt,Cairo International Stadium,75000,Africa,,30.069,31.315,Africa/Cairo,true"
+    },
+    {
+      "id": "DFL-08-VENUE-038",
+      "section": 8,
+      "source_line": 628,
+      "anchor": "INTL-038,Casablanca,Morocco,Stade Mohammed V,45000,Africa,,33.578,-7.643,Africa/Casablanca,true"
+    },
+    {
+      "id": "DFL-08-VENUE-039",
+      "section": 8,
+      "source_line": 629,
+      "anchor": "INTL-039,Rio de Janeiro,Brazil,Maracanã Stadium,78800,South America,,-22.912,-43.230,America/Sao_Paulo,true"
+    },
+    {
+      "id": "DFL-08-VENUE-040",
+      "section": 8,
+      "source_line": 630,
+      "anchor": "INTL-040,São Paulo,Brazil,Neo Química Arena,49200,South America,proven,-23.545,-46.474,America/Sao_Paulo,true"
+    },
+    {
+      "id": "DFL-08-VENUE-041",
+      "section": 8,
+      "source_line": 631,
+      "anchor": "INTL-041,São Paulo,Brazil,MorumBIS Stadium,66800,South America,,-23.600,-46.720,America/Sao_Paulo,true"
+    },
+    {
+      "id": "DFL-08-VENUE-042",
+      "section": 8,
+      "source_line": 632,
+      "anchor": "INTL-042,Belo Horizonte,Brazil,Mineirão Stadium,61900,South America,,-19.866,-43.971,America/Sao_Paulo,true"
+    },
+    {
+      "id": "DFL-08-VENUE-043",
+      "section": 8,
+      "source_line": 633,
+      "anchor": "INTL-043,Buenos Aires,Argentina,Estadio Monumental,85000,South America,,-34.545,-58.450,America/Argentina/Buenos_Aires,true"
+    },
+    {
+      "id": "DFL-08-VENUE-044",
+      "section": 8,
+      "source_line": 634,
+      "anchor": "INTL-044,Montevideo,Uruguay,Estadio Centenario,60200,South America,,-34.895,-56.153,America/Montevideo,true"
+    },
+    {
+      "id": "DFL-08-VENUE-045",
+      "section": 8,
+      "source_line": 635,
+      "anchor": "INTL-045,Santiago,Chile,Estadio Nacional,48700,South America,,-33.464,-70.610,America/Santiago,true"
+    },
+    {
+      "id": "DFL-08-VENUE-046",
+      "section": 8,
+      "source_line": 636,
+      "anchor": "INTL-046,Melbourne,Australia,Melbourne Cricket Ground,100000,Oceania,,-37.820,144.983,Australia/Melbourne,true"
+    },
+    {
+      "id": "DFL-08-VENUE-047",
+      "section": 8,
+      "source_line": 637,
+      "anchor": "INTL-047,Sydney,Australia,Stadium Australia,83500,Oceania,,-33.847,151.063,Australia/Sydney,true"
+    },
+    {
+      "id": "DFL-08-VENUE-048",
+      "section": 8,
+      "source_line": 638,
+      "anchor": "INTL-048,Perth,Australia,Optus Stadium,61200,Oceania,,-31.951,115.889,Australia/Perth,true"
+    },
+    {
+      "id": "DFL-08-VENUE-049",
+      "section": 8,
+      "source_line": 639,
+      "anchor": "INTL-049,Adelaide,Australia,Adelaide Oval,53600,Oceania,,-34.916,138.596,Australia/Adelaide,true"
+    },
+    {
+      "id": "DFL-08-VENUE-050",
+      "section": 8,
+      "source_line": 640,
+      "anchor": "INTL-050,Auckland,New Zealand,Eden Park,50000,Oceania,,-36.875,174.745,Pacific/Auckland,true"
+    }
+  ]
+}
