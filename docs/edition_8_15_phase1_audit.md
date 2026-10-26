@@ -312,3 +312,10 @@ Draft PR #42 remains unmerged and unpromoted.
 - The preview has no JavaScript, buttons, login, administrator shortcuts, forms, data writes, or connection to the live server. All displayed strings are HTML-escaped, team palette values must be six-digit hex, and a restrictive static Content Security Policy is included. The command requires an explicit `--out` HTML path; it never touches the live website or deploy folders by default.
 - Added `engine/check_ed815_site_preview.py` to FAST: exact six tabs, 48/40/8 club counts, 360 games, unknown-ID rejection, private event and hidden-card redaction, script-injection escaping, deterministic HTML, no interactive controls, and isolated CLI write to a temporary output path.
 - The preview is **not** the actual live viewer, an integrated public route, a completed stats/standings page or a replacement for the legacy `site/template.html`. It cannot be counted as closing the Phase 1 website integration gate until routed to the real Edition 8.15 event/season state and tested end to end. The latest pre-change FAST evidence remains 57/57; a new CI run is required for this preview test.
+
+
+## Twenty-fifth checkpoint — opt-in Edition 8.15 existing-site-builder mode
+
+- Added `engine/build_site.py --ed815-preview <new-output.html>` as an explicit alternate build path. It calls the audited Edition 8.15 static preview directly, bypassing legacy `site_export.export` and simulation-derived season outcomes; it requires an explicit output filename and refuses overwriting an existing output. `--live` cannot be mixed with this mode. The legacy default `build()`/CLI path remains unchanged.
+- Added `engine/check_ed815_build_mode.py` to FAST: subprocess generation, six tabs, no administrator or pause controls, no public player-card fabrication, overwrite refusal and invalid invocation rejection. This is **build integration**, not a mounted production route, deployment or official gameplay data wiring. The website integration gate remains BLOCKED.
+- Prior tested checkpoint was **58/58 FAST** on commit `1658b3af`; the new opt-in build mode must pass the subsequent GitHub CI run before claiming it is verified.
