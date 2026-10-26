@@ -26,12 +26,12 @@ def check_release_and_split():
     assert split.booked_dead[2002] == Decimal("37.5")
     assert split.split_used == {2001}
     # The club cannot use the same year's special release again.
-    two=C.sign(active,contract(pid="q",bases=(10,),guarantees=(0,),bonus=10),2000)
+    two=C.sign(active,contract(pid="q",bases=(10,10),guarantees=(0,0),bonus=10),2000)
     once=C.release(two,"p",2001,split=True)
     try:
         C.release(once,"q",2001,split=True)
     except ValueError:
-        pass  # q has expired; second split is also impossible.
+        pass
     else:
         raise AssertionError("second split allowed")
     assert active.contracts["p"].bonus == 100
@@ -93,7 +93,7 @@ def check_bonus_conservation():
         amortized=c.yearly_bonus*elapsed
         remaining=c.uncharged_bonus(release_year)
         assert amortized+remaining == bonus
-        assert c.cap_hit(release_year) == bases[elapsed]+c.yearly_bonus
+        assert c.cap_hit(release_year) == bases[elapsed]+c.bonus_charge(release_year)
         assert sum((c.yearly_bonus for _ in range(elapsed)),CAP.D(0))+remaining == bonus
         # No part of the signing bonus can migrate to a receiving club.
         initial=C.Ledger("A",contracts={str(i):c})
