@@ -45,6 +45,10 @@ def validate(manifest, *, root=ROOT):
     if not ci.get("slow_tested"):
         if "full_slow_suite" not in blockers:
             raise ValueError("cannot verify slow suite without execution evidence")
+    if "normative_open_items" not in blockers:
+        open_items = json.loads((root / "docs" / "ed815_open_items.json").read_text(encoding="utf-8"))
+        if any(x["freeze_impact"] == "blocking" for x in open_items["items"]):
+            raise ValueError("normative items cannot be verified while freeze decisions are open")
     if "atomic_rule_manifest" not in blockers:
         rule_register = json.loads((root / "docs" / "ed815_rule_register.json").read_text(encoding="utf-8"))
         if not rule_register.get("frozen", False):
