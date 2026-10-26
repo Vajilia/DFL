@@ -34,6 +34,20 @@ def _roster(r):
     return dict(club_id=r.club_id,
                 players={k:asdict(v) for k,v in sorted(r.players.items())})
 
+def encode_club(club: TX.Club) -> dict:
+    return dict(ledger=_ledger(club.ledger),roster=_roster(club.roster))
+
+def decode_club(obj: dict) -> TX.Club:
+    l=obj["ledger"]
+    contracts={pid:CONTRACTS.Contract(**c) for pid,c in l["contracts"].items()}
+    ledger=CONTRACTS.Ledger(l["club_id"],contracts,
+                 {int(y):Decimal(x) for y,x in l["booked_dead"].items()},
+                 frozenset(l["split_used"]))
+    r=obj["roster"]
+    roster=ROSTER.Roster(r["club_id"],
+                  {pid:ROSTER.Player(**p) for pid,p in r["players"].items()})
+    return TX.Club(ledger,roster)
+
 def _reservation(r):
     if r is None:
         return None
@@ -47,7 +61,7 @@ def _reservation(r):
                       for leg in r.legs])
 
 def encode(snapshot: SETTLEMENT.Snapshot) -> str:
-    clubs={name:dict(ledger=_ledger(c.ledger),roster=_roster(c.roster))
+    clubs={name:encode_club(c)
            for name,c in sorted(snapshot.clubs.items())}
     ordinary=[asdict(p) for _,p in sorted(snapshot.ordinary.items(),key=lambda kv:str(kv[0]))]
     compensation=[dict(draft_year=p.draft_year,slot_after_round_seven=p.slot_after_round_seven,
@@ -65,17 +79,7 @@ def decode(payload: str) -> SETTLEMENT.Snapshot:
     raw=json.loads(payload)
     if raw.get("schema")!=SCHEMA_VERSION:
         raise ValueError("unsupported Edition 8.15 snapshot schema")
-    clubs={}
-    for name,obj in raw["clubs"].items():
-        l=obj["ledger"]
-        contracts={pid:CONTRACTS.Contract(**c) for pid,c in l["contracts"].items()}
-        ledger=CONTRACTS.Ledger(l["club_id"],contracts,
-                  {int(y):Decimal(x) for y,x in l["booked_dead"].items()},
-                  frozenset(l["split_used"]))
-        r=obj["roster"]
-        roster=ROSTER.Roster(r["club_id"],
-                     {pid:ROSTER.Player(**p) for pid,p in r["players"].items()})
-        clubs[name]=TX.Club(ledger,roster)
+    clubs={name:decode_club(obj) for name,obj in raw["clubs"].items()}
     ordinary={}
     for p in raw["ordinary"]:
         pick=PICKS.Pick(**p)
