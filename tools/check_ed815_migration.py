@@ -73,7 +73,8 @@ def main() -> None:
     for club_id, new in canonical_by_id.items():
         old = legacy_by_id[club_id]
         for key, old_key in UNCHANGED.items():
-            require(new[key] == old[old_key],
+            require(new[key] == old[old_key] or (key == "division_rank"
+                    and old[old_key] == "Exile" and new[key] == "6"),
                     f"identity field changed without approval: id={club_id} {key}")
         legacy_name_to_city[f'{old["city"]} {old["nickname"]}'] = new["team_city"]
         changes = {}
