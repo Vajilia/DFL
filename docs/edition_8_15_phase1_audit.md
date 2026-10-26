@@ -172,3 +172,14 @@ The user's current instruction that real NFL changes never alter DFL resolves th
 - **Important distinction:** This is NOT yet a true persistent atomic database commit or a durable lock. The snapshot contains in-memory dictionaries, so process crashes, multiple workers, or races require a transactional storage adapter with compare-and-swap and durable event append. Current trading clock also retains the provisional February 1 opening until leadership hiring completion is specified. The reference interface now returns (clubs, ordinary picks, compensation picks), and no production callers are connected to it.
 
 **Phase 1 remains open; production `main` is not changed.**
+
+
+## Eleventh checkpoint — SQLite-backed atomic transaction persistence
+
+- Added `engine/ed815_storage.py`: explicit JSON serialization/deserialization of contract, roster, ordinary pick, compensatory pick, settlement reservation and event states, with a schema-version field and Decimal values represented exactly as strings.
+- The store uses a single SQLite `BEGIN IMMEDIATE` transaction with a checked revision update. Reservation, commit and cancellation save complete snapshots. A successful commit appends a unique-token event record in the **same SQLite transaction** as the state update. For file-backed databases the adapter requests WAL journal mode and `synchronous=FULL`.
+- Added `engine/check_ed815_storage.py` to FAST. An isolated **in-memory SQLite** run passed JSON round trips, reservation replay/stale revision rejection, event uniqueness, and rollback when a deliberately failing SQL trigger aborts the event insert after the state update. Both state and event records remained unchanged after that failure.
+- A **real on-disk close/reopen test** is checked in but **could not execute in this sandbox**: the execution environment blocks temporary-file creation. The full check thus has NOT been observed to pass end-to-end here; only the in-memory subset was executed. Re-run on writable CI/checkout before any production claim.
+- This adapter remains deliberately isolated and scoped to a two-club trade snapshot; it is **not connected to the live league state**, is not a global 48-club transaction database, does not verify real multi-process races, and does not solve recovery/orphan-reservation policy or leaguewide draft/character locking. The trading-opening timestamp is still provisional pending global hiring-close rule wiring.
+
+**Phase 1 remains unfrozen.** No changes were made to production `main`.
