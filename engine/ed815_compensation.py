@@ -143,3 +143,27 @@ def fixed_rookie_contract(player_id: str, pick: PICKS.Pick | CompPick) -> CONTRA
     if not pick.used:
         raise ValueError("rookie contract requires completed selection")
     return CONTRACTS.Contract(player_id,pick.draft_year,(salary,)*4,(CAP.D(0),)*4,CAP.D(0))
+
+
+def select_and_sign_rookie(draft_year: int, ordinary: Mapping,
+                           compensation: Iterable[CompPick],
+                           identity: tuple, ledger: CONTRACTS.Ledger,
+                           player_id: str) -> tuple[dict, CONTRACTS.Ledger]:
+    """Reserve replacement is one pure, validated action for an ordinary pick.
+
+    No caller state changes on failure. Future years are evaluated by the
+    contract ledger before returning the new pick/contract states.
+    """
+    if identity not in ordinary:
+        raise ValueError("ordinary pick not found")
+    pick=ordinary[identity]
+    if pick.draft_year != draft_year or pick.owner != ledger.club_id:
+        raise ValueError("draft year/owner mismatch")
+    before=rookie_holds_by_owner(draft_year,ordinary,compensation)
+    selected=PICKS.select(ordinary,identity,ledger.club_id)
+    after=rookie_holds_by_owner(draft_year,selected,compensation)
+    rookie=fixed_rookie_contract(player_id,selected[identity])
+    updated=CONTRACTS.sign(ledger,rookie,draft_year,post_cut=False,
+                           rookie_holds=before.get(ledger.club_id,()),
+                           rookie_holds_after=after.get(ledger.club_id,()))
+    return selected,updated
