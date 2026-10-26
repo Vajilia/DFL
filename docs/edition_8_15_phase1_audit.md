@@ -239,3 +239,14 @@ The user's current instruction that real NFL changes never alter DFL resolves th
 - **Remaining:** priority ordering after Week 4 is currently supplied externally rather than derived from an authoritative persisted standings view; "no signing during a game" still requires a live-game lock; paid-week contract accrual and real database file crash recovery remain unverified. No current production actor executes this reference path.
 
 **Phase 1 not complete; `main` remains untouched.**
+
+
+## Seventeenth checkpoint — independent CI and exact tabular rule IDs
+
+- Opened **draft PR #42** (`audit/ed8-15-phase1` → `main`) solely to trigger the existing GitHub Actions FAST suite and expose a reviewable diff. It remains a draft; **no merge or deploy was performed**.
+- Read repository `AGENTS.md`, orientation and production-lane documents; verified that `main` currently points to `84ce78f8d6c969448f6914894a3bc94827ca5c8d` and that historical v1 rulebook text is superseded for Edition 8.15 by the pinned Design Bible. Historical `step6-rebuild` deployment defaults are **not** an approval to alter production.
+- Added `docs/ed815_table_row_register.json` and `tools/check_ed815_tables.py` plus FAST wrapper. Exactly **458 canonical tabular rows** now have stable Edition 8.15 source references: 48 founding teams (§5), 360 immutable games (§6), and 50 international venues (§8). The validator checks exact source-line content, unambiguous IDs, CSV schema and row identities against the pinned document. A direct independent JS source-anchor comparison of all 458 entries passed; the Python checker syntax parsed. Its full on-repo execution is left to writable CI.
+- The original 158-entry rule register remains **coarse** and its normative clauses still need one-ID-per-atomic-requirement refactoring. The table supplement closes a data-coverage gap, not the entire rule-manifest completion gate.
+- At checkpoint writing, pull-request GitHub Actions FAST was **in progress**; no success was claimed. Collect actual workflow job conclusions and failures before any release status change.
+
+**Production `main` unchanged; Phase 1 still not frozen.**
