@@ -19,13 +19,16 @@ numbers as an Edition 8.15 calibration result.
 
 ## Phase 2 objective
 
-Develop an isolated, deterministically replayable **season transaction
-pipeline** that can accept legitimate simulation outcomes for all 40 active
-clubs and eight ambassadors without writing, resetting, or publishing the
-live league. Rule decisions flow only from the frozen Edition 8.15 document.
-Empirical football rates are independently versioned model parameters,
-expressed per play, per snap, per player-exposure, or per team-season
-rather than forced league totals.
+Integrate the **22-player spatial game engine** with authentic rosters,
+play calling, substitutions, injuries, penalties, statistics, game outcomes
+and the Edition 8.15 season system. Scores and player statistics must arise
+causally from plays; the protected game-final ledger may accept only those
+validated outcomes. The spatial engine advances physics in 0.05-second ticks,
+checks decisions at most every 0.10 seconds, preserves lossless 22-player
+position/ball/intent traces, and deterministically reproduces outcomes from
+explicit seeds. NFL-style empirical rates are separately versioned model
+parameters with per-play, per-snap and player-exposure denominators—not
+league-total quotas.
 
 ### Modules and acceptance checks
 
@@ -34,8 +37,12 @@ rather than forced league totals.
 | Frozen fixtures, 48 stable club identities, eight-year rotation | Founding validator and long-cycle cross-check | Isolated, tested |
 | Reversible economy transactions and 48-club snapshot/handoff | SQLite rollback, cap, trade/waiver/draft tests | Isolated, tested |
 | Append-only authoritative event history | Hash-chain/restart/anti-mutation checks | Isolated, tested |
-| Fixture-bound game-final ingestion | Reject wrong fixture, negative score, duplicate, cross-season event; 360-result replay and restart | New check; CI pending |
-| Deterministic full-season engine runner | Independently reproduce game output and event hashes from explicit seeds across restart | Not started |
+| Fixture-bound game-final ingestion | Reject wrong fixture, negative score, duplicate, cross-season event; 360 synthetic-result replay and restart | Isolated, 62/62 FAST CI |
+| 22-player spatial ticks and trace codec | Eleven per side, ball and intent states each 0.05 s; lossless compressed restart and deterministic hashes | Not started |
+| Play calling, motion, assignment and substitution | Legal snap/formation, offensive and defensive assignments, causal player action with personnel eligibility | Not started |
+| Game laws and outcomes | Edition 8.15 kicking, possession, clock, penalties, overtime, challenges and scoring | Not started |
+| Causal player/team statistics | Every stat and score aggregates from validated play/decisive events, no drawn final score | Not started |
+| Deterministic full-season engine runner | Independently reproduce 360 game results and event hashes from explicit seeds across restart | Not started |
 | People, staff and player creator migration | Preserve IDs, provenance, hidden state and no stored OVR; prohibit narrative from mutating engine | Not started |
 | NFL-reference rate calibration | Record fixed reference period, units, denominators, confidence bands and stress/fairness sweep results | Not started |
 | Active and Ambassador playoffs / honors | Versioned bracket, Bowl selection, elections, awards and chronology tests | Not started |
@@ -45,7 +52,7 @@ rather than forced league totals.
 ### Promotion criteria
 
 1. Preserve Phase 1's normative-gate failures as failures while decisions remain open.
-2. Test the Edition 8.15 kernels under reproducible independent seeds, including adverse inputs.
+2. Test spatial player movement and interactions across all 22 participants at the fixed timestep, with causal play-derived scores, legal rosters, substitutions, game laws and reproducible independent seeds.
 3. Demonstrate league state, event log, viewer output and handoff reconstruct identically
    after a cold restart. No partly committed result may become public.
 4. Publish a report separating **verified**, **untested**, and **proposed** claims,
