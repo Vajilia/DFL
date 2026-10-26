@@ -15,6 +15,7 @@ import ed815_picks as PICKS
 import ed815_roster as ROSTER
 import ed815_compensation as COMP
 import ed815_market as MARKET
+import ed815_calendar as CAL
 
 @dataclass(frozen=True)
 class Club:
@@ -52,7 +53,8 @@ def propose_trade(clubs: Mapping[str,Club], ordinary: Mapping,
         if name != club.ledger.club_id:
             raise ValueError("club map identity mismatch")
         ROSTER.validate(club.roster,require_eleven=require_eleven)
-    before_holds=COMP.rookie_holds_by_owner(season,ordinary,compensation)
+    year=CAL.civil_year(season)
+    before_holds=COMP.rookie_holds_by_owner(year,ordinary,compensation)
     new_contracts={k:dict(v.ledger.contracts) for k,v in clubs.items()}
     new_rosters={k:dict(v.roster.players) for k,v in clubs.items()}
     new_dead={k:{y:CAP.D(a) for y,a in v.ledger.booked_dead.items()} for k,v in clubs.items()}
@@ -74,10 +76,10 @@ def propose_trade(clubs: Mapping[str,Club], ordinary: Mapping,
             if pid in new_contracts[dst] or pid in new_rosters[dst]:
                 raise ValueError("duplicate receiving player")
             contract=new_contracts[src].pop(pid)
-            if not contract.active_in(season):
+            if not contract.active_in(year):
                 raise ValueError("player contract not active in trade year")
             # Original club retains only already-paid/unamortized bonus charge.
-            new_dead[src][season]=new_dead[src].get(season,CAP.D(0))+contract.uncharged_bonus(season)
+            new_dead[src][year]=new_dead[src].get(year,CAP.D(0))+contract.uncharged_bonus(year)
             new_contracts[dst][pid]=replace(contract,bonus=CAP.D(0))
             new_rosters[dst][pid]=new_rosters[src].pop(pid)
         for identity in leg.pick_ids:
@@ -85,16 +87,16 @@ def propose_trade(clubs: Mapping[str,Club], ordinary: Mapping,
                 raise ValueError("pick cannot move twice in one trade")
             moved_picks.add(identity)
             new_picks=PICKS.transfer(new_picks,identity,from_club=src,to_club=dst,
-                                     current_draft_year=season)
-    after_holds=COMP.rookie_holds_by_owner(season,new_picks,compensation)
+                                     current_draft_year=year)
+    after_holds=COMP.rookie_holds_by_owner(year,new_picks,compensation)
     result={}
     for name,club in clubs.items():
         ledger=replace(club.ledger,contracts=new_contracts[name],booked_dead=new_dead[name])
         roster=replace(club.roster,players=new_rosters[name])
         ROSTER.validate(roster,require_eleven=require_eleven)
-        years=range(season,season+6)
+        years=range(year,year+6)
         before={y:CONTRACTS.projection(club.ledger,y,post_cut=post_cut,
-                   rookie_holds=before_holds.get(name,()) if y==season else ())
+                   rookie_holds=before_holds.get(name,()) if y==year else ())
                 for y in years}
         after={y:CONTRACTS.projection(ledger,y,post_cut=post_cut,
                    rookie_holds=after_holds.get(name,()) if y==season else ())
