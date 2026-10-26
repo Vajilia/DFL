@@ -296,3 +296,11 @@ Draft PR #42 remains unmerged and unpromoted.
 - Added `tools/check_ed815_phase1_gate.py` to report readiness from that manifest, validate artifact paths, reject dishonest status labels, and exit nonzero under `--require-complete` until every mandatory gate is evidenced. Its accompanying `engine/check_ed815_phase1_gate.py` tests malformed/false-ready metadata and the blocking promotion result; registered in FAST.
 - A green FAST run on this audit branch must **not** be equated with Phase 1 completion. This gate is deliberately BLOCKED and is meant to be called by a future approved promotion workflow; no production workflow was altered and no constitutional defaults were silently changed.
 - The new gate checker awaits its own subsequent GitHub FAST execution; the earlier 55/55 run predates it. Draft PR #42 stays unmerged; production `main` unchanged.
+
+
+## Twenty-third checkpoint — source-anchored §20 disposition ledger
+
+- Extracted all 18 numbered Edition 8.15 §20 open items into `docs/ed815_open_items.json`, retaining verbatim source anchors and stable `DFL-20-001` through `DFL-20-018` identities. Classification: **six pre-founding freeze blockers** (#4 Bowl roster shortfall repair, #6 atomic IDs, #8 emergency NFL parameters, #9 standings assumptions, #10 top-69 market calibration, #14 provisional offseason dates); eleven later engine/calibration/deferred work items; one explicit closed jersey-number default (#18). These dispositions do **not** constitute approval or alter the Bible.
+- Added `tools/check_ed815_open_items.py` and `engine/check_ed815_open_items.py` to FAST, verifying all eighteen exact source anchors, fixed numbering, classifications and honest blockers. The readiness gate now checks the open-item ledger and will reject a claim that the normative-open-item gate is verified while any item remains blocking.
+- Do not treat the eleven nonblocking technical-model items as free of future work; they are allocated to later phases, and some will still affect actual simulation realism. The six listed blocking rules need explicit freeze resolution or owner acceptance of a provisional value before official founding.
+- Prior GitHub FAST evidence remains **56/56** on commit `5f44985c`; this new ledger and checker await their own CI run. Main and production unchanged; PR #42 remains draft.
