@@ -18,7 +18,7 @@ def check_constants_and_count():
     post = state(hits=[10]*70, holds=[25],cut=True)
     assert pre.cap_number == 715
     assert post.cap_number == 725
-    assert state(hits=[10]*69,booked=10).cap_number == 700
+    assert state(hits=[10]*69,booked=10,strict=10).cap_number == 700
     assert state(strict=735).viability_margin == 0
     assert state(strict=735.01).viability_margin < 0
     assert state(strict=800,fraction=Decimal("0.5")).viability_margin == 55
