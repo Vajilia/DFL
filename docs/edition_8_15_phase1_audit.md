@@ -100,3 +100,10 @@ The user's current instruction that real NFL changes never alter DFL resolves th
 - Added `engine/check_ed815_standings.py` with focused tests for those behaviors. An initial test fixture incorrectly assigned a read-only calculated field; the fixture was corrected, and the checks passed when run against the new source in an isolated Python process.
 - Added `engine/check_ed815_reference.py` and enrolled both new checks into the fast-test tier in `engine/run_checks.py`.
 - **Not integrated** into `engine/standings.py`, `engine/tiebreak.py`, `engine/season.py`, or the live runner. Existing simulation output still uses older rules until an explicit migration. Focused tests are not a substitute for independent historical/schedule/cycle and multiseason checks.
+
+## Third checkpoint — calendar, bed rotation and fixture template
+
+- Added `engine/ed815_calendar.py` with last-Sunday Coronation anchoring, 27-week calendar, three active-club breaks, 19 numbered fixture weeks, postseason offsets, seven international Tour windows, canonical eight-year bed rotation and seed-to-bed assignment.
+- Extracted `data/ed815_fixture_beds.csv`: the exact 360 games in §6 rewritten from Season 1 city labels into permanent home/away bed-rank IDs, so later years substitute each season's divisions and ranks without inventing new matchups.
+- Added `engine/check_ed815_calendar.py`, enrolled in the fast tier. In a memory-backed Python test (without modifying a local checkout), verified 300 calendar years, 400 successive bed rotations, and 16 seasons of fixture totals, division/conference composition, four double-played divisional opponents, one bye in weeks 15–19 and kickoff-slot points of 33–38. Tests passed after correcting one incorrect test assertion about the distance of the conference-block flip.
+- **Not yet verified:** the full independent Edition 8.15 validator; random reseeding across 150 realistic season standings; local runner integration; live/website timing and pending offseason transactions. The new calendar/fixtures are isolated reference implementation, not production wiring.
