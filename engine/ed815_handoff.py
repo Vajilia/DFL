@@ -58,7 +58,7 @@ def advance(state: LEAGUE.League,results,*,seed,coronation_complete,
     event=("season_handoff",current.season,next_struct.season,digest,
            tuple(sorted(expired)),retired)
     updated=LEAGUE.League(state.revision+1,next_clubs,state.ordinary,
-            state.compensation,None,state.events+(event,),next_struct,pool)
+            state.compensation,None,state.events+(event,),next_struct,pool,state.prospects)
     report=dict(completed=current.season,next=next_struct.season,
                 expired_players=tuple(sorted(expired)),retired_players=retired,
                 exiled=summary["exiled_clubs"],returning=summary["returning_clubs"],
