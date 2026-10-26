@@ -38,7 +38,7 @@ league-total quotas.
 | Reversible economy transactions and 48-club snapshot/handoff | SQLite rollback, cap, trade/waiver/draft tests | Isolated, tested |
 | Append-only authoritative event history | Hash-chain/restart/anti-mutation checks | Isolated, tested |
 | Fixture-bound game-final ingestion | Reject wrong fixture, negative score, duplicate, cross-season event; 360 synthetic-result replay and restart | Isolated, 62/62 FAST CI |
-| 22-player spatial ticks and trace codec | Eleven per side, ball and intent states each 0.05 s; lossless compressed restart and deterministic hashes | Not started |
+| 22-player spatial ticks and trace codec | Eleven per side, ball and intent states each 0.05 s; lossless compressed restart and deterministic hashes | Trace contract/codec isolated; spatial physics engine not started; CI pending |
 | Play calling, motion, assignment and substitution | Legal snap/formation, offensive and defensive assignments, causal player action with personnel eligibility | Not started |
 | Game laws and outcomes | Edition 8.15 kicking, possession, clock, penalties, overtime, challenges and scoring | Not started |
 | Causal player/team statistics | Every stat and score aggregates from validated play/decisive events, no drawn final score | Not started |
