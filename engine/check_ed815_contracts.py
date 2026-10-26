@@ -72,6 +72,13 @@ def check_input_and_cap():
         pass
     else:
         raise AssertionError("six-year deal accepted")
+    # A cheap current year cannot hide an illegal future cap commitment.
+    try:
+        C.sign(C.Ledger("A"),contract(bases=(10,1001),guarantees=(0,0),bonus=0),2000)
+    except ValueError:
+        pass
+    else:
+        raise AssertionError("future-year over-cap contract accepted")
     try:
         C.sign(C.Ledger("A"),contract(bases=(500,),guarantees=(500,),bonus=400),2000)
     except ValueError:
