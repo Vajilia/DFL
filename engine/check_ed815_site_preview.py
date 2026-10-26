@@ -31,7 +31,7 @@ events = [
     {"id": "e2", "sequence": 2, "simulated_time": "2000-01-02",
      "visibility": "private", "public_summary": "DO NOT EXPOSE"},
 ]
-h = SITE.render_html(document, cards=[secret_card], events=events)
+h = SITE.render_html(document, cards=[secret_card], events=events, revealed_through_sequence=1)
 assert h.startswith("<!doctype html>")
 assert 'Content-Security-Policy' in h
 assert h.count("<section id=") == 6
@@ -42,12 +42,12 @@ assert h.count("<tr>") == 410  # two headers, 48 clubs, 360 fixtures
 assert "&lt;script&gt;Player&lt;/script&gt;" in h
 assert "&lt;script&gt;Signed&lt;/script&gt;" in h
 assert "<script>" not in h
-assert "DO NOT EXPOSE" not in h
+assert "DO NOT EXPOSE" not in h\nassert "Final recorded" not in h
 assert "pause-live" not in h
 assert "admin=1" not in h
 assert "<button" not in h and "<form" not in h
 assert "public-event digest" in h.lower()
-assert SITE.render_html(document, cards=[secret_card], events=events) == h
+assert SITE.render_html(document, cards=[secret_card], events=events, revealed_through_sequence=1) == h
 
 def must_fail(source):
     try:
