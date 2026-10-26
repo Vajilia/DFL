@@ -13,6 +13,7 @@ import json
 import ed815_cycle as CYCLE
 import ed815_calendar as CAL
 import ed815_league_store as LEAGUE
+import ed815_free_agents as FREE
 
 def advance(state: LEAGUE.League,results,*,seed,coronation_complete,
             template_path=None):
@@ -31,11 +32,17 @@ def advance(state: LEAGUE.League,results,*,seed,coronation_complete,
         raise AssertionError("non-consecutive season handoff")
     next_clubs={}
     expired=[]
+    pool,retired=FREE.retire_due(state.free_agents,incoming_year)
     for club_id,club in sorted(state.clubs.items()):
         surviving={}
         for pid,contract in club.ledger.contracts.items():
             if contract.end_year<=incoming_year:
+                if pid not in club.roster.players:
+                    raise ValueError("expired contract lacks a player roster identity")
+                if pid in pool:
+                    raise ValueError("expired player already in free-agent pool")
                 expired.append((club_id,pid))
+                pool[pid]=FREE.FreeAgent(club.roster.players[pid],club_id,incoming_year)
             else:
                 surviving[pid]=contract
         remaining_roster={pid:p for pid,p in club.roster.players.items() if pid not in
@@ -49,11 +56,11 @@ def advance(state: LEAGUE.League,results,*,seed,coronation_complete,
                 r["home_score"],r["away_score"]) for r in results]
     digest=hashlib.sha256(json.dumps(sorted(canonical),separators=(",",":")).encode()).hexdigest()
     event=("season_handoff",current.season,next_struct.season,digest,
-           tuple(sorted(expired)))
+           tuple(sorted(expired)),retired)
     updated=LEAGUE.League(state.revision+1,next_clubs,state.ordinary,
-            state.compensation,None,state.events+(event,),next_struct)
+            state.compensation,None,state.events+(event,),next_struct,pool)
     report=dict(completed=current.season,next=next_struct.season,
-                expired_players=tuple(sorted(expired)),
+                expired_players=tuple(sorted(expired)),retired_players=retired,
                 exiled=summary["exiled_clubs"],returning=summary["returning_clubs"],
                 result_digest=digest)
     return updated,report
