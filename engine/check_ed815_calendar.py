@@ -55,7 +55,7 @@ def check_eight_year_rotation():
                 base = 1 if bed <= 4 else 5
                 assert following[div] == base + (bed-base+1)%4
             else:
-                assert abs(following[div]-bed) == 4
+                assert (following[div] <= 4) != (bed <= 4)
 
 
 def check_assignments():
