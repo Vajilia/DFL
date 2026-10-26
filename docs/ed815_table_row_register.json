@@ -1,18 +1,186 @@
 {
-  "schema": "dfl-ed815-table-row-register-v1",
+  "schema": "dfl-ed815-table-row-register-v2",
   "authority": "DFL Living Design Document Edition 8.15",
   "frozen": false,
   "counts": {
+    "2": 27,
     "5": 48,
     "6": 360,
-    "8": 50
+    "7": 28,
+    "8": 50,
+    "9": 12
   },
   "headers": {
+    "2": "calendar_week,phase,numbered_week,saturday,sunday,monday,note",
     "5": "team_id,abbr,team_city,team_name,conference,division,bed_id,division_rank,club_status,is_active,is_league_member,draft_band,venue,location,primary_color,primary_hex,secondary_color,secondary_hex,tertiary_color,tertiary_hex",
     "6": "week,game,date,kickoff,away,home",
-    "8": "venue_id,city,country,venue_name,capacity,region,suitability,lat,lon,timezone,active"
+    "7": "tour_round,calendar_week,date,kickoff,game,away_nominal,home_nominal,venue_slot",
+    "8": "venue_id,city,country,venue_name,capacity,region,suitability,lat,lon,timezone,active",
+    "9": "scope,name,hex,role"
   },
   "rows": [
+    {
+      "id": "DFL-02-CAL-001",
+      "section": 2,
+      "source_line": 71,
+      "anchor": "1,regular,1,2000-07-01,2000-07-02,2000-07-03,"
+    },
+    {
+      "id": "DFL-02-CAL-002",
+      "section": 2,
+      "source_line": 72,
+      "anchor": "2,regular,2,2000-07-08,2000-07-09,2000-07-10,"
+    },
+    {
+      "id": "DFL-02-CAL-003",
+      "section": 2,
+      "source_line": 73,
+      "anchor": "3,regular,3,2000-07-15,2000-07-16,2000-07-17,"
+    },
+    {
+      "id": "DFL-02-CAL-004",
+      "section": 2,
+      "source_line": 74,
+      "anchor": "4,regular,4,2000-07-22,2000-07-23,2000-07-24,"
+    },
+    {
+      "id": "DFL-02-CAL-005",
+      "section": 2,
+      "source_line": 75,
+      "anchor": "5,break,,2000-07-29,2000-07-30,2000-07-31,active-club break"
+    },
+    {
+      "id": "DFL-02-CAL-006",
+      "section": 2,
+      "source_line": 76,
+      "anchor": "6,regular,5,2000-08-05,2000-08-06,2000-08-07,"
+    },
+    {
+      "id": "DFL-02-CAL-007",
+      "section": 2,
+      "source_line": 77,
+      "anchor": "7,regular,6,2000-08-12,2000-08-13,2000-08-14,"
+    },
+    {
+      "id": "DFL-02-CAL-008",
+      "section": 2,
+      "source_line": 78,
+      "anchor": "8,regular,7,2000-08-19,2000-08-20,2000-08-21,"
+    },
+    {
+      "id": "DFL-02-CAL-009",
+      "section": 2,
+      "source_line": 79,
+      "anchor": "9,regular,8,2000-08-26,2000-08-27,2000-08-28,"
+    },
+    {
+      "id": "DFL-02-CAL-010",
+      "section": 2,
+      "source_line": 80,
+      "anchor": "10,regular,9,2000-09-02,2000-09-03,2000-09-04,"
+    },
+    {
+      "id": "DFL-02-CAL-011",
+      "section": 2,
+      "source_line": 81,
+      "anchor": "11,break,,2000-09-09,2000-09-10,2000-09-11,active-club break"
+    },
+    {
+      "id": "DFL-02-CAL-012",
+      "section": 2,
+      "source_line": 82,
+      "anchor": "12,regular,10,2000-09-16,2000-09-17,2000-09-18,"
+    },
+    {
+      "id": "DFL-02-CAL-013",
+      "section": 2,
+      "source_line": 83,
+      "anchor": "13,regular,11,2000-09-23,2000-09-24,2000-09-25,"
+    },
+    {
+      "id": "DFL-02-CAL-014",
+      "section": 2,
+      "source_line": 84,
+      "anchor": "14,regular,12,2000-09-30,2000-10-01,2000-10-02,"
+    },
+    {
+      "id": "DFL-02-CAL-015",
+      "section": 2,
+      "source_line": 85,
+      "anchor": "15,regular,13,2000-10-07,2000-10-08,2000-10-09,"
+    },
+    {
+      "id": "DFL-02-CAL-016",
+      "section": 2,
+      "source_line": 86,
+      "anchor": "16,regular,14,2000-10-14,2000-10-15,2000-10-16,"
+    },
+    {
+      "id": "DFL-02-CAL-017",
+      "section": 2,
+      "source_line": 87,
+      "anchor": "17,break,,2000-10-21,2000-10-22,2000-10-23,active-club break"
+    },
+    {
+      "id": "DFL-02-CAL-018",
+      "section": 2,
+      "source_line": 88,
+      "anchor": "18,regular,15,2000-10-28,2000-10-29,2000-10-30,bye group: seed 3"
+    },
+    {
+      "id": "DFL-02-CAL-019",
+      "section": 2,
+      "source_line": 89,
+      "anchor": "19,regular,16,2000-11-04,2000-11-05,2000-11-06,bye group: seed 1"
+    },
+    {
+      "id": "DFL-02-CAL-020",
+      "section": 2,
+      "source_line": 90,
+      "anchor": "20,regular,17,2000-11-11,2000-11-12,2000-11-13,bye group: seed 2"
+    },
+    {
+      "id": "DFL-02-CAL-021",
+      "section": 2,
+      "source_line": 91,
+      "anchor": "21,regular,18,2000-11-18,2000-11-19,2000-11-20,bye group: seed 5"
+    },
+    {
+      "id": "DFL-02-CAL-022",
+      "section": 2,
+      "source_line": 92,
+      "anchor": "22,regular,19,2000-11-25,2000-11-26,2000-11-27,bye group: seed 4"
+    },
+    {
+      "id": "DFL-02-CAL-023",
+      "section": 2,
+      "source_line": 93,
+      "anchor": "23,postseason,,,2000-12-03,,wild card round"
+    },
+    {
+      "id": "DFL-02-CAL-024",
+      "section": 2,
+      "source_line": 94,
+      "anchor": "24,postseason,,,2000-12-10,,divisional round"
+    },
+    {
+      "id": "DFL-02-CAL-025",
+      "section": 2,
+      "source_line": 95,
+      "anchor": "25,postseason,,,2000-12-17,,conference championships"
+    },
+    {
+      "id": "DFL-02-CAL-026",
+      "section": 2,
+      "source_line": 96,
+      "anchor": "26,ambassadors,,,2000-12-24,,Ambassador Bowl"
+    },
+    {
+      "id": "DFL-02-CAL-027",
+      "section": 2,
+      "source_line": 97,
+      "anchor": "27,postseason,,,2000-12-31,,Diamond Coronation"
+    },
     {
       "id": "DFL-05-TEAM-001",
       "section": 5,
@@ -2462,6 +2630,174 @@
       "anchor": "19,16,2000-11-27,17:30,San Francisco,Las Vegas"
     },
     {
+      "id": "DFL-07-TOUR-001",
+      "section": 7,
+      "source_line": 556,
+      "anchor": "1,1,2000-07-01,17:30,1,Tampa Bay,Portland,TR-1"
+    },
+    {
+      "id": "DFL-07-TOUR-002",
+      "section": 7,
+      "source_line": 557,
+      "anchor": "1,1,2000-07-02,10:00,2,Baja,Indianapolis,TR-1"
+    },
+    {
+      "id": "DFL-07-TOUR-003",
+      "section": 7,
+      "source_line": 558,
+      "anchor": "1,1,2000-07-02,13:00,3,Los Angeles,Baltimore,TR-1"
+    },
+    {
+      "id": "DFL-07-TOUR-004",
+      "section": 7,
+      "source_line": 559,
+      "anchor": "1,1,2000-07-03,17:30,4,Minnesota,Buffalo,TR-1"
+    },
+    {
+      "id": "DFL-07-TOUR-005",
+      "section": 7,
+      "source_line": 560,
+      "anchor": "2,4,2000-07-22,17:30,1,Portland,Baja,TR-2"
+    },
+    {
+      "id": "DFL-07-TOUR-006",
+      "section": 7,
+      "source_line": 561,
+      "anchor": "2,4,2000-07-23,10:00,2,Baltimore,Tampa Bay,TR-2"
+    },
+    {
+      "id": "DFL-07-TOUR-007",
+      "section": 7,
+      "source_line": 562,
+      "anchor": "2,4,2000-07-23,13:00,3,Indianapolis,Minnesota,TR-2"
+    },
+    {
+      "id": "DFL-07-TOUR-008",
+      "section": 7,
+      "source_line": 563,
+      "anchor": "2,4,2000-07-24,17:30,4,Buffalo,Los Angeles,TR-2"
+    },
+    {
+      "id": "DFL-07-TOUR-009",
+      "section": 7,
+      "source_line": 564,
+      "anchor": "3,8,2000-08-19,17:30,1,Baltimore,Portland,TR-3"
+    },
+    {
+      "id": "DFL-07-TOUR-010",
+      "section": 7,
+      "source_line": 565,
+      "anchor": "3,8,2000-08-20,10:00,2,Minnesota,Baja,TR-3"
+    },
+    {
+      "id": "DFL-07-TOUR-011",
+      "section": 7,
+      "source_line": 566,
+      "anchor": "3,8,2000-08-20,13:00,3,Tampa Bay,Buffalo,TR-3"
+    },
+    {
+      "id": "DFL-07-TOUR-012",
+      "section": 7,
+      "source_line": 567,
+      "anchor": "3,8,2000-08-21,17:30,4,Los Angeles,Indianapolis,TR-3"
+    },
+    {
+      "id": "DFL-07-TOUR-013",
+      "section": 7,
+      "source_line": 568,
+      "anchor": "4,11,2000-09-09,17:30,1,Portland,Minnesota,TR-4"
+    },
+    {
+      "id": "DFL-07-TOUR-014",
+      "section": 7,
+      "source_line": 569,
+      "anchor": "4,11,2000-09-10,10:00,2,Buffalo,Baltimore,TR-4"
+    },
+    {
+      "id": "DFL-07-TOUR-015",
+      "section": 7,
+      "source_line": 570,
+      "anchor": "4,11,2000-09-10,13:00,3,Baja,Los Angeles,TR-4"
+    },
+    {
+      "id": "DFL-07-TOUR-016",
+      "section": 7,
+      "source_line": 571,
+      "anchor": "4,11,2000-09-11,17:30,4,Indianapolis,Tampa Bay,TR-4"
+    },
+    {
+      "id": "DFL-07-TOUR-017",
+      "section": 7,
+      "source_line": 572,
+      "anchor": "5,15,2000-10-07,17:30,1,Buffalo,Portland,TR-5"
+    },
+    {
+      "id": "DFL-07-TOUR-018",
+      "section": 7,
+      "source_line": 573,
+      "anchor": "5,15,2000-10-08,10:00,2,Los Angeles,Minnesota,TR-5"
+    },
+    {
+      "id": "DFL-07-TOUR-019",
+      "section": 7,
+      "source_line": 574,
+      "anchor": "5,15,2000-10-08,13:00,3,Baltimore,Indianapolis,TR-5"
+    },
+    {
+      "id": "DFL-07-TOUR-020",
+      "section": 7,
+      "source_line": 575,
+      "anchor": "5,15,2000-10-09,17:30,4,Tampa Bay,Baja,TR-5"
+    },
+    {
+      "id": "DFL-07-TOUR-021",
+      "section": 7,
+      "source_line": 576,
+      "anchor": "6,18,2000-10-28,17:30,1,Portland,Los Angeles,TR-6"
+    },
+    {
+      "id": "DFL-07-TOUR-022",
+      "section": 7,
+      "source_line": 577,
+      "anchor": "6,18,2000-10-29,10:00,2,Indianapolis,Buffalo,TR-6"
+    },
+    {
+      "id": "DFL-07-TOUR-023",
+      "section": 7,
+      "source_line": 578,
+      "anchor": "6,18,2000-10-29,13:00,3,Minnesota,Tampa Bay,TR-6"
+    },
+    {
+      "id": "DFL-07-TOUR-024",
+      "section": 7,
+      "source_line": 579,
+      "anchor": "6,18,2000-10-30,17:30,4,Baja,Baltimore,TR-6"
+    },
+    {
+      "id": "DFL-07-TOUR-025",
+      "section": 7,
+      "source_line": 580,
+      "anchor": "7,22,2000-11-25,17:30,1,Indianapolis,Portland,TR-7"
+    },
+    {
+      "id": "DFL-07-TOUR-026",
+      "section": 7,
+      "source_line": 581,
+      "anchor": "7,22,2000-11-26,10:00,2,Los Angeles,Tampa Bay,TR-7"
+    },
+    {
+      "id": "DFL-07-TOUR-027",
+      "section": 7,
+      "source_line": 582,
+      "anchor": "7,22,2000-11-26,13:00,3,Buffalo,Baja,TR-7"
+    },
+    {
+      "id": "DFL-07-TOUR-028",
+      "section": 7,
+      "source_line": 583,
+      "anchor": "7,22,2000-11-27,17:30,4,Baltimore,Minnesota,TR-7"
+    },
+    {
       "id": "DFL-08-VENUE-001",
       "section": 8,
       "source_line": 591,
@@ -2760,6 +3096,78 @@
       "section": 8,
       "source_line": 640,
       "anchor": "INTL-050,Auckland,New Zealand,Eden Park,50000,Oceania,,-36.875,174.745,Pacific/Auckland,true"
+    },
+    {
+      "id": "DFL-09-COLOR-001",
+      "section": 9,
+      "source_line": 652,
+      "anchor": "League brand,Diamond,#B9F2FF,Primary league gemstone"
+    },
+    {
+      "id": "DFL-09-COLOR-002",
+      "section": 9,
+      "source_line": 653,
+      "anchor": "League brand,Amethyst,#9966CC,Secondary league gemstone"
+    },
+    {
+      "id": "DFL-09-COLOR-003",
+      "section": 9,
+      "source_line": 654,
+      "anchor": "Western Conference,Sapphire,#0F52BA,Conference gemstone"
+    },
+    {
+      "id": "DFL-09-COLOR-004",
+      "section": 9,
+      "source_line": 655,
+      "anchor": "Eastern Conference,Ruby,#E0115F,Conference gemstone"
+    },
+    {
+      "id": "DFL-09-COLOR-005",
+      "section": 9,
+      "source_line": 656,
+      "anchor": "Western/Northwest,Topaz,#E6A32E,Division gemstone"
+    },
+    {
+      "id": "DFL-09-COLOR-006",
+      "section": 9,
+      "source_line": 657,
+      "anchor": "Western/Southwest,Peridot,#A5C83B,Division gemstone"
+    },
+    {
+      "id": "DFL-09-COLOR-007",
+      "section": 9,
+      "source_line": 658,
+      "anchor": "Western/Central,Tourmaline,#D94B89,Division gemstone"
+    },
+    {
+      "id": "DFL-09-COLOR-008",
+      "section": 9,
+      "source_line": 659,
+      "anchor": "Western/Southern,Garnet,#9A1B36,Division gemstone"
+    },
+    {
+      "id": "DFL-09-COLOR-009",
+      "section": 9,
+      "source_line": 660,
+      "anchor": "Eastern/Midwest,Aquamarine,#55C5D8,Division gemstone"
+    },
+    {
+      "id": "DFL-09-COLOR-010",
+      "section": 9,
+      "source_line": 661,
+      "anchor": "Eastern/Northeast,Emerald,#009B77,Division gemstone"
+    },
+    {
+      "id": "DFL-09-COLOR-011",
+      "section": 9,
+      "source_line": 662,
+      "anchor": "Eastern/East,Turquoise,#26A9A0,Division gemstone"
+    },
+    {
+      "id": "DFL-09-COLOR-012",
+      "section": 9,
+      "source_line": 663,
+      "anchor": "Eastern/Southeast,Alexandrite,#7040A0,Division gemstone"
     }
   ]
 }
