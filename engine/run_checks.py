@@ -18,7 +18,7 @@ import time
 from concurrent.futures import ThreadPoolExecutor
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-FAST = """agents autotrade calendar cards ceo chronicle contracts coordinators elevations enrichment extensions founding gm_roster governance injuries live movement phase0 phase1 playlog
+FAST = """ed815_nfl_reference ed815_atomic_section1 ed815_atomic_section0 ed815_spatial_assignments ed815_spatial_rush ed815_spatial_trace ed815_game_final_ledger ed815_event_store ed815_public_results ed815_build_mode ed815_site_preview ed815_open_items ed815_phase1_gate ed815_public_view ed815_migration ed815_cross_rotation ed815_independent ed815_tables ed815_waiver_ledger ed815_draft_roster ed815_free_agents ed815_handoff ed815_league_store ed815_storage ed815_settlement ed815_transactions ed815_reference ed815_compensation ed815_waivers ed815_picks ed815_contracts ed815_cap ed815_market ed815_calendar ed815_cycle ed815_standings agents autotrade calendar cards ceo chronicle contracts coordinators elevations enrichment extensions founding gm_roster governance injuries live movement phase0 phase1 playlog
 prospects relations rosters rulebook service service_pay site skeleton tiebreaks ties transactions verdicts""".split()
 
 

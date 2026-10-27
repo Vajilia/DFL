@@ -1,0 +1,147 @@
+{
+  "schema": "dfl-ed815-atomic-rule-register-v0",
+  "authority": "docs/DFL_Design_Document_Ed8.15.md",
+  "reference_sha256": "6a77c043f6ca8fb89a5e17637f0e291d9ae8995ebf47a01a6bcd38d71a547454",
+  "status": "partial_unverified",
+  "coverage": {
+    "sections": [
+      1
+    ],
+    "coarse_clauses_covered": 5,
+    "coarse_clauses_total": 158,
+    "atomic_entries": 13
+  },
+  "policy": "Draft atomic source decomposition only; no implementation/test evidence recorded or constitution amended.",
+  "atoms": [
+    {
+      "id": "DFL-01-001-01",
+      "clause_id": "DFL-01-001",
+      "source_line": 41,
+      "source_fragment": "All characters are female",
+      "requirement": "All DFL-created characters are female",
+      "implementation": "unmapped",
+      "test": "unmapped",
+      "verification": "pending"
+    },
+    {
+      "id": "DFL-01-001-02",
+      "clause_id": "DFL-01-001",
+      "source_line": 41,
+      "source_fragment": "owns all 48 clubs",
+      "requirement": "The DFL owns all 48 clubs",
+      "implementation": "unmapped",
+      "test": "unmapped",
+      "verification": "pending"
+    },
+    {
+      "id": "DFL-01-002-01",
+      "clause_id": "DFL-01-002",
+      "source_line": 42,
+      "source_fragment": "pure viewer",
+      "requirement": "The human website user is exclusively a viewer",
+      "implementation": "unmapped",
+      "test": "unmapped",
+      "verification": "pending"
+    },
+    {
+      "id": "DFL-01-002-02",
+      "clause_id": "DFL-01-002",
+      "source_line": 42,
+      "source_fragment": "no control",
+      "requirement": "The viewer has no control over the simulation",
+      "implementation": "unmapped",
+      "test": "unmapped",
+      "verification": "pending"
+    },
+    {
+      "id": "DFL-01-002-03",
+      "clause_id": "DFL-01-002",
+      "source_line": 42,
+      "source_fragment": "no secret information",
+      "requirement": "The viewer receives no secret state",
+      "implementation": "unmapped",
+      "test": "unmapped",
+      "verification": "pending"
+    },
+    {
+      "id": "DFL-01-002-04",
+      "clause_id": "DFL-01-002",
+      "source_line": 42,
+      "source_fragment": "no controlling vote",
+      "requirement": "The viewer has no controlling vote",
+      "implementation": "unmapped",
+      "test": "unmapped",
+      "verification": "pending"
+    },
+    {
+      "id": "DFL-01-003-01",
+      "clause_id": "DFL-01-003",
+      "source_line": 43,
+      "source_fragment": "fixed UTC civil calendar",
+      "requirement": "All league time follows a fixed UTC civil calendar",
+      "implementation": "unmapped",
+      "test": "unmapped",
+      "verification": "pending"
+    },
+    {
+      "id": "DFL-01-003-02",
+      "clause_id": "DFL-01-003",
+      "source_line": 43,
+      "source_fragment": "no daylight-saving changes",
+      "requirement": "No daylight-saving clock change is applied",
+      "implementation": "unmapped",
+      "test": "unmapped",
+      "verification": "pending"
+    },
+    {
+      "id": "DFL-01-004-01",
+      "clause_id": "DFL-01-004",
+      "source_line": 44,
+      "source_fragment": "No monetary inflation",
+      "requirement": "No monetary inflation occurs",
+      "implementation": "unmapped",
+      "test": "unmapped",
+      "verification": "pending"
+    },
+    {
+      "id": "DFL-01-004-02",
+      "clause_id": "DFL-01-004",
+      "source_line": 44,
+      "source_fragment": "No cap rollover",
+      "requirement": "Cap space does not roll to a future season",
+      "implementation": "unmapped",
+      "test": "unmapped",
+      "verification": "pending"
+    },
+    {
+      "id": "DFL-01-004-03",
+      "clause_id": "DFL-01-004",
+      "source_line": 44,
+      "source_fragment": "No cap-space trading",
+      "requirement": "Cap space cannot be traded",
+      "implementation": "unmapped",
+      "test": "unmapped",
+      "verification": "pending"
+    },
+    {
+      "id": "DFL-01-005-01",
+      "clause_id": "DFL-01-005",
+      "source_line": 45,
+      "source_fragment": "Simulation is deterministic",
+      "requirement": "The simulation is deterministic",
+      "implementation": "unmapped",
+      "test": "unmapped",
+      "verification": "pending"
+    },
+    {
+      "id": "DFL-01-005-02",
+      "clause_id": "DFL-01-005",
+      "source_line": 45,
+      "source_fragment": "front end is a renderer",
+      "requirement": "The viewer frontend only renders simulation state",
+      "implementation": "unmapped",
+      "test": "unmapped",
+      "verification": "pending"
+    }
+  ]
+}

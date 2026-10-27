@@ -1,0 +1,92 @@
+{
+  "schema": "dfl-ed815-nfl-reference-inventory-v1",
+  "status": "candidate_not_frozen",
+  "as_observed_on": "2026-10-27",
+  "dfl_authority": "docs/DFL_Design_Document_Ed8.15.md",
+  "precedence": [
+    "explicit Edition 8.15 rule",
+    "owner-approved Edition 8.15 pre-founding gap resolution",
+    "archived 2026 NFL default where DFL is otherwise silent"
+  ],
+  "temporal_fence": "Rules adopted into DFL are static. Revisions to any linked live NFL page after the pre-founding freeze have zero automatic effect.",
+  "sources": [
+    {
+      "id": "NFL2026-PLAYING",
+      "title": "Official Playing Rules of the NFL — 2026",
+      "url": "https://static.www.nfl.com/image/upload/fl_attachment/league/tqivdkzt9mu6wdgsh1ku.pdf",
+      "publisher": "National Football League",
+      "year": 2026,
+      "scope": "on-field playing rules",
+      "sha256": null,
+      "archived_copy": false
+    },
+    {
+      "id": "NFL2026-ROSTER",
+      "title": "NFL Football Operations — Contract Language, roster and practice-squad provisions",
+      "url": "https://operations.nfl.com/calendar-events/nfl-free-agency/contract-language",
+      "publisher": "NFL Football Operations",
+      "year": 2026,
+      "scope": "roster and practice squad conditions; live webpage must be archived at freeze",
+      "sha256": null,
+      "archived_copy": false
+    },
+    {
+      "id": "NFL2026-IR",
+      "title": "NFL reporting — 2026 four-game injured reserve example",
+      "url": "https://www.nfl.com/news/patriots-to-place-a-j-brown-ankle-on-injured-reserve-sidelining-wr-at-least-four-games",
+      "publisher": "NFL.com",
+      "year": 2026,
+      "scope": "contemporary evidence of four-game minimum; not underlying signed CBA",
+      "sha256": null,
+      "archived_copy": false
+    }
+  ],
+  "provisional_defaults": [
+    {
+      "id": "NFL-GD-48",
+      "subject": "game-day active maximum",
+      "value": 48,
+      "condition": "at least eight offensive linemen active",
+      "source": "NFL2026-ROSTER",
+      "dfl_status": "requires_freeze"
+    },
+    {
+      "id": "NFL-GD-47",
+      "subject": "game-day active maximum",
+      "value": 47,
+      "condition": "fewer than eight offensive linemen active",
+      "source": "NFL2026-ROSTER",
+      "dfl_status": "requires_freeze"
+    },
+    {
+      "id": "NFL-PS-GAME",
+      "subject": "practice squad standard elevations",
+      "value": 2,
+      "unit": "maximum players per game",
+      "source": "NFL2026-ROSTER",
+      "dfl_status": "requires_freeze"
+    },
+    {
+      "id": "NFL-PS-PLAYER",
+      "subject": "practice squad standard elevations",
+      "value": 3,
+      "unit": "maximum regular-season games per player prior to full roster transaction",
+      "source": "NFL2026-ROSTER",
+      "dfl_status": "requires_freeze"
+    },
+    {
+      "id": "NFL-IR-MIN",
+      "subject": "returnable injured reserve minimum",
+      "value": 4,
+      "unit": "team games elapsed",
+      "source": "NFL2026-IR",
+      "dfl_status": "requires_freeze"
+    }
+  ],
+  "remaining_evidence": [
+    "Archive immutable, content-hashed copies of primary NFL game rules and applicable roster/CBA source at the chosen freeze revision.",
+    "Confirm DFL adaptation of roster rules against 18 games and fixed DFL game-day positions.",
+    "Owner accepts final gap defaults into Edition 8.15 register; this file is not itself an amendment."
+  ],
+  "warning": "Edition 8.15 controls on-field kickoffs, touchbacks, overtime, trade windows, financial cap, draft and governance wherever it conflicts with 2026 NFL."
+}

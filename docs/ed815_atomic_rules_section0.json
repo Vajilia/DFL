@@ -1,0 +1,717 @@
+{
+  "schema": "dfl-ed815-atomic-rule-register-v0",
+  "authority": "docs/DFL_Design_Document_Ed8.15.md",
+  "reference_sha256": "6a77c043f6ca8fb89a5e17637f0e291d9ae8995ebf47a01a6bcd38d71a547454",
+  "status": "partial_unverified",
+  "coverage": {
+    "sections": [
+      0
+    ],
+    "coarse_clauses_covered": 21,
+    "coarse_clauses_total": 158,
+    "atomic_entries": 70
+  },
+  "policy": "An atom has a permanent draft ID and a source anchor; none is marked verified until implementation and test evidence exist. This is a PARTIAL source decomposition, not a completed rule freeze.",
+  "atoms": [
+    {
+      "id": "DFL-00-001-01",
+      "clause_id": "DFL-00-001",
+      "source_line": 16,
+      "source_fragment": "48",
+      "requirement": "League member count is 48",
+      "implementation": "unmapped",
+      "test": "unmapped",
+      "verification": "pending"
+    },
+    {
+      "id": "DFL-00-001-02",
+      "clause_id": "DFL-00-001",
+      "source_line": 16,
+      "source_fragment": "2",
+      "requirement": "Conference count is 2",
+      "implementation": "unmapped",
+      "test": "unmapped",
+      "verification": "pending"
+    },
+    {
+      "id": "DFL-00-001-03",
+      "clause_id": "DFL-00-001",
+      "source_line": 16,
+      "source_fragment": "8",
+      "requirement": "Division count is 8",
+      "implementation": "unmapped",
+      "test": "unmapped",
+      "verification": "pending"
+    },
+    {
+      "id": "DFL-00-001-04",
+      "clause_id": "DFL-00-001",
+      "source_line": 16,
+      "source_fragment": "six clubs each",
+      "requirement": "Each division has six clubs",
+      "implementation": "unmapped",
+      "test": "unmapped",
+      "verification": "pending"
+    },
+    {
+      "id": "DFL-00-002-01",
+      "clause_id": "DFL-00-002",
+      "source_line": 17,
+      "source_fragment": "40",
+      "requirement": "Forty clubs are active",
+      "implementation": "unmapped",
+      "test": "unmapped",
+      "verification": "pending"
+    },
+    {
+      "id": "DFL-00-002-02",
+      "clause_id": "DFL-00-002",
+      "source_line": 17,
+      "source_fragment": "8",
+      "requirement": "Eight clubs are ambassadors",
+      "implementation": "unmapped",
+      "test": "unmapped",
+      "verification": "pending"
+    },
+    {
+      "id": "DFL-00-003-01",
+      "clause_id": "DFL-00-003",
+      "source_line": 18,
+      "source_fragment": "18 games per club",
+      "requirement": "Each active club plays 18 regular-season games",
+      "implementation": "unmapped",
+      "test": "unmapped",
+      "verification": "pending"
+    },
+    {
+      "id": "DFL-00-003-02",
+      "clause_id": "DFL-00-003",
+      "source_line": 18,
+      "source_fragment": "9H",
+      "requirement": "Each active club has nine home games",
+      "implementation": "unmapped",
+      "test": "unmapped",
+      "verification": "pending"
+    },
+    {
+      "id": "DFL-00-003-03",
+      "clause_id": "DFL-00-003",
+      "source_line": 18,
+      "source_fragment": "9A",
+      "requirement": "Each active club has nine away games",
+      "implementation": "unmapped",
+      "test": "unmapped",
+      "verification": "pending"
+    },
+    {
+      "id": "DFL-00-003-04",
+      "clause_id": "DFL-00-003",
+      "source_line": 18,
+      "source_fragment": "360 games",
+      "requirement": "The regular season has 360 total games",
+      "implementation": "unmapped",
+      "test": "unmapped",
+      "verification": "pending"
+    },
+    {
+      "id": "DFL-00-004-01",
+      "clause_id": "DFL-00-004",
+      "source_line": 19,
+      "source_fragment": "19",
+      "requirement": "There are 19 numbered fixture weeks",
+      "implementation": "unmapped",
+      "test": "unmapped",
+      "verification": "pending"
+    },
+    {
+      "id": "DFL-00-004-02",
+      "clause_id": "DFL-00-004",
+      "source_line": 19,
+      "source_fragment": "27",
+      "requirement": "There are 27 calendar weeks",
+      "implementation": "unmapped",
+      "test": "unmapped",
+      "verification": "pending"
+    },
+    {
+      "id": "DFL-00-004-03",
+      "clause_id": "DFL-00-004",
+      "source_line": 19,
+      "source_fragment": "3 (after weeks 4, 9, 14)",
+      "requirement": "Three active-club breaks occur after numbered weeks 4, 9 and 14",
+      "implementation": "unmapped",
+      "test": "unmapped",
+      "verification": "pending"
+    },
+    {
+      "id": "DFL-00-005-01",
+      "clause_id": "DFL-00-005",
+      "source_line": 20,
+      "source_fragment": "weeks 15–19",
+      "requirement": "Byes occur during numbered weeks 15 through 19",
+      "implementation": "unmapped",
+      "test": "unmapped",
+      "verification": "pending"
+    },
+    {
+      "id": "DFL-00-005-02",
+      "clause_id": "DFL-00-005",
+      "source_line": 20,
+      "source_fragment": "one per club",
+      "requirement": "Each active club receives one bye",
+      "implementation": "unmapped",
+      "test": "unmapped",
+      "verification": "pending"
+    },
+    {
+      "id": "DFL-00-006-01",
+      "clause_id": "DFL-00-006",
+      "source_line": 21,
+      "source_fragment": "5 —",
+      "requirement": "Five kickoff windows exist",
+      "implementation": "unmapped",
+      "test": "unmapped",
+      "verification": "pending"
+    },
+    {
+      "id": "DFL-00-006-02",
+      "clause_id": "DFL-00-006",
+      "source_line": 21,
+      "source_fragment": "Sat 17:30",
+      "requirement": "Saturday 17:30 is a kickoff window",
+      "implementation": "unmapped",
+      "test": "unmapped",
+      "verification": "pending"
+    },
+    {
+      "id": "DFL-00-006-03",
+      "clause_id": "DFL-00-006",
+      "source_line": 21,
+      "source_fragment": "Sun 10:00",
+      "requirement": "Sunday 10:00 is a kickoff window",
+      "implementation": "unmapped",
+      "test": "unmapped",
+      "verification": "pending"
+    },
+    {
+      "id": "DFL-00-006-04",
+      "clause_id": "DFL-00-006",
+      "source_line": 21,
+      "source_fragment": "Sun 13:00",
+      "requirement": "Sunday 13:00 is a kickoff window",
+      "implementation": "unmapped",
+      "test": "unmapped",
+      "verification": "pending"
+    },
+    {
+      "id": "DFL-00-006-05",
+      "clause_id": "DFL-00-006",
+      "source_line": 21,
+      "source_fragment": "Sun 17:30",
+      "requirement": "Sunday 17:30 is a kickoff window",
+      "implementation": "unmapped",
+      "test": "unmapped",
+      "verification": "pending"
+    },
+    {
+      "id": "DFL-00-006-06",
+      "clause_id": "DFL-00-006",
+      "source_line": 21,
+      "source_fragment": "Mon 17:30",
+      "requirement": "Monday 17:30 is a kickoff window",
+      "implementation": "unmapped",
+      "test": "unmapped",
+      "verification": "pending"
+    },
+    {
+      "id": "DFL-00-007-01",
+      "clause_id": "DFL-00-007",
+      "source_line": 22,
+      "source_fragment": "14 clubs",
+      "requirement": "The postseason qualifies 14 clubs",
+      "implementation": "unmapped",
+      "test": "unmapped",
+      "verification": "pending"
+    },
+    {
+      "id": "DFL-00-007-02",
+      "clause_id": "DFL-00-007",
+      "source_line": 22,
+      "source_fragment": "7 per conference",
+      "requirement": "Each conference qualifies seven clubs",
+      "implementation": "unmapped",
+      "test": "unmapped",
+      "verification": "pending"
+    },
+    {
+      "id": "DFL-00-007-03",
+      "clause_id": "DFL-00-007",
+      "source_line": 22,
+      "source_fragment": "13 games",
+      "requirement": "The postseason contains 13 games",
+      "implementation": "unmapped",
+      "test": "unmapped",
+      "verification": "pending"
+    },
+    {
+      "id": "DFL-00-008-01",
+      "clause_id": "DFL-00-008",
+      "source_line": 23,
+      "source_fragment": "8 clubs",
+      "requirement": "Eight clubs play the Ambassador Tour",
+      "implementation": "unmapped",
+      "test": "unmapped",
+      "verification": "pending"
+    },
+    {
+      "id": "DFL-00-008-02",
+      "clause_id": "DFL-00-008",
+      "source_line": 23,
+      "source_fragment": "7 rounds",
+      "requirement": "The Ambassador Tour consists of seven rounds",
+      "implementation": "unmapped",
+      "test": "unmapped",
+      "verification": "pending"
+    },
+    {
+      "id": "DFL-00-008-03",
+      "clause_id": "DFL-00-008",
+      "source_line": 23,
+      "source_fragment": "28 games",
+      "requirement": "The Ambassador Tour contains 28 games",
+      "implementation": "unmapped",
+      "test": "unmapped",
+      "verification": "pending"
+    },
+    {
+      "id": "DFL-00-009-01",
+      "clause_id": "DFL-00-009",
+      "source_line": 24,
+      "source_fragment": "$1,000",
+      "requirement": "The league salary cap is $1,000",
+      "implementation": "unmapped",
+      "test": "unmapped",
+      "verification": "pending"
+    },
+    {
+      "id": "DFL-00-009-02",
+      "clause_id": "DFL-00-009",
+      "source_line": 24,
+      "source_fragment": "$25",
+      "requirement": "The cap reserve is $25",
+      "implementation": "unmapped",
+      "test": "unmapped",
+      "verification": "pending"
+    },
+    {
+      "id": "DFL-00-009-03",
+      "clause_id": "DFL-00-009",
+      "source_line": 24,
+      "source_fragment": "$5",
+      "requirement": "The minimum salary is $5",
+      "implementation": "unmapped",
+      "test": "unmapped",
+      "verification": "pending"
+    },
+    {
+      "id": "DFL-00-009-04",
+      "clause_id": "DFL-00-009",
+      "source_line": 24,
+      "source_fragment": "$75",
+      "requirement": "The compensation threshold is $75",
+      "implementation": "unmapped",
+      "test": "unmapped",
+      "verification": "pending"
+    },
+    {
+      "id": "DFL-00-009-05",
+      "clause_id": "DFL-00-009",
+      "source_line": 24,
+      "source_fragment": "$2,000",
+      "requirement": "CEO salary is $2,000",
+      "implementation": "unmapped",
+      "test": "unmapped",
+      "verification": "pending"
+    },
+    {
+      "id": "DFL-00-010-01",
+      "clause_id": "DFL-00-010",
+      "source_line": 25,
+      "source_fragment": "$25",
+      "requirement": "Round-one rookie salary is $25",
+      "implementation": "unmapped",
+      "test": "unmapped",
+      "verification": "pending"
+    },
+    {
+      "id": "DFL-00-010-02",
+      "clause_id": "DFL-00-010",
+      "source_line": 25,
+      "source_fragment": "$18",
+      "requirement": "Round-two rookie salary is $18",
+      "implementation": "unmapped",
+      "test": "unmapped",
+      "verification": "pending"
+    },
+    {
+      "id": "DFL-00-010-03",
+      "clause_id": "DFL-00-010",
+      "source_line": 25,
+      "source_fragment": "$14",
+      "requirement": "Round-three rookie salary is $14",
+      "implementation": "unmapped",
+      "test": "unmapped",
+      "verification": "pending"
+    },
+    {
+      "id": "DFL-00-010-04",
+      "clause_id": "DFL-00-010",
+      "source_line": 25,
+      "source_fragment": "$11",
+      "requirement": "Round-four rookie salary is $11",
+      "implementation": "unmapped",
+      "test": "unmapped",
+      "verification": "pending"
+    },
+    {
+      "id": "DFL-00-010-05",
+      "clause_id": "DFL-00-010",
+      "source_line": 25,
+      "source_fragment": "$9",
+      "requirement": "Round-five rookie salary is $9",
+      "implementation": "unmapped",
+      "test": "unmapped",
+      "verification": "pending"
+    },
+    {
+      "id": "DFL-00-010-06",
+      "clause_id": "DFL-00-010",
+      "source_line": 25,
+      "source_fragment": "$7",
+      "requirement": "Round-six rookie salary is $7",
+      "implementation": "unmapped",
+      "test": "unmapped",
+      "verification": "pending"
+    },
+    {
+      "id": "DFL-00-010-07",
+      "clause_id": "DFL-00-010",
+      "source_line": 25,
+      "source_fragment": "$5",
+      "requirement": "Round-seven rookie salary is $5",
+      "implementation": "unmapped",
+      "test": "unmapped",
+      "verification": "pending"
+    },
+    {
+      "id": "DFL-00-010-08",
+      "clause_id": "DFL-00-010",
+      "source_line": 25,
+      "source_fragment": "$35",
+      "requirement": "First-round rookie option salary is $35",
+      "implementation": "unmapped",
+      "test": "unmapped",
+      "verification": "pending"
+    },
+    {
+      "id": "DFL-00-011-01",
+      "clause_id": "DFL-00-011",
+      "source_line": 26,
+      "source_fragment": "53 ·",
+      "requirement": "Main roster size is 53",
+      "implementation": "unmapped",
+      "test": "unmapped",
+      "verification": "pending"
+    },
+    {
+      "id": "DFL-00-011-02",
+      "clause_id": "DFL-00-011",
+      "source_line": 26,
+      "source_fragment": "16",
+      "requirement": "Practice-squad capacity is 16",
+      "implementation": "unmapped",
+      "test": "unmapped",
+      "verification": "pending"
+    },
+    {
+      "id": "DFL-00-011-03",
+      "clause_id": "DFL-00-011",
+      "source_line": 26,
+      "source_fragment": "90",
+      "requirement": "Preseason roster ceiling is 90",
+      "implementation": "unmapped",
+      "test": "unmapped",
+      "verification": "pending"
+    },
+    {
+      "id": "DFL-00-011-04",
+      "clause_id": "DFL-00-011",
+      "source_line": 26,
+      "source_fragment": "48",
+      "requirement": "Required position places total 48",
+      "implementation": "unmapped",
+      "test": "unmapped",
+      "verification": "pending"
+    },
+    {
+      "id": "DFL-00-011-05",
+      "clause_id": "DFL-00-011",
+      "source_line": 26,
+      "source_fragment": "53 |",
+      "requirement": "Ambassador Bowl roster places total 53",
+      "implementation": "unmapped",
+      "test": "unmapped",
+      "verification": "pending"
+    },
+    {
+      "id": "DFL-00-012-01",
+      "clause_id": "DFL-00-012",
+      "source_line": 27,
+      "source_fragment": "69 (53 + 16)",
+      "requirement": "Pre-final-cut salary-cap counting includes 69 contracts (53 + 16)",
+      "implementation": "unmapped",
+      "test": "unmapped",
+      "verification": "pending"
+    },
+    {
+      "id": "DFL-00-012-02",
+      "clause_id": "DFL-00-012",
+      "source_line": 27,
+      "source_fragment": "4 |",
+      "requirement": "Four credited seasons exempt a released player from waivers",
+      "implementation": "unmapped",
+      "test": "unmapped",
+      "verification": "pending"
+    },
+    {
+      "id": "DFL-00-013-01",
+      "clause_id": "DFL-00-013",
+      "source_line": 28,
+      "source_fragment": "7 rounds",
+      "requirement": "The draft has seven rounds",
+      "implementation": "unmapped",
+      "test": "unmapped",
+      "verification": "pending"
+    },
+    {
+      "id": "DFL-00-013-02",
+      "clause_id": "DFL-00-013",
+      "source_line": 28,
+      "source_fragment": "48",
+      "requirement": "The draft has 48 ordinary picks per round",
+      "implementation": "unmapped",
+      "test": "unmapped",
+      "verification": "pending"
+    },
+    {
+      "id": "DFL-00-013-03",
+      "clause_id": "DFL-00-013",
+      "source_line": 28,
+      "source_fragment": "336 picks",
+      "requirement": "The draft has 336 ordinary picks total",
+      "implementation": "unmapped",
+      "test": "unmapped",
+      "verification": "pending"
+    },
+    {
+      "id": "DFL-00-014-01",
+      "clause_id": "DFL-00-014",
+      "source_line": 29,
+      "source_fragment": "8,192",
+      "requirement": "The bracket has 8,192 winner paths",
+      "implementation": "unmapped",
+      "test": "unmapped",
+      "verification": "pending"
+    },
+    {
+      "id": "DFL-00-014-02",
+      "clause_id": "DFL-00-014",
+      "source_line": 29,
+      "source_fragment": "59",
+      "requirement": "The league contains 59 halls",
+      "implementation": "unmapped",
+      "test": "unmapped",
+      "verification": "pending"
+    },
+    {
+      "id": "DFL-00-014-03",
+      "clause_id": "DFL-00-014",
+      "source_line": 29,
+      "source_fragment": "2,256",
+      "requirement": "There are 2,256 directional relationships",
+      "implementation": "unmapped",
+      "test": "unmapped",
+      "verification": "pending"
+    },
+    {
+      "id": "DFL-00-015-01",
+      "clause_id": "DFL-00-015",
+      "source_line": 30,
+      "source_fragment": "672",
+      "requirement": "The draft class contains 672 characters",
+      "implementation": "unmapped",
+      "test": "unmapped",
+      "verification": "pending"
+    },
+    {
+      "id": "DFL-00-015-02",
+      "clause_id": "DFL-00-015",
+      "source_line": 30,
+      "source_fragment": "8",
+      "requirement": "The character pool floor per position is eight",
+      "implementation": "unmapped",
+      "test": "unmapped",
+      "verification": "pending"
+    },
+    {
+      "id": "DFL-00-015-03",
+      "clause_id": "DFL-00-015",
+      "source_line": 30,
+      "source_fragment": "4 |",
+      "requirement": "Leader pool has four willing candidates per role",
+      "implementation": "unmapped",
+      "test": "unmapped",
+      "verification": "pending"
+    },
+    {
+      "id": "DFL-00-016-01",
+      "clause_id": "DFL-00-016",
+      "source_line": 31,
+      "source_fragment": "45 min",
+      "requirement": "Offseason presentation target is 45 real minutes",
+      "implementation": "unmapped",
+      "test": "unmapped",
+      "verification": "pending"
+    },
+    {
+      "id": "DFL-00-016-02",
+      "clause_id": "DFL-00-016",
+      "source_line": 31,
+      "source_fragment": "120 min",
+      "requirement": "Competitive week presentation target is 120 real minutes",
+      "implementation": "unmapped",
+      "test": "unmapped",
+      "verification": "pending"
+    },
+    {
+      "id": "DFL-00-016-03",
+      "clause_id": "DFL-00-016",
+      "source_line": 31,
+      "source_fragment": "≈55 h",
+      "requirement": "Approximate whole-year presentation is 55 real hours",
+      "implementation": "unmapped",
+      "test": "unmapped",
+      "verification": "pending"
+    },
+    {
+      "id": "DFL-00-017-01",
+      "clause_id": "DFL-00-017",
+      "source_line": 32,
+      "source_fragment": "about 50 hours",
+      "requirement": "Overall season length target is about 50 real hours",
+      "implementation": "unmapped",
+      "test": "unmapped",
+      "verification": "pending"
+    },
+    {
+      "id": "DFL-00-017-02",
+      "clause_id": "DFL-00-017",
+      "source_line": 32,
+      "source_fragment": "missing it is not a defect",
+      "requirement": "Missing season length target does not constitute a rules defect",
+      "implementation": "unmapped",
+      "test": "unmapped",
+      "verification": "pending"
+    },
+    {
+      "id": "DFL-00-018-01",
+      "clause_id": "DFL-00-018",
+      "source_line": 33,
+      "source_fragment": "sentiment 20",
+      "requirement": "CEO recall sentiment threshold is 20",
+      "implementation": "unmapped",
+      "test": "unmapped",
+      "verification": "pending"
+    },
+    {
+      "id": "DFL-00-018-02",
+      "clause_id": "DFL-00-018",
+      "source_line": 33,
+      "source_fragment": "every 3 seasons",
+      "requirement": "CEO elections occur every three seasons",
+      "implementation": "unmapped",
+      "test": "unmapped",
+      "verification": "pending"
+    },
+    {
+      "id": "DFL-00-019-01",
+      "clause_id": "DFL-00-019",
+      "source_line": 34,
+      "source_fragment": "53 + 6 staff",
+      "requirement": "The Tiara recognizes 53 players plus six staff",
+      "implementation": "unmapped",
+      "test": "unmapped",
+      "verification": "pending"
+    },
+    {
+      "id": "DFL-00-019-02",
+      "clause_id": "DFL-00-019",
+      "source_line": 34,
+      "source_fragment": "5",
+      "requirement": "Hall eligibility requires five credited seasons",
+      "implementation": "unmapped",
+      "test": "unmapped",
+      "verification": "pending"
+    },
+    {
+      "id": "DFL-00-019-03",
+      "clause_id": "DFL-00-019",
+      "source_line": 34,
+      "source_fragment": "32",
+      "requirement": "A character begins with 32 memories",
+      "implementation": "unmapped",
+      "test": "unmapped",
+      "verification": "pending"
+    },
+    {
+      "id": "DFL-00-020-01",
+      "clause_id": "DFL-00-020",
+      "source_line": 35,
+      "source_fragment": "0.05 s",
+      "requirement": "Spatial physics timestep is 0.05 seconds",
+      "implementation": "unmapped",
+      "test": "unmapped",
+      "verification": "pending"
+    },
+    {
+      "id": "DFL-00-020-02",
+      "clause_id": "DFL-00-020",
+      "source_line": 35,
+      "source_fragment": "≤0.10 s",
+      "requirement": "Decision interval may not exceed 0.10 seconds",
+      "implementation": "unmapped",
+      "test": "unmapped",
+      "verification": "pending"
+    },
+    {
+      "id": "DFL-00-021-01",
+      "clause_id": "DFL-00-021",
+      "source_line": 36,
+      "source_fragment": "50 (minimum 8)",
+      "requirement": "International venue pool target is 50 with at least eight",
+      "implementation": "unmapped",
+      "test": "unmapped",
+      "verification": "pending"
+    },
+    {
+      "id": "DFL-00-021-02",
+      "clause_id": "DFL-00-021",
+      "source_line": 36,
+      "source_fragment": "8 (7 Tour rounds + the Bowl)",
+      "requirement": "Eight venues are drawn per season, seven for Tour rounds and one for the Bowl",
+      "implementation": "unmapped",
+      "test": "unmapped",
+      "verification": "pending"
+    }
+  ]
+}

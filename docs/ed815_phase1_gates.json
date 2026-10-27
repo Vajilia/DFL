@@ -1,0 +1,94 @@
+{
+  "schema": "dfl-ed815-phase1-gates-v1",
+  "authority": "docs/DFL_Design_Document_Ed8.15.md",
+  "status": "blocked",
+  "audit_branch": "audit/ed8-15-phase1",
+  "verified_ci": {
+    "commit": "7bceeabcee69dc25d7f4e656a88b195cdc14eecf",
+    "run": "https://github.com/Vajilia/DFL/actions/runs/40367249927",
+    "fast_passed": 55,
+    "fast_total": 55,
+    "slow_tested": false
+  },
+  "policy": "Verified means the named isolated gate has concrete evidence, not that production uses it. Phase 1 completes only when every gate is verified and an explicit independent release rehearsal passes.",
+  "gates": [
+    {
+      "id": "source_checksum",
+      "state": "verified",
+      "meaning": "Pinned Edition 8.15 authoritative text and validated SHA-256",
+      "artifact": "docs/DFL_Design_Document_Ed8.15.md"
+    },
+    {
+      "id": "founding_tables",
+      "state": "verified",
+      "meaning": "525 source-anchored row identities; 74 independent validator passes",
+      "artifact": "docs/ed815_table_row_register.json"
+    },
+    {
+      "id": "structural_rotation",
+      "state": "verified",
+      "meaning": "Independent rotation cross-check for 400 seasons and 8 divisions",
+      "artifact": "engine/check_ed815_cross_rotation.py"
+    },
+    {
+      "id": "economic_reference",
+      "state": "verified",
+      "meaning": "Isolated cap, contract, trade, waiver, pick and SQLite safety tests",
+      "artifact": "engine/check_ed815_league_store.py"
+    },
+    {
+      "id": "viewer_projection",
+      "state": "verified",
+      "meaning": "Isolated read-only privacy contract in FAST run 40367249927",
+      "artifact": "engine/check_ed815_public_view.py"
+    },
+    {
+      "id": "atomic_rule_manifest",
+      "state": "blocked",
+      "meaning": "158 coarse clauses still include multiple independent requirements",
+      "artifact": "docs/ed815_rule_register.json"
+    },
+    {
+      "id": "normative_open_items",
+      "state": "blocked",
+      "meaning": "Six pre-founding rule freeze choices identified among all eighteen §20 items; none silently approved",
+      "artifact": "docs/ed815_open_items.json"
+    },
+    {
+      "id": "nfl_reference_snapshot",
+      "state": "blocked",
+      "meaning": "2026 NFL source version and silent-default precedence are not independently pinned",
+      "artifact": "docs/edition_8_15_phase1_audit.md"
+    },
+    {
+      "id": "legacy_route_isolation",
+      "state": "blocked",
+      "meaning": "Production legacy engine still executes contradictory rules",
+      "artifact": "engine/rules.py"
+    },
+    {
+      "id": "character_and_game_integration",
+      "state": "blocked",
+      "meaning": "Edition 8.15 creation cards, snap/game rules and full-rate traces not wired",
+      "artifact": "engine/season.py"
+    },
+    {
+      "id": "website_integration",
+      "state": "blocked",
+      "meaning": "Read-only projection is not wired; legacy admin pause control remains",
+      "artifact": "site/template.html"
+    },
+    {
+      "id": "full_slow_suite",
+      "state": "blocked",
+      "meaning": "No successful current-revision full SLOW-tier evidence",
+      "artifact": "engine/run_checks.py"
+    },
+    {
+      "id": "year_zero_release_rehearsal",
+      "state": "blocked",
+      "meaning": "No end-to-end official founding rehearsal, rollback and handoff proof",
+      "artifact": "docs/edition_8_15_phase1_audit.md"
+    }
+  ]
+}
