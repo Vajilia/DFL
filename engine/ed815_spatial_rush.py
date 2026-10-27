@@ -12,6 +12,7 @@ import math
 from dataclasses import dataclass
 
 import ed815_spatial_trace as TRACE
+import ed815_spatial_assignments as ASSIGN
 
 DT = 0.05
 DECISION_TICKS = 2  # reconsider pursuits every 0.10 simulated seconds
@@ -63,7 +64,7 @@ def _step(p, aim_x, aim_y, speed):
     p["y"] = round(max(0.0, min(53.333333, p["y"] + advance * dy / length)), 6)
 
 
-def simulate_rush(offense, defense, carrier_id, *, lane_y=None, max_ticks=MAX_TICKS):
+def simulate_rush(offense, defense, carrier_id, *, lane_y=None, max_ticks=MAX_TICKS, plan=None):
     """Move all 22 agents; outcome comes from tackle contact or goal-line crossing."""
     _validate_side(offense, "offense")
     _validate_side(defense, "defense")
@@ -76,9 +77,12 @@ def simulate_rush(offense, defense, carrier_id, *, lane_y=None, max_ticks=MAX_TI
     if set(home).intersection(away) or carrier_id not in home:
         raise ValueError("22 distinct IDs and offense ball carrier required")
     runner = home[carrier_id]
-    lane = runner["y"] if lane_y is None else lane_y
-    if type(lane) not in (int, float) or not math.isfinite(lane) or not 0 <= lane <= 53.333333:
-        raise ValueError("invalid run lane")
+    if plan is not None and lane_y is not None and "lane_y" in plan:
+        raise ValueError("run lane specified twice")
+    assignments = ASSIGN.compile_rush_plan(
+        plan, home, away, carrier_id, runner["y"] if lane_y is None else lane_y
+    )
+    lane = assignments["lane_y"]
     start_x = runner["x"]
     frames = []
     orders = {}
@@ -89,7 +93,9 @@ def simulate_rush(offense, defense, carrier_id, *, lane_y=None, max_ticks=MAX_TI
                 p = roster[pid]
                 units.append({"id": pid, "side": side, "x": p["x"], "y": p["y"],
                               "intent": "carry" if pid == carrier_id else
-                              "block" if side == "home" else "pursue"})
+                              ("block:" + assignments["blocks"][pid]
+                               if pid in assignments["blocks"] else "block")
+                              if side == "home" else assignments["defense"][pid]})
         frames.append({"tick": tick, "players": units,
                        "ball": {"x": runner["x"], "y": runner["y"], "z": 1.0,
                                 "holder": carrier_id},
@@ -101,7 +107,10 @@ def simulate_rush(offense, defense, carrier_id, *, lane_y=None, max_ticks=MAX_TI
         if (tick - 1) % DECISION_TICKS == 0:
             # Pure, deterministic decision layer; later playbooks replace these aims.
             for pid, p in away.items():
-                orders[pid] = (runner["x"], runner["y"])
+                mode = assignments["defense"][pid]
+                orders[pid] = ((p["x"], p["y"]) if mode == "hold" else
+                               (runner["x"], lane) if mode == "contain_lane" else
+                               (runner["x"], runner["y"]))
         for pid in sorted(away):
             p = away[pid]
             engaged = any(_dist(p, block) <= BLOCK_RADIUS
@@ -113,7 +122,9 @@ def simulate_rush(offense, defense, carrier_id, *, lane_y=None, max_ticks=MAX_TI
             if pid == carrier_id:
                 continue
             p = home[pid]
-            target = min(away.values(), key=lambda d: (_dist(p, d), d["id"]))
+            target = (away[assignments["blocks"][pid]]
+                      if pid in assignments["blocks"] else
+                      min(away.values(), key=lambda d: (_dist(p, d), d["id"])))
             _step(p, target["x"], target["y"], p["speed"] * 0.45)
         _step(runner, 100, lane, runner["speed"])
         decisive = []
