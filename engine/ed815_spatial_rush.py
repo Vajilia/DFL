@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import copy
 import math
+from collections.abc import Mapping
 from dataclasses import dataclass
 
 import ed815_spatial_trace as TRACE
@@ -77,7 +78,7 @@ def simulate_rush(offense, defense, carrier_id, *, lane_y=None, max_ticks=MAX_TI
     if set(home).intersection(away) or carrier_id not in home:
         raise ValueError("22 distinct IDs and offense ball carrier required")
     runner = home[carrier_id]
-    if plan is not None and lane_y is not None and "lane_y" in plan:
+    if isinstance(plan, Mapping) and lane_y is not None and "lane_y" in plan:
         raise ValueError("run lane specified twice")
     assignments = ASSIGN.compile_rush_plan(
         plan, home, away, carrier_id, runner["y"] if lane_y is None else lane_y
